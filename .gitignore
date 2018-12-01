@@ -4,7 +4,16 @@ Cargo.lock
 
 **.wasm
 # Allow JS in example folders
-**/pkg/*.js
+**/pkg/*
+**/.wasm
 **.d.ts
 **/node_modules/
+**/package-lock.json
 **/target/
+
+# Temporarily borrowed from Draco for troubleshooting
+src/mailbox.rs
+src/subscription.rs
+src/element.rs
+src/node.rs
+src/text.rs

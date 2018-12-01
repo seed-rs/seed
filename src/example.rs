@@ -4,9 +4,10 @@ use std::boxed::Box; // todo temp??
 
 use wasm_bindgen::prelude::*;
 
-// in Real app, this should be replaced with use rebar::prelude::*;
-use crate::dom_types::{Attrs, Style, El, Events, Event, Tag, UpdateEl};
-use crate::vdom;
+// This prelude is the equivalent of the following imports:
+// use rebar::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
+// use rebar::vdom::run;
+use crate::prelude::*;
 
 
 // Model
@@ -17,7 +18,7 @@ struct Model {
     pub what_we_count: String,
 }
 
-// Setup a default here, for initialization later.
+// Set the starting state here, for initialization in the render() function.
 impl Default for Model {
     fn default() -> Self {
         Self {
@@ -69,6 +70,8 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
 fn comp(model: &Model) -> El<Msg> {
+    // Attributes, styles, events, text, and children can be created inside the
+    // element macros, or separately.
     let outer_style = style!{
             "display" => "flex";
             "flex-direction" => "column";
@@ -95,9 +98,6 @@ fn comp(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() -> Result<(), JsValue> {
-    let model = Model::default();
-
-//    let app = vdom::App::new(model, Box::new(update), Box::new(comp), "main");
-    let mut app = vdom::App::new(model, update, comp, "main");
-    app.mount()
+//    run(Model::default(), Box::new(update), Box::new(comp), "main")
+    run(Model::default(), update, comp, "main")
 }

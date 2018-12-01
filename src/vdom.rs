@@ -6,42 +6,7 @@ use wasm_bindgen::{prelude::*, JsCast};
 //use js_sys;
 
 use crate::dom_types::{El, Events, Event};
-//use crate::scheduler; // todo temp?
-
-pub type S = Cow<'static, str>;
-
-struct Listener<Ms> {
-    name: S,
-    handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
-    closure: Option<Closure<FnMut(web_sys::Event)>>,
-}
-
-
-impl<Ms: 'static> Listener<Ms> {
-    fn do_map<NewMessage: 'static>(
-        self,
-        f: Rc<impl Fn(Ms) -> NewMessage + 'static>,
-    ) -> Listener<NewMessage> {
-        let Listener {
-            name,
-            mut handler,
-            closure,
-        } = self;
-        let handler =
-            match handler.take() {
-                Some(mut handler) => Some(Box::new(move |event| f(handler(event)))
-                    as Box<FnMut(web_sys::Event) -> NewMessage>),
-                None => None,
-            };
-        Listener {
-            name,
-            handler,
-            closure,
-        }
-    }
-}
-
-
+use crate::{mailbox, subscription, node, element}; // todo temp?
 
 fn test<M>(model: M) {
 
@@ -76,7 +41,7 @@ fn add_event<T>(el_ws: &web_sys::Element, event: &Event, handler: T)
 
 
 /// Experimental struct to hold state-related parts of app, and methods.
-pub struct App<Ms, Mdl> {
+struct App<Ms, Mdl> {
     document: web_sys::Document,
     main_div: web_sys::Element,
     model: Rc<RefCell<Mdl>>,
@@ -194,4 +159,11 @@ impl<Ms, Mdl> App<Ms, Mdl> {
         Ok(())
     }
 
+}
+
+// The entry point for user apps; exposed in the prelude.
+pub fn run<Ms, Mdl>(model: Mdl, update: fn(&Ms, Rc<RefCell<Mdl>>) -> Mdl,
+        top_component: fn(&Mdl) -> El<Ms>, parent_div_id: &str) -> Result<(), JsValue> {
+    let mut app = App::new(model, update, top_component, parent_div_id);
+    app.mount()
 }

@@ -14,12 +14,14 @@ This package requires you to install [Rust](https://www.rust-lang.org/en-US/).
 The wasm32-unknown-unknown target:
 `rustup target add wasm32-unknown-unknown --toolchain nightly`,
 
-
 And wasm-bindgen: 
 `cargo +nightly install wasm-bindgen-cli`
 
+To start, either clone [This quickstart repo](https://github.com/David-OConnor/rebar), 
+or create a new lib with Cargo:
+`cargo new --lib appname`
 
-You also need an Html file that loads your app's compiled module, and provides a div with id 
+You need an Html file that loads your app's compiled module, and provides a div with id 
 to load the framework into. It also needs the following code to load your WASM module -
  Ie, the body should contain this:
 
@@ -30,7 +32,7 @@ to load the framework into. It also needs the following code to load your WASM m
     delete WebAssembly.instantiateStreaming;
 </script>
 
-<script src='./pkg/rebar.js'></script>
+<script src='./pkg/appname.js'></script>
 
 <script>
     const { render } = wasm_bindgen;
@@ -39,12 +41,13 @@ to load the framework into. It also needs the following code to load your WASM m
         render();
     }
 
-    wasm_bindgen('./pkg/rebar_bg.wasm')
+    wasm_bindgen('./pkg/appname_bg.wasm')
         .then(run)
         .catch(console.error);
 </script>
 ```
-Where `rebar` in `rebar.js` and `rebar_bg.wasm` is replaced by your app's name.
+Where `appname` in `appname.js` and `appname_bg.wasm` is replaced by your app's name.
+The Quickstart repo includes this file, but you still need to perform the rename.
 
 You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
@@ -57,6 +60,7 @@ of `"cdylib"`. Example:
 name = "appname"
 version = "0.1.0"
 authors = ["Name <email@email.com>"]
+edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
@@ -152,7 +156,7 @@ fn comp(model: &Model) -> El<Msg> {
 pub fn render() -> Result<(), JsValue> {
     let model = Model::default();
     vdom::mount(model, &update, &comp, "main")
-}f
+}
 ```
 
 ## Building and running
@@ -162,24 +166,24 @@ For details, reference [the wasm-pack documentation](https://rustwasm.github.io/
 To build your app, run the following two commands:
 
 ```
-cargo build --target wasm32-unknown-unknown`
+cargo build --target wasm32-unknown-unknown
 ```
 and 
 ```
-wasm-bindgen target/wasm32-unknown-unknown/debug/rebar.wasm --no modules --out-dir ./pkg
+wasm-bindgen target/wasm32-unknown-unknown/debug/appname.wasm --no modules --out-dir ./pkg
 ```
-where `rebar` is replaced with your app's name. This compiles your code in the target
+where `appname` is replaced with your app's name. This compiles your code in the target
 folder, and populates the pkg folder with your WASM module, a Typescript definitions file,
 and a Javascript file used to link your module from HTML.
 
-You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows)
+You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows).
+The Quickstart repo includes this, but you'll still need to do the rename. You can then use
+`./build.sh` or `.\build.ps1`
 
 For development, you can view your app using a dev server, or by opening the HTML file in a browser.
 
 For example, after installing the  [http crate](https://crates.io/crates/https), run `http`.
-Or with Python 3 installed, run `python -m http.server`
-
-## Example with more extensive coverage
+Or with Python 3 installed, run `python -m http.server` from your crate's root.
 
 
 ## Guide
@@ -383,31 +387,40 @@ Rebar should make this easy.
 - This project is strongly influenced by Elm, React, and Redux. The overall layout
 of Rebar apps mimicks that of The Elm Architecture.
 
-## FAQ
-**Q:** There are several existing frameworks for Rust in WASM; why add another?
 
-**A:** My goal is for this to be easy to pick up from looking at a tutorial or documentation, regardless of your
+### Why another entry in a saturated field?
+
+There are several existing frameworks for Rust in WASM; why add another?
+
+**There are already several Rust frameworks; why another?** 
+My goal is for this to be easy to pick up from looking at a tutorial or documentation, regardless of your
 level of experience with Rust. I'm distinguising this package through clear examples
 and documentation (see goals above), and using `wasm-bindgen` internally. I started this
-project after being unable to get existing frameworks working,
-due to lack of *standalone* examples, and inconsistency between documentation and published versions.
+project after being unable to get existing frameworks to work
+due to lack of documented examples, and inconsistency between documentation and 
+published versions. My intent is for anyone who's proficient in a frontend
+framework to get a standalone Rebar app working in the browser, using just the 
+Quickstart guide within a few minutes.
 
 Rebar approaches HTML-display syntax differently from existing packages: 
 rather than use an HTML-like markup similar to JSX, 
-it uses Rust builtin types, thinly-wrapped by a macro for each html element.
-This subjective decision may not appeal to everyone, 
+it uses Rust builtin types, thinly-wrapped by a macro for each dom element.
+This decision may not appeal to everyone, 
 but I think it integrates more naturally with the Rust language.
 
-**Q:** Why build a frontend in Rust over Elm or Javascript-based frameworks?
-
-**A:** You may prefer writing in Rust, and using packages from Cargo vis npm. Additionally,
+**Why build a frontend in Rust over Elm or Javascript-based frameworks?**
+You may prefer writing in Rust, and using packages from Cargo vis npm. Additionally,
 wasm-based frontends are usally faster than JS-based ones. You may choose this approach over
 Elm if you're already comfortable with Rust, want the performance benefits, or don't
 want to code business logic in a purely-functional langauge.
 
-**Q:** How stable is the API:
+Compared to React, for example, you may appreciate the consistency of how to write apps:
+There's no distinction between logic and display code; no restrictions on comments;
+no distinction between components and normal functions. The API is
+flexible, and avoids boilerplate.
 
-**A:** Not stable yet! Subject to change, especially DOM-element-related syntax.
+I also hope that config, building, and dependency-management is cleaner with Cargo and
+wasm-bindgen than with npm.
 
 ## Shoutouts
  - The WASM-Bindgen team: For building the tools this project relies on

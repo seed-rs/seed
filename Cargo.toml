@@ -20,21 +20,36 @@ wasm-bindgen = {version = "^0.2.28", features = ["nightly"]}
 proc_macros = { path = "proc_macros"}
 js-sys = "^0.3.5"
 
+# todo temp
+futures = "0.1.25"
+int_hash = "0.1.1"
+wasm-bindgen-futures = "0.3"
+
 [dependencies.web-sys]
 version = "^0.3.4"
 features = [
-  'Document',
-  'Element',
-  'HtmlElement',
-  'HtmlCollection',
-  'Node',
-  'Window',
-  'console',
-  'Event',
-  'EventTarget',
-  'MessagePort',
-  'MessageChannel',
-  'Text',
+    "Document",
+    "Element",
+    "Event",
+    "EventTarget",
+    "History",
+    "HtmlElement",
+    "HtmlInputElement",
+    "HtmlTextAreaElement",
+    "HtmlSelectElement",
+    "Location",
+    "MouseEvent",
+    "Node",
+    "NodeList",
+    "Performance",
+    "Request",
+    "RequestInit",
+    "RequestMode",
+    "Response",
+    "Storage",
+    "Text",
+    "console",
+"Window",
 ]
 
 
