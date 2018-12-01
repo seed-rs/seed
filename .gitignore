@@ -1,0 +1,10 @@
+/target
+**/*.rs.bk
+Cargo.lock
+
+**.wasm
+# Allow JS in example folders
+**/pkg/*.js
+**.d.ts
+**/node_modules/
+**/target/
