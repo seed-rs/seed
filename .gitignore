@@ -17,3 +17,5 @@ src/subscription.rs
 src/element.rs
 src/node.rs
 src/text.rs
+src/app.rs
+src/console.rs

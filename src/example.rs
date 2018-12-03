@@ -1,3 +1,5 @@
+
+
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::boxed::Box; // todo temp??
@@ -9,6 +11,10 @@ use wasm_bindgen::prelude::*;
 // use rebar::vdom::run;
 use crate::prelude::*;
 
+use crate::mailbox::Mailbox; // todo temp
+
+
+// Todo trait etc that prevents the user from having to enter <Msg> with each El?
 
 // Model
 
@@ -30,23 +36,25 @@ impl Default for Model {
 
 // Update
 
-enum Msg {
+pub enum Msg {  // todo temp pub
     Increment,
     Decrement,
     ChangeDescrip(String),
 }
 
 //fn update(msg: &Msg, model: Rc<Model>) -> Model {
-fn update(msg: &Msg, model: Rc<RefCell<Model>>) -> Model {
+//fn update(msg: &Msg, model: &Model) -> Model {
+fn update(mailbox: &Mailbox<Msg>, msg: &Msg, model: &Model) -> Model {
     // todo msg probably doesn't need to be a ref.
 //    let model2 = model.clone(); // todo deal with this.
     match msg {
         &Msg::Increment => {
-//            Model {clicks: model.clicks + 1, ..model.unwrap()}
-            Model {clicks: model.borrow().clicks + 1, what_we_count: String::from("test")}
+            Model {clicks: model.clicks + 1, ..model.clone()}
+//            Model {clicks: model.borrow().clicks + 1, what_we_count: String::from("test")}
         },
         &Msg::Decrement => {
-            Model {clicks: model.borrow().clicks - 1, what_we_count: String::from("test")}
+            Model {clicks: model.clicks - 1, ..model.clone()}
+//            Model {clicks: model.borrow().clicks - 1, what_we_count: String::from("test")}
         },
         &Msg::ChangeDescrip(ref descrip) => {
 //            Model {descrip, ..model.unwrap()}
@@ -78,7 +86,10 @@ fn comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-    div![outer_style, vec![
+    let mut button1 = button![ events!{"click" => Msg::Increment}, "Click me" ];
+    button1.add_ev("click", |_| Msg::Increment);
+
+    div![outer_style, "TEST", vec![
         div![
             attrs!{"class" => "ok elements"},
             style!{
@@ -89,15 +100,15 @@ fn comp(model: &Model) -> El<Msg> {
             vec![
                 h1![ "Counting" ],
                 h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
-                button![ events!{"click" => Msg::Increment}, "Click me" ],
+                button1,
                 button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ],
             ] ],
-        success_level(model.clicks)
+        success_level(model.clicks),
     ] ]
 }
 
 #[wasm_bindgen]
-pub fn render() -> Result<(), JsValue> {
+pub fn render() {
 //    run(Model::default(), Box::new(update), Box::new(comp), "main")
-    run(Model::default(), update, comp, "main")
+    run(Model::default(), update, comp, "main");
 }

@@ -68,6 +68,12 @@ crate-type = ["cdylib"]
 [dependencies]
 wasm-bindgen = "^0.2.28"
 rebar = "^0.1.0"
+
+# For serialization, eg sending requests to a server. Otherwise, not required.
+serde = "^1.0.80"
+serde_derive = "^1.0.80"
+serde_json = "1.0.33"
+
 ```
 
 ### Minimal example
@@ -316,9 +322,9 @@ You can mix in constructors (or struct literals) in components as needed, depend
 ### Components
 The analog of components in frameworks like React are normal Rust functions that that return Els.
 The parameters these functions take are not treated in a way equivalent
-to attributes on native DOM elements, like in React; they just provide a way to 
+to attributes on native DOM elements; they just provide a way to 
 organize your code. In practice, they feel similar to components in React, but are just
-functions usedy to create elements that end up in the `children` property of
+functions used to create elements that end up in the `children` property of
 parent elements.
 
 For example, you could break up the above example like this:
@@ -327,26 +333,69 @@ For example, you could break up the above example like this:
         h3![ text ]
     }  
     
-
     div![ style!{"display" => "flex"; flex-direction: "column"}, vec![
         text_display("Some things"),
         button![ events!{"click" => Msg::SayHi}, "Click me!" ]
     ] ]
 ```
 
-Note that this 'component' returns a single El that is inserted into its parents'
+The text_display() component returns a single El that is inserted into its parents'
 `children` Vec; you can use this in patterns as you would in React. You can also use
 functions that return Vecs or Tuples of Els, which you can incorporate into other components
-using normal rust code (Eg using the extend method of the `children` Vec.) Rust's type system
-ensures that only `El`s  can end up as children of other `El`s, so if your app compiles,
+using normal Rust code. See Fragments
+section below. Rust's type system
+ensures that only `El`s  can end up as children, so if your app compiles,
 you haven't violated any rules.
  
 Note that unlike in JSX, there's a clear syntax delineation here between natural HTML
-elements, and custom components.
+elements (element macros), and custom components (function calls).
+
+### Fragments
+Fragments (`<>...</>` syntax in React and Yew) are components that represent multiple
+elements without a parent. This is useful to avoid
+unecessary divs, which may be undesirable on their own, and breaks things like tables and CSS-grid. 
+In Rebar, there's no special syntax; just have your component return a Vec of `El`s instead of 
+one, and pass them into the parent's `children` parameter via Rust's Vec methods
+like `extend`, or pass the whole Vec if there are no other children:
+
+```rust
+fn cols() -> Vec<El<Msg>> {
+    vec![
+        td![ "1" ],
+        td![ "2" ],
+        td![ "3" ]
+    ]
+}
+
+fn items() -> El<Msg> {
+    table![ vec![
+        tr![ cols() ]
+    ]
+}
+```
+
+### The update function
+The update function you pass to rebar::run describes how the state should change, upon
+receiving each type of Message. It works similar to a reducer in Redux: It accepts the
+current state as input, and outputs the new state, both of which are instances of the Model
+defined above it.
+
 
 ### Comments in the view
 The Element-creation macros used to create views are normal Rust code, you can
 use comments in them normally: either on their own line, or in line.
+
+
+### Serialization and deserialization
+Use the [Serde](https://serde.rs/) crate to serialize and deserialize data, eg
+when sending and receiving data from a REST-etc. It supports most popular formats,
+including `JSON`, `YAML`, and `XML`.
+
+### Querying servers using fetch
+To send and receive data with a server, use `wasm-bindgen`'s `web-sys` fetch methods,
+[described here](https://rustwasm.github.io/wasm-bindgen/examples/fetch.html), paired
+with Serde.
+
 
 ## Goals:
 - Documentation that matches the current version. If you're unable to get example code working
@@ -427,4 +476,5 @@ wasm-bindgen than with npm.
  - Alex Chrichton: For being extraodinarily helpful in the Rust / WASM community
  - The Elm team: For creating and standardizing the Elm architecture
  - Denis Kolodin: for creating the inspirational Yew framework
- 
+ - Utkarsh Kukreti, for through his Draco lib, helping me understand how wasm-bindgen's
+ closure system can be used to update state.

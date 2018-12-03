@@ -3,12 +3,12 @@
   <component name="ChangeListManager">
     <list default="true" id="3452ec20-742e-44e7-91f1-73266b0307dc" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/framework.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/framework.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/example.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/example.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/scheduler.rs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vdom.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/vdom.rs" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/" />
@@ -21,42 +21,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="600">
-      <file leaf-file-name="Cargo.toml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Cargo.toml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="348">
-              <caret line="50" column="14" selection-start-line="50" selection-start-column="14" selection-end-line="50" selection-end-column="14" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="text.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/text.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="325">
-              <caret line="31" column="9" selection-start-line="31" selection-start-column="9" selection-end-line="31" selection-end-column="9" />
-              <folding>
-                <element signature="e#875#876#0" expanded="true" />
-                <element signature="e#907#908#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/vdom.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="266">
-              <caret line="158" column="14" lean-forward="true" selection-start-line="158" selection-start-column="14" selection-end-line="158" selection-end-column="14" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="example.rs" pinned="false" current-in-tab="true">
+      <file leaf-file-name="example.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/example.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="172">
-              <caret line="19" lean-forward="true" selection-start-line="19" selection-end-line="19" />
+            <state relative-caret-position="289">
+              <caret line="83" column="32" lean-forward="true" selection-start-line="83" selection-start-column="32" selection-end-line="83" selection-end-column="32" />
             </state>
           </provider>
         </entry>
@@ -64,20 +33,31 @@
       <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="197">
-              <caret line="28" column="31" lean-forward="true" selection-start-line="28" selection-start-column="31" selection-end-line="28" selection-end-column="31" />
+            <state relative-caret-position="64">
+              <caret line="4" column="48" selection-start-line="4" selection-start-column="48" selection-end-line="4" selection-end-column="48" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="mailbox.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mailbox.rs">
+      <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/vdom.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="272">
-              <caret line="17" column="5" selection-start-line="17" selection-start-column="5" selection-end-line="17" selection-end-column="5" />
+            <state relative-caret-position="1">
+              <caret line="221" column="34" selection-start-line="221" selection-start-column="34" selection-end-line="221" selection-end-column="34" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dom_types.rs" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="372">
+              <caret line="368" column="39" lean-forward="true" selection-start-line="368" selection-start-column="39" selection-end-line="368" selection-end-column="39" />
               <folding>
-                <element signature="e#479#480#0" expanded="true" />
-                <element signature="e#514#515#0" expanded="true" />
+                <element signature="e#11883#11884#0" expanded="true" />
+                <element signature="e#11926#11927#0" expanded="true" />
+                <element signature="e#12330#12331#0" expanded="true" />
+                <element signature="e#12374#12375#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -86,8 +66,8 @@
       <file leaf-file-name="subscription.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/subscription.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1584">
-              <caret line="99" selection-start-line="99" selection-end-line="99" />
+            <state relative-caret-position="277">
+              <caret line="61" column="26" lean-forward="true" selection-start-line="61" selection-start-column="26" selection-end-line="61" selection-end-column="26" />
               <folding>
                 <element signature="e#384#385#0" expanded="true" />
                 <element signature="e#429#430#0" expanded="true" />
@@ -100,52 +80,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="node.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/node.rs">
+      <file leaf-file-name="mailbox.rs" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/mailbox.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="313">
-              <caret line="94" column="12" selection-start-line="94" selection-start-column="8" selection-end-line="94" selection-end-column="12" />
+            <state relative-caret-position="176">
+              <caret line="47" lean-forward="true" selection-start-line="47" selection-end-line="47" />
               <folding>
-                <element signature="e#2106#2107#0" expanded="true" />
-                <element signature="e#2144#2145#0" expanded="true" />
-                <element signature="e#2626#2627#0" expanded="true" />
-                <element signature="e#2657#2658#0" expanded="true" />
-                <element signature="e#2791#2792#0" expanded="true" />
-                <element signature="e#2828#2829#0" expanded="true" />
-                <element signature="e#2962#2963#0" expanded="true" />
-                <element signature="e#3010#3011#0" expanded="true" />
-                <element signature="e#3105#3106#0" expanded="true" />
-                <element signature="e#3151#3152#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/.gitignore">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="18" column="11" selection-start-line="18" selection-start-column="11" selection-end-line="18" selection-end-column="11" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="element.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/element.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="112">
-              <caret line="7" column="18" selection-start-line="7" selection-start-column="18" selection-end-line="7" selection-end-column="18" />
-              <folding>
-                <element signature="e#7940#7941#0" expanded="true" />
-                <element signature="e#7972#7973#0" expanded="true" />
-                <element signature="e#8478#8479#0" expanded="true" />
-                <element signature="e#8516#8517#0" expanded="true" />
-                <element signature="e#9941#9942#0" expanded="true" />
-                <element signature="e#9979#9980#0" expanded="true" />
-                <element signature="e#11159#11160#0" expanded="true" />
-                <element signature="e#11194#11195#0" expanded="true" />
-                <element signature="e#12278#12279#0" expanded="true" />
-                <element signature="e#12310#12311#0" expanded="true" />
+                <element signature="e#479#480#0" expanded="true" />
+                <element signature="e#514#515#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -162,36 +104,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>let inner =</find>
+      <find>.expec</find>
+      <find>.patch</find>
+      <find>fn new</find>
+      <find>listeners</find>
+      <find>.into</find>
+      <find>cow::</find>
+      <find>update(</find>
+      <find>update</find>
+      <find>fn send</find>
+      <find>normal rust</find>
+      <find>vec</find>
+      <find>do_ma</find>
+      <find>impl&lt;ms</find>
+      <find>listen</find>
+      <find>Listen</find>
+      <find>do_map</find>
+      <find>struct listen</find>
+      <find>end up as</find>
+      <find>fn update</find>
+      <find>struct liste</find>
+      <find>listener</find>
+      <find>struct events</find>
+      <find>struct list</find>
+      <find>|</find>
+      <find>trait up</find>
       <find>add_event</find>
-      <find>add_e</find>
-      <find>add_</find>
-      <find>controll</find>
-      <find>closure</find>
-      <find>closu</find>
-      <find>http</find>
-      <find>tag::</find>
-      <find>section</find>
-      <find>main</find>
-      <find>tag_camel</find>
-      <find>click</find>
-      <find>web_sys::</find>
-      <find>web_sys::con</find>
-      <find>from_</find>
-      <find>element::</find>
-      <find>el.add_s</find>
-      <find>from_str</find>
-      <find>from_st</find>
-      <find>event::f</find>
-      <find>and wasm-</find>
-      <find>authors =</find>
-      <find>event::from</find>
-      <find>cargo build</find>
-      <find>html ele</find>
-      <find>example with</find>
-      <find>build</find>
-      <find>quicks</find>
-      <find>text</find>
+      <find>add_ev(</find>
+      <find>send</find>
+      <find>cow</find>
+      <find>name:</find>
     </findStrings>
     <replaceStrings>
       <replace>empty</replace>
@@ -206,25 +148,26 @@
       <list>
         <option value="$PROJECT_DIR$/proc_macros/src/temp.rs" />
         <option value="$PROJECT_DIR$/proc_macros/Cargo.toml" />
-        <option value="$PROJECT_DIR$/src/app.rs" />
         <option value="$PROJECT_DIR$/webpack.config.js" />
         <option value="$PROJECT_DIR$/build.ps1" />
         <option value="$PROJECT_DIR$/proc_macros/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/scheduler.rs" />
         <option value="$PROJECT_DIR$/index.html" />
         <option value="$PROJECT_DIR$/src/dom_shortcuts.rs" />
-        <option value="$PROJECT_DIR$/src/dom_types.rs" />
         <option value="$PROJECT_DIR$/src/mailbox.rs" />
         <option value="$PROJECT_DIR$/src/subscription.rs" />
         <option value="$PROJECT_DIR$/src/node.rs" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/text.rs" />
         <option value="$PROJECT_DIR$/src/element.rs" />
-        <option value="$PROJECT_DIR$/Cargo.toml" />
+        <option value="$PROJECT_DIR$/src/app.rs" />
         <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/src/console.rs" />
+        <option value="$PROJECT_DIR$/Cargo.toml" />
+        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/lib.rs" />
-        <option value="$PROJECT_DIR$/src/vdom.rs" />
         <option value="$PROJECT_DIR$/src/example.rs" />
+        <option value="$PROJECT_DIR$/src/vdom.rs" />
+        <option value="$PROJECT_DIR$/src/dom_types.rs" />
       </list>
     </option>
   </component>
@@ -241,10 +184,10 @@
     </packageJsonPaths>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="2220" />
-    <option name="y" value="233" />
-    <option name="width" value="1146" />
-    <option name="height" value="1160" />
+    <option name="x" value="1954" />
+    <option name="y" value="51" />
+    <option name="width" value="1347" />
+    <option name="height" value="1304" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -309,7 +252,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="2220" y="233" width="1146" height="1160" extended-state="0" />
+    <frame x="1954" y="51" width="1347" height="1304" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -319,10 +262,11 @@
       <window_info anchor="bottom" id="Version Control" order="11" />
       <window_info anchor="bottom" id="Python Console" order="8" weight="0.3292683" />
       <window_info anchor="bottom" id="Run" order="2" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.28501946" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.21178637" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.38225257" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.17871018" />
       <window_info anchor="bottom" id="Docker" order="10" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="5" />
+      <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="right" id="SciView" order="4" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
@@ -333,7 +277,6 @@
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" />
     </layout>
     <layout-to-restore>
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -367,13 +310,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/lib.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1333">
-          <caret line="43" column="40" selection-start-line="43" selection-start-column="40" selection-end-line="43" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/vdom.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="434">
@@ -556,7 +492,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/proc_macros/src/temp.rs" />
-    <entry file="file://$PROJECT_DIR$/src/app.rs" />
     <entry file="file://$PROJECT_DIR$/proc_macros/Cargo.toml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="192">
@@ -601,9 +536,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/build.ps1">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/build.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="16">
@@ -618,68 +550,67 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
+    <entry file="file://$PROJECT_DIR$/src/scheduler.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="70">
-          <caret line="126" column="37" selection-start-line="126" selection-start-column="37" selection-end-line="126" selection-end-column="37" />
+        <state relative-caret-position="240">
+          <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
           <folding>
-            <element signature="e#4716#4717#0" expanded="true" />
-            <element signature="e#4742#4743#0" expanded="true" />
-            <element signature="e#4772#4773#0" expanded="true" />
-            <element signature="e#4810#4811#0" expanded="true" />
-            <element signature="e#7638#7639#0" expanded="true" />
-            <element signature="e#7681#7682#0" expanded="true" />
-            <element signature="e#8085#8086#0" expanded="true" />
-            <element signature="e#8129#8130#0" expanded="true" />
+            <element signature="e#4328#4329#0" expanded="true" />
+            <element signature="e#4377#4378#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
+    <entry file="file://$PROJECT_DIR$/src/app.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="212" column="60" selection-start-line="212" selection-start-column="60" selection-end-line="212" selection-end-column="60" />
+        <state relative-caret-position="115">
+          <caret line="82" column="32" selection-start-line="82" selection-start-column="32" selection-end-line="82" selection-end-column="32" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="361">
-            <caret line="161" column="23" selection-start-line="161" selection-start-column="23" selection-end-line="161" selection-end-column="23" />
-            <folding>
-              <element signature="e#43#44#0" expanded="true" />
-              <element signature="e#69#70#0" expanded="true" />
-            </folding>
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-      <provider editor-type-id="text-editor">
-        <state relative-caret-position="1054">
-          <caret line="40" column="19" lean-forward="true" selection-start-line="40" selection-start-column="19" selection-end-line="40" selection-end-column="19" />
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="20" column="14" selection-start-line="20" selection-start-column="14" selection-end-line="20" selection-end-column="14" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/subscription.rs">
+    <entry file="file://$PROJECT_DIR$/src/console.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1584">
-          <caret line="99" selection-start-line="99" selection-end-line="99" />
+        <state relative-caret-position="467">
+          <caret line="30" lean-forward="true" selection-start-line="30" selection-end-line="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="50" column="14" selection-start-line="50" selection-start-column="14" selection-end-line="50" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build.ps1">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="43" lean-forward="true" selection-start-column="43" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/text.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="96">
+          <caret line="6" column="24" selection-start-line="6" selection-start-column="24" selection-end-line="6" selection-end-column="24" />
           <folding>
-            <element signature="e#384#385#0" expanded="true" />
-            <element signature="e#429#430#0" expanded="true" />
-            <element signature="e#856#857#0" expanded="true" />
-            <element signature="e#901#902#0" expanded="true" />
-            <element signature="e#1716#1717#0" expanded="true" />
-            <element signature="e#1746#1747#0" expanded="true" />
+            <element signature="e#875#876#0" expanded="true" />
+            <element signature="e#907#908#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/node.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="313">
-          <caret line="94" column="12" selection-start-line="94" selection-start-column="8" selection-end-line="94" selection-end-column="12" />
+        <state relative-caret-position="1408">
+          <caret line="88" column="18" selection-start-line="88" selection-start-column="18" selection-end-line="88" selection-end-column="18" />
           <folding>
             <element signature="e#2106#2107#0" expanded="true" />
             <element signature="e#2144#2145#0" expanded="true" />
@@ -695,51 +626,43 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/text.rs">
+    <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="325">
-          <caret line="31" column="9" selection-start-line="31" selection-start-column="9" selection-end-line="31" selection-end-column="9" />
-          <folding>
-            <element signature="e#875#876#0" expanded="true" />
-            <element signature="e#907#908#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="1411">
+          <caret line="212" column="60" selection-start-line="212" selection-start-column="60" selection-end-line="212" selection-end-column="60" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="421">
+            <caret line="358" column="21" selection-start-line="358" selection-start-column="21" selection-end-line="358" selection-end-column="21" />
+            <folding>
+              <element signature="e#43#44#0" expanded="true" />
+              <element signature="e#69#70#0" expanded="true" />
+            </folding>
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+      <provider editor-type-id="text-editor">
+        <state relative-caret-position="1054">
+          <caret line="40" column="19" lean-forward="true" selection-start-line="40" selection-start-column="19" selection-end-line="40" selection-end-column="19" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/element.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="112">
-          <caret line="7" column="18" selection-start-line="7" selection-start-column="18" selection-end-line="7" selection-end-column="18" />
-          <folding>
-            <element signature="e#7940#7941#0" expanded="true" />
-            <element signature="e#7972#7973#0" expanded="true" />
-            <element signature="e#8478#8479#0" expanded="true" />
-            <element signature="e#8516#8517#0" expanded="true" />
-            <element signature="e#9941#9942#0" expanded="true" />
-            <element signature="e#9979#9980#0" expanded="true" />
-            <element signature="e#11159#11160#0" expanded="true" />
-            <element signature="e#11194#11195#0" expanded="true" />
-            <element signature="e#12278#12279#0" expanded="true" />
-            <element signature="e#12310#12311#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/scheduler.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
-          <folding>
-            <element signature="e#4328#4329#0" expanded="true" />
-            <element signature="e#4377#4378#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="1408">
+          <caret line="88" column="45" selection-start-line="88" selection-start-column="45" selection-end-line="88" selection-end-column="45" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mailbox.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="17" column="5" selection-start-line="17" selection-start-column="5" selection-end-line="17" selection-end-column="5" />
+        <state relative-caret-position="176">
+          <caret line="47" lean-forward="true" selection-start-line="47" selection-end-line="47" />
           <folding>
             <element signature="e#479#480#0" expanded="true" />
             <element signature="e#514#515#0" expanded="true" />
@@ -747,38 +670,52 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Cargo.toml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="348">
-          <caret line="50" column="14" selection-start-line="50" selection-start-column="14" selection-end-line="50" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/.gitignore">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="18" column="11" selection-start-line="18" selection-start-column="11" selection-end-line="18" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="197">
-          <caret line="28" column="31" lean-forward="true" selection-start-line="28" selection-start-column="31" selection-end-line="28" selection-end-column="31" />
+        <state relative-caret-position="64">
+          <caret line="4" column="48" selection-start-line="4" selection-start-column="48" selection-end-line="4" selection-end-column="48" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/subscription.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="277">
+          <caret line="61" column="26" lean-forward="true" selection-start-line="61" selection-start-column="26" selection-end-line="61" selection-end-column="26" />
+          <folding>
+            <element signature="e#384#385#0" expanded="true" />
+            <element signature="e#429#430#0" expanded="true" />
+            <element signature="e#856#857#0" expanded="true" />
+            <element signature="e#901#902#0" expanded="true" />
+            <element signature="e#1716#1717#0" expanded="true" />
+            <element signature="e#1746#1747#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/vdom.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="266">
-          <caret line="158" column="14" lean-forward="true" selection-start-line="158" selection-start-column="14" selection-end-line="158" selection-end-column="14" />
+        <state relative-caret-position="1">
+          <caret line="221" column="34" selection-start-line="221" selection-start-column="34" selection-end-line="221" selection-end-column="34" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/example.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="172">
-          <caret line="19" lean-forward="true" selection-start-line="19" selection-end-line="19" />
+        <state relative-caret-position="289">
+          <caret line="83" column="32" lean-forward="true" selection-start-line="83" selection-start-column="32" selection-end-line="83" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="372">
+          <caret line="368" column="39" lean-forward="true" selection-start-line="368" selection-start-column="39" selection-end-line="368" selection-end-column="39" />
+          <folding>
+            <element signature="e#11883#11884#0" expanded="true" />
+            <element signature="e#11926#11927#0" expanded="true" />
+            <element signature="e#12330#12331#0" expanded="true" />
+            <element signature="e#12374#12375#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

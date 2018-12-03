@@ -2,6 +2,9 @@
 
 #![allow(unused_macros)]
 
+// todo temp>?? (For listener creation / handler
+#![feature(impl_trait_in_bindings)]
+
 pub mod dom_types;
 #[macro_use]
 pub mod dom_shortcuts;
@@ -14,6 +17,8 @@ mod subscription;
 mod node;
 mod element;
 mod text;
+mod app;
+mod console;
 
 
 // todo temp
@@ -28,12 +33,12 @@ use std::borrow::Cow;
 
 pub type S = Cow<'static, str>;
 
-pub fn select(selector: &str) -> Option<web_sys::Element> {
-    web_sys::window()?
-        .document()?
-        .query_selector(selector)
-        .ok()?
-}
+//pub fn select(selector: &str) -> Option<web_sys::Element> {
+//    web_sys::window()?
+//        .document()?
+//        .query_selector(selector)
+//        .ok()?
+//}
 
 
 /// The basics, into the global namespace.
@@ -43,8 +48,5 @@ pub mod prelude {
 //    pub use crate::dom_types::{Element, Styles, Attrs, Tag};
 //    pub use proc_macros::*;
 }
-
-
-
 
 
