@@ -386,6 +386,11 @@ The Element-creation macros used to create views are normal Rust code, you can
 use comments in them normally: either on their own line, or in line.
 
 
+### Logging in the web browser
+To output to teh web browser's console (ie console.log() in JS), use web_sys::console_log1...
+or the `log` convenience function exposed in the rebar prelude: `log("hello, world!")`
+
+
 ### Serialization and deserialization
 Use the [Serde](https://serde.rs/) crate to serialize and deserialize data, eg
 when sending and receiving data from a REST-etc. It supports most popular formats,

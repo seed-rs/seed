@@ -1,18 +1,9 @@
-
-
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::boxed::Box; // todo temp??
-
 use wasm_bindgen::prelude::*;
 
 // This prelude is the equivalent of the following imports:
 // use rebar::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
 // use rebar::vdom::run;
 use crate::prelude::*;
-
-use crate::mailbox::Mailbox; // todo temp
-
 
 // Todo trait etc that prevents the user from having to enter <Msg> with each El?
 
@@ -42,23 +33,17 @@ pub enum Msg {  // todo temp pub
     ChangeDescrip(String),
 }
 
-//fn update(msg: &Msg, model: Rc<Model>) -> Model {
-//fn update(msg: &Msg, model: &Model) -> Model {
-fn update(mailbox: &Mailbox<Msg>, msg: &Msg, model: &Model) -> Model {
-    // todo msg probably doesn't need to be a ref.
-//    let model2 = model.clone(); // todo deal with this.
+fn update(msg: &Msg, model: &Model) -> Model {
+    let model2 = model.clone(); // todo deal with this.
     match msg {
         &Msg::Increment => {
-            Model {clicks: model.clicks + 1, ..model.clone()}
-//            Model {clicks: model.borrow().clicks + 1, what_we_count: String::from("test")}
+            Model {clicks: model.clicks + 1, ..model2}
         },
         &Msg::Decrement => {
-            Model {clicks: model.clicks - 1, ..model.clone()}
-//            Model {clicks: model.borrow().clicks - 1, what_we_count: String::from("test")}
+            Model {clicks: model.clicks - 1, ..model2}
         },
         &Msg::ChangeDescrip(ref descrip) => {
-//            Model {descrip, ..model.unwrap()}
-            Model { what_we_count: descrip.to_string(), clicks: 2}
+            Model { what_we_count: descrip.to_string(), ..model2}
         }
     }
 }
@@ -87,9 +72,11 @@ fn comp(model: &Model) -> El<Msg> {
     };
 
     let mut button1 = button![ events!{"click" => Msg::Increment}, "Click me" ];
-    button1.add_ev("click", |_| Msg::Increment);
+//    button1.add_ev("click", |_| Msg::Increment);
+    let mut button2 = button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ];
+//    button2.add_ev("dblclick", |_| Msg::Decrement);
 
-    div![outer_style, "TEST", vec![
+    div![outer_style, vec![
         div![
             attrs!{"class" => "ok elements"},
             style!{
@@ -101,7 +88,8 @@ fn comp(model: &Model) -> El<Msg> {
                 h1![ "Counting" ],
                 h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
                 button1,
-                button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ],
+                button2
+
             ] ],
         success_level(model.clicks),
     ] ]
@@ -109,6 +97,5 @@ fn comp(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-//    run(Model::default(), Box::new(update), Box::new(comp), "main")
     run(Model::default(), update, comp, "main");
 }

@@ -1,9 +1,6 @@
 //! This file exports helper macros for element creation, populated by a higher-level macro,
 //! and macros for creating the parts of elements. (attrs, style, events)
 
-
-use web_sys;
-
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
 /// In the matching mattern below, we match the name we want to use with the name under
 /// the Tag enum. Eg the div! macro uses Tag::Div.

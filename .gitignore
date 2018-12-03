@@ -10,12 +10,3 @@ Cargo.lock
 **/node_modules/
 **/package-lock.json
 **/target/
-
-# Temporarily borrowed from Draco for troubleshooting
-src/mailbox.rs
-src/subscription.rs
-src/element.rs
-src/node.rs
-src/text.rs
-src/app.rs
-src/console.rs
