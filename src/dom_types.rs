@@ -9,7 +9,7 @@ use std::rc::Rc;
 use web_sys;
 use wasm_bindgen::{prelude::*, JsCast};
 
-use crate::Mailbox;  // todo temp
+use crate::vdom::Mailbox;  // todo temp
 
 
 // todo cleanup enums vs &strs for restricting events/styles/attrs to
@@ -39,29 +39,29 @@ impl<Ms> std::fmt::Debug for Listener<Ms> {
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 // todo temp
 impl<Ms: 'static> Listener<Ms> {
-    fn do_map<NewMs: 'static>(
-        self,
-        f: Rc<impl Fn(Ms) -> NewMs + 'static>,
-    ) -> Listener<NewMs> {
-        let Listener {
-            name,
-            mut handler,
-            closure,
-        } = self;
-        let handler =
-            match handler.take() {
-                Some(mut handler) => Some(Box::new(move |event| {
-                    f(handler(event))
-                })
-                    as Box<FnMut(web_sys::Event) -> NewMs>),
-                None => None,
-            };
-        Listener {
-            name,
-            handler,
-            closure,
-        }
-    }
+//    fn do_map<NewMs: 'static>(
+//        self,
+//        f: Rc<impl Fn(Ms) -> NewMs + 'static>,
+//    ) -> Listener<NewMs> {
+//        let Listener {
+//            name,
+//            mut handler,
+//            closure,
+//        } = self;
+//        let handler =
+//            match handler.take() {
+//                Some(mut handler) => Some(Box::new(move |event| {
+//                    f(handler(event))
+//                })
+//                    as Box<FnMut(web_sys::Event) -> NewMs>),
+//                None => None,
+//            };
+//        Listener {
+//            name,
+//            handler,
+//            closure,
+//        }
+//    }
 
     fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
@@ -115,26 +115,37 @@ impl<Ms> UpdateEl<El<Ms>> for Events<Ms> {
 //        el.events = self;
         // todo evaluate this
 
-        let mut listeners: Vec<Listener<Ms>> = Vec::new();
-        for (vdom_event, message) in self.vals {
+//        let mut listeners: Vec<Listener<Ms>> = Vec::new();
+//        for (vdom_event, message) in self.vals {
 
-            let handler: impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
+//            let handler: impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
+//
+//
+//            let listener = Listener {
+////                name: Cow::from(vdom_event.as_str()),
+////                name: vdom_event.as_str(),
+//                name: String::from(vdom_event.as_str()).into(),
+////                name: 'static: vdom_event.as_str().into(),
+//                handler: Some(Box::new(handler)),
+//                closure: None
+//            };
 
 
-            let listener = Listener {
-//                name: Cow::from(vdom_event.as_str()),
-//                name: vdom_event.as_str(),
-                name: String::from(vdom_event.as_str()).into(),
-//                name: 'static: vdom_event.as_str().into(),
-                handler: Some(Box::new(handler)),
-                closure: None
-            };
-            listeners.push(listener)
-        }
+
+
+//            el.add_ev("click", |_| message)
+
+
+
+
+
+//            listeners.push(listener)
+//        }
 
 
     }
 }
+
 impl<Ms> UpdateEl<El<Ms>> for &str {
     fn update(self, el: &mut El<Ms>) {
         el.text = Some(self.into());
@@ -297,7 +308,6 @@ impl<Ms> Events<Ms> {
 
 /// Populate tags using a macro, to reduce code repetition.
 /// The tag enum primarily exists to ensure only valid elements are allowed.
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/HTML/Element
 /// We leave out non-body tags like html, meta, title, and body.
 macro_rules! make_tags {
     // Create shortcut macros for any element; populate these functions in this module.
@@ -322,20 +332,44 @@ macro_rules! make_tags {
     }
 }
 
+/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+/// Grouped here by category on Mozilla's page, linked above.
 make_tags! {
     Address => "address", Article => "article", Aside => "aside", Footer => "footer",
-    Hgroup => "hgroup", Main => "main", Nav => "nav", Section => "section", BlockQuote => "blockquote",
-    Dd => "dd", Dir => "dir", Dl => "dl", Dt => "dt", FigCaption => "figcaption", Figure => "figure",
-    Hr => "hr", Li => "li", Ol => "ol", Pre => "pre", Ul => "ul", Abbr => "abbr",
+    Header => "header", H1 => "h1",
+    H2 => "h2", H3 => "h3", H4 => "h4", H5 => "h5", H6 => "h6",
+    Hgroup => "hgroup", Main => "main", Nav => "nav", Section => "section",
+
+    BlockQuote => "blockquote",
+    Dd => "dd", Dir => "dir", Div => "div", Dl => "dl", Dt => "dt", FigCaption => "figcaption", Figure => "figure",
+    Hr => "hr", Li => "li", Ol => "ol", P => "p", Pre => "pre", Ul => "ul",
+
+    A => "a", Abbr => "abbr",
     B => "b", Bdi => "bdi", Bdo => "bdo", Br => "br", Cite => "cite", Code => "code", Data => "data",
     Dfn => "dfn", Em => "em", I => "i", Kbd => "kbd", Mark => "mark", Q => "q", Rb => "rb",
     Rp => "rp", Rt => "rt", Rtc => "rtc", Ruby => "ruby", S => "s", Samp => "samp", Small => "small",
     Span => "span", Strong => "strong", Sub => "sub", Sup => "sup", Time => "time", Tt => "tt",
     U => "u", Var => "var", Wbr => "wbr",
 
-    A => "a", Img => "img", Div => "div", H1 => "h1",
-    H2 => "h2", H3 => "h3", H4 => "h4", H5 => "h5", H6 => "h6", P => "p",
-    Button => "button", Input => "input", Select => "select"
+    Area => "area", Audio => "audio", Img => "img", Map => "map", Track => "track", Video => "video",
+
+    Applet => "applet", Embed => "embed", Iframe => "iframe",
+    NoEmbed => "noembed", Object => "object", Param => "param", Picture => "picture", Source => "source",
+
+    Canvas => "canvas", NoScript => "noscript", Script => "Script",
+
+    Del => "del", Ins => "ins",
+
+    Caption => "caption", Col => "col", ColGroup => "colgroup", Table => "table", Tbody => "tbody",
+    Td => "td", Tfoot =>"tfoot", Th => "th", Thead => "thead", Tr => "tr",
+
+    Button => "button", DataList => "datalist", FieldSet => "fieldset", Form => "form", Input => "input",
+    Label => "label", Legend => "legend", Meter => "meter", OptGroup => "optgroup", Option => "option",
+    Output => "output", Progress => "progress", Select => "select", TextArea => "textarea",
+
+    Details => "details", Dialog => "dialog", Menu => "menu", MenuItem => "menuitem", Summary => "summary",
+
+    Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template"
 }
 
 #[derive(Debug)]
@@ -364,7 +398,7 @@ pub struct El<Ms: 'static> {
 impl<Ms: 'static> El<Ms> {  // todo temp
 
     //    pub fn add_ev(&mut self, event: Event, message: Ms) {
-    pub fn add_ev(&mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) {
+    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
 //        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
 //        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
 
@@ -381,7 +415,7 @@ impl<Ms: 'static> El<Ms> {  // todo temp
 
         self.listeners.push(listener);
 
-        crate::log("Added listener");
+        self
     }
 
 

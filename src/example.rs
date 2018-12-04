@@ -9,10 +9,10 @@ use crate::prelude::*;
 
 // Model
 
-#[derive(Clone, Debug)] // todo
+#[derive(Clone)] // todo
 struct Model {
-    pub clicks: i32,
-    pub what_we_count: String,
+    clicks: i32,
+    what_we_count: &'static str,
 }
 
 // Set the starting state here, for initialization in the render() function.
@@ -27,10 +27,10 @@ impl Default for Model {
 
 // Update
 
-pub enum Msg {  // todo temp pub
+enum Msg {  // todo temp pub
     Increment,
     Decrement,
-    ChangeDescrip(String),
+    ChangeDescrip(&'static str),
 }
 
 fn update(msg: &Msg, model: &Model) -> Model {
@@ -43,7 +43,7 @@ fn update(msg: &Msg, model: &Model) -> Model {
             Model {clicks: model.clicks - 1, ..model2}
         },
         &Msg::ChangeDescrip(ref descrip) => {
-            Model { what_we_count: descrip.to_string(), ..model2}
+            Model { what_we_count: descrip, ..model2}
         }
     }
 }
@@ -71,11 +71,6 @@ fn comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-    let mut button1 = button![ events!{"click" => Msg::Increment}, "Click me" ];
-//    button1.add_ev("click", |_| Msg::Increment);
-    let mut button2 = button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ];
-//    button2.add_ev("dblclick", |_| Msg::Decrement);
-
     div![outer_style, vec![
         div![
             attrs!{"class" => "ok elements"},
@@ -87,8 +82,10 @@ fn comp(model: &Model) -> El<Msg> {
             vec![
                 h1![ "Counting" ],
                 h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
-                button1,
-                button2
+                button![ events!{"click" => Msg::Increment}, "Click me" ]
+                    .ev("click", |_| Msg::Increment),
+//                button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ]
+//                    .ev("contextmenu", |ev| {ev.prevent_default(); Msg::Decrement})
 
             ] ],
         success_level(model.clicks),

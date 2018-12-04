@@ -12,12 +12,12 @@ This package requires you to install [Rust](https://www.rust-lang.org/en-US/).
 `rustup default nightly`,
 
 The wasm32-unknown-unknown target:
-`rustup target add wasm32-unknown-unknown --toolchain nightly`,
+`rustup target add wasm32-unknown-unknown --toolchain nightly`
 
 And wasm-bindgen: 
 `cargo +nightly install wasm-bindgen-cli`
 
-To start, either clone [This quickstart repo](https://github.com/David-OConnor/rebar), 
+To start, either clone [This quickstart repo](https://github.com/David-OConnor/rebar-quickstart) 
 or create a new lib with Cargo:
 `cargo new --lib appname`
 
@@ -52,7 +52,7 @@ The Quickstart repo includes this file, but you still need to perform the rename
 You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
 
-Your `Cargo.toml` file needs `wasm-bindgen`, and `rebar` as depdendencies, and crate type
+`Cargo.toml`needs `wasm-bindgen`, and `rebar` as depdendencies, and crate-type
 of `"cdylib"`. Example:
 
 ```toml
@@ -77,6 +77,8 @@ serde_json = "1.0.33"
 ```
 
 ### Minimal example
+Here's an example app to demonstrating syntax. Descriptions of its parts are in the
+Guide section below.
 
 lib.rs:
 ```rust
@@ -94,8 +96,7 @@ use rebar::vdom;
 
 
 // MODEL
-// todo remove pub ?
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Model {
     pub clicks: i8,
     pub descrip: String,
@@ -166,9 +167,6 @@ pub fn render() -> Result<(), JsValue> {
 ```
 
 ## Building and running
-
-For details, reference [the wasm-pack documentation](https://rustwasm.github.io/wasm-pack/book/prerequisites/index.html).
-
 To build your app, run the following two commands:
 
 ```
@@ -191,6 +189,7 @@ For development, you can view your app using a dev server, or by opening the HTM
 For example, after installing the  [http crate](https://crates.io/crates/https), run `http`.
 Or with Python 3 installed, run `python -m http.server` from your crate's root.
 
+For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 
 ## Guide
 
@@ -217,18 +216,121 @@ using these tools will likely have an easy time learning Rebar.
 
 **Model**
 
-**Messages**
+Each app must contain a model [struct]( https://doc.rust-lang.org/book/2018-edition/ch05-00-structs.html), 
+which contains the app’s state and data. It can contain 
+[owned data[(https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html), or references
+with a static [lifetime](https://doc.rust-lang.org/book/2018-edition/ch10-03-lifetime-syntax.html). Example:
 
-**Update function**
+```rust
+#[derive(Clone, Debug)]
+
+struct Model {
+    value: i8,
+    descrip: String,  // Could be '&static str
+}
+
+ 
+
+impl Default for Model {
+    fn default() -> Self {
+        Self {
+            value: 0,
+            descrip: “A description”.into(),  // Skip the into() if using a ref
+        }
+    }
+}
+```
+ 
+The first line, `#[derive(Clone)]` is required to let Rebar make copies or it, and
+display it internally.In this example, we provide 
+initialization via Rust’s `Default` trait, in order to keep the initialization code by the
+ model itself. When we call `Model.default()`, it initializes with these values. We could 
+ also initialize it using a constructor method, or a struct literal. Note the use of `into()` 
+ on our string literal, to convert it into an owned string.
+ 
+The model holds all data used by the app, and will be replaced with updated versions when the data changes.
+
+ 
+The model may be split into sub-structs to organize it – this is especially useful as the app grows. 
+The sub-structs must also implement Clone:
+ 
+
+```rust
+#[derive(Clone)]
+struct FormData {
+    name: String,
+    age: i8,
+
+}
+
+#[derive(Clone)]
+struct Misc {
+    value: i8,
+    descrip: String,
+}
+
+#[derive(Clone)]
+struct Model {
+    form_data: FormData,
+    misc: Misc
+}
+```
+
+ **Update**
+
+ 
+The Message is an [enum]( https://doc.rust-lang.org/book/2018-edition/ch06-00-enums.html) which 
+categorizes each type of interaction with the app. Its fields may hold a value, or not. 
+We’ve abbreviated it as `Msg` here for brevity. Example:
+
+```rust
+
+enum Msg {
+    Increment,
+    Decrement,
+    ChangeDescrip(String),
+}
+
+```
+ 
+
+The update [function]( https://doc.rust-lang.org/book/2018-edition/ch03-03-how-functions-work.html) 
+is the only place where the model is changed. It accepts a message reference, and model 
+reference as parameters, and returns a Model instance. This function signature cannot be changed.
+ Note that it doesn’t update the model in place: It returns a new one.
+
+ 
+Example:
+
+```rust
+fn update(msg: &Msg, model: &Model) -> Model {
+    let model2 = model.clone();
+    match msg {
+        Msg::Increment => {
+            Model {clicks: model.clicks + 1, ..model}
+        },
+        Msg::Decrement => {
+            Model {clicks: model.clicks - 1, ..model}
+        },
+        Msg::ChangeDescrip(descrip) => {
+            Model {descrip, ..model}
+        }
+    }
+}
+```
+As with the model, only one update function is passed to the app, but it may be split into 
+sub-functions to aid code organization.
+ 
 
 **View**
-
+ Visual layout (ie HTML/DOM elements) is described declaratively in Rust, but uses 
+[macros]( https://doc.rust-lang.org/book/2018-edition/appendix-04-macros.html) to simplify syntax. 
 
 ### Elements, attributes, styles, and events.
 When passing your layout to Rebar, attributes for DOM elements (eg id, class, src etc), 
 styles (eg display, color, font-size), and
 events (eg onclick, contextmenu, dblclick) are passed to DOM-macros (like div!{}) using
-unique types. T
+unique types.
 
 Views are described using El structs, defined in the dom_types module. They're most-easily created
 with a shorthand using macros. These macros can take any combination of the following 5 argument types:
@@ -281,6 +383,7 @@ prelude.
 The following equivalent example shows creating the required structs without constructors,
 to demonstrate that the macros and constructors above represent normal Rust structs,
 and provide insight into what abstractions they perform:
+
 ```rust
 // Rust has no HashMap literal syntax; you can see why we prefer macros!
 let mut style = HashMap::new();
@@ -312,7 +415,6 @@ El {
         } 
     ]
 }
-
 ```
 
 For most uses, the first example (using macros) will be the easiest to read and write.
@@ -328,6 +430,7 @@ functions used to create elements that end up in the `children` property of
 parent elements.
 
 For example, you could break up the above example like this:
+
 ```rust
     fn text_display(text: &str) -> El<Msg> {
         h3![ text ]
@@ -402,14 +505,14 @@ To send and receive data with a server, use `wasm-bindgen`'s `web-sys` fetch met
 with Serde.
 
 
-## Goals:
-- Documentation that matches the current version. If you're unable to get example code working
-using the latest version of framework on Crates.io, submit an issue on Github.
-
+## Goals
 - Learning the syntax, creating a project, and building it should be easy - regardless
 of your familiarity with Rust.
 
-- A clean API that's easy to read, write, and understand.
+- Complete documentation that always matches the current version. Getting examples working, and
+ starting a project should be painless, and require nothing beyond this guide.
+
+- An API that's easy to read, write, and understand.
 
 
 ### A note on the view syntax
@@ -463,10 +566,13 @@ This decision may not appeal to everyone,
 but I think it integrates more naturally with the Rust language.
 
 **Why build a frontend in Rust over Elm or Javascript-based frameworks?**
-You may prefer writing in Rust, and using packages from Cargo vis npm. Additionally,
-wasm-based frontends are usally faster than JS-based ones. You may choose this approach over
-Elm if you're already comfortable with Rust, want the performance benefits, or don't
-want to code business logic in a purely-functional langauge.
+You may prefer writing in Rust, and using packages from Cargo vis npm. Getting started with
+this framework will, in most cases be faster, and require less config and setup overhead than
+with JS frameworks.
+
+You may choose 
+this approach over Elm if you're already comfortable with Rust, want the performance 
+benefits, or don't want to code business logic in a purely-functional langauge.
 
 Compared to React, for example, you may appreciate the consistency of how to write apps:
 There's no distinction between logic and display code; no restrictions on comments;
