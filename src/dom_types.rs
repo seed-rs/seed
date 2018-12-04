@@ -16,12 +16,14 @@ use crate::vdom::Mailbox;  // todo temp
 // todo valid ones.
 
 
+//type EventFn<Ms> = FnMut(web_sys::Event) -> Ms + 'static;
+type EventFn<Ms> = FnMut(web_sys::Event) -> Ms;
+// todo see where you can apply this. and if +'static should be a part of it.
+
+
 // todo temp
 pub struct Listener<Ms> {
-    //    pub name: S,
     pub name: Cow<'static, str>,
-    //    pub name: String,
-//    pub name: &'static str,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
 }
@@ -39,29 +41,29 @@ impl<Ms> std::fmt::Debug for Listener<Ms> {
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 // todo temp
 impl<Ms: 'static> Listener<Ms> {
-//    fn do_map<NewMs: 'static>(
-//        self,
-//        f: Rc<impl Fn(Ms) -> NewMs + 'static>,
-//    ) -> Listener<NewMs> {
-//        let Listener {
-//            name,
-//            mut handler,
-//            closure,
-//        } = self;
-//        let handler =
-//            match handler.take() {
-//                Some(mut handler) => Some(Box::new(move |event| {
-//                    f(handler(event))
-//                })
-//                    as Box<FnMut(web_sys::Event) -> NewMs>),
-//                None => None,
-//            };
-//        Listener {
-//            name,
-//            handler,
-//            closure,
-//        }
-//    }
+    fn do_map<NewMs: 'static>(
+        self,
+        f: Rc<impl Fn(Ms) -> NewMs + 'static>,
+    ) -> Listener<NewMs> {
+        let Listener {
+            name,
+            mut handler,
+            closure,
+        } = self;
+        let handler =
+            match handler.take() {
+                Some(mut handler) => Some(Box::new(move |event| {
+                    f(handler(event))
+                })
+                    as Box<FnMut(web_sys::Event) -> NewMs>),
+                None => None,
+            };
+        Listener {
+            name,
+            handler,
+            closure,
+        }
+    }
 
     fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
@@ -109,40 +111,26 @@ impl<Ms> UpdateEl<El<Ms>> for Style {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Events<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
     fn update(self, el: &mut El<Ms>) {
 
-//        el.events = self;
+        el.events = self;
         // todo evaluate this
 
 //        let mut listeners: Vec<Listener<Ms>> = Vec::new();
 //        for (vdom_event, message) in self.vals {
-
-//            let handler: impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
-//
+//            let handler: impl FnMut(web_sys::Event) -> Ms + 'static = move |_| message.clone();
 //
 //            let listener = Listener {
-////                name: Cow::from(vdom_event.as_str()),
-////                name: vdom_event.as_str(),
-//                name: String::from(vdom_event.as_str()).into(),
+////                name: vdom_event.as_str().into(),
+//                name: String::from("contextmenu").into(),
 ////                name: 'static: vdom_event.as_str().into(),
 //                handler: Some(Box::new(handler)),
 //                closure: None
 //            };
-
-
-
-
-//            el.add_ev("click", |_| message)
-
-
-
-
-
+//
 //            listeners.push(listener)
 //        }
-
-
     }
 }
 
@@ -292,16 +280,19 @@ pub struct Events<Ms> {
     // by the virtual dom.
     // HashMap might be more appropriate, but Event would need
     // to implement Eq and Hash.
-    pub vals: Vec<(Event, Ms)>
+//    pub vals: Vec<(Event, Box<EventFn<Ms>>)>
+    pub vals: Box<Vec<(Event, EventFn<Ms>)>>
 }
 
 impl<Ms> Events<Ms> {
-    pub fn new(vals: Vec<(Event, Ms)>) -> Self {
-        Self {vals}
+    pub fn new(vals: Vec<(Event, EventFn<Ms>)>) -> Self {
+//        Self {vals: vals.map(|ev, f| (ev, Box::new(f))).collect()}
+        Self {vals: Box::new(vals)}
     }
 
     pub fn empty() -> Self {
-        Self {vals: Vec::new()}
+//        Self {vals: Vec::new()}
+        Self {vals: Box::new(Vec::new())}
     }
 }
 
@@ -397,26 +388,25 @@ pub struct El<Ms: 'static> {
 
 impl<Ms: 'static> El<Ms> {  // todo temp
 
-    //    pub fn add_ev(&mut self, event: Event, message: Ms) {
-    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
-//        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
-//        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
-
-        let listener = Listener {
-            //                name: Cow::from(vdom_event.as_str()),
-            //                name: vdom_event.as_str(),
-//            name: String::from(event.as_str()),
-//            name: String::from(name),`
-            name: name.into(),
-            //                name: 'static: vdom_event.as_str().into(),
-            handler: Some(Box::new(handler)),
-            closure: None
-        };
-
-        self.listeners.push(listener);
-
-        self
-    }
+//    //    pub fn add_ev(&mut self, event: Event, message: Ms) {
+//    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
+////        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
+////        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
+//
+//        let listener = Listener {
+//            //                name: Cow::from(vdom_event.as_str()),
+//            //                name: vdom_event.as_str(),
+////            name: String::from(event.as_str()),
+////            name: String::from(name),`
+//            name: name.into(),
+//            //                name: 'static: vdom_event.as_str().into(),
+//            handler: Some(Box::new(handler)),
+//            closure: None
+//        };
+//
+//        self.listeners.push(listener);
+//        self
+//    }
 
 
     pub fn new(tag: Tag, attrs: Attrs, style: Style, events: Events<Ms>,

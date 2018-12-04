@@ -49,7 +49,7 @@ macro_rules! div {
             if arg_count > 5{
             // todo there are ways to sort this out, I think. Have update methods
             // todo accept/return a value; have them return an err type etc.
-                web_sys::console::log_1(&"Element-creation macros can take no more than 5 arguments.".into());
+                crate::log(&"Element-creation macros can take no more than 5 arguments.");
             }
             el
         }
@@ -216,17 +216,17 @@ macro_rules! attrs {
      };
 }
 
-//// todo DRY between thsi and style
-#[macro_export]
-macro_rules! events {
-    { $($event_str:expr => $msg:expr);+ } => {
-        {
-            let mut vals = Vec::new();
-            $(
-                vals.push(($event_str.into(), $msg));
-            )+
-            Events::new(vals)
-        }
-     };
-}
+////// todo DRY between thsi and style
+//#[macro_export]
+//macro_rules! events {
+//    { $($event_str:expr => $handler:expr);+ } => {
+//        {
+//            let mut vals = Vec::new();
+//            $(
+//                vals.push(($event_str.into(), $handler));
+//            )+
+//            Events::new(vals)
+//        }
+//     };
+//}
 

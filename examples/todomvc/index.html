@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-framework="rust">
+<head>
+    <meta charset="utf-8">
+    <title>Rebar • TodoMVC</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    
+
+</head>
+<body>
+<div id="main"></div>
+
+<script>
+    // The `--no-modules`-generated JS from `wasm-bindgen` attempts to use
+    // `WebAssembly.instantiateStreaming` to instantiate the wasm module,
+    // but this doesn't work with `file://` urls. This example is frequently
+    // viewed by simply opening `index.html` in a browser (with a `file://`
+    // url), so it would fail if we were to call this function!
+    //
+    // Work around this for now by deleting the function to ensure that the
+    // `no_modules.js` script doesn't have access to it. You won't need this
+    // hack when deploying over HTTP.
+    delete WebAssembly.instantiateStreaming;
+</script>
+
+<script src='./pkg/rebar.js'></script>
+
+<script>
+    // the `wasm_bindgen` global is set to the exports of the Rust module
+    const { render } = wasm_bindgen;
+    // we'll defer our execution until the wasm is ready to go
+    function run() {
+        render();
+    }
+    // here we tell bindgen the path to the wasm file so it can run
+    // initialization and return to us a promise when it's done
+    wasm_bindgen('./pkg/rebar.wasm')
+        .then(run)
+        .catch(console.error);
+</script>
+
+</body>
+</html>

@@ -9,6 +9,9 @@ use crate::prelude::*;
 
 // Model
 
+/// A demonstration of using web_sys to download data over http.
+
+
 #[derive(Clone)] // todo
 struct Model {
     clicks: i32,
@@ -27,6 +30,7 @@ impl Default for Model {
 
 // Update
 
+#[derive(Clone)]
 enum Msg {  // todo temp pub
     Increment,
     Decrement,
@@ -34,16 +38,16 @@ enum Msg {  // todo temp pub
 }
 
 fn update(msg: &Msg, model: &Model) -> Model {
-    let model2 = model.clone(); // todo deal with this.
+    let model = model.clone(); // todo deal with this.
     match msg {
         &Msg::Increment => {
-            Model {clicks: model.clicks + 1, ..model2}
+            Model {clicks: model.clicks + 1, ..model}
         },
         &Msg::Decrement => {
-            Model {clicks: model.clicks - 1, ..model2}
+            Model {clicks: model.clicks - 1, ..model}
         },
         &Msg::ChangeDescrip(ref descrip) => {
-            Model { what_we_count: descrip, ..model2}
+            Model { what_we_count: descrip, ..model}
         }
     }
 }
@@ -82,8 +86,8 @@ fn comp(model: &Model) -> El<Msg> {
             vec![
                 h1![ "Counting" ],
                 h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
-                button![ events!{"click" => Msg::Increment}, "Click me" ]
-                    .ev("click", |_| Msg::Increment),
+//                button![ events!{"click" => |_| Msg::Increment}, "Click me" ]
+//                    .ev("click", |_| Msg::Increment),
 //                button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ]
 //                    .ev("contextmenu", |ev| {ev.prevent_default(); Msg::Decrement})
 

@@ -8,9 +8,9 @@
 pub mod dom_types;
 #[macro_use]
 pub mod dom_shortcuts;
+//mod fetch;
 mod vdom;
 mod example;
-
 
 /// A convenience function for logging to the web browser's console.
 pub fn log(text: &str) {

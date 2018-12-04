@@ -166,7 +166,7 @@ pub fn render() -> Result<(), JsValue> {
 }
 ```
 
-## Building and running
+### Building and running
 To build your app, run the following two commands:
 
 ```
@@ -219,17 +219,17 @@ using these tools will likely have an easy time learning Rebar.
 Each app must contain a model [struct]( https://doc.rust-lang.org/book/2018-edition/ch05-00-structs.html), 
 which contains the app’s state and data. It can contain 
 [owned data[(https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html), or references
-with a static [lifetime](https://doc.rust-lang.org/book/2018-edition/ch10-03-lifetime-syntax.html). Example:
+with a static [lifetime](https://doc.rust-lang.org/book/2018-edition/ch10-03-lifetime-syntax.html).
+ If you're not sure which to use, keep in mind they'll both work for many uses, and
+  `&'static str` has simpler syntax. Example:
 
 ```rust
 #[derive(Clone, Debug)]
 
 struct Model {
     value: i8,
-    descrip: String,  // Could be '&static str
+    descrip: String,  // Could be &'static str
 }
-
- 
 
 impl Default for Model {
     fn default() -> Self {
@@ -278,7 +278,6 @@ struct Model {
 
  **Update**
 
- 
 The Message is an [enum]( https://doc.rust-lang.org/book/2018-edition/ch06-00-enums.html) which 
 categorizes each type of interaction with the app. Its fields may hold a value, or not. 
 We’ve abbreviated it as `Msg` here for brevity. Example:
@@ -323,6 +322,7 @@ sub-functions to aid code organization.
  
 
 **View**
+
  Visual layout (ie HTML/DOM elements) is described declaratively in Rust, but uses 
 [macros]( https://doc.rust-lang.org/book/2018-edition/appendix-04-macros.html) to simplify syntax. 
 
@@ -541,7 +541,7 @@ Rebar should make this easy.
 
 
 ### Influences
-- This project is strongly influenced by Elm, React, and Redux. The overall layout
+This project is strongly influenced by Elm, React, and Redux. The overall layout
 of Rebar apps mimicks that of The Elm Architecture.
 
 
@@ -550,6 +550,7 @@ of Rebar apps mimicks that of The Elm Architecture.
 There are several existing frameworks for Rust in WASM; why add another?
 
 **There are already several Rust frameworks; why another?** 
+
 My goal is for this to be easy to pick up from looking at a tutorial or documentation, regardless of your
 level of experience with Rust. I'm distinguising this package through clear examples
 and documentation (see goals above), and using `wasm-bindgen` internally. I started this
@@ -566,6 +567,7 @@ This decision may not appeal to everyone,
 but I think it integrates more naturally with the Rust language.
 
 **Why build a frontend in Rust over Elm or Javascript-based frameworks?**
+
 You may prefer writing in Rust, and using packages from Cargo vis npm. Getting started with
 this framework will, in most cases be faster, and require less config and setup overhead than
 with JS frameworks.
@@ -577,7 +579,7 @@ benefits, or don't want to code business logic in a purely-functional langauge.
 Compared to React, for example, you may appreciate the consistency of how to write apps:
 There's no distinction between logic and display code; no restrictions on comments;
 no distinction between components and normal functions. The API is
-flexible, and avoids boilerplate.
+flexible, and avoids the OOP boilerplate associated with React.
 
 I also hope that config, building, and dependency-management is cleaner with Cargo and
 wasm-bindgen than with npm.
@@ -589,3 +591,10 @@ wasm-bindgen than with npm.
  - Denis Kolodin: for creating the inspirational Yew framework
  - Utkarsh Kukreti, for through his Draco lib, helping me understand how wasm-bindgen's
  closure system can be used to update state.
+
+
+## To-do
+ - Router
+ - Local storage integration
+ - More examples
+ - Optimization
