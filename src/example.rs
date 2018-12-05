@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 // This prelude is the equivalent of the following imports:
- use crate::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
+ use crate::dom_types::{El, Style, Attrs, Tag, Listener, UpdateEl};
  use crate::vdom::run;
 //use crate::prelude::*;
 
@@ -77,8 +77,6 @@ fn comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-    let ev2 = events!{"click" => Msg::Increment};
-
     div![outer_style, vec![
         div![
             attrs!{"class" => "ok elements"},
@@ -90,11 +88,8 @@ fn comp(model: &Model) -> El<Msg> {
             vec![
                 h1![ "Counting" ],
                 h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
-                button![ ev2, "++" ]
-//                button![ events!{"click" => |_| Msg::Increment}, "Click me" ]
-//                    .ev("click", |_| Msg::Increment),
-//                button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ]
-//                    .ev("contextmenu", |ev| {ev.prevent_default(); Msg::Decrement})
+                button![ events!{"click" => |_| Msg::Increment}, "Click me" ],
+                button![ events!{"contextmenu" => |e: web_sys::Event| {e.prevent_default(); Msg::Decrement}}, "Don't click me" ],
 
             ] ],
         success_level(model.clicks),

@@ -35,7 +35,7 @@ impl ReqMethod {
 
 /// A wrapper over web_sys's fetch api, to simplify code
 /// https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-pub fn fetch_clicks(url: &str, method: ReqMethod, payload: &str) {
+fn inner(url: &str, method: ReqMethod, payload: &str) {
     let mut opts = RequestInit::new();
     opts.method(method.as_str());
     opts.mode(RequestMode::Cors);
@@ -71,4 +71,12 @@ pub fn fetch_clicks(url: &str, method: ReqMethod, payload: &str) {
 
     // Convert this Rust `Future` back into a JS `Promise`.
     future_to_promise(future)
+}
+
+pub fn fetch() {
+
+}
+
+pub fn post() {
+
 }

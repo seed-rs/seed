@@ -251,6 +251,77 @@ macro_rules! div {
     };
 }
 
+macro_rules! dl {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Dl);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+
+macro_rules! dt {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Dt);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! figure {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Figure);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! figcaption {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::FigCaption);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! hr {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Hr);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! li {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Li);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! ol {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Ol);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
 macro_rules! p {
     ( $($part:expr),* ) => {
         {
@@ -261,137 +332,26 @@ macro_rules! p {
     };
 }
 
-macro_rules! button {
+
+macro_rules! pre {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Button);
+            let mut el = El::empty(Tag::Pre);
             $ ( $part.update(&mut el); )*
             el
         }
     };
 }
 
-macro_rules! fieldset {
+macro_rules! ul {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::FieldSet);
+            let mut el = El::empty(Tag::Ul);
             $ ( $part.update(&mut el); )*
             el
         }
     };
 }
-
-macro_rules! form {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Form);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! input {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Input);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! label {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Label);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! legend {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Legend);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! meter {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Meter);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! optgroup {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::OptGroup);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-
-macro_rules! option {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Option);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! output {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Output);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! progress {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Progress);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! select {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::Select);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-macro_rules! textarea {
-    ( $($part:expr),* ) => {
-        {
-            let mut el = El::empty(Tag::TextArea);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
 
 macro_rules! a {
     ( $($part:expr),* ) => {
@@ -527,6 +487,136 @@ macro_rules! mark {
     ( $($part:expr),* ) => {
         {
             let mut el = El::empty(Tag::Mark);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+macro_rules! button {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Button);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! fieldset {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::FieldSet);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! form {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Form);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! input {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Input);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! label {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Label);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! legend {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Legend);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! meter {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Meter);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! optgroup {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::OptGroup);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+
+macro_rules! option {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Option);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! output {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Output);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! progress {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Progress);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! select {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::Select);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+macro_rules! textarea {
+    ( $($part:expr),* ) => {
+        {
+            let mut el = El::empty(Tag::TextArea);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -723,17 +813,34 @@ macro_rules! attrs {
      };
 }
 
+////////// todo DRY between thsi and style
+////#[macro_export]
+//macro_rules! events {
+//    { $($event_str:expr => $handler:expr);+ } => {
+//        {
+//            let mut vals = Vec::new();
+//            $(
+//
+//
+//                vals.push(($event_str.into(), Box::new($handler)));
+////                vals.push(($event_str.into(), $handler));
+//            )+
+////            Events::new(vals)
+//            Listener::new(vals)
+//        }
+//     };
+//}
+
 //////// todo DRY between thsi and style
 //#[macro_export]
 macro_rules! events {
     { $($event_str:expr => $handler:expr);+ } => {
         {
-            let mut vals = Vec::new();
+            let mut result = Vec::new();
             $(
-//                vals.push(($event_str.into(), Box::new($handler)));
-                vals.push(($event_str.into(), $handler));
+                result.push(Listener::new($event_str.into(), Box::new($handler)));
             )+
-            Events::new(vals)
+            result
         }
      };
 }

@@ -16,7 +16,7 @@ use crate::vdom::Mailbox;  // todo temp
 // todo valid ones.
 
 
-//type EventFn<Ms> = FnMut(web_sys::Event) -> Ms + 'static;
+type EventFn<Ms> = FnMut(web_sys::Event) -> Ms + 'static;
 //type EventFn<Ms> = FnMut(web_sys::Event) -> Ms;
 // todo see where you can apply this. and if +'static should be a part of it.
 
@@ -41,6 +41,17 @@ pub struct Listener<Ms: Clone> {
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 // todo temp
 impl<Ms: Clone + 'static> Listener<Ms> {
+//    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
+    pub fn new(event: Event, handler: Box<impl FnMut(web_sys::Event) -> Ms + 'static>) -> Self {
+
+
+        Self {
+            name: String::from(event.as_str()).into(),
+            handler: Some(handler),
+            closure: None
+        }
+    }
+
     fn do_map<NewMs: Clone + 'static>(
         self,
         f: Rc<impl Fn(Ms) -> NewMs + 'static>,
@@ -111,7 +122,8 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Style {
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
+//impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Listener<Ms> {
     fn update(self, el: &mut El<Ms>) {
 
 //        el.events = self;
@@ -131,6 +143,12 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
 //
 //            listeners.push(listener)
 //        }
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
+    fn update(self, el: &mut El<Ms>) {
+        el.listeners = self;
     }
 }
 
@@ -276,34 +294,36 @@ make_events! {
 }
 
 
-//#[derive(Clone)]
-pub struct Events<Ms: Clone> {
-    // Msg is an enum of types of Msg.
-    // This is not tied to the real DOM, unlike attrs and style; used internally
-    // by the virtual dom.
-    // HashMap might be more appropriate, but Event would need
-    // to implement Eq and Hash.
+////#[derive(Clone)]
+//pub struct Events<Ms: Clone> {
+//    // Msg is an enum of types of Msg.
+//    // This is not tied to the real DOM, unlike attrs and style; used internally
+//    // by the virtual dom.
+//    // HashMap might be more appropriate, but Event would need
+//    // to implement Eq and Hash.
+//
+////    pub vals: Vec<(Event, i8)>,
 //    pub vals: Vec<(Event, Box<EventFn<Ms>>)>
-//    pub vals: Box<Vec<(Event, EventFn<Ms>)>>
-    pub vals: Vec<(Event, Ms)>
-}
-
-impl<Ms: Clone> Events<Ms> {
-//    pub fn new(vals: Box<Vec<(Event, Ms)>>)>) -> Self {
-//    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
-//    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms + 'static>)>) -> Self {
-    pub fn new(vals: Vec<(Event, Ms)>) -> Self {
-//    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
-//        Self {vals: vals.map(|ev, f| (ev, Box::new(f))).collect()}
-//        Self {vals: Box::new(vals)}
-//        Self { vals }
-        Self {vals}
-    }
-
-    pub fn empty() -> Self {
-        Self {vals: Vec::new()}
-    }
-}
+////    pub vals: Vec<(Event, Ms)>
+//}
+//
+//impl<Ms: Clone> Events<Ms> {
+////    pub fn new(vals: Box<Vec<(Event, Ms)>>)>) -> Self {
+////    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
+////    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms + 'static>)>) -> Self {
+////    pub fn new(vals: Vec<(Event, Ms)>) -> Self {
+//    pub fn new(vals: Box<Vec<(Event, EventFn<Ms>)>>) -> Self {
+////    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
+////        Self {vals: vals.map(|ev, f| (ev, Box::new(f))).collect()}
+////        Self {vals: Box::new(vals)}
+////        Self { vals }
+//        Self {vals}
+//    }
+//
+//    pub fn empty() -> Self {
+//        Self {vals: Vec::new()}
+//    }
+//}
 
 
 /// Populate tags using a macro, to reduce code repetition.
@@ -398,26 +418,28 @@ pub struct El<Ms: Clone + 'static> {
 impl<Ms: Clone + 'static> El<Ms> {
 
 //        pub fn add_ev(&mut self, event: Event, message: Ms) {
-////    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
+    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) {
 //        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = move |_| {crate::log("YO"); message.clone()};
+//        let handler  = move |_| { message.clone()};
+//
+////        let name = event.as_str();
+//
+        let k = "click";
 ////
-//////        let name = event.as_str();
-////
-//        let k = "click";
-//////
-//        let listener = Listener {
-//            //                name: Cow::from(vdom_event.as_str()),
-//            //                name: vdom_event.as_str(),
-////            name: String::from(event.as_str()),
-////            name: String::from(name),`
-//            name: k.into(),
-//            //                name: 'static: vdom_event.as_str().into(),
-//            handler: Some(Box::new(handler)),
-//            closure: None
-//        };
-////
-//        self.listeners.push(listener);
-//    }
+
+        let listener = Listener {
+            //                name: Cow::from(vdom_event.as_str()),
+            //                name: vdom_event.as_str(),
+//            name: String::from(event.as_str()),
+//            name: String::from(name),`
+            name: k.into(),
+            //                name: 'static: vdom_event.as_str().into(),
+            handler: Some(Box::new(handler)),
+            closure: None
+        };
+//
+        self.listeners.push(listener);
+    }
 
 
     pub fn new(tag: Tag, attrs: Attrs, style: Style,

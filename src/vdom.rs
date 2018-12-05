@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::dom_types::{El, Events, Event, Tag};
+use crate::dom_types::{El, Tag};
 
 
 // todo: Get rid of the clone assiated with MS everywhere if you can!

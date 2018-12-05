@@ -44,6 +44,7 @@ impl Item {
 struct Model {
     todos: Vec<Item>,
     visible: Visible,
+    local_storage: web_sys::Storage,
     // todo: key and on_changes ??
 }
 
@@ -63,8 +64,13 @@ impl Model {
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
+        let local_storage = window.local_storage();
+        local_storage.fetch_local_storage();
+
         Self {
             todos: Vec::new(),
+            visible: Visible::All,
+            local_storage,
         }
     }
 }

@@ -14,8 +14,6 @@ mod example;
 
 
 //// todos:
-// todo Fix events
-// todo fix population of element-creation macros
 // todo router
 // todo local storage
 // todo vdom patching
@@ -36,7 +34,8 @@ pub fn log(text: &str) {
 //// The basics, into the global namespace.  Note that some of these from dom_types are required
 //// to be in the global namespace for the view-creation macros to work.
 pub mod prelude {
-    pub use crate::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
+//    pub use crate::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
+    pub use crate::dom_types::{El, Style, Attrs, Tag, Event, Listener, UpdateEl};
     pub use crate::vdom;
     pub use crate::log;
 }

@@ -5,7 +5,8 @@
 ## Quickstart
 
 ### Setup
-This package requires you to install [Rust](https://www.rust-lang.org/en-US/).
+This package requires you to install [Rust](https://www.rust-lang.org/en-US/). This will
+enable the CLI commands below.
 
  You'll need a recent version of Rust's nightly toolchain:
 `rustup update`
@@ -24,6 +25,9 @@ or create a new lib with Cargo:
 You need an Html file that loads your app's compiled module, and provides a div with id 
 to load the framework into. It also needs the following code to load your WASM module -
  Ie, the body should contain this:
+ 
+ (todo: Once the --out-name flag is enabled on bindgen, simplify this section, explaining how
+ the quickstart repo works immediately by running the build script, and opening the HTML file)
 
 ```html
  <div id="main"></div>
@@ -199,6 +203,12 @@ It helps, but I think you'll be able to build a usable webapp using this guide,
 and example code alone. For business logic behind the GUI, more study may be required.
 The official [Rust Book](https://doc.rust-lang.org/book/2018-edition/index.html) is a good
 place to start.
+
+You'll be able to go with just the basic Rust syntax common to most programming
+languages, eg conditionals, equalities, iteration, collections, and how Rust's borrow system applies
+to strings. A skim through the first few chapters of the Book, and the examples here should provide 
+what you need. Rust's advanced and specialized features like lifetimes, generics, smartpointers, and traits
+aren't required to build an interactive GUI.
 
 **Web fundamentals**: Experience building websites using HTML/CSS or other frameworks
 is required. Neither this guide nor the API docs describes how web pages are structured,
@@ -503,6 +513,10 @@ including `JSON`, `YAML`, and `XML`.
 To send and receive data with a server, use `wasm-bindgen`'s `web-sys` fetch methods,
 [described here](https://rustwasm.github.io/wasm-bindgen/examples/fetch.html), paired
 with Serde.
+
+### Local storage
+You can store page state locally using web_sys's [Storage struct](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html)
+.
 
 
 ## Goals
