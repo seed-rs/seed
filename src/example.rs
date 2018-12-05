@@ -1,9 +1,9 @@
 use wasm_bindgen::prelude::*;
 
 // This prelude is the equivalent of the following imports:
-// use rebar::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
-// use rebar::vdom::run;
-use crate::prelude::*;
+ use crate::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
+ use crate::vdom::run;
+//use crate::prelude::*;
 
 // Todo trait etc that prevents the user from having to enter <Msg> with each El?
 
@@ -30,6 +30,8 @@ impl Default for Model {
 
 // Update
 
+
+// todo make these take events as their arg, and only have events return msg.
 #[derive(Clone)]
 enum Msg {  // todo temp pub
     Increment,
@@ -75,6 +77,8 @@ fn comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
+    let ev2 = events!{"click" => Msg::Increment};
+
     div![outer_style, vec![
         div![
             attrs!{"class" => "ok elements"},
@@ -86,6 +90,7 @@ fn comp(model: &Model) -> El<Msg> {
             vec![
                 h1![ "Counting" ],
                 h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
+                button![ ev2, "++" ]
 //                button![ events!{"click" => |_| Msg::Increment}, "Click me" ]
 //                    .ev("click", |_| Msg::Increment),
 //                button![ events!{"contextmenu" => Msg::Decrement}, "Don't click me" ]
@@ -94,6 +99,7 @@ fn comp(model: &Model) -> El<Msg> {
             ] ],
         success_level(model.clicks),
     ] ]
+//    div![]
 }
 
 #[wasm_bindgen]

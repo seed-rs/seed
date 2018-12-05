@@ -6,8 +6,8 @@ use wasm_bindgen::prelude::*;
 use rebar::prelude::*;
 
 
-const ENTER_KEY: i16 = 13;
-const ESCAPE_KEY: i16 = 27;
+const ENTER_KEY: u16 = 13;
+const ESCAPE_KEY: u16 = 27;
 
 enum Visible {
     All,
@@ -23,6 +23,7 @@ fn class_names() {
 // Model
 
 struct Item {
+    id: u16,
     title: &'static str,
     edit_text: String,
     completed: bool,
@@ -41,17 +42,19 @@ impl Item {
 
 #[derive(Clone)]
 struct Model {
-    items: Vec<Item>,
+    todos: Vec<Item>,
+    visible: Visible,
+    // todo: key and on_changes ??
 }
 
 impl Model {
     fn completed_count(&self) -> i32 { 
-        self.items.filter(|i| i.completed == true).collect().len()
+        self.todos.filter(|i| i.completed == true).collect().len()
     }
 
     fn active_count(&self) -> i32 {
         // By process of elimination; active means not completed.
-        self.items.len() - self.completed_count()
+        self.todos.len() - self.completed_count()
     }
 
 
@@ -61,7 +64,7 @@ impl Model {
 impl Default for Model {
     fn default() -> Self {
         Self {
-            items: Vec::new(),
+            todos: Vec::new(),
         }
     }
 }
@@ -74,17 +77,24 @@ enum Msg {
     KeyDownItem(&Item),
     Destroy(&Item),
     Toggle(&Item),
+    NewTodoKeydown(e),
 }
 
 //fn update(msg: &Msg, model: Rc<Model>) -> Model {
-fn update(msg: &Msg, model: Rc<RefCell<Model>>) -> Model {
+fn update(msg: &Msg, model: &model) -> Model {
     // todo msg probably doesn't need to be a ref.
-//    let model2 = model.clone(); // todo deal with this.
+    let model = model.clone();
     match msg {
         &Msg::Increment => {
 //            Model {clicks: model.clicks + 1, ..model.unwrap()}
             Model {clicks: model.borrow().clicks + 1, what_we_count: String::from("test")}
         },
+        &Msg::EditItem(item, event) => {
+            let updated_item = Item{ title: event.target.value, ..item.clone() };
+            let mut updated = &model.todos.filter(|todo| todo.id != updated_item.id).collect();
+            updated.push(updated_item);
+            Model {todos: updated}
+        }
     }
 }
 
@@ -99,12 +109,14 @@ fn todo_item(item: &todo_item) -> El<Msg> {
 //     }
 // }
 
-    li![ attrs!{"class" => classNames({
-        completed: item.completed,
-        editing: item.editing
-        })}, vec![
+//    let att =attrs!{"class" => classNames({
+//        completed: item.completed,
+//        editing: item.editing
+//        })}
+    let att = attrs!{};
 
-        div![ attrs!{"class" => "view"} ], vec![ 
+    li![ att, vec![
+        div![ attrs!{"class" => "view"} ], vec![
             input![ 
                 attrs!{"class" => "toggle", "type" => "checkbox", "checked" => item.completed },
                 events!{"change" => |_| Msg::Toggle(item)} 
@@ -124,7 +136,7 @@ fn todo_item(item: &todo_item) -> El<Msg> {
 }
 
 fn footer(model: &Model) -> El<Msg> {
-    let active_todo_word = pluralize(model.items.len(), 'item');
+    let active_todo_word = pluralize(model.todos.len(), "item");
 
     if model.completed_count() > 0 {
         let clear_button = button![ 
@@ -132,7 +144,7 @@ fn footer(model: &Model) -> El<Msg> {
             events!{"click", |_| Msg::ClearCompleted},
             "Clear completed"
         ];
-    } else { let clear_button = div![] };
+    } else { let clear_button = div![]; };
 
     footer![ attrs!{"class" => "footer"}, vec![
         span![ attrs!{"class" => "todo-count"}, vec![
@@ -141,13 +153,16 @@ fn footer(model: &Model) -> El<Msg> {
 
         ul![ attrs!{"class" => "filters"}, vec![
             li![ vec![
-                a![ attrs!{"href" => "#/", "class" => class_names({selected: nowShowing === ALL_TODOS})}, "All" ]
+                a![ attrs!{"href" => "#/";
+                "class" => if model.visible == Visible::All {"selected"} else {""}}, "All" ]
             ] ],
             li![ vec![
-                a![ attrs!{"href" => "#/active", "class" => class_names({selected: nowShowing === ACTIVE_TODOS})}, "All" ]
+                a![ attrs!{"href" => "#/active";
+                "class" => if model.visible == Visible::Active {"selected"} else {""}}, "Active" ]
             ] ],
             li![ vec![
-                a![ attrs!{"href" => "#/completed", "class" => class_names({selected: nowShowing === COMPLETED_TODOS})}, "All" ]
+                a![ attrs!{"href" => "#/completed";
+                "class" => if model.visible == Visible::Selected {"selected"} else {""}}, "Completed" ]
             ] ],
         ] ],
 
@@ -160,7 +175,31 @@ fn footer(model: &Model) -> El<Msg> {
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
 fn todo_app(model: &Model) -> El<Msg> {
-    if (model.)
+    let todo_items = &model.todos.map(|todo| todo_item(todo)).collect();
+
+    let main = section![ attrs!{"class" => "main"}, vec![
+        input![
+            attrs!{"id" => "toggle-all"; "class" => "toggle-all"; "type" => "checkbox",
+                   "checked" => model.active_count() == 0},
+            events!{"change" => Msg::ToggleAll}
+        ],
+        label![ attrs!{"for" => "toggle-all"} "Mark all as complete"],
+        ul![ attrs!{"class" => "todo-list"}, todo_items ],
+    ] ];
+
+    div![ vec![
+        header![ attrs!{"class" => "header"}, vec![
+            h1![ "todos" ],
+            input![
+                attrs!{"class" => "new-todo"; "placeholder" => "What needs to be done?";
+                       "auto-focus" => true.as_str()}
+                events!{"keydown" => NewTodoKeydown}
+           ]
+        ]
+        ],
+        main,
+        footer(model)
+    ] ]
 }
 
 

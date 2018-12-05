@@ -17,12 +17,12 @@ use crate::vdom::Mailbox;  // todo temp
 
 
 //type EventFn<Ms> = FnMut(web_sys::Event) -> Ms + 'static;
-type EventFn<Ms> = FnMut(web_sys::Event) -> Ms;
+//type EventFn<Ms> = FnMut(web_sys::Event) -> Ms;
 // todo see where you can apply this. and if +'static should be a part of it.
 
 
 // todo temp
-pub struct Listener<Ms> {
+pub struct Listener<Ms: Clone> {
     pub name: Cow<'static, str>,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
@@ -30,18 +30,18 @@ pub struct Listener<Ms> {
 
 
 // todo temp
-impl<Ms> std::fmt::Debug for Listener<Ms> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_struct("Listener")
-            .field("name", &self.name)
-            .finish()
-    }
-}
+//impl<Ms> std::fmt::Debug for Listener<Ms> {
+//    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+//        f.debug_struct("Listener")
+//            .field("name", &self.name)
+//            .finish()
+//    }
+//}
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 // todo temp
-impl<Ms: 'static> Listener<Ms> {
-    fn do_map<NewMs: 'static>(
+impl<Ms: Clone + 'static> Listener<Ms> {
+    fn do_map<NewMs: Clone + 'static>(
         self,
         f: Rc<impl Fn(Ms) -> NewMs + 'static>,
     ) -> Listener<NewMs> {
@@ -99,13 +99,13 @@ pub trait UpdateEl<T> {
     fn update(self, el: &mut T);
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Attrs {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Attrs {
     fn update(self, el: &mut El<Ms>) {
         el.attrs = self;
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Style {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
         el.style = self;
     }
@@ -114,9 +114,9 @@ impl<Ms> UpdateEl<El<Ms>> for Style {
 impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
     fn update(self, el: &mut El<Ms>) {
 
-        el.events = self;
-        // todo evaluate this
-
+//        el.events = self;
+//         todo evaluate this
+//
 //        let mut listeners: Vec<Listener<Ms>> = Vec::new();
 //        for (vdom_event, message) in self.vals {
 //            let handler: impl FnMut(web_sys::Event) -> Ms + 'static = move |_| message.clone();
@@ -134,20 +134,21 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for &str {
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     fn update(self, el: &mut El<Ms>) {
         el.text = Some(self.into());
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         el.children = self;
     }
 }
 
 
-#[derive(Debug)]
+//#[derive(Debug)]
 pub enum _Attr {
     // https://www.w3schools.com/tags/ref_attributes.asp
     // This enum primarily exists to ensure only valid attrs are allowed.
@@ -169,7 +170,8 @@ pub enum _Attr {
     Width,
 }
 
-#[derive(Clone, Debug)]
+//#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Attrs {
     // todo enum of only allowed attrs?
     pub vals: HashMap<&'static str, &'static str>
@@ -194,7 +196,8 @@ impl Attrs {
     }
 }
 
-#[derive(Clone, Debug)]
+//#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Style {
     // Handle Style separately from Attrs, since it commonly involves multiple parts.
     // todo enum for key?
@@ -230,7 +233,7 @@ macro_rules! make_events {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($event_camel:ident => $event:expr),+ } => {
 
-        #[derive(Clone, Debug)]
+        #[derive(Clone)]
         pub enum Event {
             $(
                 $event_camel,
@@ -273,26 +276,32 @@ make_events! {
 }
 
 
-#[derive(Clone, Debug)]
-pub struct Events<Ms> {
+//#[derive(Clone)]
+pub struct Events<Ms: Clone> {
     // Msg is an enum of types of Msg.
     // This is not tied to the real DOM, unlike attrs and style; used internally
     // by the virtual dom.
     // HashMap might be more appropriate, but Event would need
     // to implement Eq and Hash.
 //    pub vals: Vec<(Event, Box<EventFn<Ms>>)>
-    pub vals: Box<Vec<(Event, EventFn<Ms>)>>
+//    pub vals: Box<Vec<(Event, EventFn<Ms>)>>
+    pub vals: Vec<(Event, Ms)>
 }
 
-impl<Ms> Events<Ms> {
-    pub fn new(vals: Vec<(Event, EventFn<Ms>)>) -> Self {
+impl<Ms: Clone> Events<Ms> {
+//    pub fn new(vals: Box<Vec<(Event, Ms)>>)>) -> Self {
+//    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
+//    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms + 'static>)>) -> Self {
+    pub fn new(vals: Vec<(Event, Ms)>) -> Self {
+//    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
 //        Self {vals: vals.map(|ev, f| (ev, Box::new(f))).collect()}
-        Self {vals: Box::new(vals)}
+//        Self {vals: Box::new(vals)}
+//        Self { vals }
+        Self {vals}
     }
 
     pub fn empty() -> Self {
-//        Self {vals: Vec::new()}
-        Self {vals: Box::new(Vec::new())}
+        Self {vals: Vec::new()}
     }
 }
 
@@ -304,7 +313,7 @@ macro_rules! make_tags {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($tag_camel:ident => $tag:expr),+ } => {
 
-        #[derive(Debug)]
+//        #[derive(Debug)]
         pub enum Tag {
             $(
                 $tag_camel,
@@ -363,8 +372,8 @@ make_tags! {
     Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template"
 }
 
-#[derive(Debug)]
-pub struct El<Ms: 'static> {
+//#[derive(Debug)]
+pub struct El<Ms: Clone + 'static> {
     // M is a message type, as in part of TEA.
 
     // Don't use 'Element' name verbatim, to avoid * import conflict with web_sys.
@@ -375,7 +384,7 @@ pub struct El<Ms: 'static> {
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
-    pub events: Events<Ms>,
+//    pub events: Events<Ms>,
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
@@ -386,37 +395,39 @@ pub struct El<Ms: 'static> {
 }
 
 
-impl<Ms: 'static> El<Ms> {  // todo temp
+impl<Ms: Clone + 'static> El<Ms> {
 
-//    //    pub fn add_ev(&mut self, event: Event, message: Ms) {
-//    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
-////        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
-////        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
-//
+//        pub fn add_ev(&mut self, event: Event, message: Ms) {
+////    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
+//        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = move |_| {crate::log("YO"); message.clone()};
+////
+//////        let name = event.as_str();
+////
+//        let k = "click";
+//////
 //        let listener = Listener {
 //            //                name: Cow::from(vdom_event.as_str()),
 //            //                name: vdom_event.as_str(),
 ////            name: String::from(event.as_str()),
 ////            name: String::from(name),`
-//            name: name.into(),
+//            name: k.into(),
 //            //                name: 'static: vdom_event.as_str().into(),
 //            handler: Some(Box::new(handler)),
 //            closure: None
 //        };
-//
+////
 //        self.listeners.push(listener);
-//        self
 //    }
 
 
-    pub fn new(tag: Tag, attrs: Attrs, style: Style, events: Events<Ms>,
+    pub fn new(tag: Tag, attrs: Attrs, style: Style,
                text: &str, children: Vec<El<Ms>>) -> Self {
-        Self {tag, attrs, style, events, text: Some(text.into()), children,
+        Self {tag, attrs, style, text: Some(text.into()), children,
             el_ws: None, listeners: Vec::new()}
     }
 
     pub fn empty(tag: Tag) -> Self {
-        Self {tag, attrs: Attrs::empty(), style: Style::empty(), events: Events::empty(),
+        Self {tag, attrs: Attrs::empty(), style: Style::empty(),
             text: None, children: Vec::new(), el_ws: None, listeners: Vec::new()}
     }
 
@@ -432,9 +443,9 @@ impl<Ms: 'static> El<Ms> {  // todo temp
         self.style.vals.insert(key, val);
     }
 
-    pub fn add_event(&mut self, event: Event, message: Ms) {
-        self.events.vals.push((event, message));
-    }
+//    pub fn add_event(&mut self, event: Event, message: Ms) {
+//        self.events.vals.push((event, message));
+//    }
 
     pub fn set_text(&mut self, text: &str) {
         self.text = Some(text.into())

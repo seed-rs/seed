@@ -547,9 +547,7 @@ of Rebar apps mimicks that of The Elm Architecture.
 
 ### Why another entry in a saturated field?
 
-There are several existing frameworks for Rust in WASM; why add another?
-
-**There are already several Rust frameworks; why another?** 
+**There are already several Rust/WASM frameworks; why another?** 
 
 My goal is for this to be easy to pick up from looking at a tutorial or documentation, regardless of your
 level of experience with Rust. I'm distinguising this package through clear examples

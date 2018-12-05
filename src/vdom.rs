@@ -8,6 +8,10 @@ use wasm_bindgen_futures::future_to_promise;
 use crate::dom_types::{El, Events, Event, Tag};
 
 
+// todo: Get rid of the clone assiated with MS everywhere if you can!
+
+
+
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
 }
@@ -77,7 +81,7 @@ impl<Message> std::fmt::Debug for Mailbox<Message> {
 
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-struct Inner<Ms: Sized + 'static , Mdl: Sized + 'static> {
+struct Inner<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     document: web_sys::Document,
     main_div: web_sys::Element,
     model: RefCell<Mdl>,
@@ -91,13 +95,13 @@ struct Inner<Ms: Sized + 'static , Mdl: Sized + 'static> {
     is_updating: RefCell<bool>,
 }
 
-pub struct App<Ms: Sized + 'static , Mdl: Sized + 'static> {
+pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     inner: Rc<Inner<Ms, Mdl>>
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
-impl<Ms: Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
+impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     pub fn new(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
         top_component: fn(&Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
 
@@ -167,7 +171,7 @@ impl<Ms: Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     }
 }
 
-impl<Ms: Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for App<Ms, Mdl> {
+impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
             inner: Rc::clone(&self.inner),
@@ -177,7 +181,7 @@ impl<Ms: Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for App<Ms, M
 
 // The entry point for user apps; exposed in the prelude.
 //pub fn run<Ms: Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, RefCell<Mdl>) -> Mdl,
-pub fn run<Ms: Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
+pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
         top_component: fn(&Mdl) -> El<Ms>, parent_div_id: &str) {
     let app = App::new(model, update, top_component, parent_div_id);
     app.update_dom();
