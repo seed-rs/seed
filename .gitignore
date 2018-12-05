@@ -8,5 +8,4 @@ Cargo.lock
 **/.wasm
 **.d.ts
 **/node_modules/
-**/package-lock.json
 **/target/

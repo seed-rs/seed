@@ -1,9 +1,0 @@
-[package]
-name = "yew-test"
-version = "0.1.0"
-authors = ["DavidOConnor <david.alan.oconnor@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-stdweb = "0.4.2"
-yew = "^0.4.0"

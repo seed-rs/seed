@@ -2,15 +2,16 @@
 
 #![allow(unused_macros)]
 
-// todo temp>?? (For listener creation / handler
-#![feature(impl_trait_in_bindings)]
-
 pub mod dom_types;
+
 #[macro_use]
 pub mod dom_shortcuts;
+
 //mod fetch;
 pub mod vdom;
-mod example;
+//mod example;
+
+//pub use vdom::run;  // todo this may start working again in the future.
 
 
 //// todos:
@@ -21,23 +22,13 @@ mod example;
 // todo maybe?? High-level css-grid and flex api?
 
 
-
-
-////
-
-//
 /// A convenience function for logging to the web browser's console.
 pub fn log(text: &str) {
     web_sys::console::log_1(&text.into());
 }
 
-//// The basics, into the global namespace.  Note that some of these from dom_types are required
-//// to be in the global namespace for the view-creation macros to work.
+/// Introduce Element-related types into the global namespace, which are
+/// required to make the element/etc macros work.
 pub mod prelude {
-//    pub use crate::dom_types::{El, Style, Attrs, Tag, Event, Events, UpdateEl};
-    pub use crate::dom_types::{El, Style, Attrs, Tag, Event, Listener, UpdateEl};
-    pub use crate::vdom;
-    pub use crate::log;
+    pub use crate::dom_types::{El, Style, Attrs, Tag, Listener, UpdateEl};
 }
-//
-//

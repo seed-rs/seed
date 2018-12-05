@@ -1,62 +1,58 @@
+//! A simple, cliché demonstrating the basics.
+
 use wasm_bindgen::prelude::*;
 
-// This prelude is the equivalent of the following imports:
- use crate::dom_types::{El, Style, Attrs, Tag, Listener, UpdateEl};
- use crate::vdom::run;
-//use crate::prelude::*;
+use crate::prelude::*;
+use crate::vdom;
 
-// Todo trait etc that prevents the user from having to enter <Msg> with each El?
 
 // Model
 
-/// A demonstration of using web_sys to download data over http.
-
-
-#[derive(Clone)] // todo
+#[derive(Clone)]
 struct Model {
-    clicks: i32,
-    what_we_count: &'static str,
+    count: i32,
+    what_we_count: &'static str
 }
 
-// Set the starting state here, for initialization in the render() function.
+// Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
         Self {
-            clicks: 0,
-            what_we_count: "click".into(),
+            count: 0,
+            what_we_count: "click"
         }
     }
 }
+
 
 // Update
 
-
-// todo make these take events as their arg, and only have events return msg.
 #[derive(Clone)]
-enum Msg {  // todo temp pub
+enum Msg {
     Increment,
     Decrement,
-    ChangeDescrip(&'static str),
+    ChangeWWC()
 }
 
+// Sole source of updating the model; returns a whole new model.
 fn update(msg: &Msg, model: &Model) -> Model {
-    let model = model.clone(); // todo deal with this.
     match msg {
         &Msg::Increment => {
-            Model {clicks: model.clicks + 1, ..model}
+            Model {count: model.count + 1, what_we_count: model.what_we_count}
         },
         &Msg::Decrement => {
-            Model {clicks: model.clicks - 1, ..model}
+            Model {count: model.count - 1, what_we_count: model.what_we_count}
         },
-        &Msg::ChangeDescrip(ref descrip) => {
-            Model { what_we_count: descrip, ..model}
-        }
+        &Msg::ChangeWWC() => {
+//            Model {count: model.count, what_we_count: ev.target.value}
+            Model {count: model.count, what_we_count: "Tester"}
+        },
     }
 }
 
+
 // View
 
-// An example component; it's just a Rust function that returns an element.
 fn success_level(clicks: i32) -> El<Msg> {
     let descrip = match clicks {
         0 ... 3 => "Not very many 🙁",
@@ -64,40 +60,43 @@ fn success_level(clicks: i32) -> El<Msg> {
         8 ... 999 => "Good job! 🙂",
         _ => "You broke it 🙃"
     };
-    p![ descrip ]  // We could add children here if we wanted
+    p![ descrip ]
 }
 
-// Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn comp(model: &Model) -> El<Msg> {
-    // Attributes, styles, events, text, and children can be created inside the
-    // element macros, or separately.
+// Top-level component we pass to the virtual dom. Must accept the model as its
+// only argument, and output a single El.
+fn main_comp(model: &Model) -> El<Msg> {
+    let plural = if model.count == 1 {""} else {"s"};
+
     let outer_style = style!{
             "display" => "flex";
             "flex-direction" => "column";
             "text-align" => "center"
     };
 
-    div![outer_style, vec![
+     div![ outer_style, vec![
+        h1![ "The Grand Total" ],
         div![
-            attrs!{"class" => "ok elements"},
             style!{
-                "color" => if model.clicks > 4 {"purple"} else {"gray"};
+                "color" => if model.count > 4 {"purple"} else {"gray"};
                 "border" => "2px solid #004422"
             },
-            // This is normal Rust code, so you can insert comments whever you like.
             vec![
-                h1![ "Counting" ],
-                h3![ format!("{} {}(s) so far", model.clicks + 1, model.what_we_count) ],
-                button![ events!{"click" => |_| Msg::Increment}, "Click me" ],
-                button![ events!{"contextmenu" => |e: web_sys::Event| {e.prevent_default(); Msg::Decrement}}, "Don't click me" ],
-
+                h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
+                button![ events!{"click" => |_| Msg::Increment}, "+" ],
+                button![ events!{"click" => |_| Msg::Decrement}, "-" ]
             ] ],
-        success_level(model.clicks),
+        success_level(model.count),
+
+        h3![ "What precisely is it we're counting?" ],
+//        input![ attrs!{"value" => model.what_we_count}, events!{
+//            "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev.target().value())
+//        } ]
     ] ]
-//    div![]
 }
+
 
 #[wasm_bindgen]
 pub fn render() {
-    run(Model::default(), update, comp, "main");
+    vdom::run(Model::default(), update, main_comp, "main");
 }

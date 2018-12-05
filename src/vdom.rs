@@ -79,7 +79,6 @@ impl<Message> std::fmt::Debug for Mailbox<Message> {
     }
 }
 
-
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 struct Inner<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     document: web_sys::Document,

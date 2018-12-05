@@ -86,87 +86,105 @@ Guide section below.
 
 lib.rs:
 ```rust
-extern crate rebar;
-extern crate wasm_bindgen;
-
 use wasm_bindgen::prelude::*;
-use rebar::prelude::*;
 
-// use rebar::dom_types::{Attrs, Style, El, Events, Event, Tag};
-use rebar::vdom;
-
-
-// The ELM Architecture (TEA)
+use crate::prelude::*;
+use crate::vdom;
 
 
-// MODEL
+// Model
+
 #[derive(Clone)]
-pub struct Model {
-    pub clicks: i8,
-    pub descrip: String,
+struct Model {
+    count: i32,
+    what_we_count: &'static str
 }
 
+// Setup a default here, for initialization later.
 impl Default for Model {
-    // Initialize here, as in TEA.
     fn default() -> Self {
         Self {
-            clicks: 0,
-            descrip: "(Placeholder)".into(),
+            count: 0,
+            what_we_count: "click"
         }
     }
 }
 
 
-// UPDATE
+// Update
 
-pub enum Msg {
+#[derive(Clone)]
+enum Msg {
     Increment,
     Decrement,
-    ChangeDescrip(String),
+    ChangeWWC()
 }
 
-fn update(msg: Msg, model: Model) -> Model {
-//    let model2 = model.clone(); // todo deal with this.
+// Sole source of updating the model; returns a whole new model.
+fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
-        Msg::Increment => {
-            Model {clicks: model.clicks + 1, ..model}
+        &Msg::Increment => {
+            Model {count: model.count + 1, what_we_count: model.what_we_count}
         },
-        Msg::Decrement => {
-            Model {clicks: model.clicks - 1, ..model}
+        &Msg::Decrement => {
+            Model {count: model.count - 1, what_we_count: model.what_we_count}
         },
-        Msg::ChangeDescrip(descrip) => {
-            Model {descrip, ..model}
-        }
+        &Msg::ChangeWWC() => {
+//            Model {count: model.count, what_we_count: ev.target.value}
+            Model {count: model.count, what_we_count: "Tester"}
+        },
     }
 }
 
 
+// View
 
-// VIEW
+fn success_level(clicks: i32) -> El<Msg> {
+    let descrip = match clicks {
+        0 ... 3 => "Not very many 🙁",
+        4 ... 7 => "An OK amount 😐",
+        8 ... 999 => "Good job! 🙂",
+        _ => "You broke it 🙃"
+    };
+    p![ descrip ]
+}
 
-fn comp(model: &Model) -> El<Msg> {
-    let mut button = El::empty(Tag::Button);
-    button.text = Some("Click me!".into());
-    button.events = Events::new(vec![(Event::Click, Msg::Increment)]);
+// Top-level component we pass to the virtual dom. Must accept the model as its
+// only argument, and output a single El.
+fn main_comp(model: &Model) -> El<Msg> {
+    let plural = if model.count == 1 {""} else {"s"};
 
-    div![ attrs!{"class" => "good elements"}, vec![
-        div![ attrs!{"class" => "ok elements"},
-              style!{"color" => "purple"; "border" => "2px solid #004422"},
-              vec![
-                  h2![ Attrs::empty(), vec![], "A walk in the woods" ],
-                  h3![ Attrs::empty(), vec![], (model.clicks+1).to_string() ],
-                  button,
-              ], "" ],
+    let outer_style = style!{
+            "display" => "flex";
+            "flex-direction" => "column";
+            "text-align" => "center"
+    };
 
-        p![ Attrs::empty(), vec![], model.descrip.clone() ]
-    ], "" ]
+     div![ outer_style, vec![
+        h1![ "The Grand Total" ],
+        div![
+            style!{
+                "color" => if model.count > 4 {"purple"} else {"gray"};
+                "border" => "2px solid #004422"
+            },
+            vec![
+                h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
+                button![ events!{"click" => |_| Msg::Increment}, "+" ],
+                button![ events!{"click" => |_| Msg::Decrement}, "-" ]
+            ] ],
+        success_level(model.count),
+
+        h3![ "What precisely is it we're counting?" ],
+//        input![ attrs!{"value" => model.what_we_count}, events!{
+//            "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev.target().value())
+//        } ]
+    ] ]
 }
 
 
 #[wasm_bindgen]
-pub fn render() -> Result<(), JsValue> {
-    let model = Model::default();
-    vdom::mount(model, &update, &comp, "main")
+pub fn render() {
+    vdom::run(Model::default(), update, main_comp, "main");
 }
 ```
 
@@ -194,6 +212,14 @@ For example, after installing the  [http crate](https://crates.io/crates/https),
 Or with Python 3 installed, run `python -m http.server` from your crate's root.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
+
+### Running included examples
+To run an example located in the `examples` folder, navigate to that folder in a console, 
+run the build script for your system (`build.sh` or `build.ps1`), then open the `index.html` file
+in a web browser. Note that if you copy an example to a separate folder, you'll need
+to edit its `Cargo.toml` to point to the package.crates.io instead of locally: Ie replace
+`rebar = { path = "../../"` with `rebar = "^0.1.0"`, and remove the leading `../../` on the second
+line of the build script.
 
 ## Guide
 
@@ -234,25 +260,25 @@ with a static [lifetime](https://doc.rust-lang.org/book/2018-edition/ch10-03-lif
   `&'static str` has simpler syntax. Example:
 
 ```rust
-#[derive(Clone, Debug)]
-
+#[derive(Clone)]
 struct Model {
-    value: i8,
-    descrip: String,  // Could be &'static str
+    count: i32,
+    what_we_count: &'static str
 }
 
+// Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
         Self {
-            value: 0,
-            descrip: “A description”.into(),  // Skip the into() if using a ref
+            count: 0,
+            what_we_count: "click"
         }
     }
 }
 ```
  
 The first line, `#[derive(Clone)]` is required to let Rebar make copies or it, and
-display it internally.In this example, we provide 
+display it internally. In this example, we provide 
 initialization via Rust’s `Default` trait, in order to keep the initialization code by the
  model itself. When we call `Model.default()`, it initializes with these values. We could 
  also initialize it using a constructor method, or a struct literal. Note the use of `into()` 
@@ -260,8 +286,7 @@ initialization via Rust’s `Default` trait, in order to keep the initialization
  
 The model holds all data used by the app, and will be replaced with updated versions when the data changes.
 
- 
-The model may be split into sub-structs to organize it – this is especially useful as the app grows. 
+ The model may be split into sub-structs to organize it – this is especially useful as the app grows. 
 The sub-structs must also implement Clone:
  
 
@@ -293,37 +318,35 @@ categorizes each type of interaction with the app. Its fields may hold a value, 
 We’ve abbreviated it as `Msg` here for brevity. Example:
 
 ```rust
-
+#[derive(Clone)]
 enum Msg {
     Increment,
     Decrement,
     ChangeDescrip(String),
 }
-
 ```
  
-
 The update [function]( https://doc.rust-lang.org/book/2018-edition/ch03-03-how-functions-work.html) 
 is the only place where the model is changed. It accepts a message reference, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
-
  
 Example:
 
 ```rust
+// Sole source of updating the model; returns a whole new model.
 fn update(msg: &Msg, model: &Model) -> Model {
-    let model2 = model.clone();
     match msg {
-        Msg::Increment => {
-            Model {clicks: model.clicks + 1, ..model}
+        &Msg::Increment => {
+            Model {count: model.count + 1, what_we_count: model.what_we_count}
         },
-        Msg::Decrement => {
-            Model {clicks: model.clicks - 1, ..model}
+        &Msg::Decrement => {
+            Model {count: model.count - 1, what_we_count: model.what_we_count}
         },
-        Msg::ChangeDescrip(descrip) => {
-            Model {descrip, ..model}
-        }
+        &Msg::ChangeWWC() => {
+//            Model {count: model.count, what_we_count: ev.target.value}
+            Model {count: model.count, what_we_count: "thing"}
+        },
     }
 }
 ```
@@ -351,9 +374,9 @@ elements present must be aranged in the order above: eg `Events` can never be be
 For example, the following code returns an `El` representing a few dom elements displayed
 in a flexbox layout:
 ```rust
-    div![ style!{"display" => "flex"; flex-direction: "column"}, vec![
+    div![ style!{"display" => "flex"; flex-direction => "column"}, vec![
         h3![ "Some things" ],
-        button![ events!{"click" => Msg::SayHi}, "Click me!" ]
+        button![ events!{"click" => |_| Msg::SayHi}, "Click me!" ]
     ] ]
 ```
 
@@ -377,7 +400,7 @@ prelude.
     );  
     
     let mut button = El::empty(Tag::Button);
-    button.add_event(Event::Click, Msg::SayHi);
+    button.add_event("click", |_| Msg::SayHi);
 
     let children = vec![heading, button];
     
@@ -419,7 +442,7 @@ El {
             tag: Tag::button,
             attrs: Attrs { vals: HashMap::new() },
             style: Style { vals: HashMap::new() },
-            events: Events { vals: vec![(Event::Click, Msg::SayHi)] },
+            events: Events { vals: vec![("click", |_| Msg::SayHi)] },
             text: None,
             children: Vec::new()
         } 
@@ -518,7 +541,6 @@ with Serde.
 You can store page state locally using web_sys's [Storage struct](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html)
 .
 
-
 ## Goals
 - Learning the syntax, creating a project, and building it should be easy - regardless
 of your familiarity with Rust.
@@ -547,9 +569,9 @@ are worth it.
 
 
 ### Where to start if you're familiar with existing frontend frameworks
-The Rosetta Stone example (examples/rosetta_stone) provides equivalent code
-in React, Elm, Yew, and Rebar. Comparing the code of a framework you know with
-Rebar should make this easy.
+The Todo MVC example (examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
+which has example code in my frameworks that do the same thing. Compare the example in this
+project to one on that page that uses a framework you're familiar with.
 
 ### Suggestions? Critique? Submit an issue or pull request on Github
 

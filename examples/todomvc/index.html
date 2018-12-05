@@ -23,7 +23,7 @@
     delete WebAssembly.instantiateStreaming;
 </script>
 
-<script src='./pkg/rebar.js'></script>
+<script src='./pkg/todomvc.js'></script>
 
 <script>
     // the `wasm_bindgen` global is set to the exports of the Rust module
@@ -34,7 +34,7 @@
     }
     // here we tell bindgen the path to the wasm file so it can run
     // initialization and return to us a promise when it's done
-    wasm_bindgen('./pkg/rebar.wasm')
+    wasm_bindgen('./pkg/todomvc.wasm')
         .then(run)
         .catch(console.error);
 </script>

@@ -7,12 +7,12 @@ license = "MIT"
 repository = "https://www.github.com/David-OConnor/framework"
 documentation = "https://docs.rs/framework"
 readme = "./README.md"
-keywords = ["wasm", "frontend", "framework", "web"]
+keywords = ["wasm", "frontend", "framework", "web", "bindgen"]
 categories = ["wasm", "web-programming", ""]
 edition = "2018"
 
-[lib]
-crate-type = ["cdylib"]
+#[lib]
+#crate-type = ["cdylib"]
 
 
 [dependencies]
@@ -62,9 +62,8 @@ features = [
 
 [workspace]
 members = [
-#    "proc_macros",
-    #"examples/rosetta_stone/self",
-#    "examples/counter",
+    "examples/counter",
+    "examples/todomvc",
 ]
 
 

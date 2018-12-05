@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-rebar = "^0.1.0"
+rebar = {path = "../../"}
 wasm-bindgen = "^0.2.28"
 
 # For serialization, eg sending requests to a server. Otherwise, not required.

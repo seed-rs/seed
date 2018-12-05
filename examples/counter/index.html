@@ -8,9 +8,7 @@
 
     <link rel="icon" type="image/png" href="./public/favicon.png">
 
-    <link href="https://fonts.googleapis.com/css?family=Karla" rel="stylesheet">
-
-    <!--<link rel="stylesheet" type="text/css" href="./public/style.css">-->
+    <!--<link rel="stylesheet" type="text/css" href="./style.css">-->
 
     <title>Counter example</title>
 
@@ -31,7 +29,7 @@
     delete WebAssembly.instantiateStreaming;
 </script>
 
-<script src='./pkg/appname.js'></script>
+<script src='./pkg/counter.js'></script>
 
 <script>
     // the `wasm_bindgen` global is set to the exports of the Rust module
@@ -42,7 +40,7 @@
     }
     // here we tell bindgen the path to the wasm file so it can run
     // initialization and return to us a promise when it's done
-    wasm_bindgen('./pkg/appname.wasm')
+    wasm_bindgen('./pkg/counter_bg.wasm')
         .then(run)
         .catch(console.error);
 </script>

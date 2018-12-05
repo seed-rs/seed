@@ -61,6 +61,7 @@
 //    };
 //}
 
+#[macro_export]
 macro_rules! address {
     ( $($part:expr),* ) => {
         {
@@ -71,6 +72,7 @@ macro_rules! address {
     };
 }
 
+#[macro_export]
 macro_rules! article {
     ( $($part:expr),* ) => {
         {
@@ -81,6 +83,7 @@ macro_rules! article {
     };
 }
 
+#[macro_export]
 macro_rules! aside {
     ( $($part:expr),* ) => {
         {
@@ -91,6 +94,7 @@ macro_rules! aside {
     };
 }
 
+#[macro_export]
 macro_rules! footer {
     ( $($part:expr),* ) => {
         {
@@ -101,6 +105,7 @@ macro_rules! footer {
     };
 }
 
+#[macro_export]
 macro_rules! header {
     ( $($part:expr),* ) => {
         {
@@ -111,6 +116,7 @@ macro_rules! header {
     };
 }
 
+#[macro_export]
 macro_rules! h1 {
     ( $($part:expr),* ) => {
         {
@@ -121,6 +127,7 @@ macro_rules! h1 {
     };
 }
 
+#[macro_export]
 macro_rules! h2 {
     ( $($part:expr),* ) => {
         {
@@ -131,6 +138,7 @@ macro_rules! h2 {
     };
 }
 
+#[macro_export]
 macro_rules! h3 {
     ( $($part:expr),* ) => {
         {
@@ -141,6 +149,7 @@ macro_rules! h3 {
     };
 }
 
+#[macro_export]
 macro_rules! h4 {
     ( $($part:expr),* ) => {
         {
@@ -151,6 +160,7 @@ macro_rules! h4 {
     };
 }
 
+#[macro_export]
 macro_rules! h5 {
     ( $($part:expr),* ) => {
         {
@@ -161,6 +171,7 @@ macro_rules! h5 {
     };
 }
 
+#[macro_export]
 macro_rules! h6 {
     ( $($part:expr),* ) => {
         {
@@ -171,6 +182,7 @@ macro_rules! h6 {
     };
 }
 
+#[macro_export]
 macro_rules! hgroup {
     ( $($part:expr),* ) => {
         {
@@ -181,6 +193,7 @@ macro_rules! hgroup {
     };
 }
 
+#[macro_export]
 macro_rules! main {
     ( $($part:expr),* ) => {
         {
@@ -191,6 +204,7 @@ macro_rules! main {
     };
 }
 
+#[macro_export]
 macro_rules! nav {
     ( $($part:expr),* ) => {
         {
@@ -201,6 +215,7 @@ macro_rules! nav {
     };
 }
 
+#[macro_export]
 macro_rules! section {
     ( $($part:expr),* ) => {
         {
@@ -211,6 +226,7 @@ macro_rules! section {
     };
 }
 
+#[macro_export]
 macro_rules! blockquote {
     ( $($part:expr),* ) => {
         {
@@ -221,6 +237,7 @@ macro_rules! blockquote {
     };
 }
 
+#[macro_export]
 macro_rules! dd {
     ( $($part:expr),* ) => {
         {
@@ -231,6 +248,7 @@ macro_rules! dd {
     };
 }
 
+#[macro_export]
 macro_rules! dir {
     ( $($part:expr),* ) => {
         {
@@ -241,6 +259,7 @@ macro_rules! dir {
     };
 }
 
+#[macro_export]
 macro_rules! div {
     ( $($part:expr),* ) => {
         {
@@ -251,6 +270,7 @@ macro_rules! div {
     };
 }
 
+#[macro_export]
 macro_rules! dl {
     ( $($part:expr),* ) => {
         {
@@ -261,7 +281,7 @@ macro_rules! dl {
     };
 }
 
-
+#[macro_export]
 macro_rules! dt {
     ( $($part:expr),* ) => {
         {
@@ -272,6 +292,7 @@ macro_rules! dt {
     };
 }
 
+#[macro_export]
 macro_rules! figure {
     ( $($part:expr),* ) => {
         {
@@ -282,6 +303,7 @@ macro_rules! figure {
     };
 }
 
+#[macro_export]
 macro_rules! figcaption {
     ( $($part:expr),* ) => {
         {
@@ -292,6 +314,7 @@ macro_rules! figcaption {
     };
 }
 
+#[macro_export]
 macro_rules! hr {
     ( $($part:expr),* ) => {
         {
@@ -302,6 +325,7 @@ macro_rules! hr {
     };
 }
 
+#[macro_export]
 macro_rules! li {
     ( $($part:expr),* ) => {
         {
@@ -312,6 +336,7 @@ macro_rules! li {
     };
 }
 
+#[macro_export]
 macro_rules! ol {
     ( $($part:expr),* ) => {
         {
@@ -322,6 +347,7 @@ macro_rules! ol {
     };
 }
 
+#[macro_export]
 macro_rules! p {
     ( $($part:expr),* ) => {
         {
@@ -332,7 +358,7 @@ macro_rules! p {
     };
 }
 
-
+#[macro_export]
 macro_rules! pre {
     ( $($part:expr),* ) => {
         {
@@ -343,6 +369,7 @@ macro_rules! pre {
     };
 }
 
+#[macro_export]
 macro_rules! ul {
     ( $($part:expr),* ) => {
         {
@@ -353,6 +380,7 @@ macro_rules! ul {
     };
 }
 
+#[macro_export]
 macro_rules! a {
     ( $($part:expr),* ) => {
         {
@@ -363,6 +391,7 @@ macro_rules! a {
     };
 }
 
+#[macro_export]
 macro_rules! abbr {
     ( $($part:expr),* ) => {
         {
@@ -373,6 +402,7 @@ macro_rules! abbr {
     };
 }
 
+#[macro_export]
 macro_rules! b {
     ( $($part:expr),* ) => {
         {
@@ -383,6 +413,7 @@ macro_rules! b {
     };
 }
 
+#[macro_export]
 macro_rules! bdi {
     ( $($part:expr),* ) => {
         {
@@ -393,6 +424,7 @@ macro_rules! bdi {
     };
 }
 
+#[macro_export]
 macro_rules! bdo {
     ( $($part:expr),* ) => {
         {
@@ -403,6 +435,7 @@ macro_rules! bdo {
     };
 }
 
+#[macro_export]
 macro_rules! br {
     ( $($part:expr),* ) => {
         {
@@ -413,6 +446,7 @@ macro_rules! br {
     };
 }
 
+#[macro_export]
 macro_rules! cite {
     ( $($part:expr),* ) => {
         {
@@ -423,6 +457,7 @@ macro_rules! cite {
     };
 }
 
+#[macro_export]
 macro_rules! code {
     ( $($part:expr),* ) => {
         {
@@ -433,6 +468,7 @@ macro_rules! code {
     };
 }
 
+#[macro_export]
 macro_rules! data {
     ( $($part:expr),* ) => {
         {
@@ -443,6 +479,7 @@ macro_rules! data {
     };
 }
 
+#[macro_export]
 macro_rules! dfn {
     ( $($part:expr),* ) => {
         {
@@ -453,6 +490,7 @@ macro_rules! dfn {
     };
 }
 
+#[macro_export]
 macro_rules! em {
     ( $($part:expr),* ) => {
         {
@@ -463,6 +501,7 @@ macro_rules! em {
     };
 }
 
+#[macro_export]
 macro_rules! i {
     ( $($part:expr),* ) => {
         {
@@ -473,6 +512,7 @@ macro_rules! i {
     };
 }
 
+#[macro_export]
 macro_rules! kbd {
     ( $($part:expr),* ) => {
         {
@@ -483,6 +523,7 @@ macro_rules! kbd {
     };
 }
 
+#[macro_export]
 macro_rules! mark {
     ( $($part:expr),* ) => {
         {
@@ -492,6 +533,8 @@ macro_rules! mark {
         }
     };
 }
+
+#[macro_export]
 macro_rules! button {
     ( $($part:expr),* ) => {
         {
@@ -502,6 +545,7 @@ macro_rules! button {
     };
 }
 
+#[macro_export]
 macro_rules! fieldset {
     ( $($part:expr),* ) => {
         {
@@ -512,6 +556,7 @@ macro_rules! fieldset {
     };
 }
 
+#[macro_export]
 macro_rules! form {
     ( $($part:expr),* ) => {
         {
@@ -522,6 +567,7 @@ macro_rules! form {
     };
 }
 
+#[macro_export]
 macro_rules! input {
     ( $($part:expr),* ) => {
         {
@@ -532,6 +578,7 @@ macro_rules! input {
     };
 }
 
+#[macro_export]
 macro_rules! label {
     ( $($part:expr),* ) => {
         {
@@ -542,6 +589,7 @@ macro_rules! label {
     };
 }
 
+#[macro_export]
 macro_rules! legend {
     ( $($part:expr),* ) => {
         {
@@ -552,6 +600,7 @@ macro_rules! legend {
     };
 }
 
+#[macro_export]
 macro_rules! meter {
     ( $($part:expr),* ) => {
         {
@@ -562,6 +611,7 @@ macro_rules! meter {
     };
 }
 
+#[macro_export]
 macro_rules! optgroup {
     ( $($part:expr),* ) => {
         {
@@ -572,7 +622,7 @@ macro_rules! optgroup {
     };
 }
 
-
+#[macro_export]
 macro_rules! option {
     ( $($part:expr),* ) => {
         {
@@ -583,6 +633,7 @@ macro_rules! option {
     };
 }
 
+#[macro_export]
 macro_rules! output {
     ( $($part:expr),* ) => {
         {
@@ -593,6 +644,7 @@ macro_rules! output {
     };
 }
 
+#[macro_export]
 macro_rules! progress {
     ( $($part:expr),* ) => {
         {
@@ -603,6 +655,7 @@ macro_rules! progress {
     };
 }
 
+#[macro_export]
 macro_rules! select {
     ( $($part:expr),* ) => {
         {
@@ -613,6 +666,7 @@ macro_rules! select {
     };
 }
 
+#[macro_export]
 macro_rules! textarea {
     ( $($part:expr),* ) => {
         {
@@ -623,6 +677,7 @@ macro_rules! textarea {
     };
 }
 
+#[macro_export]
 macro_rules! span {
     ( $($part:expr),* ) => {
         {
@@ -633,6 +688,7 @@ macro_rules! span {
     };
 }
 
+#[macro_export]
 macro_rules! strong {
     ( $($part:expr),* ) => {
         {
@@ -643,6 +699,7 @@ macro_rules! strong {
     };
 }
 
+#[macro_export]
 macro_rules! sub {
     ( $($part:expr),* ) => {
         {
@@ -653,6 +710,7 @@ macro_rules! sub {
     };
 }
 
+#[macro_export]
 macro_rules! sup {
     ( $($part:expr),* ) => {
         {
@@ -663,6 +721,7 @@ macro_rules! sup {
     };
 }
 
+#[macro_export]
 macro_rules! img {
     ( $($part:expr),* ) => {
         {
@@ -673,6 +732,7 @@ macro_rules! img {
     };
 }
 
+#[macro_export]
 macro_rules! canvas {
     ( $($part:expr),* ) => {
         {
@@ -683,6 +743,7 @@ macro_rules! canvas {
     };
 }
 
+#[macro_export]
 macro_rules! noscript {
     ( $($part:expr),* ) => {
         {
@@ -693,6 +754,7 @@ macro_rules! noscript {
     };
 }
 
+#[macro_export]
 macro_rules! script {
     ( $($part:expr),* ) => {
         {
@@ -703,6 +765,7 @@ macro_rules! script {
     };
 }
 
+#[macro_export]
 macro_rules! del {
     ( $($part:expr),* ) => {
         {
@@ -713,6 +776,7 @@ macro_rules! del {
     };
 }
 
+#[macro_export]
 macro_rules! ins {
     ( $($part:expr),* ) => {
         {
@@ -723,6 +787,7 @@ macro_rules! ins {
     };
 }
 
+#[macro_export]
 macro_rules! map {
     ( $($part:expr),* ) => {
         {
@@ -733,6 +798,7 @@ macro_rules! map {
     };
 }
 
+#[macro_export]
 macro_rules! track {
     ( $($part:expr),* ) => {
         {
@@ -743,6 +809,7 @@ macro_rules! track {
     };
 }
 
+#[macro_export]
 macro_rules! video {
     ( $($part:expr),* ) => {
         {
@@ -753,6 +820,7 @@ macro_rules! video {
     };
 }
 
+#[macro_export]
 macro_rules! applet {
     ( $($part:expr),* ) => {
         {
@@ -763,6 +831,7 @@ macro_rules! applet {
     };
 }
 
+#[macro_export]
 macro_rules! embed {
     ( $($part:expr),* ) => {
         {
@@ -773,6 +842,7 @@ macro_rules! embed {
     };
 }
 
+#[macro_export]
 macro_rules! iframe {
     ( $($part:expr),* ) => {
         {
@@ -785,7 +855,7 @@ macro_rules! iframe {
 
 
 /// Provide a shortcut for creating styles.
-//#[macro_export]
+#[macro_export]
 macro_rules! style {
     { $($key:expr => $value:expr);* } => {
         {
@@ -800,7 +870,7 @@ macro_rules! style {
 
 /// Provide a shortcut for creating attributes.
 // todo DRY between thsi and style
-//#[macro_export]
+#[macro_export]
 macro_rules! attrs {
     { $($key:expr => $value:expr);* } => {
         {
@@ -813,26 +883,7 @@ macro_rules! attrs {
      };
 }
 
-////////// todo DRY between thsi and style
-////#[macro_export]
-//macro_rules! events {
-//    { $($event_str:expr => $handler:expr);+ } => {
-//        {
-//            let mut vals = Vec::new();
-//            $(
-//
-//
-//                vals.push(($event_str.into(), Box::new($handler)));
-////                vals.push(($event_str.into(), $handler));
-//            )+
-////            Events::new(vals)
-//            Listener::new(vals)
-//        }
-//     };
-//}
-
-//////// todo DRY between thsi and style
-//#[macro_export]
+#[macro_export]
 macro_rules! events {
     { $($event_str:expr => $handler:expr);+ } => {
         {

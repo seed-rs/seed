@@ -16,11 +16,6 @@ use crate::vdom::Mailbox;  // todo temp
 // todo valid ones.
 
 
-type EventFn<Ms> = FnMut(web_sys::Event) -> Ms + 'static;
-//type EventFn<Ms> = FnMut(web_sys::Event) -> Ms;
-// todo see where you can apply this. and if +'static should be a part of it.
-
-
 // todo temp
 pub struct Listener<Ms: Clone> {
     pub name: Cow<'static, str>,
@@ -28,23 +23,10 @@ pub struct Listener<Ms: Clone> {
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
 }
 
-
-// todo temp
-//impl<Ms> std::fmt::Debug for Listener<Ms> {
-//    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-//        f.debug_struct("Listener")
-//            .field("name", &self.name)
-//            .finish()
-//    }
-//}
-
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-// todo temp
 impl<Ms: Clone + 'static> Listener<Ms> {
 //    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
     pub fn new(event: Event, handler: Box<impl FnMut(web_sys::Event) -> Ms + 'static>) -> Self {
-
-
         Self {
             name: String::from(event.as_str()).into(),
             handler: Some(handler),
@@ -122,36 +104,11 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Style {
     }
 }
 
-//impl<Ms: Clone> UpdateEl<El<Ms>> for Events<Ms> {
-impl<Ms: Clone> UpdateEl<El<Ms>> for Listener<Ms> {
-    fn update(self, el: &mut El<Ms>) {
-
-//        el.events = self;
-//         todo evaluate this
-//
-//        let mut listeners: Vec<Listener<Ms>> = Vec::new();
-//        for (vdom_event, message) in self.vals {
-//            let handler: impl FnMut(web_sys::Event) -> Ms + 'static = move |_| message.clone();
-//
-//            let listener = Listener {
-////                name: vdom_event.as_str().into(),
-//                name: String::from("contextmenu").into(),
-////                name: 'static: vdom_event.as_str().into(),
-//                handler: Some(Box::new(handler)),
-//                closure: None
-//            };
-//
-//            listeners.push(listener)
-//        }
-    }
-}
-
 impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         el.listeners = self;
     }
 }
-
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     fn update(self, el: &mut El<Ms>) {
@@ -294,38 +251,6 @@ make_events! {
 }
 
 
-////#[derive(Clone)]
-//pub struct Events<Ms: Clone> {
-//    // Msg is an enum of types of Msg.
-//    // This is not tied to the real DOM, unlike attrs and style; used internally
-//    // by the virtual dom.
-//    // HashMap might be more appropriate, but Event would need
-//    // to implement Eq and Hash.
-//
-////    pub vals: Vec<(Event, i8)>,
-//    pub vals: Vec<(Event, Box<EventFn<Ms>>)>
-////    pub vals: Vec<(Event, Ms)>
-//}
-//
-//impl<Ms: Clone> Events<Ms> {
-////    pub fn new(vals: Box<Vec<(Event, Ms)>>)>) -> Self {
-////    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
-////    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms + 'static>)>) -> Self {
-////    pub fn new(vals: Vec<(Event, Ms)>) -> Self {
-//    pub fn new(vals: Box<Vec<(Event, EventFn<Ms>)>>) -> Self {
-////    pub fn new(vals: Vec<(Event, Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
-////        Self {vals: vals.map(|ev, f| (ev, Box::new(f))).collect()}
-////        Self {vals: Box::new(vals)}
-////        Self { vals }
-//        Self {vals}
-//    }
-//
-//    pub fn empty() -> Self {
-//        Self {vals: Vec::new()}
-//    }
-//}
-
-
 /// Populate tags using a macro, to reduce code repetition.
 /// The tag enum primarily exists to ensure only valid elements are allowed.
 /// We leave out non-body tags like html, meta, title, and body.
@@ -416,32 +341,6 @@ pub struct El<Ms: Clone + 'static> {
 
 
 impl<Ms: Clone + 'static> El<Ms> {
-
-//        pub fn add_ev(&mut self, event: Event, message: Ms) {
-    pub fn ev(mut self, name: &'static str, handler : impl FnMut(web_sys::Event) -> Ms + 'static) {
-//        let handler : impl FnMut(web_sys::Event) -> Ms + 'static = move |_| {crate::log("YO"); message.clone()};
-//        let handler  = move |_| { message.clone()};
-//
-////        let name = event.as_str();
-//
-        let k = "click";
-////
-
-        let listener = Listener {
-            //                name: Cow::from(vdom_event.as_str()),
-            //                name: vdom_event.as_str(),
-//            name: String::from(event.as_str()),
-//            name: String::from(name),`
-            name: k.into(),
-            //                name: 'static: vdom_event.as_str().into(),
-            handler: Some(Box::new(handler)),
-            closure: None
-        };
-//
-        self.listeners.push(listener);
-    }
-
-
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
                text: &str, children: Vec<El<Ms>>) -> Self {
         Self {tag, attrs, style, text: Some(text.into()), children,
@@ -465,9 +364,9 @@ impl<Ms: Clone + 'static> El<Ms> {
         self.style.vals.insert(key, val);
     }
 
-//    pub fn add_event(&mut self, event: Event, message: Ms) {
-//        self.events.vals.push((event, message));
-//    }
+    pub fn add_listener(&mut self, event: Event, handler: Box<impl FnMut(web_sys::Event) -> Ms + 'static>) {
+        self.listeners.push(Listener::new(event, handler));
+    }
 
     pub fn set_text(&mut self, text: &str) {
         self.text = Some(text.into())
