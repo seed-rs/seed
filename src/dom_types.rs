@@ -18,7 +18,7 @@ use crate::vdom::Mailbox;  // todo temp
 
 // todo temp
 pub struct Listener<Ms: Clone> {
-    pub name: Cow<'static, str>,
+    pub trigger: Cow<'static, str>,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
 }
@@ -28,7 +28,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
 //    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
     pub fn new(event: Event, handler: Box<impl FnMut(web_sys::Event) -> Ms + 'static>) -> Self {
         Self {
-            name: String::from(event.as_str()).into(),
+            trigger: String::from(event.as_str()).into(),
             handler: Some(handler),
             closure: None
         }
@@ -39,7 +39,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         f: Rc<impl Fn(Ms) -> NewMs + 'static>,
     ) -> Listener<NewMs> {
         let Listener {
-            name,
+            trigger,
             mut handler,
             closure,
         } = self;
@@ -52,7 +52,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
                 None => None,
             };
         Listener {
-            name,
+            trigger,
             handler,
             closure,
         }
@@ -72,7 +72,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
                 as Box<FnMut(web_sys::Event) + 'static>,
         );
         (element.as_ref() as &web_sys::EventTarget)
-            .add_event_listener_with_callback(&self.name, closure.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("add_event_listener_with_callback");
 //        self.closure = Some(closure);
         closure.forget();  // draco uses self.closure = logic, not .forget.
@@ -81,7 +81,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     fn detach(&self, element: &web_sys::Element) {
         let closure = self.closure.as_ref().unwrap();
         (element.as_ref() as &web_sys::EventTarget)
-            .remove_event_listener_with_callback(&self.name, closure.as_ref().unchecked_ref())
+            .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("remove_event_listener_with_callback");
     }
 }
@@ -203,7 +203,6 @@ impl Style {
 }
 
 /// Similar to tag population.
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
 macro_rules! make_events {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($event_camel:ident => $event:expr),+ } => {
@@ -242,12 +241,32 @@ macro_rules! make_events {
     }
 }
 
+/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
 make_events! {
-    AuxClick => "auxclick", Click => "click", ContextMenu => "contextmenu", DblClick => "dblclick",
+    Cached => "cached", Error => "error", Abort => "abort", Load => "load", BeforeUnload => "beforeunload",
+    Unload => "unload", Online => "online", Offline => "offline", Focus => "focus", Blur => "blur",
+    Open => "open", Message => "message", Close => "close", PageHide => "pagehide",
+    PageShow => "pageshow", PopState => "popstate", AnimationStart => "animationstart", AnimationEnd => "animationend",
+    AnimationIteration => "animationiteration", TransitionStart => "transtionstart", TransitionEnd => "transitionend",
+    TranstionRun => "transitionrun",
+
+    Rest => "rest", Submit => "submit", BeforePrint => "beforeprint", AfterPrint => "afterprint",
+    CompositionStart => "compositionstart", CompositionUpdate => "compositionupdate", CompositionEnd => "compositionend",
+
+    FullScreenChange => "fullscreenchange", FullScreenError => "fullscreenerror", Resize => "resize",
+    Scroll => "scroll", Cut => "cut", Copy => "copy", Paste => "paste",
+
+    KeyDown => "keydown",
+    KeyPress => "keypress", AuxClick => "auxclick", Click => "click", ContextMenu => "contextmenu", DblClick => "dblclick",
     MouseDown => "mousedown", MouseEnter => "mouseenter", MouseLeave => "mouseleave",
     MouseMove => "mousemove", MouseOver => "mouseover", MouseOut => "mouseout", MouseUp => "mouseup",
     PointerLockChange => "pointerlockchange", PointerLockError => "pointerlockerror", Select => "select",
-    Wheel => "wheel"
+    Wheel => "wheel",
+
+    Drag => "drag", DragEnd => "dragend", DragEnter => "dragenter", DragStart => "dragstart", DragLeave => "dragleave",
+    DragOver => "dragover", Drop => "drop",
+
+    Change => "change"
 }
 
 

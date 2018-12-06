@@ -4,10 +4,11 @@
 extern crate rebar;
 use rebar::prelude::*;
 use wasm_bindgen::prelude::*;
+use web_sys;
 
 // Model
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Model {
     count: i32,
     what_we_count: &'static str
@@ -30,21 +31,29 @@ impl Default for Model {
 enum Msg {
     Increment,
     Decrement,
-    ChangeWWC()
+    ChangeWWC(web_sys::Event)
 }
 
 // Sole source of updating the model; returns a whole new model.
 fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
-        &Msg::Increment => {
+        Msg::Increment => {
             Model {count: model.count + 1, what_we_count: model.what_we_count}
         },
-        &Msg::Decrement => {
+        Msg::Decrement => {
             Model {count: model.count - 1, what_we_count: model.what_we_count}
         },
-        &Msg::ChangeWWC() => {
-//            Model {count: model.count, what_we_count: ev.target.value}
-            Model {count: model.count, what_we_count: "Tester"}
+        Msg::ChangeWWC(ev) => {
+            let text = match ev.target() {
+                Some(et) => "HIOORAY",
+                None => "Error",
+            };
+
+
+
+//            wasm_bindgen::JsCast::dyn_ref::<web_sys::HtmlInputElement>(&target)
+//            Model {count: model.count, what_we_count: ev.target().value}
+            Model {count: model.count, what_we_count: text}
         },
     }
 }
@@ -88,9 +97,9 @@ fn main_comp(model: &Model) -> El<Msg> {
         success_level(model.count),
 
         h3![ "What precisely is it we're counting?" ],
-//        input![ attrs!{"value" => model.what_we_count}, events!{
-//            "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev.target().value())
-//        } ]
+        input![ attrs!{"value" => model.what_we_count}, events!{
+            "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev)
+        } ]
     ] ]
 }
 

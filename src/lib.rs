@@ -19,6 +19,7 @@ pub mod vdom;
 // todo local storage
 // todo vdom patching
 // todo booleans/values in attrs/style.
+// todo streamlined input handling for text etc
 // todo maybe?? High-level css-grid and flex api?
 
 

@@ -4,8 +4,11 @@ Cargo.lock
 
 **.wasm
 # Allow JS in example folders
-**/pkg/*
+# wasm-bindgen won't automatically create this directory.
+# **/pkg/*
 **/.wasm
 **.d.ts
+**.ts
+**.js
 **/node_modules/
 **/target/

@@ -16,18 +16,18 @@ pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
 }
 
-impl<Message: 'static> Mailbox<Message> {
-    pub fn new(func: impl Fn(Message) + 'static) -> Self {
+impl<Ms: 'static> Mailbox<Ms> {
+    pub fn new(func: impl Fn(Ms) + 'static) -> Self {
         Mailbox {
             func: Rc::new(func),
         }
     }
 
-    pub fn send(&self, message: Message) {
+    pub fn send(&self, message: Ms) {
         (self.func)(message)
     }
 
-    pub fn send_after(&self, timeout: i32, f: impl Fn() -> Message + 'static) {
+    pub fn send_after(&self, timeout: i32, f: impl Fn() -> Ms + 'static) {
         let cloned = self.clone();
         let closure = Closure::wrap(Box::new(move || {
             cloned.send(f());
@@ -45,14 +45,14 @@ impl<Message: 'static> Mailbox<Message> {
 
     pub fn map<NewMessage: 'static>(
         self,
-        f: impl Fn(NewMessage) -> Message + 'static,
+        f: impl Fn(NewMessage) -> Ms + 'static,
     ) -> Mailbox<NewMessage> {
         Mailbox {
             func: Rc::new(move |message| (self.func)(f(message))),
         }
     }
 
-    pub fn spawn<F>(&self, future: F, func: impl Fn(Result<F::Item, F::Error>) -> Message + 'static)
+    pub fn spawn<F>(&self, future: F, func: impl Fn(Result<F::Item, F::Error>) -> Ms + 'static)
     where
         F: Future + 'static,
     {
@@ -65,7 +65,7 @@ impl<Message: 'static> Mailbox<Message> {
     }
 }
 
-impl<Message> Clone for Mailbox<Message> {
+impl<Ms> Clone for Mailbox<Ms> {
     fn clone(&self) -> Self {
         Mailbox {
             func: self.func.clone(),
@@ -73,7 +73,7 @@ impl<Message> Clone for Mailbox<Message> {
     }
 }
 
-impl<Message> std::fmt::Debug for Mailbox<Message> {
+impl<Ms> std::fmt::Debug for Mailbox<Ms> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("Mailbox").finish()
     }
@@ -129,12 +129,31 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     /// It updates the state, and any DOM elements affected by this change.
     /// todo this is where we need to compare against differences and only update nodes affected
     /// by teh state change.
-    fn update_dom(&self) {
-        let mut top_el = (self.inner.top_component)(&self.inner.model.borrow());
-//        self.process_children(&top_el, self.inner.main_div.clone());
+//    fn update_dom(&self, old_state: &Mdl) {
+    fn update_dom(&self, updated_model: Option<Mdl>) {
+        // The model storred in inner is the old model; updated_model is the new one.
+        let el_ws;
+        let mut top_el_old = (self.inner.top_component)(&self.inner.model.borrow());
+
+        match updated_model {
+            Some(model) => {
+                let mut top_el_new = (self.inner.top_component)(&model);
+                self.inner.model.replace(model);
+                el_ws = top_el_new.make_websys_el(&self.inner.document, self.mailbox());
+            },
+            None => {
+                // Eg our initial render
+                el_ws = top_el_old.make_websys_el(&self.inner.document, self.mailbox());
+            }
+        }
 
 
-        let el_ws = top_el.make_websys_el(&self.inner.document, self.mailbox());
+        // Store the top element, for comparison next iteration.
+//        self.inner.el_vdom.replace(top_el);
+
+//
+
+//        let top_el_old = (self.inner.top_component)(&old_state);
 
 
         // todo no diffing / patching algo atm; just replace everything.
@@ -145,21 +164,32 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     }
 
     fn send(&self, message: Ms) {
-        if *self.inner.is_updating.borrow() {
-            self.inner.queue.borrow_mut().push(message);
-            return;
-        }
-        self.inner.is_updating.replace(true);
-        let updated_model = (self.inner.update)(&message, &self.inner.model.borrow());
-        self.inner.model.replace(updated_model);
-        while !self.inner.queue.borrow().is_empty() {
-            let message = self.inner.queue.borrow_mut().remove(0);
-            let updated_model = (self.inner.update)(&message, &self.inner.model.borrow());
-            self.inner.model.replace(updated_model);
-        }
-        self.inner.is_updating.replace(false);
+        // todo address what all the stuff you just deleted does...
+//        if *self.inner.is_updating.borrow() {
+//            self.inner.queue.borrow_mut().push(message);
+//            return;
+//        }
 
-        self.update_dom();
+
+        let updated_model = (self.inner.update)(&message, &self.inner.model.borrow());
+
+//        let old_model = &Rc::clone(&self.inner).model;
+
+//        self.inner.is_updating.replace(true);
+
+
+
+
+        // todo not sure what this is for.
+//        while !self.inner.queue.borrow().is_empty() {
+//            let message = self.inner.queue.borrow_mut().remove(0);
+//            let updated_model = (self.inner.update)(&message, &self.inner.model.borrow());
+//            self.inner.model.replace(updated_model);
+//        }
+//        self.inner.is_updating.replace(false);
+
+//        self.update_dom(&old_model.borrow());
+        self.update_dom(Some(updated_model));
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
@@ -183,6 +213,9 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
 pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
         top_component: fn(&Mdl) -> El<Ms>, parent_div_id: &str) {
     let app = App::new(model, update, top_component, parent_div_id);
-    app.update_dom();
+
+//    let old_model = &Rc::clone(&app.inner).model;
+//    app.update_dom(&old_model.borrow());
+    app.update_dom(None);
 }
 

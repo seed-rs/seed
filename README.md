@@ -63,15 +63,16 @@ of `"cdylib"`. Example:
 [package]
 name = "appname"
 version = "0.1.0"
-authors = ["Name <email@email.com>"]
+authors = ["Your Name <email@address.com>"]
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "^0.2.28"
 rebar = "^0.1.0"
+wasm-bindgen = "^0.2.29"
+web-sys = "^0.3.6"
 
 # For serialization, eg sending requests to a server. Otherwise, not required.
 serde = "^1.0.80"
@@ -80,16 +81,20 @@ serde_json = "1.0.33"
 
 ```
 
-### Minimal example
+### A short example
 Here's an example app to demonstrating syntax. Descriptions of its parts are in the
 Guide section below.
 
 lib.rs:
 ```rust
-use wasm_bindgen::prelude::*;
+#[macro_use]
+// This is required to allow access to element-creation macros
+extern crate rebar;
 
-use crate::prelude::*;
-use crate::vdom;
+/// Introduce Element-related types into the global namespace, which are
+/// required to make the element/etc macros work.
+use rebar::prelude::*;
+use wasm_bindgen::prelude::*;
 
 
 // Model
@@ -123,13 +128,13 @@ enum Msg {
 // Sole source of updating the model; returns a whole new model.
 fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
-        &Msg::Increment => {
+        Msg::Increment => {
             Model {count: model.count + 1, what_we_count: model.what_we_count}
         },
-        &Msg::Decrement => {
+        Msg::Decrement => {
             Model {count: model.count - 1, what_we_count: model.what_we_count}
         },
-        &Msg::ChangeWWC() => {
+        Msg::ChangeWWC() => {
 //            Model {count: model.count, what_we_count: ev.target.value}
             Model {count: model.count, what_we_count: "Tester"}
         },
@@ -213,13 +218,15 @@ Or with Python 3 installed, run `python -m http.server` from your crate's root.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 
+(Todo: Release version)
+
 ### Running included examples
-To run an example located in the `examples` folder, navigate to that folder in a console, 
+To run an example located in the `examples` folder, navigate to that folder in a terminal, 
 run the build script for your system (`build.sh` or `build.ps1`), then open the `index.html` file
 in a web browser. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package.crates.io instead of locally: Ie replace
-`rebar = { path = "../../"` with `rebar = "^0.1.0"`, and remove the leading `../../` on the second
-line of the build script.
+`rebar = { path = "../../"` with `rebar = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
+line.
 
 ## Guide
 
