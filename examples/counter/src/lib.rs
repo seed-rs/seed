@@ -13,7 +13,7 @@ use web_sys;
 #[derive(Clone, Debug)]
 struct Model {
     count: i32,
-    what_we_count: &'static str
+    what_we_count: String
 }
 
 // Setup a default here, for initialization later.
@@ -21,7 +21,7 @@ impl Default for Model {
     fn default() -> Self {
         Self {
             count: 0,
-            what_we_count: "click"
+            what_we_count: String::from("click")
         }
     }
 }
@@ -40,10 +40,10 @@ enum Msg {
 fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
         Msg::Increment => {
-            Model {count: model.count + 1, what_we_count: model.what_we_count}
+            Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
         },
         Msg::Decrement => {
-            Model {count: model.count - 1, what_we_count: model.what_we_count}
+            Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
         },
         Msg::ChangeWWC(ev) => {
             let text = match ev.target() {
@@ -53,14 +53,14 @@ fn update(msg: &Msg, model: &Model) -> Model {
                     let z = v.clone();
 //                    rebar::log(&v);
 //                    &z
-                    "WER"
+                    String::from("WER")
                 },
-                None => "Error",
+                None => String::from("Error"),
             };
 
 //            wasm_bindgen::JsCast::dyn_ref::<web_sys::HtmlInputElement>(&target)
 //            Model {count: model.count, what_we_count: ev.target().value}
-            Model {count: model.count, what_we_count: &text.clone()}
+            Model {count: model.count, what_we_count: text.clone()}
         },
     }
 }
@@ -105,7 +105,7 @@ fn main_comp(model: &Model) -> El<Msg> {
         success_level(model.count),
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count}, events!{
+        input![ attrs!{"value" => String::from("SDF")}, events!{
             "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev)
         } ]
     ] ]

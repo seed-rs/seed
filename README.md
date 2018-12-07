@@ -91,8 +91,8 @@ lib.rs:
 // This is required to allow access to element-creation macros
 extern crate rebar;
 
-/// Introduce Element-related types into the global namespace, which are
-/// required to make the element/etc macros work.
+/// Introduce The `El` type into the global namespace, as well as a trait used
+/// to make macros work.
 use rebar::prelude::*;
 use wasm_bindgen::prelude::*;
 
@@ -379,12 +379,9 @@ with a shorthand using macros. These macros can take any combination of the foll
 are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`, and `events!{}`. All
 elements present must be aranged in the order above: eg `Events` can never be before `Attrs`.
 
-Currently, `Attrs`, and `Style` parameters mut be &strs (The string literals used in the examples).
-If you have a boolean or numerical value, you can convert to this format using `&val.tostring()`, where
-val is your value. We plan to allow numerical and boolean values here in the future. `Style` parameters
-are &str, closure pairs, where the `&str` is the [event name](https://developer.mozilla.org/en-US/docs/Web/Events),
-and the closure accepts a single `web_sys::EventTarget` variable, and returns an instance
-of your Message enum.
+`Attrs`, and `Style` values can be owned `Strings`, `&str`s, or when applicable, numerical and 
+boolean values. Eg: `input![ attrs!{"disabled" => false]` and `input![ attrs!{"disabled" => "false"]` 
+are equivalent.
 
 For example, the following code returns an `El` representing a few dom elements displayed
 in a flexbox layout:
@@ -399,8 +396,7 @@ The only magic parts of this are the macros used to simplify syntax for creating
 things: text are normal rust borrowed strings; children are Vecs of sub-elements; 
 Attrs, Style and Events are thinly-wrapped HashMaps. They can be created independently, and
 passed to the macros separately. The following code is equivalent; it uses constructors
-from the El struct. Note that `El`, `Attrs`, `Style`, `Tag`, and `Event` are imported with the Rebar
-prelude.
+from the El struct. Note that `El` type is imported with the Prelude.
 
 
 ```rust
@@ -551,7 +547,7 @@ use comments in them normally: either on their own line, or in line.
 
 ### Logging in the web browser
 To output to teh web browser's console (ie console.log() in JS), use web_sys::console_log1...
-or the `log` convenience function exposed in the rebar prelude: `log("hello, world!")`
+or the `log` convenience function: `rebar::log("hello, world!")`
 
 
 ### Serialization and deserialization

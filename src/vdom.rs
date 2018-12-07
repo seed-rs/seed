@@ -77,7 +77,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
                 update,
                 main_component: top_component,
 
-                main_el_vdom: RefCell::new(div ! []),
+                main_el_vdom: RefCell::new(El::empty(Tag::Div)),
                 ids: Vec::new(),
 
                 els_ws: RefCell::new(HashMap::new()),
@@ -342,13 +342,12 @@ pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update
     let mut main_el_vdom = (app.data.main_component)(&app.data.model.borrow());
     populate_nest_levels(&mut main_el_vdom, 0, 0);
 
-    let mut el_map = HashMap::new();
-    let main_el_ws = main_el_vdom.make_websys_el(el_map, &app.data.document, &app.data.ids, app.mailbox());
+    let main_el_ws = main_el_vdom.make_websys_el(&app.data.document, &app.data.ids, app.mailbox());
 
 
     app.data.main_div.set_inner_html("");
 
-//    app.data.main_div.append_child(&main_el_ws).unwrap();
+    app.data.main_div.append_child(&main_el_ws).unwrap();
     // The websys el will now "live" with its vdom el, to make make patching easier.
 //    main_el_vdom.el_ws = Some(main_el_ws);
 

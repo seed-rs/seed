@@ -3,20 +3,20 @@
 
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
 /// In the matching mattern below, we match the name we want to use with the name under
-/// the Tag enum. Eg the div! macro uses Tag::Div.
+/// the rebar::dom_types::Tag enum. Eg the div! macro uses rebar::dom_types::Tag::Div.
 ///
 ///
 
 
 //macro_rules! element {
 //    // Create shortcut macros for any element; populate these functions in this module.
-//    ($($tag:ident => $tag_camel:ident);+) => {
+//    ($($rebar::dom_types::Tag:ident => $rebar::dom_types::Tag_camel:ident);+) => {
 //        $(
 //            #[macro_export]
-//            macro_rules! $tag {
+//            macro_rules! $rebar::dom_types::Tag {
 //                ( $($part:expr),* ) => {
 //                    {
-//                        let mut el = El::empty(Tag::$tag_camel);
+//                        let mut el = El::empty(rebar::dom_types::Tag::$rebar::dom_types::Tag_camel);
 //                        $ (
 //                             $part.update(&mut el);
 //                        )*
@@ -48,7 +48,7 @@
 //macro_rules! div {
 //    ( $($part:expr),* ) => {
 //        {
-//            let mut el = El::empty(Tag::Div);
+//            let mut el = El::empty(rebar::dom_types::Tag::Div);
 //            let mut arg_count = 0;
 //            $ ( $part.update(&mut el); arg_count += 1;)*
 //            if arg_count > 5{
@@ -65,7 +65,7 @@
 macro_rules! address {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Address);
+            let mut el = El::empty(rebar::dom_types::Tag::Address);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -76,7 +76,7 @@ macro_rules! address {
 macro_rules! article {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Article);
+            let mut el = El::empty(rebar::dom_types::Tag::Article);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -87,7 +87,7 @@ macro_rules! article {
 macro_rules! aside {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Aside);
+            let mut el = El::empty(rebar::dom_types::Tag::Aside);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -98,7 +98,7 @@ macro_rules! aside {
 macro_rules! footer {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Footer);
+            let mut el = El::empty(rebar::dom_types::Tag::Footer);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -109,7 +109,7 @@ macro_rules! footer {
 macro_rules! header {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Header);
+            let mut el = El::empty(rebar::dom_types::Tag::Header);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -120,7 +120,7 @@ macro_rules! header {
 macro_rules! h1 {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::H1);
+            let mut el = El::empty(rebar::dom_types::Tag::H1);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -131,7 +131,7 @@ macro_rules! h1 {
 macro_rules! h2 {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::H2);
+            let mut el = El::empty(rebar::dom_types::Tag::H2);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -142,7 +142,7 @@ macro_rules! h2 {
 macro_rules! h3 {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::H3);
+            let mut el = El::empty(rebar::dom_types::Tag::H3);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -153,7 +153,7 @@ macro_rules! h3 {
 macro_rules! h4 {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::H4);
+            let mut el = El::empty(rebar::dom_types::Tag::H4);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -164,7 +164,7 @@ macro_rules! h4 {
 macro_rules! h5 {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::H5);
+            let mut el = El::empty(rebar::dom_types::Tag::H5);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -175,7 +175,7 @@ macro_rules! h5 {
 macro_rules! h6 {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::H6);
+            let mut el = El::empty(rebar::dom_types::Tag::H6);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -186,7 +186,7 @@ macro_rules! h6 {
 macro_rules! hgroup {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Hgroup);
+            let mut el = El::empty(rebar::dom_types::Tag::Hgroup);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -197,7 +197,7 @@ macro_rules! hgroup {
 macro_rules! main {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Main);
+            let mut el = El::empty(rebar::dom_types::Tag::Main);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -208,7 +208,7 @@ macro_rules! main {
 macro_rules! nav {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Nav);
+            let mut el = El::empty(rebar::dom_types::Tag::Nav);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -219,7 +219,7 @@ macro_rules! nav {
 macro_rules! section {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Section);
+            let mut el = El::empty(rebar::dom_types::Tag::Section);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -230,7 +230,7 @@ macro_rules! section {
 macro_rules! blockquote {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Blockquote);
+            let mut el = El::empty(rebar::dom_types::Tag::Blockquote);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -241,7 +241,7 @@ macro_rules! blockquote {
 macro_rules! dd {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Dd);
+            let mut el = El::empty(rebar::dom_types::Tag::Dd);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -252,7 +252,7 @@ macro_rules! dd {
 macro_rules! dir {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Dir);
+            let mut el = El::empty(rebar::dom_types::Tag::Dir);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -263,7 +263,7 @@ macro_rules! dir {
 macro_rules! div {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Div);
+            let mut el = El::empty(rebar::dom_types::Tag::Div);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -274,7 +274,7 @@ macro_rules! div {
 macro_rules! dl {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Dl);
+            let mut el = El::empty(rebar::dom_types::Tag::Dl);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -285,7 +285,7 @@ macro_rules! dl {
 macro_rules! dt {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Dt);
+            let mut el = El::empty(rebar::dom_types::Tag::Dt);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -296,7 +296,7 @@ macro_rules! dt {
 macro_rules! figure {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Figure);
+            let mut el = El::empty(rebar::dom_types::Tag::Figure);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -307,7 +307,7 @@ macro_rules! figure {
 macro_rules! figcaption {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::FigCaption);
+            let mut el = El::empty(rebar::dom_types::Tag::FigCaption);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -318,7 +318,7 @@ macro_rules! figcaption {
 macro_rules! hr {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Hr);
+            let mut el = El::empty(rebar::dom_types::Tag::Hr);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -329,7 +329,7 @@ macro_rules! hr {
 macro_rules! li {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Li);
+            let mut el = El::empty(rebar::dom_types::Tag::Li);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -340,7 +340,7 @@ macro_rules! li {
 macro_rules! ol {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Ol);
+            let mut el = El::empty(rebar::dom_types::Tag::Ol);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -351,7 +351,7 @@ macro_rules! ol {
 macro_rules! p {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::P);
+            let mut el = El::empty(rebar::dom_types::Tag::P);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -362,7 +362,7 @@ macro_rules! p {
 macro_rules! pre {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Pre);
+            let mut el = El::empty(rebar::dom_types::Tag::Pre);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -373,7 +373,7 @@ macro_rules! pre {
 macro_rules! ul {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Ul);
+            let mut el = El::empty(rebar::dom_types::Tag::Ul);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -384,7 +384,7 @@ macro_rules! ul {
 macro_rules! a {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::A);
+            let mut el = El::empty(rebar::dom_types::Tag::A);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -395,7 +395,7 @@ macro_rules! a {
 macro_rules! abbr {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Abbr);
+            let mut el = El::empty(rebar::dom_types::Tag::Abbr);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -406,7 +406,7 @@ macro_rules! abbr {
 macro_rules! b {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::B);
+            let mut el = El::empty(rebar::dom_types::Tag::B);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -417,7 +417,7 @@ macro_rules! b {
 macro_rules! bdi {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Bdi);
+            let mut el = El::empty(rebar::dom_types::Tag::Bdi);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -428,7 +428,7 @@ macro_rules! bdi {
 macro_rules! bdo {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Bdo);
+            let mut el = El::empty(rebar::dom_types::Tag::Bdo);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -439,7 +439,7 @@ macro_rules! bdo {
 macro_rules! br {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Br);
+            let mut el = El::empty(rebar::dom_types::Tag::Br);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -450,7 +450,7 @@ macro_rules! br {
 macro_rules! cite {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Cite);
+            let mut el = El::empty(rebar::dom_types::Tag::Cite);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -461,7 +461,7 @@ macro_rules! cite {
 macro_rules! code {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Code);
+            let mut el = El::empty(rebar::dom_types::Tag::Code);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -472,7 +472,7 @@ macro_rules! code {
 macro_rules! data {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Data);
+            let mut el = El::empty(rebar::dom_types::Tag::Data);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -483,7 +483,7 @@ macro_rules! data {
 macro_rules! dfn {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Dfn);
+            let mut el = El::empty(rebar::dom_types::Tag::Dfn);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -494,7 +494,7 @@ macro_rules! dfn {
 macro_rules! em {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Em);
+            let mut el = El::empty(rebar::dom_types::Tag::Em);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -505,7 +505,7 @@ macro_rules! em {
 macro_rules! i {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::I);
+            let mut el = El::empty(rebar::dom_types::Tag::I);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -516,7 +516,7 @@ macro_rules! i {
 macro_rules! kbd {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Kbd);
+            let mut el = El::empty(rebar::dom_types::Tag::Kbd);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -527,7 +527,7 @@ macro_rules! kbd {
 macro_rules! mark {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Mark);
+            let mut el = El::empty(rebar::dom_types::Tag::Mark);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -538,7 +538,7 @@ macro_rules! mark {
 macro_rules! button {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Button);
+            let mut el = El::empty(rebar::dom_types::Tag::Button);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -549,7 +549,7 @@ macro_rules! button {
 macro_rules! fieldset {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::FieldSet);
+            let mut el = El::empty(rebar::dom_types::Tag::FieldSet);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -560,7 +560,7 @@ macro_rules! fieldset {
 macro_rules! form {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Form);
+            let mut el = El::empty(rebar::dom_types::Tag::Form);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -571,7 +571,7 @@ macro_rules! form {
 macro_rules! input {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Input);
+            let mut el = El::empty(rebar::dom_types::Tag::Input);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -582,7 +582,7 @@ macro_rules! input {
 macro_rules! label {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Label);
+            let mut el = El::empty(rebar::dom_types::Tag::Label);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -593,7 +593,7 @@ macro_rules! label {
 macro_rules! legend {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Legend);
+            let mut el = El::empty(rebar::dom_types::Tag::Legend);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -604,7 +604,7 @@ macro_rules! legend {
 macro_rules! meter {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Meter);
+            let mut el = El::empty(rebar::dom_types::Tag::Meter);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -615,7 +615,7 @@ macro_rules! meter {
 macro_rules! optgroup {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::OptGroup);
+            let mut el = El::empty(rebar::dom_types::Tag::OptGroup);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -626,7 +626,7 @@ macro_rules! optgroup {
 macro_rules! option {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Option);
+            let mut el = El::empty(rebar::dom_types::Tag::Option);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -637,7 +637,7 @@ macro_rules! option {
 macro_rules! output {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Output);
+            let mut el = El::empty(rebar::dom_types::Tag::Output);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -648,7 +648,7 @@ macro_rules! output {
 macro_rules! progress {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Progress);
+            let mut el = El::empty(rebar::dom_types::Tag::Progress);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -659,7 +659,7 @@ macro_rules! progress {
 macro_rules! select {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Select);
+            let mut el = El::empty(rebar::dom_types::Tag::Select);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -670,7 +670,7 @@ macro_rules! select {
 macro_rules! textarea {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::TextArea);
+            let mut el = El::empty(rebar::dom_types::Tag::TextArea);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -681,7 +681,7 @@ macro_rules! textarea {
 macro_rules! span {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Span);
+            let mut el = El::empty(rebar::dom_types::Tag::Span);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -692,7 +692,7 @@ macro_rules! span {
 macro_rules! strong {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Strong);
+            let mut el = El::empty(rebar::dom_types::Tag::Strong);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -703,7 +703,7 @@ macro_rules! strong {
 macro_rules! sub {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Sub);
+            let mut el = El::empty(rebar::dom_types::Tag::Sub);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -714,7 +714,7 @@ macro_rules! sub {
 macro_rules! sup {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Sup);
+            let mut el = El::empty(rebar::dom_types::Tag::Sup);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -725,7 +725,7 @@ macro_rules! sup {
 macro_rules! img {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Img);
+            let mut el = El::empty(rebar::dom_types::Tag::Img);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -736,7 +736,7 @@ macro_rules! img {
 macro_rules! canvas {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Canvas);
+            let mut el = El::empty(rebar::dom_types::Tag::Canvas);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -747,7 +747,7 @@ macro_rules! canvas {
 macro_rules! noscript {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::NoScript);
+            let mut el = El::empty(rebar::dom_types::Tag::NoScript);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -758,7 +758,7 @@ macro_rules! noscript {
 macro_rules! script {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Script);
+            let mut el = El::empty(rebar::dom_types::Tag::Script);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -769,7 +769,7 @@ macro_rules! script {
 macro_rules! del {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Del);
+            let mut el = El::empty(rebar::dom_types::Tag::Del);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -780,7 +780,7 @@ macro_rules! del {
 macro_rules! ins {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Ins);
+            let mut el = El::empty(rebar::dom_types::Tag::Ins);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -791,7 +791,7 @@ macro_rules! ins {
 macro_rules! map {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Map);
+            let mut el = El::empty(rebar::dom_types::Tag::Map);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -802,7 +802,7 @@ macro_rules! map {
 macro_rules! track {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Track);
+            let mut el = El::empty(rebar::dom_types::Tag::Track);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -813,7 +813,7 @@ macro_rules! track {
 macro_rules! video {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Video);
+            let mut el = El::empty(rebar::dom_types::Tag::Video);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -824,7 +824,7 @@ macro_rules! video {
 macro_rules! applet {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Applet);
+            let mut el = El::empty(rebar::dom_types::Tag::Applet);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -835,7 +835,7 @@ macro_rules! applet {
 macro_rules! embed {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Embed);
+            let mut el = El::empty(rebar::dom_types::Tag::Embed);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -846,25 +846,11 @@ macro_rules! embed {
 macro_rules! iframe {
     ( $($part:expr),* ) => {
         {
-            let mut el = El::empty(Tag::Iframe);
+            let mut el = El::empty(rebar::dom_types::Tag::Iframe);
             $ ( $part.update(&mut el); )*
             el
         }
     };
-}
-
-/// Provide a shortcut for creating styles.
-#[macro_export]
-macro_rules! style {
-    { $($key:expr => $value:expr);* } => {
-        {
-            let mut vals = std::collections::HashMap::new();
-            $(
-                vals.insert($key, $value);
-            )*
-            Style::new(vals)
-        }
-     };
 }
 
 /// Provide a shortcut for creating attributes.
@@ -875,14 +861,31 @@ macro_rules! attrs {
         {
             let mut vals = std::collections::HashMap::new();
             $(
-//                let helper: AttrHelper = ($key, val: $value).into();
-//                vals.insert(&helper.key, &helper.val);
-                  vals.insert($key, &$value.to_string());
+                // We can handle arguments of multiple types by using this:
+                // Strings, &strs, bools, numbers etc.
+                vals.insert(String::from($key), $value.to_string());
             )*
-            Attrs::new(vals)
+            rebar::dom_types::Attrs::new(vals)
         }
      };
 }
+
+/// Provide a shortcut for creating styles.
+#[macro_export]
+macro_rules! style {
+    { $($key:expr => $value:expr);* } => {
+        {
+            let mut vals = std::collections::HashMap::new();
+            $(
+                // We can handle arguments of multiple types by using this:
+                // Strings, &strs, bools, numbers etc.
+                vals.insert(String::from($key), $value.to_string());
+            )*
+            rebar::dom_types::Style::new(vals)
+        }
+     };
+}
+
 
 #[macro_export]
 macro_rules! events {
@@ -890,7 +893,7 @@ macro_rules! events {
         {
             let mut result = Vec::new();
             $(
-                result.push(Listener::new($event_str.into(), Box::new($handler)));
+                result.push(rebar::dom_types::Listener::new($event_str.into(), Box::new($handler)));
             )+
             result
         }

@@ -27,8 +27,8 @@
       <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/vdom.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="343" lean-forward="true" selection-start-line="343" selection-end-line="343" />
+            <state relative-caret-position="176">
+              <caret line="68" column="31" lean-forward="true" selection-start-line="68" selection-start-column="31" selection-end-line="68" selection-end-column="32" />
               <folding>
                 <element signature="e#571#572#0" expanded="true" />
                 <element signature="e#606#607#0" expanded="true" />
@@ -46,14 +46,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="dom_types.rs" pinned="false" current-in-tab="true">
+      <file leaf-file-name="dom_types.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="431" column="49" selection-start-line="431" selection-start-column="49" selection-end-line="431" selection-end-column="49" />
+            <state relative-caret-position="285">
+              <caret line="79" column="37" selection-start-line="79" selection-start-column="37" selection-end-line="79" selection-end-column="37" />
               <folding>
-                <element signature="e#3665#3666#0" expanded="true" />
-                <element signature="e#3696#3697#0" expanded="true" />
+                <element signature="e#2852#2853#0" expanded="true" />
+                <element signature="e#2883#2884#0" expanded="true" />
                 <element signature="e#3783#3784#0" expanded="true" />
                 <element signature="e#3814#3815#0" expanded="true" />
                 <element signature="e#4712#4713#0" expanded="true" />
@@ -62,18 +62,22 @@
                 <element signature="e#4877#4878#0" expanded="true" />
                 <element signature="e#4970#4971#0" expanded="true" />
                 <element signature="e#5004#5005#0" expanded="true" />
-                <element signature="e#4411#4412#0" expanded="true" />
-                <element signature="e#4437#4438#0" expanded="true" />
-                <element signature="e#4152#4153#0" expanded="true" />
-                <element signature="e#4194#4195#0" expanded="true" />
-                <element signature="e#4807#4808#0" expanded="true" />
-                <element signature="e#4833#4834#0" expanded="true" />
-                <element signature="e#4863#4864#0" expanded="true" />
-                <element signature="e#4905#4906#0" expanded="true" />
-                <element signature="e#12383#12384#0" expanded="true" />
-                <element signature="e#12426#12427#0" expanded="true" />
-                <element signature="e#12889#12890#0" expanded="true" />
-                <element signature="e#12933#12934#0" expanded="true" />
+                <element signature="e#4108#4109#0" expanded="true" />
+                <element signature="e#4136#4137#0" expanded="true" />
+                <element signature="e#4110#4111#0" expanded="true" />
+                <element signature="e#4154#4155#0" expanded="true" />
+                <element signature="e#4811#4812#0" expanded="true" />
+                <element signature="e#4837#4838#0" expanded="true" />
+                <element signature="e#4867#4868#0" expanded="true" />
+                <element signature="e#4909#4910#0" expanded="true" />
+                <element signature="e#12317#12318#0" expanded="true" />
+                <element signature="e#12360#12361#0" expanded="true" />
+                <element signature="e#12473#12474#0" expanded="true" />
+                <element signature="e#12521#12522#0" expanded="true" />
+                <element signature="e#12424#12425#0" expanded="true" />
+                <element signature="e#12472#12473#0" expanded="true" />
+                <element signature="e#12823#12824#0" expanded="true" />
+                <element signature="e#12867#12868#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -82,8 +86,8 @@
       <file leaf-file-name="dom_shortcuts.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="308">
-              <caret line="879" column="37" selection-start-line="879" selection-start-column="37" selection-end-line="879" selection-end-column="37" />
+            <state relative-caret-position="75">
+              <caret line="248" column="1" lean-forward="true" selection-start-line="248" selection-start-column="1" selection-end-line="248" selection-end-column="1" />
             </state>
           </provider>
         </entry>
@@ -91,11 +95,11 @@
       <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="368">
-              <caret line="89" column="6" lean-forward="true" selection-start-line="89" selection-start-column="6" selection-end-line="89" selection-end-column="6" />
+            <state relative-caret-position="192">
+              <caret line="12" column="23" lean-forward="true" selection-start-line="12" selection-start-column="23" selection-end-line="12" selection-end-column="23" />
               <folding>
-                <element signature="e#3025#3026#0" expanded="true" />
-                <element signature="e#3094#3095#0" expanded="true" />
+                <element signature="e#3158#3159#0" expanded="true" />
+                <element signature="e#3227#3228#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -105,28 +109,27 @@
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="132">
-                <caret line="233" column="33" selection-start-line="233" selection-start-column="33" selection-end-line="233" selection-end-column="33" />
+              <first_editor relative-caret-position="187">
+                <caret line="95" column="22" lean-forward="true" selection-start-line="95" selection-start-column="22" selection-end-line="95" selection-end-column="22" />
+                <folding>
+                  <element signature="e#2595#2596#0" expanded="true" />
+                  <element signature="e#2657#2658#0" expanded="true" />
+                  <element signature="e#43#44#0" expanded="true" />
+                  <element signature="e#69#70#0" expanded="true" />
+                  <element signature="e#32#33#0" expanded="true" />
+                  <element signature="e#101#102#0" expanded="true" />
+                </folding>
               </first_editor>
               <second_editor />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/todomvc/src/lib.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="419">
-              <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
+      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="544">
-              <caret line="36" column="42" selection-start-line="36" selection-start-column="42" selection-end-line="36" selection-end-column="42" />
+            <state relative-caret-position="512">
+              <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
             </state>
           </provider>
         </entry>
@@ -142,18 +145,8 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>struct style</find>
-      <find>make_ws</find>
-      <find>key</find>
-      <find>make_we</find>
-      <find>unche</find>
-      <find>make_web</find>
-      <find>make_webs</find>
-      <find>append_c</find>
-      <find>nest_</find>
       <find>send</find>
       <find>self</find>
-      <find>book</find>
       <find>From</find>
       <find>el_ws:</find>
       <find>attrs</find>
@@ -170,18 +163,31 @@
       <find>refce</find>
       <find>app.inner</find>
       <find>self.inner</find>
-      <find>populate_ne</find>
+      <find>book</find>
+      <find>struct style</find>
       <find>struct attrs</find>
+      <find>listener</find>
+      <find>update</find>
+      <find>Rebar</find>
+      <find>Rebar::dom</find>
+      <find>Tag</find>
+      <find>updatee</find>
+      <find>populate_ne</find>
+      <find>prelude</find>
+      <find>prelu</find>
     </findStrings>
     <replaceStrings>
       <replace>empty</replace>
       <replace>event_camel</replace>
       <replace>Ms:</replace>
       <replace>Ms</replace>
-      <replace>let el</replace>
       <replace>style</replace>
       <replace>app.data</replace>
+      <replace>rebar</replace>
+      <replace>rebar::dom</replace>
+      <replace>rebar::dom_types::Tag</replace>
       <replace>self.data</replace>
+      <replace>let el</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -214,14 +220,14 @@
         <option value="$PROJECT_DIR$/examples/todomvc/Cargo.toml" />
         <option value="$PROJECT_DIR$/examples/counter/Cargo.toml" />
         <option value="$PROJECT_DIR$/Cargo.toml" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/example.rs" />
-        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/serialize.rs" />
+        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/dom_shortcuts.rs" />
         <option value="$PROJECT_DIR$/src/vdom.rs" />
-        <option value="$PROJECT_DIR$/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/dom_types.rs" />
+        <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/src/lib.rs" />
       </list>
     </option>
   </component>
@@ -235,9 +241,9 @@
     <packageJsonPaths />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1450" />
-    <option name="y" value="78" />
-    <option name="width" value="1575" />
+    <option name="x" value="1674" />
+    <option name="y" value="76" />
+    <option name="width" value="1606" />
     <option name="height" value="1273" />
   </component>
   <component name="ProjectView">
@@ -353,7 +359,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1450" y="78" width="1575" height="1273" extended-state="0" />
+    <frame x="1674" y="76" width="1606" height="1273" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -363,8 +369,8 @@
       <window_info anchor="bottom" id="Version Control" order="11" weight="0.32881662" />
       <window_info anchor="bottom" id="Python Console" order="8" weight="0.32910246" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3363554" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.36021033" />
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.15049505" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.43207714" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.14747736" />
       <window_info anchor="bottom" id="Docker" order="10" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="5" />
       <window_info anchor="right" id="SciView" order="4" />
@@ -416,8 +422,8 @@
         <state relative-caret-position="4247">
           <caret line="137" column="32" selection-start-line="137" selection-start-column="32" selection-end-line="137" selection-end-column="32" />
           <folding>
-            <element signature="e#3665#3666#0" expanded="true" />
-            <element signature="e#3696#3697#0" expanded="true" />
+            <element signature="e#2852#2853#0" expanded="true" />
+            <element signature="e#2883#2884#0" expanded="true" />
             <element signature="e#3783#3784#0" expanded="true" />
             <element signature="e#3814#3815#0" expanded="true" />
             <element signature="e#4712#4713#0" expanded="true" />
@@ -426,18 +432,22 @@
             <element signature="e#4877#4878#0" expanded="true" />
             <element signature="e#4970#4971#0" expanded="true" />
             <element signature="e#5004#5005#0" expanded="true" />
-            <element signature="e#4411#4412#0" expanded="true" />
-            <element signature="e#4437#4438#0" expanded="true" />
-            <element signature="e#4152#4153#0" expanded="true" />
-            <element signature="e#4194#4195#0" expanded="true" />
-            <element signature="e#4807#4808#0" expanded="true" />
-            <element signature="e#4833#4834#0" expanded="true" />
-            <element signature="e#4863#4864#0" expanded="true" />
-            <element signature="e#4905#4906#0" expanded="true" />
-            <element signature="e#12383#12384#0" expanded="true" />
-            <element signature="e#12426#12427#0" expanded="true" />
-            <element signature="e#12889#12890#0" expanded="true" />
-            <element signature="e#12933#12934#0" expanded="true" />
+            <element signature="e#4108#4109#0" expanded="true" />
+            <element signature="e#4136#4137#0" expanded="true" />
+            <element signature="e#4110#4111#0" expanded="true" />
+            <element signature="e#4154#4155#0" expanded="true" />
+            <element signature="e#4811#4812#0" expanded="true" />
+            <element signature="e#4837#4838#0" expanded="true" />
+            <element signature="e#4867#4868#0" expanded="true" />
+            <element signature="e#4909#4910#0" expanded="true" />
+            <element signature="e#12317#12318#0" expanded="true" />
+            <element signature="e#12360#12361#0" expanded="true" />
+            <element signature="e#12473#12474#0" expanded="true" />
+            <element signature="e#12521#12522#0" expanded="true" />
+            <element signature="e#12424#12425#0" expanded="true" />
+            <element signature="e#12472#12473#0" expanded="true" />
+            <element signature="e#12823#12824#0" expanded="true" />
+            <element signature="e#12867#12868#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -490,8 +500,8 @@
         <state relative-caret-position="4247">
           <caret line="137" column="32" selection-start-line="137" selection-start-column="32" selection-end-line="137" selection-end-column="32" />
           <folding>
-            <element signature="e#3665#3666#0" expanded="true" />
-            <element signature="e#3696#3697#0" expanded="true" />
+            <element signature="e#2852#2853#0" expanded="true" />
+            <element signature="e#2883#2884#0" expanded="true" />
             <element signature="e#3783#3784#0" expanded="true" />
             <element signature="e#3814#3815#0" expanded="true" />
             <element signature="e#4712#4713#0" expanded="true" />
@@ -500,18 +510,22 @@
             <element signature="e#4877#4878#0" expanded="true" />
             <element signature="e#4970#4971#0" expanded="true" />
             <element signature="e#5004#5005#0" expanded="true" />
-            <element signature="e#4411#4412#0" expanded="true" />
-            <element signature="e#4437#4438#0" expanded="true" />
-            <element signature="e#4152#4153#0" expanded="true" />
-            <element signature="e#4194#4195#0" expanded="true" />
-            <element signature="e#4807#4808#0" expanded="true" />
-            <element signature="e#4833#4834#0" expanded="true" />
-            <element signature="e#4863#4864#0" expanded="true" />
-            <element signature="e#4905#4906#0" expanded="true" />
-            <element signature="e#12383#12384#0" expanded="true" />
-            <element signature="e#12426#12427#0" expanded="true" />
-            <element signature="e#12889#12890#0" expanded="true" />
-            <element signature="e#12933#12934#0" expanded="true" />
+            <element signature="e#4108#4109#0" expanded="true" />
+            <element signature="e#4136#4137#0" expanded="true" />
+            <element signature="e#4110#4111#0" expanded="true" />
+            <element signature="e#4154#4155#0" expanded="true" />
+            <element signature="e#4811#4812#0" expanded="true" />
+            <element signature="e#4837#4838#0" expanded="true" />
+            <element signature="e#4867#4868#0" expanded="true" />
+            <element signature="e#4909#4910#0" expanded="true" />
+            <element signature="e#12317#12318#0" expanded="true" />
+            <element signature="e#12360#12361#0" expanded="true" />
+            <element signature="e#12473#12474#0" expanded="true" />
+            <element signature="e#12521#12522#0" expanded="true" />
+            <element signature="e#12424#12425#0" expanded="true" />
+            <element signature="e#12472#12473#0" expanded="true" />
+            <element signature="e#12823#12824#0" expanded="true" />
+            <element signature="e#12867#12868#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -685,53 +699,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider editor-type-id="text-editor">
-        <state relative-caret-position="1054">
-          <caret line="40" column="19" lean-forward="true" selection-start-line="40" selection-start-column="19" selection-end-line="40" selection-end-column="19" />
-        </state>
-      </provider>
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="132">
-            <caret line="233" column="33" selection-start-line="233" selection-start-column="33" selection-end-line="233" selection-end-column="33" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/examples/todomvc/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="419">
+        <state relative-caret-position="3056">
           <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="368">
-          <caret line="89" column="6" lean-forward="true" selection-start-line="89" selection-start-column="6" selection-end-line="89" selection-end-column="6" />
-          <folding>
-            <element signature="e#3025#3026#0" expanded="true" />
-            <element signature="e#3094#3095#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="308">
-          <caret line="879" column="37" selection-start-line="879" selection-start-column="37" selection-end-line="879" selection-end-column="37" />
+        <state relative-caret-position="75">
+          <caret line="248" column="1" lean-forward="true" selection-start-line="248" selection-start-column="1" selection-end-line="248" selection-end-column="1" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/vdom.rs">
+    <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="343" lean-forward="true" selection-start-line="343" selection-end-line="343" />
+        <state relative-caret-position="285">
+          <caret line="79" column="37" selection-start-line="79" selection-start-column="37" selection-end-line="79" selection-end-column="37" />
           <folding>
-            <element signature="e#571#572#0" expanded="true" />
-            <element signature="e#606#607#0" expanded="true" />
+            <element signature="e#2852#2853#0" expanded="true" />
+            <element signature="e#2883#2884#0" expanded="true" />
+            <element signature="e#3783#3784#0" expanded="true" />
+            <element signature="e#3814#3815#0" expanded="true" />
+            <element signature="e#4712#4713#0" expanded="true" />
+            <element signature="e#4747#4748#0" expanded="true" />
+            <element signature="e#4834#4835#0" expanded="true" />
+            <element signature="e#4877#4878#0" expanded="true" />
+            <element signature="e#4970#4971#0" expanded="true" />
+            <element signature="e#5004#5005#0" expanded="true" />
+            <element signature="e#4108#4109#0" expanded="true" />
+            <element signature="e#4136#4137#0" expanded="true" />
+            <element signature="e#4110#4111#0" expanded="true" />
+            <element signature="e#4154#4155#0" expanded="true" />
+            <element signature="e#4811#4812#0" expanded="true" />
+            <element signature="e#4837#4838#0" expanded="true" />
+            <element signature="e#4867#4868#0" expanded="true" />
+            <element signature="e#4909#4910#0" expanded="true" />
+            <element signature="e#12317#12318#0" expanded="true" />
+            <element signature="e#12360#12361#0" expanded="true" />
+            <element signature="e#12473#12474#0" expanded="true" />
+            <element signature="e#12521#12522#0" expanded="true" />
+            <element signature="e#12424#12425#0" expanded="true" />
+            <element signature="e#12472#12473#0" expanded="true" />
+            <element signature="e#12823#12824#0" expanded="true" />
+            <element signature="e#12867#12868#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -743,41 +755,55 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/lib.rs">
+    <entry file="file://$PROJECT_DIR$/src/vdom.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="36" column="42" selection-start-line="36" selection-start-column="42" selection-end-line="36" selection-end-column="42" />
+        <state relative-caret-position="176">
+          <caret line="68" column="31" lean-forward="true" selection-start-line="68" selection-start-column="31" selection-end-line="68" selection-end-column="32" />
+          <folding>
+            <element signature="e#571#572#0" expanded="true" />
+            <element signature="e#606#607#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider editor-type-id="text-editor">
+        <state relative-caret-position="1054">
+          <caret line="40" column="19" lean-forward="true" selection-start-line="40" selection-start-column="19" selection-end-line="40" selection-end-column="19" />
+        </state>
+      </provider>
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="187">
+            <caret line="95" column="22" lean-forward="true" selection-start-line="95" selection-start-column="22" selection-end-line="95" selection-end-column="22" />
+            <folding>
+              <element signature="e#2595#2596#0" expanded="true" />
+              <element signature="e#2657#2658#0" expanded="true" />
+              <element signature="e#43#44#0" expanded="true" />
+              <element signature="e#69#70#0" expanded="true" />
+              <element signature="e#32#33#0" expanded="true" />
+              <element signature="e#101#102#0" expanded="true" />
+            </folding>
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="431" column="49" selection-start-line="431" selection-start-column="49" selection-end-line="431" selection-end-column="49" />
+        <state relative-caret-position="192">
+          <caret line="12" column="23" lean-forward="true" selection-start-line="12" selection-start-column="23" selection-end-line="12" selection-end-column="23" />
           <folding>
-            <element signature="e#3665#3666#0" expanded="true" />
-            <element signature="e#3696#3697#0" expanded="true" />
-            <element signature="e#3783#3784#0" expanded="true" />
-            <element signature="e#3814#3815#0" expanded="true" />
-            <element signature="e#4712#4713#0" expanded="true" />
-            <element signature="e#4747#4748#0" expanded="true" />
-            <element signature="e#4834#4835#0" expanded="true" />
-            <element signature="e#4877#4878#0" expanded="true" />
-            <element signature="e#4970#4971#0" expanded="true" />
-            <element signature="e#5004#5005#0" expanded="true" />
-            <element signature="e#4411#4412#0" expanded="true" />
-            <element signature="e#4437#4438#0" expanded="true" />
-            <element signature="e#4152#4153#0" expanded="true" />
-            <element signature="e#4194#4195#0" expanded="true" />
-            <element signature="e#4807#4808#0" expanded="true" />
-            <element signature="e#4833#4834#0" expanded="true" />
-            <element signature="e#4863#4864#0" expanded="true" />
-            <element signature="e#4905#4906#0" expanded="true" />
-            <element signature="e#12383#12384#0" expanded="true" />
-            <element signature="e#12426#12427#0" expanded="true" />
-            <element signature="e#12889#12890#0" expanded="true" />
-            <element signature="e#12933#12934#0" expanded="true" />
+            <element signature="e#3158#3159#0" expanded="true" />
+            <element signature="e#3227#3228#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="512">
+          <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
         </state>
       </provider>
     </entry>

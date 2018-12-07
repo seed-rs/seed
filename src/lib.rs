@@ -18,7 +18,6 @@ pub mod vdom;
 // todo router
 // todo local storage
 // todo vdom patching
-// todo booleans/values in attrs/style.
 // todo streamlined input handling for text etc
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
@@ -31,8 +30,9 @@ pub fn log(text: &str) {
     web_sys::console::log_1(&text.into());
 }
 
-/// Introduce Element-related types into the global namespace, which are
-/// required to make the element/etc macros work.
+/// Introduce El into the global namespace for convenience (It will be repeated
+/// often in the output type of components), and UpdateEl, which is required
+/// for our element-creation macros.
 pub mod prelude {
-    pub use crate::dom_types::{El, Style, Attrs, Tag, Listener, UpdateEl};
+    pub use crate::dom_types::{El, UpdateEl};
 }

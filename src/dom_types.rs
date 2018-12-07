@@ -134,11 +134,11 @@ pub enum _Attr {
 #[derive(Clone, PartialEq)]
 pub struct Attrs {
     // todo enum of only allowed attrs?
-    pub vals: HashMap<&'static str, &'static str>
+    pub vals: HashMap<String, String>
 }
 
 impl Attrs {
-    pub fn new(vals: HashMap<&'static str, &'static str>) -> Self {
+    pub fn new(vals: HashMap<String, String>) -> Self {
         Self { vals }
     }
 
@@ -157,21 +157,21 @@ impl Attrs {
 }
 
 
+// Handle Style separately from Attrs, since it commonly involves multiple parts.
 #[derive(Clone, PartialEq)]
 pub struct Style {
-    // Handle Style separately from Attrs, since it commonly involves multiple parts.
     // todo enum for key?
-    pub vals: HashMap<&'static str, &'static str>
+    pub vals: HashMap<String, String>
 }
 
 impl Style {
     // todo avoid Dry code between this and Attrs.
-    pub fn new(vals: HashMap<&'static str, &'static str>) -> Self {
-        Self {vals}
+    pub fn new(vals: HashMap<String, String>) -> Self {
+        Self { vals }
     }
 
     pub fn empty() -> Self {
-        Self {vals: HashMap::new()}
+        Self { vals: HashMap::new() }
     }
 
     /// Output style as a string, as would be set in the DOM as the attribute value
@@ -367,11 +367,11 @@ impl<Ms: Clone + 'static> El<Ms> {
         self.children.push(element);
     }
 
-    pub fn add_attr(&mut self, key: &'static str, val: &'static str) {
+    pub fn add_attr(&mut self, key: String, val: String) {
         self.attrs.vals.insert(key, val);
     }
 
-    pub fn add_style(&mut self, key: &'static str, val: &'static str) {
+    pub fn add_style(&mut self, key: String, val: String) {
         self.style.vals.insert(key, val);
     }
 
@@ -432,25 +432,15 @@ impl<Ms: Clone + 'static> El<Ms> {
             listener.attach(&el_ws, mailbox.clone());
         }
 
-//        let mut el_map = el_map;
-//        el_map.insert(self.id.expect("Didn't find an id for vdom El."), el_ws);
-
         for child in &mut self.children {
-            el_map = child.make_websys_el(el_map, document, ids, mailbox.clone());
-            let el_ws_child = &elmap.get(&child.id.unwrap()).expect("HM key error");
-            el_ws.append_child(el_ws_child).unwrap();
+            el_ws.append_child(&child.make_websys_el(document, ids, mailbox.clone())).unwrap();
         }
-
-
-
 
 //        self.el_ws = Some(el_ws.clone());  // todo clone??
 
         crate::log("Drawing an el");
-//        el_ws
-
-        el_map
-    }
+        el_ws
+}
 }
 
 impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
