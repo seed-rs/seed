@@ -261,7 +261,7 @@ using these tools will likely have an easy time learning Rebar.
 
 Each app must contain a model [struct]( https://doc.rust-lang.org/book/ch05-00-structs.html), 
 which contains the app’s state and data. It can contain 
-[owned data[(https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html), or references
+[owned data](https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html), or references
 with a static [lifetime](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html).
  If you're not sure which to use, keep in mind they'll both work for many uses, and
   `&'static str` has simpler syntax. Example:
@@ -294,7 +294,7 @@ initialization via Rust’s `Default` trait, in order to keep the initialization
 The model holds all data used by the app, and will be replaced with updated versions when the data changes.
 
  The model may be split into sub-structs to organize it – this is especially useful as the app grows. 
-The sub-structs must also implement Clone:
+The sub-structs must also implement `Clone`:
  
 
 ```rust
@@ -334,7 +334,7 @@ enum Msg {
 ```
  
 The update [function]( https://doc.rust-lang.org/book/ch03-03-how-functions-work.html) 
-you pass to rebar::vdom::run describes how the state should change, upon
+you pass to `rebar::vdom::run` describes how the state should change, upon
 receiving each type of Message. It is the only place where the model is changed. It accepts a message reference, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
@@ -373,7 +373,7 @@ styles (eg display, color, font-size), and
 events (eg onclick, contextmenu, dblclick) are passed to DOM-macros (like div!{}) using
 unique types.
 
-Views are described using El structs, defined in the dom_types module. They're most-easily created
+Views are described using El structs, defined in the `dom_types` module. They're most-easily created
 with a shorthand using macros. These macros can take any combination of the following 5 argument types:
 (0 or 1 of each) `Attrs`, `Style`, `Events`, `Vec<El>` (children), and `&str` (text). Attrs, Style, and Events
 are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`, and `events!{}`. All
@@ -381,9 +381,13 @@ elements present must be aranged in the order above: eg `Events` can never be be
 
 `Attrs`, and `Style` values can be owned `Strings`, `&str`s, or when applicable, numerical and 
 boolean values. Eg: `input![ attrs!{"disabled" => false]` and `input![ attrs!{"disabled" => "false"]` 
-are equivalent.
+are equivalent. If a numerical value is used in a `Style`, 'px' will be automatically appended.
+If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font-size" => 16} ]` , or
+`h2![ style!{"font-size" => "1.5em"} ]` for specifying font size in pixels or em respectively. Note that
+once created, a `Style` instance holds all its values as `Strings`; eg that `16` above will be stored
+as `"16px"`; keep this in mind if editing a style that you made outside an element macro.
 
-For example, the following code returns an `El` representing a few dom elements displayed
+For example, the following code returns an `El` representing a few DOM elements displayed
 in a flexbox layout:
 ```rust
     div![ style!{"display" => "flex"; "flex-direction" => "column"}, vec![
@@ -400,6 +404,8 @@ from the El struct. Note that `El` type is imported with the Prelude.
 
 
 ```rust
+    use rebar::dom_types::Tag;
+    
     // heading and button here show two types of element constructors
     let mut heading = El::new(
         Tag::H2, 
@@ -429,7 +435,10 @@ to demonstrate that the macros and constructors above represent normal Rust stru
 and provide insight into what abstractions they perform:
 
 ```rust
-// Rust has no HashMap literal syntax; you can see why we prefer macros!
+// todo: Events is Depricated; below ex is incorrect re that.
+use rebar::dom_types::{Attrs, Events, Style, Tag};
+
+// Rust has no built-in HashMap literal syntax.
 let mut style = HashMap::new();
 style.insert("display", "flex");  
 style.insert("flex-direction", "column");  
@@ -482,7 +491,7 @@ For example, you could break up the above example like this:
     
     div![ style!{"display" => "flex"; flex-direction: "column"}, vec![
         text_display("Some things"),
-        button![ events!{"click" => Msg::SayHi}, "Click me!" ]
+        button![ events!{"click" => |_| Msg::SayHi}, "Click me!" ]
     ] ]
 ```
 
@@ -546,7 +555,7 @@ use comments in them normally: either on their own line, or in line.
 
 
 ### Logging in the web browser
-To output to teh web browser's console (ie console.log() in JS), use web_sys::console_log1...
+To output to teh web browser's console (ie console.log() in JS), use `web_sys::console_log1`,
 or the `log` convenience function: `rebar::log("hello, world!")`
 
 
@@ -555,14 +564,22 @@ Use the [Serde](https://serde.rs/) crate to serialize and deserialize data, eg
 when sending and receiving data from a REST-etc. It supports most popular formats,
 including `JSON`, `YAML`, and `XML`.
 
+(Example, and with our integration)
+
 ### Querying servers using fetch
 To send and receive data with a server, use `wasm-bindgen`'s `web-sys` fetch methods,
 [described here](https://rustwasm.github.io/wasm-bindgen/examples/fetch.html), paired
 with Serde.
 
+Check out the `server_interaction` examples for an example of how to send and receive
+data from the server in JSON.
+
 ### Local storage
 You can store page state locally using web_sys's [Storage struct](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html)
 .
+
+### Building a release version
+(todo)
 
 ## Goals
 - Learning the syntax, creating a project, and building it should be easy - regardless
@@ -619,7 +636,7 @@ Quickstart guide within a few minutes.
 
 Rebar approaches HTML-display syntax differently from existing packages: 
 rather than use an HTML-like markup similar to JSX, 
-it uses Rust builtin types, thinly-wrapped by a macro for each dom element.
+it uses Rust builtin types, thinly-wrapped by a macro for each DOM element.
 This decision may not appeal to everyone, 
 but I think it integrates more naturally with the Rust language.
 
@@ -654,4 +671,5 @@ wasm-bindgen than with npm.
  - Router
  - Local storage integration
  - More examples
- - Optimization
+ - Optimization 
+ 

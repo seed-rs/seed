@@ -94,6 +94,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     /// knowing what vars the model holds ahead of time), but only edit the rendered, web_sys dom
     /// for things that have been changed.
 //    fn update_dom(&self, old_state: &Mdl) {
+
     fn update_dom(&self, message: Ms) {
         // Note that we re-render the virtual DOM on every change, but (attempt to) only change
         // the actual DOM, via web_sys, when we need.
@@ -103,9 +104,10 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
 
         let mut topel_new_vdom = (self.data.main_component)(&updated_model);
         self.data.model.replace(updated_model);
-        populate_nest_levels(&mut topel_new_vdom, 0, 0);
-
-//        self.patch(&mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom);
+        // We setup the vdom (which populates web_sys els through it, but don't
+        // render them with attach_children; we try to do it cleverly via patch().
+        self.setup_vdom(&mut topel_new_vdom, 0, 0);
+        self.patch(&mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom);
 
         // todo these 4 lines shold go away once you get patch working.
 //        topel_new_vdom.make_websys_el(&self.data.document, &self.data.ids, self.mailbox());
@@ -128,144 +130,207 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     }
 
     // Note: Attached to the struct due to use of mailbox method.
-//    fn patch(&self, old: &mut El<Ms>, new: &mut El<Ms>) {
-//        // Todo: Current sceme is that if the parent changes, redraw all children...
-//        // todo fix this later.
-//        // We make an assumption that most of the page is not dramatically changed
-//        // by each event, to optimize.
-//        // todo: There are a lot of ways you could make this more sophisticated.
-//
-//        // todo only redraw teh whole subtree if children are diff; if it's
-//        // todo just text or attrs etc, patch them.
-//
-//        crate::log("Top of patch");
-//
-//
-//        // take removes the interior value from the Option; otherwise we run into problems
-//        // about not being able to remove from borrowed content.
-//        // todo: Is replacing this required? I don't think so, since we
-//        // todo don't need old.el_ws anymore.  QC where this should go.
-//        let el_ws_to_patch = old.el_ws.take().expect("No old node");
-//        crate::log("After take");
-//
-//        if old != new {
+    fn patch(&self, old: &mut El<Ms>, new: &mut El<Ms>) {
+        // Todo: Current sceme is that if the parent changes, redraw all children...
+        // todo fix this later.
+        // We make an assumption that most of the page is not dramatically changed
+        // by each event, to optimize.
+        // todo: There are a lot of ways you could make this more sophisticated.
+
+        // todo only redraw teh whole subtree if children are diff; if it's
+        // todo just text or attrs etc, patch them.
+
+        // take removes the interior value from the Option; otherwise we run into problems
+        // about not being able to remove from borrowed content.
+        // todo: Is replacing this required? I don't think so, since we
+        // todo don't need old.el_ws anymore.  QC where this should go.
+        let el_ws_to_patch = old.el_ws.take().expect("No old node");
+
+        if old != new {
 //            crate::log("DIFFERENT");
-//
-//            // Something about this node itself is different: patch it.
-//
-//            if old.tag != new.tag {
-//                // You can't change the tag in the DOM directly; need to create a new element.
-//                let new_el_ws = new.make_websys_el(&self.data.document, &self.data.ids, self.mailbox());
-//                el_ws_to_patch.parent_node().unwrap().replace_child(
-//                    &new_el_ws, &el_ws_to_patch
-//                ).unwrap();
-//                new.el_ws = Some(new_el_ws);
-//            }
+
+            // Something about this node itself is different: patch it.
+
+            if old.tag != new.tag {
+                // You can't change the tag in the DOM directly; need to create a new element.
+                let new_el_ws = new.make_websys_el(&self.data.document, &self.data.ids, self.mailbox());
+                el_ws_to_patch.parent_node().unwrap().replace_child(
+                    &new_el_ws, &el_ws_to_patch
+                ).unwrap();
+                new.el_ws = Some(new_el_ws);
+            }
 //            crate::log("Past tag");
-//            if old.attrs != new.attrs {
-//                for (key, new_val) in &new.attrs.vals {
-//                    match old.attrs.vals.get(key) {
-//                        Some(old_val) => {
-//                            // The value's different
-//                            if old_val != new_val {
-//                                el_ws_to_patch.set_attribute(key, new_val).expect("Replacing attribute");
-//                            }
-//                        },
-//
-//                        None => el_ws_to_patch.set_attribute(key, new_val).expect("Adding a new attribute")
-//                    }
-//                }
-//                // Remove attributes that aren't in the new vdom.
-//                for (key, old_val) in &old.attrs.vals {
-//                    if new.attrs.vals.get(key).is_none() {
-//                        el_ws_to_patch.remove_attribute(key).expect("Removing an attribute");
-//                    }
-//                }
-//            }
+            if old.attrs != new.attrs {
+                for (key, new_val) in &new.attrs.vals {
+                    match old.attrs.vals.get(key) {
+                        Some(old_val) => {
+                            // The value's different
+                            if old_val != new_val {
+                                el_ws_to_patch.set_attribute(key, new_val).expect("Replacing attribute");
+                            }
+                        },
+                        None => el_ws_to_patch.set_attribute(key, new_val).expect("Adding a new attribute")
+                    }
+                }
+                // Remove attributes that aren't in the new vdom.
+                for (key, old_val) in &old.attrs.vals {
+                    if new.attrs.vals.get(key).is_none() {
+                        el_ws_to_patch.remove_attribute(key).expect("Removing an attribute");
+                    }
+                }
+            }
 //            crate::log("Past attrs");
-//            if old.style != new.style {
-//                // We can't patch each part of style; rewrite the whole attribute.
-//                el_ws_to_patch.set_attribute("style", &new.style.as_str())
-//                    .expect("Setting style");
+            if old.style != new.style {
+                // We can't patch each part of style; rewrite the whole attribute.
+                el_ws_to_patch.set_attribute("style", &new.style.as_str())
+                    .expect("Setting style");
+            }
+
+            if old.text != new.text {
+                // It appears that at this point, there is no way to manage Option comparison more directly.
+                let text = new.text.clone().unwrap_or(String::new());
+                el_ws_to_patch.set_text_content(Some(&text));
+            }
+
+            // todo events.
+
+            // todo this children comparison appears to be passing when the children are different.
+//            if old.children == new.children {
+//                // We've pached the el itself, and its children match; we're done.
+//
+//                // todo is this right?
+//                // todo return early, attach the el now ?
+//                crate::log("Pre questionable take");
+//                new.el_ws = Some(el_ws_to_patch);
+//                crate::log("An early return");
+//                return
 //            }
-//            crate::log("Past style");
-//            if old.text != new.text {
-//                // It appears that at this point, there is no way to manage Option comparison more directly.
-//                let text = new.text.clone().unwrap_or(String::new());
-//                el_ws_to_patch.set_text_content(Some(&text));
-//            }
-//
-//            // todo events.
-//            crate::log("Past text");
-//
-//            // todo this children comparison appears to be passing when the children are different.
-////            if old.children == new.children {
-////                // We've pached the el itself, and its children match; we're done.
-////
-////                // todo is this right?
-////                // todo return early, attach the el now ?
-////                crate::log("Pre questionable take");
-////                new.el_ws = Some(el_ws_to_patch);
-////                crate::log("An early return");
-////                return
-////            }
-//
-//        }
-//        crate::log("Past different");
-//
-//
-//        // If we didn't return due to the children equality check, we need to recursively
-//        // run this function for the children.
-//
-//        // The element itself appears to be the same, but its children may have changed,
-//        // or we've picked a spoofer element. (If we did, we'll probably have to rerender
-//        // all the children... Try to be smarter about picking the right one. Count children
-//        // or analyze tag of children to assist?
-//
-//        // For each of the children of the new vdom element, find the first "matching"
-//        // el of the old vdom, and assume it's right for this iteration of the recursion.
-//        for child_new in &mut new.children {
-//            crate::log("In child loop");
-//            let mut found_match = false;
-//
-//            // We've found a good-enough match; treat it as the equiv element that
-//            // we pass in, to check its children.
-//            for child_old in &mut old.children {
-//                crate::log("In second child loop");
-//
-//                if child_new == child_old {
-//                    found_match = true;
-//                    // We've found a child that matches in terms of tag, attrs, style etc,
-//                    // so treat it as the right one, and recursively patch its children.
+
+        }
+
+        // If we didn't return due to the children equality check, we need to recursively
+        // run this function for the children.
+
+        // The element itself appears to be the same, but its children may have changed,
+        // or we've picked a spoofer element. (If we did, we'll probably have to rerender
+        // all the children... Try to be smarter about picking the right one. Count children
+        // or analyze tag of children to assist?
+
+        // For each of the children of the new vdom element, find the first "matching"
+        // el of the old vdom, and assume it's right for this iteration of the recursion.
+
+        // todo qc this, esp with the keys on on children njot being right
+        let mut children_accounted_for = Vec::new();
+
+        // todo this and elsewhere v inefficient; cause unneeded re-rendering.
+        for child_new in &mut new.children {
+            let mut found_match = false;
+
+            // We've found a good-enough match; treat it as the equiv element that
+            // we pass in, to check its children.
+            for child_old in &mut old.children {
+
+                if child_new == child_old {
+                    found_match = true;
+                    children_accounted_for.push(child_old.id.unwrap());
+                    // We've found a child that matches in terms of tag, attrs, style etc,
+                    // so treat it as the right one, and recursively patch its children.
 //                    crate::log("Pre recursion");
-//                    self.patch(child_old, child_new);
+                    self.patch(child_old, child_new);
 //                    crate::log("Post recursion");
-//                    break;
-//                }
-//            }
-//
-//            // The child was not present on the old version; create it.
-//            // todo QC this. Didn't we already take this??
+                    break;
+                }
+            }
+
+            // The child was not present on the old version; create it.
+            // todo QC this. Didn't we already take this??
 //            let el_ws_to_patch = &old.el_ws.take().expect("No old node");
-//
-//            if found_match == false {
-//                // We need to create a new child element.
-//                let new_el_ws = child_new.make_websys_el(&self.data.document, &self.data.ids, self.mailbox());
-//                el_ws_to_patch.append_child(&new_el_ws);
-//                child_new.el_ws = Some(new_el_ws);
-//
-//                // calling make_websys_el creates all children for this, so no need
-//                // to enter the recursion again here.
-//
-//                // todo delete extra children!
+
+            if found_match == false {
+                // We need to create a new child element.
+                let new_el_ws = child_new.make_websys_el(&self.data.document, &self.data.ids, self.mailbox());
+                el_ws_to_patch.append_child(&new_el_ws);
+//                crate::log("Rendering child in patch");
+                // todo: This id logic is bogus, but we don't use ids yet.
+                // calling setup_vdom creates all children for this, so no need
+                // to enter the recursion again here.
+                self.setup_vdom(child_new, child_new.nest_level.expect("Missing nest level") + 1, 0);
+                // todo attach children.
+//                let mut future_parent = &mut new.quick_clone();
+//                self.attach_children(child_new, Some(&mut future_parent));
+
+
+            }
+
+        }
+//        for child_old in &old.children {
+//            if !children_accounted_for.contains(&child_old.id.unwrap()) {
+//                // todo convert from el to node
+//                let node: web_sys::Node = child_old.quick_clone().el_ws.unwrap().into();
+//                el_ws_to_patch.remove_child(&node).expect("Error removing child)");
 //            }
-//
-//
 //        }
-//
-//        // Apply the el, which was previously bound to the old vdom el, to the new one.
-//        new.el_ws = Some(el_ws_to_patch);
-//    }
+
+
+        // Apply the el, which was previously bound to the old vdom el, to the new one.
+        new.el_ws = Some(el_ws_to_patch);
+    }
+
+
+    /// Populate attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
+    /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
+    fn setup_vdom(&self, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32) {
+        // Active id iterates once per item; active-level once per nesting level.
+        let mut id = active_id;
+        el_vdom.id = Some(active_id);
+        id += 1;  // Raise the id after each element we process.
+        el_vdom.nest_level = Some(active_level);
+
+        // Create the web_sys element; add it to the working tree; store it in
+        // its corresponding vdom El.
+        let el_ws = el_vdom.make_websys_el(&self.data.document, &self.data.ids, self.mailbox());
+
+        el_vdom.el_ws = Some(el_ws);
+
+        for child in &mut el_vdom.children {
+            // Raise the active level once per recursion.
+            self.setup_vdom(child, active_level + 1, id)
+        }
+    }
+
+    // Attaches all children, recursively. Only run this when creating a fresh vdom node, since
+    // it performs a rerender of the el and all children; eg a potentially-expensive op.
+    fn attach_children(&self, el_vdom: &mut El<Ms>, parent: Option<&mut El<Ms>>) {
+        // No parent means we're operating on the top-level element; append it to the main div.
+        // This is how we call this function externally, ie not through recursion.
+        let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
+
+        // No parent means we're operating on the top-level element; append it to the main div.
+        // This is how we call this function externally, ie not through recursion.
+        match parent {
+            Some(par) => {
+                // Take the el_ws from its parent's Option where it lives.
+                let par_el_ws = par.el_ws.take().expect("Missing el_ws in parent");
+                // Append its child while it's out
+                crate::log("Rendering child in attach_children");
+                par_el_ws.append_child(&el_ws);
+                // Now replace it, Indiana-Jones-style. Take that, borrow checker!
+                par.el_ws.replace(par_el_ws);
+            },
+            None => {self.data.main_div.append_child(&el_ws);},
+        };
+
+        // More Indie-action.
+        el_vdom.el_ws.replace(el_ws);
+
+        // future_parent simply exists to expose el_ws for the purpose of appending
+        // children to it.
+        let mut future_parent = el_vdom.quick_clone();
+        for child in &mut el_vdom.children {
+            // Raise the active level once per recursion.
+            self.attach_children(child, Some(&mut future_parent))
+        }
+    }
 
 }
 
@@ -284,21 +349,7 @@ fn add_id(ids: Vec<u32>) -> Vec<u32> {
     result
 }
 
-// todo perhaps rename this
-/// Populate ids, and nest-levels. Run this after creating a vdom, but before
-/// using it to process the web_sys dom. Run this on the top-level element.
-fn populate_nest_levels<Ms: Clone>(el_vdom: &mut El<Ms>, active_level: u32, active_id: u32) {
-    // Todo perhaps we populate this while making el_wses, to
-    // todo avoid teh duplicate recursion.
-    let mut id = active_id;
-    el_vdom.id = Some(active_id);
-    id += 1;
-    el_vdom.nest_level = Some(active_level);
-    // Active id iterates once per item; active-level once per nesting level.
-    for child in &mut el_vdom.children {
-        populate_nest_levels(child, active_level + 1, id)
-    }
-}
+
 
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
@@ -332,7 +383,6 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 }
 
 // The entry point for user apps; exposed in the prelude.
-//pub fn run<Ms: Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, RefCell<Mdl>) -> Mdl,
 pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
         main_component: fn(&Mdl) -> El<Ms>, main_div_id: &str) {
     let app = App::new(model, update, main_component, main_div_id);
@@ -340,16 +390,8 @@ pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut main_el_vdom = (app.data.main_component)(&app.data.model.borrow());
-    populate_nest_levels(&mut main_el_vdom, 0, 0);
-
-    let main_el_ws = main_el_vdom.make_websys_el(&app.data.document, &app.data.ids, app.mailbox());
-
-
-    app.data.main_div.set_inner_html("");
-
-    app.data.main_div.append_child(&main_el_ws).unwrap();
-    // The websys el will now "live" with its vdom el, to make make patching easier.
-//    main_el_vdom.el_ws = Some(main_el_ws);
+    app.setup_vdom(&mut main_el_vdom, 0, 0);
+    app.attach_children(&mut main_el_vdom, None);
 
     app.data.main_el_vdom.replace(main_el_vdom);
 }

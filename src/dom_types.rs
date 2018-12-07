@@ -17,12 +17,13 @@ use crate::vdom::Mailbox;  // todo temp
 // todo valid ones.
 
 
-// todo temp
+
 pub struct Listener<Ms: Clone> {
     pub trigger: Cow<'static, str>,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
 }
+
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms: Clone + 'static> Listener<Ms> {
@@ -167,7 +168,17 @@ pub struct Style {
 impl Style {
     // todo avoid Dry code between this and Attrs.
     pub fn new(vals: HashMap<String, String>) -> Self {
-        Self { vals }
+        let mut new_vals = HashMap::new();
+        for (key, val) in vals.into_iter() {
+            let val_backup = val.clone();
+            match val.parse::<u32>() {
+                Ok(_) => new_vals.insert(key, val_backup + "px"),
+                Err(_) => new_vals.insert(key, val_backup),
+            };
+        }
+
+
+        Self { vals: new_vals }
     }
 
     pub fn empty() -> Self {
@@ -264,7 +275,8 @@ macro_rules! make_tags {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($tag_camel:ident => $tag:expr),+ } => {
 
-        #[derive(PartialEq)]
+//        #[derive(PartialEq)]
+        #[derive(Clone, PartialEq)]
         pub enum Tag {
             $(
                 $tag_camel,
@@ -323,6 +335,7 @@ make_tags! {
     Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template"
 }
 
+//#[derive(Clone)] // todo temp??
 pub struct El<Ms: Clone + 'static> {
     // M is a message type, as in part of TEA.
 
@@ -432,16 +445,51 @@ impl<Ms: Clone + 'static> El<Ms> {
             listener.attach(&el_ws, mailbox.clone());
         }
 
-        for child in &mut self.children {
-            el_ws.append_child(&child.make_websys_el(document, ids, mailbox.clone())).unwrap();
-        }
+//        for child in &mut self.children {
+//            el_ws.append_child(&child.make_websys_el(document, ids, mailbox.clone())).unwrap();
+//        }
 
 //        self.el_ws = Some(el_ws.clone());  // todo clone??
 
-        crate::log("Drawing an el");
         el_ws
+    }
+
+    /// This is used to provide access to el_ws while recursively appending children to it.
+    pub fn quick_clone(&self) -> Self {
+        Self {
+            tag: self.tag.clone(),
+            attrs: Attrs::empty(),
+            style: Style::empty(),
+            text: None,
+            children: Vec::new(),
+            key: None,
+            id: None,
+            nest_level: None,
+            el_ws: self.el_ws.clone(),
+            listeners: Vec::new(),
+        }
+    }
 }
+
+/// Allow the user to clone their Els. Note that there's no easy way to clone the
+/// closures within listeners, so we ommit it.
+impl<Ms: Clone + 'static> Clone for El<Ms> {
+    fn clone(&self) -> Self {
+        Self {
+            tag: self.tag.clone(),
+            attrs: self.attrs.clone(),
+            style: self.style.clone(),
+            text: self.text.clone(),
+            children: self.children.clone(),
+            key: self.key.clone(),
+            id: self.id.clone(),
+            nest_level: self.nest_level.clone(),
+            el_ws: self.el_ws.clone(),
+            listeners: Vec::new(),
+        }
+    }
 }
+
 
 impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {

@@ -89,13 +89,13 @@ fn main_comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-     div![ outer_style, &model.count.to_string(), vec![
-//     div![ outer_style, vec![
+//     div![ outer_style, &model.count.to_string(), vec![
+     div![ outer_style, vec![
         h1![ "The Grand Total" ],
         div![
             style!{
                 "color" => if model.count > 4 {"purple"} else {"gray"};
-                "border" => "2px solid #004422"
+                "border" => "2px solid #004422"; "height" => 200
             },
             vec![
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
