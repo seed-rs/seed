@@ -11,13 +11,8 @@ keywords = ["wasm", "frontend", "framework", "web", "bindgen"]
 categories = ["wasm", "web-programming", ""]
 edition = "2018"
 
-#[lib]
-#crate-type = ["cdylib"]
-
-
 [dependencies]
 wasm-bindgen = {version = "0.2.28", features = ["nightly"]}
-#proc_macros = { path = "proc_macros"}
 js-sys = "0.3.5"
 
 # For serialization, eg sending requests to a server. Otherwise, not required.

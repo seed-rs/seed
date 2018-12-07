@@ -234,7 +234,7 @@ line.
 **Rust**: Proficiency in Rust isn't required to get started using this framework.
 It helps, but I think you'll be able to build a usable webapp using this guide,
 and example code alone. For business logic behind the GUI, more study may be required.
-The official [Rust Book](https://doc.rust-lang.org/book/2018-edition/index.html) is a good
+The official [Rust Book](https://doc.rust-lang.org/book/index.html) is a good
 place to start.
 
 You'll be able to go with just the basic Rust syntax common to most programming
@@ -259,10 +259,10 @@ using these tools will likely have an easy time learning Rebar.
 
 **Model**
 
-Each app must contain a model [struct]( https://doc.rust-lang.org/book/2018-edition/ch05-00-structs.html), 
+Each app must contain a model [struct]( https://doc.rust-lang.org/book/ch05-00-structs.html), 
 which contains the app’s state and data. It can contain 
 [owned data[(https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html), or references
-with a static [lifetime](https://doc.rust-lang.org/book/2018-edition/ch10-03-lifetime-syntax.html).
+with a static [lifetime](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html).
  If you're not sure which to use, keep in mind they'll both work for many uses, and
   `&'static str` has simpler syntax. Example:
 
@@ -320,7 +320,7 @@ struct Model {
 
  **Update**
 
-The Message is an [enum]( https://doc.rust-lang.org/book/2018-edition/ch06-00-enums.html) which 
+The Message is an [enum]( https://doc.rust-lang.org/book/ch06-00-enums.html) which 
 categorizes each type of interaction with the app. Its fields may hold a value, or not. 
 We’ve abbreviated it as `Msg` here for brevity. Example:
 
@@ -333,8 +333,9 @@ enum Msg {
 }
 ```
  
-The update [function]( https://doc.rust-lang.org/book/2018-edition/ch03-03-how-functions-work.html) 
-is the only place where the model is changed. It accepts a message reference, and model 
+The update [function]( https://doc.rust-lang.org/book/ch03-03-how-functions-work.html) 
+you pass to rebar::vdom::run describes how the state should change, upon
+receiving each type of Message. It is the only place where the model is changed. It accepts a message reference, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
  
@@ -364,7 +365,7 @@ sub-functions to aid code organization.
 **View**
 
  Visual layout (ie HTML/DOM elements) is described declaratively in Rust, but uses 
-[macros]( https://doc.rust-lang.org/book/2018-edition/appendix-04-macros.html) to simplify syntax. 
+[macros]( https://doc.rust-lang.org/book/appendix-04-macros.html) to simplify syntax. 
 
 ### Elements, attributes, styles, and events.
 When passing your layout to Rebar, attributes for DOM elements (eg id, class, src etc), 
@@ -378,10 +379,17 @@ with a shorthand using macros. These macros can take any combination of the foll
 are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`, and `events!{}`. All
 elements present must be aranged in the order above: eg `Events` can never be before `Attrs`.
 
+Currently, `Attrs`, and `Style` parameters mut be &strs (The string literals used in the examples).
+If you have a boolean or numerical value, you can convert to this format using `&val.tostring()`, where
+val is your value. We plan to allow numerical and boolean values here in the future. `Style` parameters
+are &str, closure pairs, where the `&str` is the [event name](https://developer.mozilla.org/en-US/docs/Web/Events),
+and the closure accepts a single `web_sys::EventTarget` variable, and returns an instance
+of your Message enum.
+
 For example, the following code returns an `El` representing a few dom elements displayed
 in a flexbox layout:
 ```rust
-    div![ style!{"display" => "flex"; flex-direction => "column"}, vec![
+    div![ style!{"display" => "flex"; "flex-direction" => "column"}, vec![
         h3![ "Some things" ],
         button![ events!{"click" => |_| Msg::SayHi}, "Click me!" ]
     ] ]
@@ -517,12 +525,24 @@ fn items() -> El<Msg> {
 }
 ```
 
-### The update function
-The update function you pass to rebar::run describes how the state should change, upon
-receiving each type of Message. It works similar to a reducer in Redux: It accepts the
-current state as input, and outputs the new state, both of which are instances of the Model
-defined above it.
+### Initializing your app
+To start your app, pass an instance of your model, the update function, the top-level component function 
+(not its output), and name of the div you wish to mount it to to the `rebar::vdom::run` function:
+```rust
+#[wasm_bindgen]
+pub fn render() {
+    rebar::vdom::run(Model::default(), update, main_comp, "main");
+}
+```
+This must be wrapped in a function named `render`, with the `#[wasm_bindgen]` invocation above.
+(More correctly, its name must match the func in this line in your html file):
+```javascript
 
+function run() {
+    render();
+}
+```
+Note that you don't need to pass your Msg enum; it's inferred from the update function.
 
 ### Comments in the view
 The Element-creation macros used to create views are normal Rust code, you can

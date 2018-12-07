@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 
 use std::borrow::Cow;
+use std::cmp;
 use std::rc::Rc;
 
 use web_sys;
@@ -34,30 +35,6 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         }
     }
 
-    fn do_map<NewMs: Clone + 'static>(
-        self,
-        f: Rc<impl Fn(Ms) -> NewMs + 'static>,
-    ) -> Listener<NewMs> {
-        let Listener {
-            trigger,
-            mut handler,
-            closure,
-        } = self;
-        let handler =
-            match handler.take() {
-                Some(mut handler) => Some(Box::new(move |event| {
-                    f(handler(event))
-                })
-                    as Box<FnMut(web_sys::Event) -> NewMs>),
-                None => None,
-            };
-        Listener {
-            trigger,
-            handler,
-            closure,
-        }
-    }
-
     fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
 
@@ -83,6 +60,14 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         (element.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("remove_event_listener_with_callback");
+    }
+}
+
+impl<Ms: Clone + 'static>  PartialEq for Listener<Ms> {
+    fn eq(&self, other: &Self) -> bool {
+        // todo we're only checking the trigger - will miss changes if
+        // todo only the fn passed changes!
+        self.trigger == other.trigger
     }
 }
 
@@ -146,10 +131,27 @@ pub enum _Attr {
 }
 
 //#[derive(Clone, Debug)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Attrs {
     // todo enum of only allowed attrs?
     pub vals: HashMap<&'static str, &'static str>
+}
+
+pub struct AttrHelper {
+    pub key: String,
+    pub val: String,
+}
+
+impl From<(&str, &str)> for AttrHelper {
+    fn from(att: (&str, &str)) -> Self {
+        Self { key: att.0.to_string(), val: att.1.to_string() }
+    }
+}
+
+impl From<(&str, bool)> for AttrHelper {
+    fn from(att: (&str, bool)) -> Self {
+        Self { key: att.0.to_string(), val: att.1.to_string() }
+    }
 }
 
 impl Attrs {
@@ -171,8 +173,8 @@ impl Attrs {
     }
 }
 
-//#[derive(Clone, Debug)]
-#[derive(Clone)]
+
+#[derive(Clone, PartialEq)]
 pub struct Style {
     // Handle Style separately from Attrs, since it commonly involves multiple parts.
     // todo enum for key?
@@ -277,7 +279,7 @@ macro_rules! make_tags {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($tag_camel:ident => $tag:expr),+ } => {
 
-//        #[derive(Debug)]
+        #[derive(PartialEq)]
         pub enum Tag {
             $(
                 $tag_camel,
@@ -336,7 +338,6 @@ make_tags! {
     Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template"
 }
 
-//#[derive(Debug)]
 pub struct El<Ms: Clone + 'static> {
     // M is a message type, as in part of TEA.
 
@@ -352,6 +353,11 @@ pub struct El<Ms: Clone + 'static> {
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
+    // todo temp?
+    pub key: Option<u32>,
+    pub id: Option<u32>,
+    pub nest_level: Option<u32>,
+
 
     // todo temp?
     pub el_ws: Option<web_sys::Element>,
@@ -363,12 +369,13 @@ impl<Ms: Clone + 'static> El<Ms> {
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
                text: &str, children: Vec<El<Ms>>) -> Self {
         Self {tag, attrs, style, text: Some(text.into()), children,
-            el_ws: None, listeners: Vec::new()}
+            el_ws: None, listeners: Vec::new(), key: None, id: None, nest_level: None}
     }
 
     pub fn empty(tag: Tag) -> Self {
         Self {tag, attrs: Attrs::empty(), style: Style::empty(),
-            text: None, children: Vec::new(), el_ws: None, listeners: Vec::new()}
+            text: None, children: Vec::new(), el_ws: None,
+            listeners: Vec::new(), key: None, id: None, nest_level: None}
     }
 
     pub fn add_child(&mut self, element: El<Ms>) {
@@ -411,7 +418,7 @@ impl<Ms: Clone + 'static> El<Ms> {
     /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
     /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
     /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-    pub fn make_websys_el(&mut self, document: &web_sys::Document, mailbox: Mailbox<Ms>) -> web_sys::Element {
+    pub fn make_websys_el(&mut self, document: &web_sys::Document, ids: &Vec<u32>, mailbox: Mailbox<Ms>) -> web_sys::Element {
         // todo do we want to repeat finding window/doc for each el like this??
 //        let window = web_sys::window().expect("no global `window` exists");
 //        let document = window.document().expect("should have a document on window");
@@ -438,9 +445,35 @@ impl<Ms: Clone + 'static> El<Ms> {
         }
 
         for child in &mut self.children {
-            el_ws.append_child(&child.make_websys_el(document, mailbox.clone())).unwrap();
+            el_ws.append_child(&child.make_websys_el(document, ids, mailbox.clone())).unwrap();
         }
 
+//        self.el_ws = Some(el_ws.clone());  // todo clone??
+
+        crate::log("Drawing an el");
         el_ws
     }
+}
+
+impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
+    fn eq(&self, other: &Self) -> bool {
+        // todo Again, note that the listeners check only checks triggers.
+        // Don't check children.
+        self.tag == other.tag &&
+        self.attrs == other.attrs &&
+        self.style == other.style &&
+        self.text == other.text &&
+        self.listeners == other.listeners &&
+        // TOdo not sure how nest-level should be used. Is it a given based on
+        // todo how we iterate? Sanity-check for now.
+        self.nest_level == other.nest_level
+    }
+}
+
+fn add_id(ids: Vec<u32>) -> Vec<u32> {
+    // duped from vdom
+    let new_id = ids.last().unwrap() + 1;
+    let mut result = ids;
+    result.push(new_id);
+    result
 }

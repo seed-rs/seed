@@ -10,40 +10,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rebar = {path = "../../"}
-wasm-bindgen = "^0.2.28"
-#web-sys = "^0.3.6"
+wasm-bindgen = "^0.2.29"
+web-sys = "^0.3.6"
 
 # For serialization, eg sending requests to a server. Otherwise, not required.
 serde = "^1.0.80"
 serde_derive = "^1.0.80"
 serde_json = "1.0.33"
-
-
-# todo temp
-[dependencies.web-sys]
-version = "0.3.4"
-features = [
-    "Document",
-    "Element",
-    "Event",
-    "EventTarget",
-    "History",
-    "HtmlElement",
-    "HtmlCollection",
-    "HtmlInputElement",
-    "HtmlTextAreaElement",
-    "HtmlSelectElement",
-    "Location",
-    "MouseEvent",
-    "Node",
-    "NodeList",
-    "Performance",
-    "Request",
-    "RequestInit",
-    "RequestMode",
-    "Response",
-    "Storage",
-    "Text",
-    "console",
-    "Window",
-]

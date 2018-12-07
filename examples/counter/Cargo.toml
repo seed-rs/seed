@@ -17,32 +17,3 @@ web-sys = "^0.3.6"
 serde = "^1.0.80"
 serde_derive = "^1.0.80"
 serde_json = "1.0.33"
-
-# todo temp
-#[dependencies.web-sys]
-#version = "0.3.6"
-#features = [
-#    "Document",
-#    "Element",
-#    "Event",
-#    "EventTarget",
-#    "History",
-#    "HtmlElement",
-#    "HtmlCollection",
-#    "HtmlInputElement",
-#    "HtmlTextAreaElement",
-#    "HtmlSelectElement",
-#    "Location",
-#    "MouseEvent",
-#    "Node",
-#    "NodeList",
-#    "Performance",
-#    "Request",
-#    "RequestInit",
-#    "RequestMode",
-#    "Response",
-#    "Storage",
-#    "Text",
-#    "console",
-#    "Window",
-#]

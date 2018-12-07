@@ -22,6 +22,8 @@ pub mod vdom;
 // todo streamlined input handling for text etc
 // todo maybe?? High-level css-grid and flex api?
 
+// todo keyed elements??
+
 
 /// A convenience function for logging to the web browser's console.
 pub fn log(text: &str) {
@@ -31,5 +33,5 @@ pub fn log(text: &str) {
 /// Introduce Element-related types into the global namespace, which are
 /// required to make the element/etc macros work.
 pub mod prelude {
-    pub use crate::dom_types::{El, Style, Attrs, Tag, Listener, UpdateEl};
+    pub use crate::dom_types::{El, Style, AttrHelper, Attrs, Tag, Listener, UpdateEl};
 }

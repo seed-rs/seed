@@ -853,7 +853,6 @@ macro_rules! iframe {
     };
 }
 
-
 /// Provide a shortcut for creating styles.
 #[macro_export]
 macro_rules! style {
@@ -876,7 +875,9 @@ macro_rules! attrs {
         {
             let mut vals = std::collections::HashMap::new();
             $(
-                vals.insert($key, $value);
+//                let helper: AttrHelper = ($key, val: $value).into();
+//                vals.insert(&helper.key, &helper.val);
+                  vals.insert($key, $value);
             )*
             Attrs::new(vals)
         }

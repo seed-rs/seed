@@ -1,10 +1,12 @@
-//! A simple, cliché demonstrating the basics.
+//! A simple, cliché example demonstrating the basics.
 
 #[macro_use]
 extern crate rebar;
 use rebar::prelude::*;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, JsCast};
 use web_sys;
+
 
 // Model
 
@@ -45,15 +47,20 @@ fn update(msg: &Msg, model: &Model) -> Model {
         },
         Msg::ChangeWWC(ev) => {
             let text = match ev.target() {
-                Some(et) => "HIOORAY",
+                Some(et) => {
+                    let input_el: &web_sys::HtmlInputElement = et.unchecked_ref();
+                    let v: String = input_el.value();
+                    let z = v.clone();
+//                    rebar::log(&v);
+//                    &z
+                    "WER"
+                },
                 None => "Error",
             };
 
-
-
 //            wasm_bindgen::JsCast::dyn_ref::<web_sys::HtmlInputElement>(&target)
 //            Model {count: model.count, what_we_count: ev.target().value}
-            Model {count: model.count, what_we_count: text}
+            Model {count: model.count, what_we_count: &text.clone()}
         },
     }
 }
@@ -82,6 +89,7 @@ fn main_comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
+//     div![ outer_style, &model.count.to_string(), vec![
      div![ outer_style, vec![
         h1![ "The Grand Total" ],
         div![
