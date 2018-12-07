@@ -877,7 +877,7 @@ macro_rules! attrs {
             $(
 //                let helper: AttrHelper = ($key, val: $value).into();
 //                vals.insert(&helper.key, &helper.val);
-                  vals.insert($key, $value);
+                  vals.insert($key, &$value.to_string());
             )*
             Attrs::new(vals)
         }

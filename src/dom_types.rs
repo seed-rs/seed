@@ -137,30 +137,13 @@ pub struct Attrs {
     pub vals: HashMap<&'static str, &'static str>
 }
 
-pub struct AttrHelper {
-    pub key: String,
-    pub val: String,
-}
-
-impl From<(&str, &str)> for AttrHelper {
-    fn from(att: (&str, &str)) -> Self {
-        Self { key: att.0.to_string(), val: att.1.to_string() }
-    }
-}
-
-impl From<(&str, bool)> for AttrHelper {
-    fn from(att: (&str, bool)) -> Self {
-        Self { key: att.0.to_string(), val: att.1.to_string() }
-    }
-}
-
 impl Attrs {
     pub fn new(vals: HashMap<&'static str, &'static str>) -> Self {
-        Self {vals}
+        Self { vals }
     }
 
     pub fn empty() -> Self {
-        Self {vals: HashMap::new()}
+        Self { vals: HashMap::new() }
     }
 
     // todo from/into instead of as_str?
@@ -191,6 +174,8 @@ impl Style {
         Self {vals: HashMap::new()}
     }
 
+    /// Output style as a string, as would be set in the DOM as the attribute value
+    /// for 'style'. Eg: "display: flex; font-size: 1.5em"
     pub fn as_str(&self) -> String {
         let mut result = String::new();
         if self.vals.keys().len() > 0 {
@@ -419,6 +404,9 @@ impl<Ms: Clone + 'static> El<Ms> {
     /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
     /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
     pub fn make_websys_el(&mut self, document: &web_sys::Document, ids: &Vec<u32>, mailbox: Mailbox<Ms>) -> web_sys::Element {
+//    pub fn make_websys_el(&mut self, el_map: HashMap<u32, web_sys::Element>, document: &web_sys::Document,
+//                          ids: &Vec<u32>, mailbox: Mailbox<Ms>) -> HashMap<u32, web_sys::Element> {
+        //
         // todo do we want to repeat finding window/doc for each el like this??
 //        let window = web_sys::window().expect("no global `window` exists");
 //        let document = window.document().expect("should have a document on window");
@@ -444,14 +432,24 @@ impl<Ms: Clone + 'static> El<Ms> {
             listener.attach(&el_ws, mailbox.clone());
         }
 
+//        let mut el_map = el_map;
+//        el_map.insert(self.id.expect("Didn't find an id for vdom El."), el_ws);
+
         for child in &mut self.children {
-            el_ws.append_child(&child.make_websys_el(document, ids, mailbox.clone())).unwrap();
+            el_map = child.make_websys_el(el_map, document, ids, mailbox.clone());
+            let el_ws_child = &elmap.get(&child.id.unwrap()).expect("HM key error");
+            el_ws.append_child(el_ws_child).unwrap();
         }
+
+
+
 
 //        self.el_ws = Some(el_ws.clone());  // todo clone??
 
         crate::log("Drawing an el");
-        el_ws
+//        el_ws
+
+        el_map
     }
 }
 
