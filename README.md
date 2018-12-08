@@ -580,7 +580,19 @@ You can store page state locally using web_sys's [Storage struct](https://rustwa
 .
 
 ### Building a release version
-(todo)
+The configuration in the `Building and Running` section towards the top are intended
+for development: They produce large `.wasm` file sizes, and unoptimized performance.
+For your release version, you'll need to append `--release` to the `cargo build` command,
+and point your `wasm-bindgen` command to the `release` subdirectory vice `debug`.
+Example:
+
+```
+cargo build --target wasm32-unknown-unknown --release
+```
+and 
+```
+wasm-bindgen target/wasm32-unknown-unknown/release/appname.wasm --no modules --out-dir ./pkg
+```
 
 ## Goals
 - Learning the syntax, creating a project, and building it should be easy - regardless

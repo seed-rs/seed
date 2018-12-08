@@ -179,7 +179,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
             }
 
             // Patch attributes.
-            patch_el_details(old, new, &old_el_ws);
+            patch_el_details(old, new, &old_el_ws, &self.data.document);
         }
 
         // If there are the same number of children, assume there's a 1-to-1 mapping,
@@ -187,7 +187,12 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
         if old.children.len() == new.children.len() {
             crate::log("Same children len");
 
-            // There's probably a more sophisticated way, but for now, this should be OK.
+            // A more sophisticated approach would be to find the best match of every
+            // combination of score of new vs old, then rank them somehow. (Eg even
+            // if old id=2 is the best match for the first new, if it's only a marginal
+            // winner, but a strong winner for the second, it makes sense to put it
+            // in the second, but we are not allowing it this opporunity as-is.
+            // todo: Look into this improvement sometime after the initial release.
 
             let mut avail_old_children = &mut old.children;
             for child_new in &mut new.children {
@@ -206,14 +211,12 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
                 });
 
                 let mut best_match = avail_old_children.pop().expect("Probably popping");
-                crate::log(&format!("Best: {:?} {:?}, {:?}", &child_new.text, &best_match.text, &best_match.id.unwrap()));
+//                crate::log(&format!("Best: {:?} {:?}, {:?}", &child_new.text, &best_match.text, &best_match.id.unwrap()));
 
 //                crate::log(&avail_old_children.len().to_string());
 
                 self.patch(&mut best_match, child_new, &old_el_ws); // todo old vs new for par
-
             }
-
 
         } else {
             crate::log("Diff child lens");
@@ -390,7 +393,9 @@ pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Element) {
+pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>,
+       old_el_ws: &web_sys::Element, document: &web_sys::Document) {
+
     if old.attrs != new.attrs {
         for (key, new_val) in &new.attrs.vals {
             match old.attrs.vals.get(key) {
@@ -420,9 +425,33 @@ pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws
 
     // Patch text
     if old.text != new.text {
+        // This is not as straightforward as it looks: There can be multiple text nodes
+        // in the DOM, even though our API only allows for 1 per element. If we
+        // naively run set_text_content(), all child nodes will be removed.
+        // Text is stored in special Text nodes that don't have a direct-relation to
+        // the vdom.
+
         // It appears that at this point, there is no way to manage Option comparison more directly.
         let text = new.text.clone().unwrap_or(String::new());
-        old_el_ws.set_text_content(Some(&text));
+
+        if old.text.is_none() {
+            // There's no old node to find: Add it.
+            let new_next_node = document.create_text_node(&text);
+            old_el_ws.append_child(&new_next_node).unwrap();
+        } else {
+            // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
+            let children = old_el_ws.child_nodes();
+            for i in 0..children.length() {
+                let node = children.item(i).unwrap();
+                // We've found it; there will be not more than 1 text node.
+                if node.node_type() == 3 {
+                    node.set_text_content(Some(&text));
+                    break;
+                }
+            }
+        }
+
+
     }
 
     // todo events.

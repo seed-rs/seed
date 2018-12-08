@@ -23,8 +23,8 @@
       <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/vdom.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="416">
-              <caret line="112" selection-start-line="112" selection-end-line="112" />
+            <state relative-caret-position="423">
+              <caret line="437" column="51" selection-start-line="437" selection-start-column="51" selection-end-line="437" selection-end-column="51" />
             </state>
           </provider>
         </entry>
@@ -32,8 +32,8 @@
       <file leaf-file-name="dom_types.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="57">
-              <caret line="500" column="18" selection-start-line="500" selection-start-column="18" selection-end-line="500" selection-end-column="18" />
+            <state relative-caret-position="279">
+              <caret line="458" column="20" selection-start-line="458" selection-start-column="20" selection-end-line="458" selection-end-column="20" />
             </state>
           </provider>
         </entry>
@@ -41,7 +41,7 @@
       <file leaf-file-name="dom_shortcuts.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="168">
+            <state relative-caret-position="197">
               <caret line="882" column="14" selection-start-line="882" selection-start-column="14" selection-end-line="882" selection-end-column="14" />
             </state>
           </provider>
@@ -50,8 +50,8 @@
       <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1167">
-              <caret line="99" column="6" lean-forward="true" selection-start-line="99" selection-start-column="6" selection-end-line="99" selection-end-column="6" />
+            <state relative-caret-position="453">
+              <caret line="103" column="25" selection-start-line="103" selection-start-column="25" selection-end-line="103" selection-end-column="25" />
             </state>
           </provider>
         </entry>
@@ -60,8 +60,8 @@
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="4624">
-                <caret line="289" column="62" selection-start-line="289" selection-start-column="62" selection-end-line="289" selection-end-column="62" />
+              <first_editor relative-caret-position="262">
+                <caret line="580" lean-forward="true" selection-start-line="580" selection-end-line="580" />
               </first_editor>
               <second_editor />
             </state>
@@ -79,13 +79,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>setup_</find>
-      <find>attach_chi</find>
-      <find>quick_</find>
-      <find>.append</find>
-      <find>rendering</find>
-      <find>attach_chil</find>
-      <find>future_</find>
       <find>::in</find>
       <find>patch</find>
       <find>patch(</find>
@@ -107,8 +100,15 @@
       <find>patch_el_de</find>
       <find>patch_el_d</find>
       <find>input</find>
-      <find>partiale</find>
       <find>let mut sco</find>
+      <find>new.el_ws</find>
+      <find>target/</find>
+      <find>patch_el_</find>
+      <find>patch_el</find>
+      <find>append_ch</find>
+      <find>partiale</find>
+      <find>replace_ch</find>
+      <find>best:</find>
     </findStrings>
     <replaceStrings>
       <replace>empty</replace>
@@ -163,11 +163,11 @@
         <option value="$PROJECT_DIR$/examples/server_interaction/build.ps1" />
         <option value="$PROJECT_DIR$/examples/server_interaction/index.html" />
         <option value="$PROJECT_DIR$/examples/todomvc/index.html" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/Cargo.toml" />
         <option value="$PROJECT_DIR$/src/dom_shortcuts.rs" />
-        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
+        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/dom_types.rs" />
+        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/vdom.rs" />
       </list>
     </option>
@@ -182,9 +182,9 @@
     <packageJsonPaths />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1690" />
-    <option name="y" value="73" />
-    <option name="width" value="1488" />
+    <option name="x" value="1911" />
+    <option name="y" value="121" />
+    <option name="width" value="1401" />
     <option name="height" value="1262" />
   </component>
   <component name="ProjectView">
@@ -300,7 +300,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1690" y="73" width="1488" height="1262" extended-state="0" />
+    <frame x="1911" y="121" width="1401" height="1262" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -311,7 +311,7 @@
       <window_info anchor="bottom" id="Python Console" order="8" weight="0.32910246" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3363554" />
       <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.31327432" />
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.16176471" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.17225951" />
       <window_info anchor="bottom" id="Docker" order="10" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="5" />
       <window_info anchor="right" id="SciView" order="4" />
@@ -470,13 +470,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/lib.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="512">
-          <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/serialize.rs" />
     <entry file="file://$PROJECT_DIR$/examples/todomvc/build.ps1">
       <provider selected="true" editor-type-id="text-editor">
@@ -541,13 +534,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Cargo.toml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="800">
-          <caret line="50" column="20" selection-start-line="50" selection-start-column="20" selection-end-line="50" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider editor-type-id="text-editor">
         <state relative-caret-position="1054">
@@ -556,38 +542,52 @@
       </provider>
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="4624">
-            <caret line="289" column="62" selection-start-line="289" selection-start-column="62" selection-end-line="289" selection-end-column="62" />
+          <first_editor relative-caret-position="262">
+            <caret line="580" lean-forward="true" selection-start-line="580" selection-end-line="580" />
           </first_editor>
           <second_editor />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="279">
+          <caret line="458" column="20" selection-start-line="458" selection-start-column="20" selection-end-line="458" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
+        <state relative-caret-position="197">
           <caret line="882" column="14" selection-start-line="882" selection-start-column="14" selection-end-line="882" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="512">
+          <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="716">
+          <caret line="50" column="20" selection-start-line="50" selection-start-column="20" selection-end-line="50" selection-end-column="20" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1167">
-          <caret line="99" column="6" lean-forward="true" selection-start-line="99" selection-start-column="6" selection-end-line="99" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="500" column="18" selection-start-line="500" selection-start-column="18" selection-end-line="500" selection-end-column="18" />
+        <state relative-caret-position="453">
+          <caret line="103" column="25" selection-start-line="103" selection-start-column="25" selection-end-line="103" selection-end-column="25" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/vdom.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
-          <caret line="112" selection-start-line="112" selection-end-line="112" />
+        <state relative-caret-position="423">
+          <caret line="437" column="51" selection-start-line="437" selection-start-column="51" selection-end-line="437" selection-end-column="51" />
         </state>
       </provider>
     </entry>

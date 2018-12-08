@@ -47,8 +47,8 @@ fn update(msg: &Msg, model: &Model) -> Model {
         Msg::Decrement => {
             Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
         },
-        Msg::ChangeWWC(ev) => {
-            Model {count: model.count, what_we_count: ev.clone()}
+        Msg::ChangeWWC(text) => {
+            Model {count: model.count, what_we_count: text.clone()}
         }
 
 //        Msg::ChangeWWC(ev) => {

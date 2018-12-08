@@ -458,7 +458,6 @@ impl<Ms: Clone + 'static> El<Ms> {
         // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
         el_ws.set_text_content(self.text.as_ref().map(String::as_ref));
 
-
         for listener in &mut self.listeners {
             listener.attach(&el_ws, mailbox.clone());
         }
