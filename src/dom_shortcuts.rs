@@ -893,7 +893,14 @@ macro_rules! events {
         {
             let mut result = Vec::new();
             $(
-                result.push(rebar::dom_types::Listener::new($event_str.into(), Box::new($handler)));
+                match $event_str {
+                    _ => result.push(rebar::dom_types::Listener::new_input($event_str.into(), $handler)),
+//                    "input" => result.push(rebar::dom_types::Listener::new_input($event_str.into(), $handler)),
+//                    _ => result.push(rebar::dom_types::Listener::new($event_str.into(), $handler)),
+
+                }
+
+//                result.push(rebar::dom_types::Listener::new($event_str.into(), $handler));
             )+
             result
         }

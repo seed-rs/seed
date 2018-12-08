@@ -102,7 +102,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone)]
 struct Model {
     count: i32,
-    what_we_count: &'static str
+    what_we_count: String,
 }
 
 // Setup a default here, for initialization later.
@@ -110,7 +110,7 @@ impl Default for Model {
     fn default() -> Self {
         Self {
             count: 0,
-            what_we_count: "click"
+            what_we_count: "click".into()
         }
     }
 }
@@ -270,7 +270,7 @@ with a static [lifetime](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.
 #[derive(Clone)]
 struct Model {
     count: i32,
-    what_we_count: &'static str
+    what_we_count: String
 }
 
 // Setup a default here, for initialization later.
@@ -278,7 +278,7 @@ impl Default for Model {
     fn default() -> Self {
         Self {
             count: 0,
-            what_we_count: "click"
+            what_we_count: "click".into()
         }
     }
 }
@@ -292,6 +292,7 @@ initialization via Rust’s `Default` trait, in order to keep the initialization
  on our string literal, to convert it into an owned string.
  
 The model holds all data used by the app, and will be replaced with updated versions when the data changes.
+Use owned data in the model; eg `String` instead of `&'static str`.
 
  The model may be split into sub-structs to organize it – this is especially useful as the app grows. 
 The sub-structs must also implement `Clone`:

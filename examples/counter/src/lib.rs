@@ -21,7 +21,7 @@ impl Default for Model {
     fn default() -> Self {
         Self {
             count: 0,
-            what_we_count: String::from("click")
+            what_we_count: "click".into()
         }
     }
 }
@@ -33,7 +33,9 @@ impl Default for Model {
 enum Msg {
     Increment,
     Decrement,
-    ChangeWWC(web_sys::Event)
+//    ChangeWWC(web_sys::Event),
+    ChangeWWC(String),
+    KeyTest(web_sys::Event),
 }
 
 // Sole source of updating the model; returns a whole new model.
@@ -46,21 +48,29 @@ fn update(msg: &Msg, model: &Model) -> Model {
             Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
         },
         Msg::ChangeWWC(ev) => {
+            Model {count: model.count, what_we_count: ev.clone()}
+        }
+
+//        Msg::ChangeWWC(ev) => {
+//            let text = match ev.target() {
+//                Some(et) => {
+//                    (et.unchecked_ref() as &web_sys::HtmlInputElement).value()
+//                },
+//                None => String::from("Error"),
+//            };
+//            Model {count: model.count, what_we_count: text}
+//        },
+        Msg::KeyTest(ev) => {
+
             let text = match ev.target() {
                 Some(et) => {
-                    let input_el: &web_sys::HtmlInputElement = et.unchecked_ref();
-                    let v: String = input_el.value();
-                    let z = v.clone();
-//                    rebar::log(&v);
-//                    &z
-                    String::from("WER")
+                    rebar::log("KEY down");
+                    (et.unchecked_ref() as &web_sys::HtmlInputElement).value()
                 },
                 None => String::from("Error"),
             };
-
-//            wasm_bindgen::JsCast::dyn_ref::<web_sys::HtmlInputElement>(&target)
-//            Model {count: model.count, what_we_count: ev.target().value}
-            Model {count: model.count, what_we_count: text.clone()}
+            rebar::log(&text);
+            Model {count: model.count, what_we_count: text}
         },
     }
 }
@@ -105,8 +115,9 @@ fn main_comp(model: &Model) -> El<Msg> {
         success_level(model.count),
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => String::from("SDF")}, events!{
-            "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev)
+        input![ attrs!{"value" => model.what_we_count}, events!{
+            "input" => |ev| Msg::ChangeWWC(ev)
+//            "keydown" => |ev: web_sys::Event| Msg::KeyTest(ev)
         } ]
     ] ]
 }

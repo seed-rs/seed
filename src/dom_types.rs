@@ -27,23 +27,39 @@ pub struct Listener<Ms: Clone> {
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms: Clone + 'static> Listener<Ms> {
-//    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
-    pub fn new(event: Event, handler: Box<impl FnMut(web_sys::Event) -> Ms + 'static>) -> Self {
+    //    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
+    pub fn new(event: Event, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
         Self {
             trigger: String::from(event.as_str()).into(),
-            handler: Some(handler),
+            handler: Some(Box::new(handler)),
             closure: None
         }
     }
 
+    pub fn new_input(event: Event, mut handler: impl FnMut(String) -> Ms + 'static) -> Self {
+        let func = move |event: web_sys::Event| {
+            if let Some(target) = event.target() {
+                if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+                    return handler(input.value());
+                }
+                if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+                    return handler(input.value());
+                }
+                if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+                    return handler(input.value());
+                }
+            }
+            handler("".into())
+        };
+
+        Self::new(event, func)
+    }
+
+    /// This method is where the processing logic for events happens.
     fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
 
-        // How to deal with closures (eg in interactivity) in wasm-bindgen is tricky: The link
-        // below provides details.
-        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
         let closure = Closure::wrap(
-
             Box::new(move |event: web_sys::Event| {
                 mailbox.send(handler(event))
             })
@@ -52,8 +68,8 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         (element.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("add_event_listener_with_callback");
-//        self.closure = Some(closure);
-        closure.forget();  // draco uses self.closure = logic, not .forget.
+
+        closure.forget();
     }
 
     fn detach(&self, element: &web_sys::Element) {
@@ -264,7 +280,9 @@ make_events! {
     Drag => "drag", DragEnd => "dragend", DragEnter => "dragenter", DragStart => "dragstart", DragLeave => "dragleave",
     DragOver => "dragover", Drop => "drop",
 
-    Change => "change"
+    Change => "change",
+
+    Input => "input"
 }
 
 
@@ -347,7 +365,7 @@ pub struct El<Ms: Clone + 'static> {
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
-//    pub events: Events<Ms>,
+    //    pub events: Events<Ms>,
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
@@ -388,7 +406,7 @@ impl<Ms: Clone + 'static> El<Ms> {
         self.style.vals.insert(key, val);
     }
 
-    pub fn add_listener(&mut self, event: Event, handler: Box<impl FnMut(web_sys::Event) -> Ms + 'static>) {
+    pub fn add_listener(&mut self, event: Event, handler: impl FnMut(web_sys::Event) -> Ms + 'static) {
         self.listeners.push(Listener::new(event, handler));
     }
 
@@ -496,13 +514,13 @@ impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
-        self.attrs == other.attrs &&
-        self.style == other.style &&
-        self.text == other.text &&
-        self.listeners == other.listeners &&
-        // TOdo not sure how nest-level should be used. Is it a given based on
-        // todo how we iterate? Sanity-check for now.
-        self.nest_level == other.nest_level
+            self.attrs == other.attrs &&
+            self.style == other.style &&
+            self.text == other.text &&
+            self.listeners == other.listeners &&
+            // TOdo not sure how nest-level should be used. Is it a given based on
+            // todo how we iterate? Sanity-check for now.
+            self.nest_level == other.nest_level
     }
 }
 
