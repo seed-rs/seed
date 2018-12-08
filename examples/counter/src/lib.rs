@@ -99,8 +99,8 @@ fn main_comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-//     div![ outer_style, &model.count.to_string(), vec![
-     div![ outer_style, vec![
+     div![ outer_style, &model.count.to_string(), vec![
+//     div![ outer_style, vec![
         h1![ "The Grand Total" ],
         div![
             style!{

@@ -20,7 +20,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="600">
-      <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="true">
+      <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/vdom.rs">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="423">
@@ -47,11 +47,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
+      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="453">
-              <caret line="103" column="25" selection-start-line="103" selection-start-column="25" selection-end-line="103" selection-end-column="25" />
+            <state relative-caret-position="421">
+              <caret line="101" column="27" selection-start-line="101" selection-start-column="27" selection-end-line="101" selection-end-column="27" />
             </state>
           </provider>
         </entry>
@@ -167,8 +167,8 @@
         <option value="$PROJECT_DIR$/src/dom_shortcuts.rs" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/dom_types.rs" />
-        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/vdom.rs" />
+        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
       </list>
     </option>
   </component>
@@ -577,17 +577,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="453">
-          <caret line="103" column="25" selection-start-line="103" selection-start-column="25" selection-end-line="103" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/vdom.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="423">
           <caret line="437" column="51" selection-start-line="437" selection-start-column="51" selection-end-line="437" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="421">
+          <caret line="101" column="27" selection-start-line="101" selection-start-column="27" selection-end-line="101" selection-end-column="27" />
         </state>
       </provider>
     </entry>
