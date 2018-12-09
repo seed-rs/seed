@@ -106,14 +106,13 @@ fn view(model: &Model) -> El<Msg> {
                 // Example of conditional logic in a style.
                 "color" => if model.count > 4 {"purple"} else {"gray"};
                 // When passing numerical values to style!, "px" is implied.
-                // If you want a different unit, use a str.
                 "border" => "2px solid #004422"; "padding" => 20
             },
             vec![
                 // We can use normal Rust code in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ events!{"click" => |_| Msg::Increment}, "+" ],
-                button![ events!{"click" => |_| Msg::Decrement}, "-" ],
+                button![ vec![ seed::simple_event("click", Msg::Increment) ], "-" ],
+                button![ vec![ seed::simple_event("click", Msg::Decrement) ], "-" ],
 
                 // Optionally-displaying an element
                 if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
@@ -122,10 +121,10 @@ fn view(model: &Model) -> El<Msg> {
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count}, events!{
-            "input" => |ev| Msg::ChangeWWC(ev)
-//            "keydown" => |ev: web_sys::Event| Msg::KeyTest(ev)
-        } ]
+        input![ attrs!{"value" => model.what_we_count},
+                vec![ seed::input_event("input", |text: String| Msg::ChangeWWC(text)) ]
+        ]
+
     ] ]
 }
 

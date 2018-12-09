@@ -19,8 +19,8 @@ And wasm-bindgen:
 `cargo +nightly install wasm-bindgen-cli`
 
 To start, either clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
-or create a new lib with Cargo: `cargo new --lib appname` .Here and everywhere it appears in this guide, `
-appname` refers to the name of your app.
+or create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
+appname` should be replaced with the name of your app.
 
 You need an Html file that loads your app's compiled module, and provides a div with id 
 to load the framework into. It also needs the following code to load your WASM module -
@@ -213,14 +213,13 @@ For example, after installing the  [http crate](https://crates.io/crates/https),
 Or with [Python](https://www.python.org/) installed, run `python -m http.server` from your crate's root.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
-
-(Todo: Release version)
+In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
 
 ### Running included examples
 To run an example located in the `examples` folder, navigate to that folder in a terminal, 
 run the build script for your system (`build.sh` or `build.ps1`), then open the `index.html` file
 in a web browser. Note that if you copy an example to a separate folder, you'll need
-to edit its `Cargo.toml` to point to the package.crates.io instead of locally: Ie replace
+to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
 `seed = { path = "../../"` with `seed = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
 line.
 
@@ -602,7 +601,24 @@ and
 wasm-bindgen target/wasm32-unknown-unknown/release/appname.wasm --no modules --out-dir ./pkg
 ```
 
-## Goals
+### Debugging
+There are two categories of error message you can receive: I'm using a different definition than
+ used in [this section of the Rust book](https://doc.rust-lang.org/book/ch09-00-error-handling.html).
+Compiler errors, and panics. 
+
+1: Errors while building, which will be displayed in the terminal 
+where you ran `cargo build`, or the build script. Rust's compiler usually provides
+helpful messages, so try to work through these using the information available.
+
+2: Runtime panics. These are more difficult to deal with, especially in the web browser.
+Their hallmark is a message that starts with `RuntimeError: "unreachable executed"`, and correspond
+to a panic in the rust code. (For example, a problem while using `unwrap()`). There's
+currently no neat way to identify which part of the code panicked; until this is sorted out,
+you may try to narrow it down using `seed.log()` commands.
+
+## About
+
+### Goals
 - Learning the syntax, creating a project, and building it should be easy - regardless
 of your familiarity with Rust.
 
@@ -635,7 +651,6 @@ which has example code in my frameworks that do the same thing. Compare the exam
 project to one on that page that uses a framework you're familiar with.
 
 ### Suggestions? Critique? Submit an issue or pull request on Github
-
 
 ### Influences
 This project is strongly influenced by Elm, React, and Redux. The overall layout

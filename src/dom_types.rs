@@ -15,6 +15,47 @@ use crate::vdom::Mailbox;  // todo temp
 // todo valid ones.
 
 
+// todo once you sort out events/listeners etc, organize/tidy this module.
+// todo and reacttack when you need = 'static.
+
+
+// TODO REATTACK when you need box
+
+pub trait UpdateListener<T> {
+    // T is the type of thing we're updating; eg attrs, style, events etc.
+    fn update_l(self, el: &mut T);
+}
+
+//
+//impl<Ms: Clone + 'static, F> UpdateListener<Listener<Ms>> for Box<F> where F: FnMut(String) -> Ms + 'static {
+//    fn update_l(self, listener: &mut Listener<Ms>) {
+//        listener.add_handler_input(self);
+//    }
+//}
+
+//impl<Ms: Clone + 'static> UpdateListener<Listener<Ms>> for Box<Ms> {
+//    fn update_l(self, listener: &mut Listener<Ms>) {
+//        listener.add_handler_simple(self);
+//    }
+//}
+
+
+pub fn simple_event<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener<Ms> {
+    let mut listener = Listener::empty(trigger.into());
+    listener.add_handler_simple(message);
+//    let handler = Box::new(|_| message);
+//    listener.add_handler_input(handler);
+
+    listener
+}
+
+pub fn input_event<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms> {
+    let mut listener = Listener::empty(trigger.into());
+    // handler must be boxed before passing to Listener's add method.
+    listener.add_handler_input(Box::new(handler));
+    listener
+}
+
 
 pub struct Listener<Ms: Clone> {
     pub trigger: Cow<'static, str>,
@@ -22,33 +63,56 @@ pub struct Listener<Ms: Clone> {
 }
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
+// todo + 'static ??
 impl<Ms: Clone + 'static> Listener<Ms> {
-    //    pub fn new(vals: Vec<(Event, Box<EventFn<Ms>>)>) -> Self {
-    pub fn new(event: Event, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Self {
+    pub fn empty(event: Event) -> Self {
         Self {
             trigger: String::from(event.as_str()).into(),
-            handler: Some(Box::new(handler)),
+            handler: None
         }
     }
 
-    pub fn new_input(event: Event, mut handler: impl FnMut(String) -> Ms + 'static) -> Self {
-        let func = move |event: web_sys::Event| {
+    fn add_handler_simple(&mut self, message: Ms) {
+        let mut handler = || message;
+//        let handler: impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
+        let closure = move |event: web_sys::Event| {
+           handler.clone()()
+        };
+
+        self.handler = Some(Box::new(closure));
+    }
+
+     fn add_handler_input(&mut self, mut handler: Box<FnMut(String) -> Ms + 'static>){
+        let closure = move |event: web_sys::Event| {
             if let Some(target) = event.target() {
-                if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-                    return handler(input.value());
-                }
-                if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-                    return handler(input.value());
-                }
-                if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-                    return handler(input.value());
-                }
+                let val =  (target.unchecked_ref() as &web_sys::HtmlInputElement).value().into();
+                return handler(val)
             }
             handler("".into())
         };
 
-        Self::new(event, func)
+        self.handler = Some(Box::new(closure));
     }
+
+//    pub fn new_input(event: Event, mut handler: impl FnMut(String) -> Ms + 'static) -> Self {
+//        // todo delete this method?
+//        let func = move |event: web_sys::Event| {
+//            if let Some(target) = event.target() {
+//                if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+//                    return handler(input.value());
+//                }
+//                if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+//                    return handler(input.value());
+//                }
+//                if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+//                    return handler(input.value());
+//                }
+//            }
+//            handler("".into())
+//        };
+//
+//        Self::new(event, func)
+//    }
 
     /// This method is where the processing logic for events happens.
     fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
@@ -65,6 +129,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             .expect("add_event_listener_with_callback");
 
         closure.forget();
+//        self.handler.replace(handler);  // todo ?
     }
 }
 
@@ -113,25 +178,6 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
 }
 
 
-//
-///// UpdateEl is used to distinguish arguments in element-creation macros.
-//pub trait UpdateEvent<T> {
-//    // T is the type of thing we're updating; eg attrs, style, events etc.
-//    fn update(self, el: &mut T);
-//}
-
-//impl<Ms: Clone> UpdateEl<El<Ms>> for impl FnMut(web_sys::Event) -> Ms {
-//    fn update(self, el: &mut El<Ms>) {
-//        listener.()();
-//    }
-//}
-//
-//impl<Ms: Clone> UpdateEl<El<Ms>> for Ms {
-//    fn update(self, el: &mut El<Ms>) {
-//        listener.()();
-//    }
-//}
-//
 
 //#[derive(Debug)]
 pub enum _Attr {
@@ -288,6 +334,8 @@ make_events! {
     Drag => "drag", DragEnd => "dragend", DragEnter => "dragenter", DragStart => "dragstart", DragLeave => "dragleave",
     DragOver => "dragover", Drop => "drop",
 
+    // todo finish this
+
     Change => "change",
 
     Input => "input"
@@ -410,10 +458,6 @@ impl<Ms: Clone + 'static> El<Ms> {
 
     pub fn add_style(&mut self, key: String, val: String) {
         self.style.vals.insert(key, val);
-    }
-
-    pub fn add_listener(&mut self, event: Event, handler: impl FnMut(web_sys::Event) -> Ms + 'static) {
-        self.listeners.push(Listener::new(event, handler));
     }
 
     pub fn set_text(&mut self, text: &str) {

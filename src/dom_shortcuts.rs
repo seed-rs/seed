@@ -890,23 +890,48 @@ macro_rules! style {
 }
 
 
-#[macro_export]
-macro_rules! events {
-    { $($event_str:expr => $handler:expr);+ } => {
-        {
-            let mut result = Vec::new();
-            $(
-                match $event_str {
-                    _ => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
-//                    "input" => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
-//                    _ => result.push(seed::dom_types::Listener::new($event_str.into(), $handler)),
+//#[macro_export]
+//macro_rules! events {
+//    { $($event_str:expr => $handler:expr);+ } => {
+//        {
+//            let mut result = Vec::new();
+//            $(
+//                match $event_str {
+////                    _ => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
+//
+//
+//                    _ => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
+////
+////
+////
+////  "input" => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
+////                    _ => result.push(seed::dom_types::Listener::new($event_str.into(), $handler)),
+//
+//                }
+//
+////                result.push(seed::dom_types::Listener::new($event_str.into(), $handler));
+//            )+
+//            result
+//        }
+//     };
+//}
+//
 
-                }
 
-//                result.push(seed::dom_types::Listener::new($event_str.into(), $handler));
-            )+
-            result
-        }
-     };
-}
 
+//#[macro_export]
+//macro_rules! events {
+//    { $($event_str:expr => $handler:expr);* } => {
+//        {
+//            let mut result = Vec::new();
+//                $ (
+////                    result.push(($event_str, $handler));
+//                    let mut listener = seed::dom_types::Listener::empty($event_str.into());
+////                    $handler.update_l(&mut listener);
+//                    Box::new($handler).update_l(&mut listener);
+//                    result.push(listener);
+//                 )*
+//            result
+//        }
+//    };
+//}
