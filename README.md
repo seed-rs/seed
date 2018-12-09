@@ -1,12 +1,12 @@
 # Seed
 
-**A Rust framework for creating webapps**
+**A Rust framework for creating web apps**
 
 ## Quickstart
 
 ### Setup
-This package requires you to install [Rust](https://www.rust-lang.org/en-US/). This will
-enable the CLI commands below.
+This package requires you to install [Rust](https://www.rust-lang.org/en-US/) - This will
+enable the CLI commands below:
 
  You'll need a recent version of Rust's nightly toolchain:
 `rustup update`
@@ -19,10 +19,8 @@ And wasm-bindgen:
 `cargo +nightly install wasm-bindgen-cli`
 
 To start, either clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart) 
-or create a new lib with Cargo:
-`cargo new --lib appname`
-
-Here and everywhere it appears in this guide, `appname` refers to the name of your app.
+or create a new lib with Cargo: `cargo new --lib appname` Here and everywhere it appears in this guide, `
+appname` refers to the name of your app.
 
 You need an Html file that loads your app's compiled module, and provides a div with id 
 to load the framework into. It also needs the following code to load your WASM module -
@@ -42,24 +40,20 @@ to load the framework into. It also needs the following code to load your WASM m
 
 <script>
     const { render } = wasm_bindgen;
-
     function run() {
         render();
     }
-
     wasm_bindgen('./pkg/appname_bg.wasm')
         .then(run)
         .catch(console.error);
 </script>
 ```
 
-The Quickstart repo includes this file, but you will need to rename the two 
-occurances of `appname`.
-
-You will eventually need to modify this file to 
+The quickstart repo includes this file, but you will need to rename the two 
+occurances of `appname`. You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
 
-`Cargo.toml`needs `wasm-bindgen`, and `seed` as depdendencies, and crate-type
+`Cargo.toml`needs `wasm-bindgen`, `web-sys`, and `seed` as depdendencies, and crate-type
 of `"cdylib"`. Example:
 
 ```toml
@@ -88,7 +82,7 @@ serde_json = "1.0.33"
 Here's an example app to demonstrating syntax. Descriptions of its parts are in the
 Guide section below.
 
-lib.rs:
+*lib.rs*:
 ```rust
 #[macro_use]
 // This is required to allow access to element-creation macros
@@ -125,7 +119,7 @@ impl Default for Model {
 enum Msg {
     Increment,
     Decrement,
-    ChangeWWC()
+    ChangeWWC(String)
 }
 
 // Sole source of updating the model; returns a whole new model.
@@ -137,9 +131,8 @@ fn update(msg: &Msg, model: &Model) -> Model {
         Msg::Decrement => {
             Model {count: model.count - 1, what_we_count: model.what_we_count}
         },
-        Msg::ChangeWWC() => {
-//            Model {count: model.count, what_we_count: ev.target.value}
-            Model {count: model.count, what_we_count: "Tester"}
+        Msg::ChangeWWC(text) => {
+            Model {count: model.count, what_we_count: text}
         },
     }
 }
@@ -177,22 +170,22 @@ fn main_comp(model: &Model) -> El<Msg> {
             },
             vec![
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ events!{"click" => |_| Msg::Increment}, "+" ],
-                button![ events!{"click" => |_| Msg::Decrement}, "-" ]
+                button![ events!{"click" => Msg::Increment}, "+" ],
+                button![ events!{"click" => Msg::Decrement}, "-" ]
             ] ],
         success_level(model.count),
 
         h3![ "What precisely is it we're counting?" ],
-//        input![ attrs!{"value" => model.what_we_count}, events!{
-//            "change" => |ev: web_sys::Event| Msg::ChangeWWC(ev.target().value())
-//        } ]
+        input![ attrs!{"value" => model.what_we_count}, events!{
+                "change" => |ev| Msg::ChangeWWC(ev)
+        } ]
     ] ]
 }
 
 
 #[wasm_bindgen]
 pub fn render() {
-    vdom::run(Model::default(), update, main_comp, "main");
+    seed::vdom::run(Model::default(), update, main_comp, "main");
 }
 ```
 
@@ -263,11 +256,10 @@ using these tools will likely have an easy time learning Seed.
 **Model**
 
 Each app must contain a model [struct]( https://doc.rust-lang.org/book/ch05-00-structs.html), 
-which contains the app’s state and data. It can contain 
-[owned data](https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html), or references
-with a static [lifetime](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html).
- If you're not sure which to use, keep in mind they'll both work for many uses, and
-  `&'static str` has simpler syntax. Example:
+which contains the app’s state and data. It should contain 
+[owned data](https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html). References
+with a static [lifetime](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html) may work,
+but will be more difficult to work with. Example:
 
 ```rust
 #[derive(Clone)]
@@ -306,7 +298,6 @@ The sub-structs must also implement `Clone`:
 struct FormData {
     name: String,
     age: i8,
-
 }
 
 #[derive(Clone)]
