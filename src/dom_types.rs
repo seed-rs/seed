@@ -4,8 +4,6 @@
 use std::collections::HashMap;
 
 use std::borrow::Cow;
-use std::cmp;
-use std::rc::Rc;
 
 use web_sys;
 use wasm_bindgen::{prelude::*, JsCast};
@@ -72,7 +70,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         closure.forget();
     }
 
-    fn detach(&self, element: &web_sys::Element) {
+    fn _detach(&self, element: &web_sys::Element) {
         let closure = self.closure.as_ref().unwrap();
         (element.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
@@ -232,7 +230,7 @@ macro_rules! make_events {
             pub fn as_str(&self) -> &str {
                 match self {
                     $ (
-                        &Event::$event_camel => $event,
+                        Event::$event_camel => $event,
                     ) +
                 }
             }
@@ -305,7 +303,7 @@ macro_rules! make_tags {
             pub fn as_str(&self) -> &str {
                 match self {
                     $ (
-                        &Tag::$tag_camel => $tag,
+                        Tag::$tag_camel => $tag,
                     ) +
                 }
             }
@@ -417,7 +415,7 @@ impl<Ms: Clone + 'static> El<Ms> {
     // todo do we need this method?
     /// Output the HTML of this node, including all its children, recursively.
     fn _html(&self) -> String {
-        let text = self.text.clone().unwrap_or(String::new());
+        let text = self.text.clone().unwrap_or_default();
 
         let opening = String::from("<") + self.tag.as_str() + &self.attrs.as_str() + " style=\"" + &self.style.as_str() + & ">\n";
 
@@ -434,7 +432,7 @@ impl<Ms: Clone + 'static> El<Ms> {
     /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
     /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
     /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-    pub fn make_websys_el(&mut self, document: &web_sys::Document, ids: &Vec<u32>, mailbox: Mailbox<Ms>) -> web_sys::Element {
+    pub fn make_websys_el(&mut self, document: &web_sys::Document, mailbox: Mailbox<Ms>) -> web_sys::Element {
 //    pub fn make_websys_el(&mut self, el_map: HashMap<u32, web_sys::Element>, document: &web_sys::Document,
 //                          ids: &Vec<u32>, mailbox: Mailbox<Ms>) -> HashMap<u32, web_sys::Element> {
         //
@@ -461,12 +459,6 @@ impl<Ms: Clone + 'static> El<Ms> {
         for listener in &mut self.listeners {
             listener.attach(&el_ws, mailbox.clone());
         }
-
-//        for child in &mut self.children {
-//            el_ws.append_child(&child.make_websys_el(document, ids, mailbox.clone())).unwrap();
-//        }
-
-//        self.el_ws = Some(el_ws.clone());  // todo clone??
 
         el_ws
     }
@@ -498,9 +490,9 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
             style: self.style.clone(),
             text: self.text.clone(),
             children: self.children.clone(),
-            key: self.key.clone(),
-            id: self.id.clone(),
-            nest_level: self.nest_level.clone(),
+            key: self.key,
+            id: self.id,
+            nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
         }
@@ -521,12 +513,4 @@ impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
             // todo how we iterate? Sanity-check for now.
             self.nest_level == other.nest_level
     }
-}
-
-fn add_id(ids: Vec<u32>) -> Vec<u32> {
-    // duped from vdom
-    let new_id = ids.last().unwrap() + 1;
-    let mut result = ids;
-    result.push(new_id);
-    result
 }

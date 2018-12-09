@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate rebar;
 use rebar::prelude::*;
+// todo: Sort out if you need JsCast once you've settled out events.
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys;
@@ -99,8 +100,8 @@ fn main_comp(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-     div![ outer_style, &model.count.to_string(), vec![
-//     div![ outer_style, vec![
+//     div![ outer_style, &model.count.to_string(), vec![
+     div![ outer_style, vec![
         h1![ "The Grand Total" ],
         div![
             style!{
