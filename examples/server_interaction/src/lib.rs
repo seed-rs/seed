@@ -1,6 +1,6 @@
 #[macro_use]
-extern crate rebar;
-use rebar::prelude::*;
+extern crate seed;
+use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
 extern crate serde;
@@ -56,11 +56,11 @@ fn update(msg: &Msg, model: &Model) -> Model {
 
 // View
 
-fn main_comp(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     div![ "Hello World" ]
 }
 
 #[wasm_bindgen]
 pub fn render() {
-    rebar::vdom::run(Model::default(), update, main_comp, "main");
+    rebar::run(Model::default(), update, view, "main");
 }

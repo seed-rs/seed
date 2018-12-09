@@ -1,4 +1,4 @@
-//! A simple, cliché example demonstrating the basics.
+//! A simple, cliché example demonstrating structure and syntax.
 
 #[macro_use]
 extern crate seed;
@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::*;
 
 // Model
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct Model {
     count: i32,
     what_we_count: String
@@ -89,19 +89,16 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept a ref to the model as its
 /// only argument, and output a single El.
-fn main_comp(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
-    // Attrs, Style, and Events may be defined separately, and passed into
-    // element macros.
+    // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style!{
             "display" => "flex";
             "flex-direction" => "column";
-            "text-align" => "center";
-            "margin" => "auto"
+            "text-align" => "center"
     };
 
-//     div![ outer_style, &model.count.to_string(), vec![
      div![ outer_style, vec![
         h1![ "The Grand Total" ],
         div![
@@ -113,19 +110,16 @@ fn main_comp(model: &Model) -> El<Msg> {
                 "border" => "2px solid #004422"; "padding" => 20
             },
             vec![
-                // We can insert normal Rust code in the view, without speical syntax.
+                // We can use normal Rust code in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
                 button![ events!{"click" => |_| Msg::Increment}, "+" ],
                 button![ events!{"click" => |_| Msg::Decrement}, "-" ],
 
-                // An example of optionally-displaying an element: Note that with
-                // ternary logic like this, we must pass an element on both branches.
-                // If you wish to avoid the extra el, you can construct the children Vec
-                // separately, and optionally append the El.
-                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { span![] }
+                // Optionally-displaying an element
+                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
 
             ] ],
-        success_level(model.count),
+        success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
         input![ attrs!{"value" => model.what_we_count}, events!{
@@ -138,5 +132,5 @@ fn main_comp(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::vdom::run(Model::default(), update, main_comp, "main");
+    seed::run(Model::default(), update, view, "main");
 }

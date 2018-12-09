@@ -4,13 +4,9 @@
 
 pub mod dom_types;
 
-#[macro_use]
-pub mod dom_shortcuts;
-
+mod dom_shortcuts;
 //mod fetch;
-pub mod vdom;
-
-//pub use vdom::run;  // todo this may start working again in the future.
+mod vdom;
 
 
 //// todos:
@@ -23,6 +19,32 @@ pub mod vdom;
 
 // todo keyed elements??
 
+
+/// The entry point for the app
+pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
+          view: fn(&Mdl) -> dom_types::El<Ms>, main_div_id: &str) {
+    let app = vdom::App::new(model, update, view, main_div_id);
+
+    // Our initial render. Can't initialize in new due to mailbox() requiring self.
+    let mut main_el_vdom = (app.data.view)(&app.data.model.borrow());
+    app.setup_vdom(&mut main_el_vdom, 0, 0);
+    // Attach all children: This is where our initial render occurs.
+    vdom::attach(&mut main_el_vdom, &app.data.main_div);
+
+    // todo really: You shouldn't need to attach here. Will be handled by patch
+// todo try it again. and maybe have a helper func to update the model, setup_vdom, run patch etc??
+// todo or maybe i'm wrong
+    app.data.main_el_vdom.replace(main_el_vdom);
+}
+
+/// Create an element flagged in a way that it will not be rendered. Useful
+/// in ternary operations.
+pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
+    // The tag doesn't matter here, but this seems semantically appropriate.
+    let mut el = dom_types::El::empty(dom_types::Tag::Del);
+    el.add_attr("dummy-element".into(), "true".into());
+    el
+}
 
 /// A convenience function for logging to the web browser's console.
 pub fn log(text: &str) {

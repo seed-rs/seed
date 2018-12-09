@@ -223,5 +223,5 @@ fn todo_app(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::vdom::run(Model::default(), update, todo_app, "main");
+    seed::run(Model::default(), update, todo_app, "main");
 }

@@ -18,8 +18,8 @@ The wasm32-unknown-unknown target:
 And wasm-bindgen: 
 `cargo +nightly install wasm-bindgen-cli`
 
-To start, either clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart) 
-or create a new lib with Cargo: `cargo new --lib appname` Here and everywhere it appears in this guide, `
+To start, either clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
+or create a new lib with Cargo: `cargo new --lib appname` .Here and everywhere it appears in this guide, `
 appname` refers to the name of your app.
 
 You need an Html file that loads your app's compiled module, and provides a div with id 
@@ -79,8 +79,8 @@ serde_json = "1.0.33"
 ```
 
 ### A short example
-Here's an example app to demonstrating syntax. Descriptions of its parts are in the
-Guide section below.
+Here's an example app demonstrating syntax. Descriptions of its parts are in the
+Guide section below. Its structure closely resembles [The Elm Architecture](https://guide.elm-lang.org/architecture/).
 
 *lib.rs*:
 ```rust
@@ -152,7 +152,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 // Top-level component we pass to the virtual dom. Must accept the model as its
 // only argument, and output a single El.
-fn main_comp(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
     let outer_style = style!{
@@ -185,7 +185,7 @@ fn main_comp(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::vdom::run(Model::default(), update, main_comp, "main");
+    seed::run(Model::default(), update, view, "main");
 }
 ```
 
@@ -248,7 +248,7 @@ is a good place to start.
 
 **Other frontend frameworks** The design principles Seed uses are similar to those
 used by React, Elm, and Yew. People familiar with how to set up interactive web pages
-using these tools will likely have an easy time learning Seed.
+using these tools will likely have an easy time learning this.
 
 
 ### App structure
@@ -329,7 +329,7 @@ enum Msg {
 ```
  
 The update [function]( https://doc.rust-lang.org/book/ch03-03-how-functions-work.html) 
-you pass to `seed::vdom::run` describes how the state should change, upon
+you pass to `seed::run` describes how the state should change, upon
 receiving each type of Message. It is the only place where the model is changed. It accepts a message reference, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
@@ -525,13 +525,27 @@ fn items() -> El<Msg> {
 }
 ```
 
+### Dummy elements
+When performing ternary and related operations instead an element macro, all
+branches must return `El`s to satisfy Rust's type system. Seed provides the
+`empty()` function, which creates a VDOM element that will not be rendered:
+
+```rust
+div![ vec![
+    if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+] ]
+```
+For more complicated construsts, you may wish to create the `children` `Vec` separately,
+push what components are needed, and pass it into the element macro.
+
+
 ### Initializing your app
 To start your app, pass an instance of your model, the update function, the top-level component function 
-(not its output), and name of the div you wish to mount it to to the `seed::vdom::run` function:
+(not its output), and name of the div you wish to mount it to to the `seed::run` function:
 ```rust
 #[wasm_bindgen]
 pub fn render() {
-    seed::vdom::run(Model::default(), update, main_comp, "main");
+    seed::run(Model::default(), update, view, "main");
 }
 ```
 This must be wrapped in a function named `render`, with the `#[wasm_bindgen]` invocation above.
@@ -598,7 +612,7 @@ of your familiarity with Rust.
 - An API that's easy to read, write, and understand.
 
 
-### A note on the view syntax
+### A note on view syntax
 This project takes a different approach to describing how to display DOM elements 
 than others. It neither uses completely natural (ie macro-free) Rust code, nor
 an HTML-like abstraction (eg JSX or templates). My intent is to make the code close 

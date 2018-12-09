@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::dom_types::{El, Tag};
+use crate::dom_types;
+use crate::dom_types::{El};
 
 
 // todo: Get rid of the clone assiated with MS everywhere if you can!
@@ -32,24 +33,24 @@ impl<Ms> Clone for Mailbox<Ms> {
 }
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
+pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     document: web_sys::Document,
-    main_div: web_sys::Element,
-    model: RefCell<Mdl>,
+    pub main_div: web_sys::Element,
+    pub model: RefCell<Mdl>,
     update: fn(&Ms, &Mdl) -> Mdl,
-    main_component: fn(&Mdl) -> El<Ms>,
-    main_el_vdom: RefCell<El<Ms>>,
+    pub view: fn(&Mdl) -> El<Ms>,
+    pub main_el_vdom: RefCell<El<Ms>>,
 }
 
 pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
-    data: Rc<Data<Ms, Mdl>>
+    pub data: Rc<Data<Ms, Mdl>>
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
 impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     pub fn new(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
-               top_component: fn(&Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
+               view: fn(&Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
 
         let window = web_sys::window().expect("no global `window` exists");
         let document = window.document().expect("should have a document on window");
@@ -63,9 +64,9 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
                 main_div: main_div.clone(),
                 model: RefCell::new(model),
                 update,
-                main_component: top_component,
+                view,
 
-                main_el_vdom: RefCell::new(El::empty(Tag::Div)),
+                main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
             })
         }
     }
@@ -88,7 +89,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
-        let mut topel_new_vdom = (self.data.main_component)(&updated_model);
+        let mut topel_new_vdom = (self.data.view)(&updated_model);
 
         // We're now done with this updated model; store it for use as the old
         // model for the next update.
@@ -129,7 +130,9 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
         // take removes the interior value from the Option; otherwise we run into problems
         // about not being able to remove from borrowed content.
         // We remove it from the old el_vodom now, and at the end... add it to the new one.
-        // We don't run attach_childre() when patching, hence this approach.
+        // We don't run attach_children() when patching, hence this approach.
+
+//        if new.is_dummy() == true { return }
 
         let old_el_ws = old.el_ws.take().expect("No old elws");
 
@@ -204,11 +207,10 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
         new.el_ws = Some(old_el_ws);
     }
 
-
     /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
     /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-    fn setup_vdom(&self, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32) {
-        // Active id iterates once per item; active-level once per nesting level.
+    pub fn setup_vdom(&self, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32) {
+        // id iterates once per item; active-level once per nesting level.
         let mut id = active_id;
         el_vdom.id = Some(id);
         id += 1;  // Raise the id after each element we process.
@@ -245,9 +247,14 @@ fn remove_children(el: &web_sys::Element) {
 // Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 // it performs a rerender of the el and all children; eg a potentially-expensive op.
 // Consider this funcion a way
-fn attach<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys::Element) {
+pub fn attach<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys::Element) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
+
+    // Don't render if we're dealing with a dummy element.
+    // todo get this working. it produes panics
+//    if el_vdom.is_dummy() == true { return }
+
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
     crate::log("Rendering element in attach");
@@ -295,8 +302,8 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 
     // todo check children a level or two down.
     // todo check types of children
-    let _old_tags: Vec<&Tag> = old.children.iter().map(|c| &c.tag).collect();
-    let _new_tags: Vec<&Tag> = new.children.iter().map(|c| &c.tag).collect();
+    let _old_tags: Vec<&dom_types::Tag> = old.children.iter().map(|c| &c.tag).collect();
+    let _new_tags: Vec<&dom_types::Tag> = new.children.iter().map(|c| &c.tag).collect();
 
     // todo: Recursively (or shallowly?) score children? we really must think of the children
     // todo seriously; we'll make lots of mistakes otherwise
@@ -369,22 +376,4 @@ pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>,
     }
 
     // todo events.
-}
-
-
-// The entry point for user apps; exposed in the prelude.
-pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
-                                                              main_component: fn(&Mdl) -> El<Ms>, main_div_id: &str) {
-    let app = App::new(model, update, main_component, main_div_id);
-
-    // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    let mut main_el_vdom = (app.data.main_component)(&app.data.model.borrow());
-    app.setup_vdom(&mut main_el_vdom, 0, 0);
-    // Attach all children: This is where our initial render occurs.
-    attach(&mut main_el_vdom, &app.data.main_div);
-
-    // todo really: You shouldn't need to attach here. Will be handled by patch
-// todo try it again. and maybe have a helper func to update the model, setup_vdom, run patch etc??
-// todo or maybe i'm wrong
-    app.data.main_el_vdom.replace(main_el_vdom);
 }

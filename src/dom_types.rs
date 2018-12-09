@@ -113,6 +113,26 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
 }
 
 
+//
+///// UpdateEl is used to distinguish arguments in element-creation macros.
+//pub trait UpdateEvent<T> {
+//    // T is the type of thing we're updating; eg attrs, style, events etc.
+//    fn update(self, el: &mut T);
+//}
+
+//impl<Ms: Clone> UpdateEl<El<Ms>> for impl FnMut(web_sys::Event) -> Ms {
+//    fn update(self, el: &mut El<Ms>) {
+//        listener.()();
+//    }
+//}
+//
+//impl<Ms: Clone> UpdateEl<El<Ms>> for Ms {
+//    fn update(self, el: &mut El<Ms>) {
+//        listener.()();
+//    }
+//}
+//
+
 //#[derive(Debug)]
 pub enum _Attr {
     // https://www.w3schools.com/tags/ref_attributes.asp
@@ -414,7 +434,6 @@ impl<Ms: Clone + 'static> El<Ms> {
         opening + &text + &inner + &closing
     }
 
-    // todo could do this with a From implementaiton once web_sys node/elemetn stop conflicting?
     /// Create, and return a web_sys Element, from our virtual-dom El. The web_sys
     /// Element is a close analog to the DOM elements.
     /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
@@ -466,6 +485,17 @@ impl<Ms: Clone + 'static> El<Ms> {
             listeners: Vec::new(),
         }
     }
+
+    /// Dummy elements are used when logic must return an El due to the type
+    /// system, but we don't want to render anything.
+    pub fn is_dummy(&self) -> bool {
+    if let Tag::Del = self.tag {
+        if let Some(val) = self.attrs.vals.get("dummy-element") {
+            return true;
+        }
+    }
+    return false;
+}
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the

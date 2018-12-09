@@ -1,16 +1,20 @@
-# TypeScript & React TodoMVC Example
+# Rust & Seed TodoMVC Example
 
-> TypeScript is a language for application-scale JavaScript development. TypeScript is a typed superset of JavaScript that compiles to plain JavaScript. Any browser. Any host. Any OS. Open Source.
+todo - use this intead; more mdirect: https://github.com/tastejs/todomvc/tree/gh-pages/examples/elm
 
-> _[TypeScript - typescriptlang.org](http://typescriptlang.org)_
+> Rust is a systems programming language with a focus on safety, 
+especially safe concurrency. It can be used with WebAssembly to run
+in web browsers.
+
+> _[Rust - https://www.rust-lang.org/](https://www.rust-lang.org)_
 
 > React is a JavaScript library for creating user interfaces. Its core principles are declarative code, efficiency, and flexibility. Simply specify what your component looks like and React will keep it up-to-date when the underlying data changes.
 
-> _[React - facebook.github.io/react](http://facebook.github.io/react)_
+> _[Seed - https://github.com/David-OConnor/seed/](https://github.com/David-OConnor/seed)_
 
-## Learning TypeScript
+## Learning Rust
 
-The [TypeScript website](http://typescriptlang.org) is a great resource for getting started.
+The [Rust website](https://www.rust-lang.org) is a great resource for getting started.
 
 Here are some links you may find helpful:
 
@@ -34,7 +38,7 @@ Get help from other TypeScript users:
 
 _If you have other helpful links to share, or find any of the links above no longer work, please [let us know](https://github.com/tastejs/todomvc/issues)._
 
-## Learning React
+## Learning Seed
 
 The [React getting started documentation](http://facebook.github.io/react/docs/getting-started.html) is a great way to get started.
 
