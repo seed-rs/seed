@@ -1,12 +1,9 @@
 //! A simple, cliché example demonstrating the basics.
 
 #[macro_use]
-extern crate rebar;
-use rebar::prelude::*;
-// todo: Sort out if you need JsCast once you've settled out events.
+extern crate seed;
+use seed::prelude::*;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::{prelude::*, JsCast};
-use web_sys;
 
 
 // Model
@@ -39,7 +36,7 @@ enum Msg {
     KeyTest(web_sys::Event),
 }
 
-// Sole source of updating the model; returns a whole new model.
+/// The sole source of updating the model; returns a fresh one.
 fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
         Msg::Increment => {
@@ -62,16 +59,16 @@ fn update(msg: &Msg, model: &Model) -> Model {
 //            Model {count: model.count, what_we_count: text}
 //        },
         Msg::KeyTest(ev) => {
-
-            let text = match ev.target() {
-                Some(et) => {
-                    rebar::log("KEY down");
-                    (et.unchecked_ref() as &web_sys::HtmlInputElement).value()
-                },
-                None => String::from("Error"),
-            };
-            rebar::log(&text);
-            Model {count: model.count, what_we_count: text}
+//
+//            let text = match ev.target() {
+//                Some(et) => {
+//                    seed::log("KEY down");
+//                    (et.unchecked_ref() as &web_sys::HtmlInputElement).value()
+//                },
+//                None => String::from("Error"),
+//            };
+//            seed::log(&text);
+            Model {count: model.count, what_we_count: "TEMP".into()}
         },
     }
 }
@@ -79,6 +76,7 @@ fn update(msg: &Msg, model: &Model) -> Model {
 
 // View
 
+/// A simple component.
 fn success_level(clicks: i32) -> El<Msg> {
     let descrip = match clicks {
         0 ... 3 => "Not very many 🙁",
@@ -89,15 +87,18 @@ fn success_level(clicks: i32) -> El<Msg> {
     p![ descrip ]
 }
 
-// Top-level component we pass to the virtual dom. Must accept the model as its
-// only argument, and output a single El.
+/// The top-level component we pass to the virtual dom. Must accept a ref to the model as its
+/// only argument, and output a single El.
 fn main_comp(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
+    // Attrs, Style, and Events may be defined separately, and passed into
+    // element macros.
     let outer_style = style!{
             "display" => "flex";
             "flex-direction" => "column";
-            "text-align" => "center"
+            "text-align" => "center";
+            "margin" => "auto"
     };
 
 //     div![ outer_style, &model.count.to_string(), vec![
@@ -105,13 +106,24 @@ fn main_comp(model: &Model) -> El<Msg> {
         h1![ "The Grand Total" ],
         div![
             style!{
+                // Example of conditional logic in a style.
                 "color" => if model.count > 4 {"purple"} else {"gray"};
-                "border" => "2px solid #004422"; "height" => 200
+                // When passing numerical values to style!, "px" is implied.
+                // If you want a different unit, use a str.
+                "border" => "2px solid #004422"; "padding" => 20
             },
             vec![
+                // We can insert normal Rust code in the view, without speical syntax.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
                 button![ events!{"click" => |_| Msg::Increment}, "+" ],
-                button![ events!{"click" => |_| Msg::Decrement}, "-" ]
+                button![ events!{"click" => |_| Msg::Decrement}, "-" ],
+
+                // An example of optionally-displaying an element: Note that with
+                // ternary logic like this, we must pass an element on both branches.
+                // If you wish to avoid the extra el, you can construct the children Vec
+                // separately, and optionally append the El.
+                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { span![] }
+
             ] ],
         success_level(model.count),
 
@@ -126,5 +138,5 @@ fn main_comp(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    rebar::vdom::run(Model::default(), update, main_comp, "main");
+    seed::vdom::run(Model::default(), update, main_comp, "main");
 }

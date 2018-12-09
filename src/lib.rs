@@ -9,7 +9,6 @@ pub mod dom_shortcuts;
 
 //mod fetch;
 pub mod vdom;
-//mod example;
 
 //pub use vdom::run;  // todo this may start working again in the future.
 

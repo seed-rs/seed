@@ -2,8 +2,8 @@
 //! https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react
 
 #[macro_use]
-extern crate rebar;
-use rebar::prelude::*;
+extern crate seed;
+use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 use web_sys;
 
@@ -17,9 +17,9 @@ enum Visible {
     Completed,
 }
 
-fn pluralize(len: usize, text: &str) -> &str {
-    let mut result = text.to_string();
-    if val.count != 1 {
+fn pluralize(count: usize, word: &str) -> &str {
+    let mut result = word.to_string();
+    if count != 1 {
         result += "s";
     }
     &result
@@ -28,9 +28,10 @@ fn pluralize(len: usize, text: &str) -> &str {
 
 // Model
 
+#[derive(Clone)]
 struct Item {
     id: u16,
-    name: &'static str,
+    name: String,
     edit_text: String,
     completed: bool,
     editing: bool,
@@ -46,7 +47,7 @@ impl Item {
     }
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 struct Model {
     todos: Vec<Item>,
     visible: Visible,
@@ -55,13 +56,14 @@ struct Model {
 }
 
 impl Model {
-    fn completed_count(&self) -> i32 { 
-        self.todos.filter(|i| i.completed == true).collect().len()
+    fn completed_count(&self) -> i32 {
+        let completed: Vec<&Item> = self.todos.iter().filter(|i| i.completed == true).collect();
+        completed.len() as i32
     }
 
     fn active_count(&self) -> i32 {
         // By process of elimination; active means not completed.
-        self.todos.len() - self.completed_count()
+        self.todos.len() as i32 - self.completed_count()
     }
 
 
@@ -70,9 +72,9 @@ impl Model {
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-        let window = web_sys::window()?;
-        let local_storage = window.local_storage();
-        local_storage.fetch_local_storage();
+        let window = web_sys::window().unwrap();
+        let local_storage = window.local_storage().unwrap().unwrap();
+//        local_storage.fetch_local_storage();
 
         Self {
             todos: Vec::new(),
@@ -86,15 +88,15 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     ClearCompleted,
-    Change(e),
-    EditItem((Item, ev)),
-    KeyDown(e),
-    KeyDownItem(Item),
-    Destroy(Item),
-    Toggle(Item),
+    Change(u16, String),  // item key, text
+    EditItem(u16),
+    KeyDown(u16),
+    KeyDownItem(u16),
+    Destroy(u16),
+    Toggle(u16),
     ToggleAll,
-    NewTodoKeydown(e),
-    Submit(e),
+    NewTodoKeydown(u16),
+    Submit(String),
 }
 
 //fn update(msg: &Msg, model: Rc<Model>) -> Model {
@@ -103,24 +105,25 @@ fn update(msg: &Msg, model: &Model) -> Model {
     let model = model.clone();
     match msg {
         Msg::ClearCompleted => (),
-        Msg::EditItem(item, event) => {
-            let updated_item = Item{ name: event.target.value, ..item.clone() };
-            let mut updated = &model.todos.filter(|todo| todo.id != updated_item.id).collect();
-            updated.push(updated_item);
-            Model {todos: updated, ..model}
+        Msg::EditItem(item_id) => {
+//            let updated_item = Item{ name: event.target.value, ..item.clone() };
+//            let mut updated = &model.todos.filter(|todo| todo.id != updated_item.id).collect();
+//            updated.push(updated_item);
+//            Model {todos: updated, ..model}
         },
-        Msg::KeyDownItem(item) => (),
-        Msg::Destroy(item) => (),
-        Msg::Toggle(item) => (),
+        Msg::KeyDownItem(key_id) => (),
+        Msg::Destroy(item_id) => (),
+        Msg::Toggle(item_id) => (),
         Msg::NewTodoKeydown(e) => (),
+        _ => (),
     };
 
-    model
+    Model::default()
 }
 
 // View
 
-fn todo_item(item: &Item) -> El<Msg> {
+fn todo_item(item: Item) -> El<Msg> {
 //       public componentDidUpdate(prevProps : ITodoItemProps) {
 //     if (!prevProps.editing && this.props.editing) {
 //       var node = React.findDOMNode<HTMLInputElement>(this.refs["editField"]);
@@ -139,25 +142,25 @@ fn todo_item(item: &Item) -> El<Msg> {
         div![ attrs!{"class" => "view"}, vec![
             input![ 
                 attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => &item.completed.to_string() },
-                events!{"change" => |_| Msg::Toggle(item)} 
+                events!{"change" => |_| Msg::Toggle(item.id)}
             ],
 
-            label![ events!{"doubleclick" => |e| Msg::EditItem(&item)}, item.name ],
-            button![ attrs!{"class" => "destroy"}, events!{"click" => |_| Msg::Destroy(item)} ]
+            label![ events!{"doubleclick" => |e| Msg::EditItem(item.id)}, item.name ],
+            button![ attrs!{"class" => "destroy"}, events!{"click" => |_| Msg::Destroy(item.id)} ]
         ] ],
 
         // todo ?? ref? state.editText?
         input![ 
             attrs!{"class" => "edit"; "value" => item.name},
-            events!{"blur" => |e| Msg::Submit(e); "change" => |e| Msg::Change(e);
-                    "keydown" => |e| Msg::KeyDown(item)}
+            events!{"blur" => |e| Msg::Submit(e); "change" => |e| Msg::Change(item.id, String::from("TEST"));
+                    "keydown" => |e| Msg::KeyDown(1)}
         ]
     ] ]
 }
 
-fn selection_li(text: &str, highlighter: Msg, path: &str) -> El<Msg> {
+fn selection_li(text: &str, path: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![ vec![
-        a![ attrs!{"href" => path; "class" => match model.visible {
+        a![ attrs!{"href" => path; "class" => match visible {
             highlighter => "selected",
             _ => ""
         }}, text ]
@@ -167,32 +170,31 @@ fn selection_li(text: &str, highlighter: Msg, path: &str) -> El<Msg> {
 fn footer(model: &Model) -> El<Msg> {
     let active_todo_word = pluralize(model.todos.len(), "item");
 
-    if model.completed_count() > 0 {
-        let clear_button = button![ 
+    let clear_button = if model.completed_count() > 0 {
+        button![
             attrs!{"class" => "clear-completed"},
             events!{"click" => |_| Msg::ClearCompleted},
             "Clear completed"
-        ];
-    } else { let clear_button = div![]; };
+        ]
+    } else { div![] };
 
     footer![ attrs!{"class" => "footer"}, vec![
         span![ attrs!{"class" => "todo-count"}, vec![
-            strong![ &model.items.len().to_string() ]
-        ], model.active_todo_word + "left" ],
+            strong![ &model.todos.len().to_string() ]
+        ], format!("{} left", active_todo_word) ],
 
         ul![ attrs!{"class" => "filters"}, vec![
-            selection_li("All", "#/", Visible::All),
-            selection_li("Active", "#/active", Visible::Active),
-            selection_li("Completed", "#/completed", Visible::Completed),
+            selection_li("All", "#/", model.visible, Visible::All),
+            selection_li("Active", "#/active", model.visible, Visible::Active),
+            selection_li("Completed", "#/completed", model.visible, Visible::Completed),
         ] ],
         clear_button
     ] ]
 }
 
-
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
 fn todo_app(model: &Model) -> El<Msg> {
-    let todo_items: Vec<El<Msg>> = model.todos.iter().map(|todo| todo_item(todo)).collect();
+    let todo_items: Vec<El<Msg>> = model.todos.iter().map(|todo| todo_item(todo.clone())).collect();
 
     let main = section![ attrs!{"class" => "main"}, vec![
         input![
@@ -210,7 +212,7 @@ fn todo_app(model: &Model) -> El<Msg> {
             input![
                 attrs!{"class" => "new-todo"; "placeholder" => "What needs to be done?";
                        "auto-focus" => &true.to_string()},
-                events!{"keydown" => |ev| Msg::NewTodoKeydown(ev)}
+                events!{"keydown" => |ev| Msg::NewTodoKeydown(1)}
            ]
         ] ],
         main,
@@ -221,5 +223,5 @@ fn todo_app(model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    rebar::vdom::run(Model::default(), update, todo_app, "main");
+    seed::vdom::run(Model::default(), update, todo_app, "main");
 }

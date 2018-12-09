@@ -2,9 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3452ec20-742e-44e7-91f1-73266b0307dc" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/framework.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/counter/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/examples/counter/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/counter/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/examples/counter/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/todomvc/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/examples/todomvc/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/todomvc/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/examples/todomvc/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/dom_shortcuts.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/dom_shortcuts.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/dom_types.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/dom_types.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vdom.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/vdom.rs" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/" />
@@ -17,25 +26,38 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="600">
-      <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="true">
+      <file leaf-file-name="vdom.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/vdom.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="431">
-              <caret line="198" column="57" lean-forward="true" selection-start-line="198" selection-start-column="57" selection-end-line="198" selection-end-column="57" />
+            <state relative-caret-position="5488">
+              <caret line="345" column="24" selection-start-line="345" selection-start-column="24" selection-end-line="345" selection-end-column="24" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Cargo.lock" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Cargo.lock">
-          <provider selected="true" editor-type-id="text-editor" />
+      <file leaf-file-name="Cargo.toml" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/examples/counter/Cargo.toml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="144">
+              <caret line="9" selection-start-line="9" selection-end-line="9" />
+            </state>
+          </provider>
         </entry>
       </file>
       <file leaf-file-name="Cargo.toml" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Cargo.toml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="272">
-              <caret line="17" column="16" selection-start-line="17" selection-start-column="16" selection-end-line="17" selection-end-column="16" />
+            <state relative-caret-position="144">
+              <caret line="9" column="20" selection-start-line="9" selection-start-column="20" selection-end-line="9" selection-end-column="20" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/lib.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="159">
+              <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
             </state>
           </provider>
         </entry>
@@ -43,8 +65,8 @@
       <file leaf-file-name="dom_types.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="207">
-              <caret line="72" column="8" selection-start-line="72" selection-start-column="8" selection-end-line="72" selection-end-column="8" />
+            <state relative-caret-position="5312">
+              <caret line="348" selection-start-line="348" selection-end-line="348" />
             </state>
           </provider>
         </entry>
@@ -52,8 +74,8 @@
       <file leaf-file-name="dom_shortcuts.rs" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="197">
-              <caret line="882" column="14" selection-start-line="882" selection-start-column="14" selection-end-line="882" selection-end-column="14" />
+            <state relative-caret-position="14240">
+              <caret line="890" column="21" selection-start-line="890" selection-start-column="21" selection-end-line="890" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -62,19 +84,10 @@
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="262">
-                <caret line="580" selection-start-line="580" selection-end-line="580" />
+              <first_editor relative-caret-position="160">
+                <caret line="10" column="54" selection-start-line="10" selection-start-column="54" selection-end-line="10" selection-end-column="54" />
               </first_editor>
               <second_editor />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="lib.rs" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="413">
-              <caret line="118" column="8" selection-start-line="118" selection-start-column="8" selection-end-line="118" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -90,23 +103,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>what_we</find>
-      <find>from</find>
-      <find>decr</find>
-      <find>Tag</find>
-      <find>attach_</find>
-      <find>.patch</find>
-      <find>data.model</find>
-      <find>.attach</find>
-      <find>web_sys::</find>
-      <find>old</find>
-      <find>patch_el_de</find>
-      <find>patch_el_d</find>
-      <find>input</find>
-      <find>let mut sco</find>
-      <find>new.el_ws</find>
-      <find>target/</find>
-      <find>patch_el_</find>
       <find>patch_el</find>
       <find>append_ch</find>
       <find>partiale</find>
@@ -120,6 +116,23 @@
       <find>pre pa</find>
       <find>self</find>
       <find>match_score</find>
+      <find>building and</find>
+      <find>building an</find>
+      <find>building</find>
+      <find>quicks</find>
+      <find>drago</find>
+      <find>crate::lo</find>
+      <find>or with py</find>
+      <find>.closure</find>
+      <find>struct el</find>
+      <find>children</find>
+      <find>submit</find>
+      <find>static</find>
+      <find>todo_item(</find>
+      <find>appnam</find>
+      <find>reba</find>
+      <find>rebar</find>
+      <find>seed</find>
     </findStrings>
     <replaceStrings>
       <replace>empty</replace>
@@ -133,6 +146,7 @@
       <replace>self.data</replace>
       <replace>let el</replace>
       <replace>rebar::dom_types::Tag</replace>
+      <replace>seed</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -161,11 +175,7 @@
         <option value="$PROJECT_DIR$/../rebar-quickstart/build.sh" />
         <option value="$PROJECT_DIR$/examples/counter/build.ps1" />
         <option value="$PROJECT_DIR$/.gitignore" />
-        <option value="$PROJECT_DIR$/examples/todomvc/src/lib.rs" />
-        <option value="$PROJECT_DIR$/examples/todomvc/Cargo.toml" />
-        <option value="$PROJECT_DIR$/examples/counter/Cargo.toml" />
         <option value="$PROJECT_DIR$/src/example.rs" />
-        <option value="$PROJECT_DIR$/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/serialize.rs" />
         <option value="$PROJECT_DIR$/examples/server_interaction/src/lib.rs" />
         <option value="$PROJECT_DIR$/examples/todomvc/build.ps1" />
@@ -174,12 +184,16 @@
         <option value="$PROJECT_DIR$/examples/server_interaction/build.ps1" />
         <option value="$PROJECT_DIR$/examples/server_interaction/index.html" />
         <option value="$PROJECT_DIR$/examples/todomvc/index.html" />
+        <option value="$PROJECT_DIR$/src/vdom.rs" />
+        <option value="$PROJECT_DIR$/src/dom_types.rs" />
+        <option value="$PROJECT_DIR$/Cargo.toml" />
+        <option value="$PROJECT_DIR$/examples/counter/Cargo.toml" />
+        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
+        <option value="$PROJECT_DIR$/examples/todomvc/Cargo.toml" />
+        <option value="$PROJECT_DIR$/examples/todomvc/src/lib.rs" />
         <option value="$PROJECT_DIR$/src/dom_shortcuts.rs" />
         <option value="$PROJECT_DIR$/README.md" />
-        <option value="$PROJECT_DIR$/Cargo.toml" />
-        <option value="$PROJECT_DIR$/examples/counter/src/lib.rs" />
-        <option value="$PROJECT_DIR$/src/dom_types.rs" />
-        <option value="$PROJECT_DIR$/src/vdom.rs" />
+        <option value="$PROJECT_DIR$/src/lib.rs" />
       </list>
     </option>
   </component>
@@ -193,10 +207,10 @@
     <packageJsonPaths />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1625" />
-    <option name="y" value="71" />
-    <option name="width" value="1472" />
-    <option name="height" value="1289" />
+    <option name="x" value="1847" />
+    <option name="y" value="204" />
+    <option name="width" value="1410" />
+    <option name="height" value="1227" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -207,43 +221,17 @@
         <subPane>
           <expand>
             <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
+              <item name="seed" type="b2602c69:ProjectViewProjectNode" />
+              <item name="seed" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
+              <item name="seed" type="b2602c69:ProjectViewProjectNode" />
+              <item name="seed" type="462c0819:PsiDirectoryNode" />
               <item name="examples" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="counter" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="counter" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="todomvc" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="todomvc" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="framework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="rebar" type="462c0819:PsiDirectoryNode" />
+              <item name="seed" type="b2602c69:ProjectViewProjectNode" />
+              <item name="seed" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -255,7 +243,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../AirForce/told" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
@@ -311,7 +299,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1625" y="71" width="1472" height="1289" extended-state="0" />
+    <frame x="1847" y="204" width="1410" height="1227" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -321,8 +309,8 @@
       <window_info anchor="bottom" id="Version Control" order="11" weight="0.32881662" />
       <window_info anchor="bottom" id="Python Console" order="8" weight="0.32910246" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3363554" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.39152983" />
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.16359773" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.41369864" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.17407407" />
       <window_info anchor="bottom" id="Docker" order="10" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="5" />
       <window_info anchor="right" id="SciView" order="4" />
@@ -340,26 +328,26 @@
     <layout-to-restore>
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Docker" order="11" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="12" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Cargo" order="3" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.8189655" visible="true" weight="0.14243324" />
       <window_info id="Structure" order="1" sideWeight="0.18103448" side_tool="true" visible="true" weight="0.14243324" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Run" order="2" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32935154" />
+      <window_info anchor="bottom" id="Python Console" order="9" weight="0.3292683" />
+      <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="right" id="Database" order="5" />
       <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.39425588" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Database Changes" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Version Control" order="12" />
       <window_info anchor="right" id="SciView" order="4" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="right" id="Database" order="5" />
-      <window_info anchor="bottom" id="Python Console" order="9" weight="0.3292683" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32935154" />
+      <window_info id="Favorites" order="2" side_tool="true" />
     </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -369,6 +357,16 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="160">
+            <caret line="10" column="54" selection-start-line="10" selection-start-column="54" selection-end-line="10" selection-end-column="54" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/build.ps1" />
     <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
       <provider selected="true" editor-type-id="text-editor">
@@ -416,13 +414,7 @@
     <entry file="file://$PROJECT_DIR$/build.ps1" />
     <entry file="file://$PROJECT_DIR$/index.html" />
     <entry file="file://$PROJECT_DIR$/build.sh" />
-    <entry file="file://$PROJECT_DIR$/../rebar-quickstart/build.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="32">
-          <caret line="2" column="64" lean-forward="true" selection-start-line="2" selection-start-column="64" selection-end-line="2" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/../rebar-quickstart/build.sh" />
     <entry file="file://$PROJECT_DIR$/examples/counter/build.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="16">
@@ -451,13 +443,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/counter/Cargo.toml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="19" selection-start-line="19" selection-end-line="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/examples/counter/README.md" />
     <entry file="file://$PROJECT_DIR$/src/fetch.rs">
       <provider selected="true" editor-type-id="text-editor">
@@ -467,13 +452,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/example.rs" />
-    <entry file="file://$PROJECT_DIR$/examples/todomvc/src/lib.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3056">
-          <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/serialize.rs" />
     <entry file="file://$PROJECT_DIR$/examples/todomvc/build.ps1">
       <provider selected="true" editor-type-id="text-editor">
@@ -486,13 +464,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="32">
           <caret line="2" column="62" selection-start-line="2" selection-start-column="62" selection-end-line="2" selection-end-column="62" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/todomvc/Cargo.toml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="224">
-          <caret line="14" selection-start-line="14" selection-end-line="14" />
         </state>
       </provider>
     </entry>
@@ -538,63 +509,81 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider editor-type-id="text-editor">
-        <state relative-caret-position="1054">
-          <caret line="40" column="19" lean-forward="true" selection-start-line="40" selection-start-column="19" selection-end-line="40" selection-end-column="19" />
-        </state>
-      </provider>
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="262">
-            <caret line="580" selection-start-line="580" selection-end-line="580" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="197">
-          <caret line="882" column="14" selection-start-line="882" selection-start-column="14" selection-end-line="882" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/lib.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="512">
-          <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Cargo.lock">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Cargo.toml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="17" column="16" selection-start-line="17" selection-start-column="16" selection-end-line="17" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/dom_types.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="207">
-          <caret line="72" column="8" selection-start-line="72" selection-start-column="8" selection-end-line="72" selection-end-column="8" />
+        <state relative-caret-position="5312">
+          <caret line="348" selection-start-line="348" selection-end-line="348" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/counter/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="144">
+          <caret line="9" selection-start-line="9" selection-end-line="9" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/counter/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="413">
-          <caret line="118" column="8" selection-start-line="118" selection-start-column="8" selection-end-line="118" selection-end-column="8" />
+        <state relative-caret-position="302">
+          <caret line="67" column="48" lean-forward="true" selection-start-line="67" selection-start-column="48" selection-end-line="67" selection-end-column="48" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/todomvc/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="64">
+          <caret line="4" column="16" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/todomvc/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="237">
+          <caret line="206" column="8" lean-forward="true" selection-start-line="206" selection-start-column="8" selection-end-line="206" selection-end-column="8" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/vdom.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="431">
-          <caret line="198" column="57" lean-forward="true" selection-start-line="198" selection-start-column="57" selection-end-line="198" selection-end-column="57" />
+        <state relative-caret-position="5488">
+          <caret line="345" column="24" selection-start-line="345" selection-start-column="24" selection-end-line="345" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dom_shortcuts.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="14240">
+          <caret line="890" column="21" selection-start-line="890" selection-start-column="21" selection-end-line="890" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="160">
+            <caret line="10" column="54" selection-start-line="10" selection-start-column="54" selection-end-line="10" selection-end-column="54" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+      <provider editor-type-id="text-editor">
+        <state relative-caret-position="1054">
+          <caret line="40" column="19" lean-forward="true" selection-start-line="40" selection-start-column="19" selection-end-line="40" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="144">
+          <caret line="9" column="20" selection-start-line="9" selection-start-column="20" selection-end-line="9" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="159">
+          <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
         </state>
       </provider>
     </entry>

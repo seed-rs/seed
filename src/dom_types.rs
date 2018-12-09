@@ -19,9 +19,7 @@ use crate::vdom::Mailbox;  // todo temp
 pub struct Listener<Ms: Clone> {
     pub trigger: Cow<'static, str>,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
-    pub closure: Option<Closure<FnMut(web_sys::Event)>>,
 }
-
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms: Clone + 'static> Listener<Ms> {
@@ -30,7 +28,6 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         Self {
             trigger: String::from(event.as_str()).into(),
             handler: Some(Box::new(handler)),
-            closure: None
         }
     }
 
@@ -68,13 +65,6 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             .expect("add_event_listener_with_callback");
 
         closure.forget();
-    }
-
-    fn _detach(&self, element: &web_sys::Element) {
-        let closure = self.closure.as_ref().unwrap();
-        (element.as_ref() as &web_sys::EventTarget)
-            .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
-            .expect("remove_event_listener_with_callback");
     }
 }
 
@@ -351,15 +341,13 @@ make_tags! {
     Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template"
 }
 
-//#[derive(Clone)] // todo temp??
+/// The Element component of our virtual DOM.
 pub struct El<Ms: Clone + 'static> {
-    // M is a message type, as in part of TEA.
+    // M sis a message type, as in part of TEA.
+    // We call this 'El' instead of 'Element' for brevity, and to prevent
+    // confusion with web_sys::Element.
 
-    // Don't use 'Element' name verbatim, to avoid * import conflict with web_sys.
-    // todo web_sys::Element is a powerful struct. Use that instead??
-    // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
-    // todo can we have both text and children?
-    // pub id: u32,
+    // Core attributes that correspond to the DOM element.
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
@@ -367,17 +355,17 @@ pub struct El<Ms: Clone + 'static> {
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
-    // todo temp?
-    pub key: Option<u32>,
+    // Things that get filled in later, to assist with rendering.
     pub id: Option<u32>,
     pub nest_level: Option<u32>,
-
+    pub el_ws: Option<web_sys::Element>,
 
     // todo temp?
-    pub el_ws: Option<web_sys::Element>,
+    pub key: Option<u32>,
+
+    // Event-handling
     listeners: Vec<Listener<Ms>>,
 }
-
 
 impl<Ms: Clone + 'static> El<Ms> {
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
@@ -498,7 +486,6 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
         }
     }
 }
-
 
 impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {

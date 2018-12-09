@@ -138,17 +138,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
             // At this step, we already assume we have the right element - either
             // by entering this func directly for the top-level, or recursively after
             // analyzing children
-
             if old.tag != new.tag {
-                // You can't change the tag in the DOM directly; need to create a new element.
-                // If this changed, we probably couldn't find a suitable match to begin with, and
-                // will likely have to re-render all children.
-//                let new_el_ws = new.el_ws.take().expect("No new elws");
-//                old_el_ws.parent_node().unwrap().replace_child(
-//                    &new_el_ws, &old_el_ws
-//                ).unwrap();
-//                new.el_ws.replace(new_el_ws);
-
                 parent.remove_child(&old_el_ws).expect("Problem removing this element");
                 attach(new, parent);
                 // We've re-rendered this child and all children; we're done with this recursion.
@@ -167,6 +157,9 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
         // if old id=2 is the best match for the first new, if it's only a marginal
         // winner, but a strong winner for the second, it makes sense to put it
         // in the second, but we are not allowing it this opporunity as-is.
+        // One approach would be check all combinations, combine scores within each combo, and pick the one
+        // with the highest total score, but this increases with the factorial of
+        // child size!
         // todo: Look into this improvement sometime after the initial release.
 
         let avail_old_children = &mut old.children;
@@ -196,9 +189,6 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
                 });
 
                 let mut best_match = avail_old_children.pop().expect("Probably popping");
-//                crate::log(&format!("Best: {:?} {:?}, {:?}", &child_new.text, &best_match.text, &best_match.id.unwrap()));
-
-//                crate::log(&avail_old_children.len().to_string());
 
                 self.patch(&mut best_match, child_new, &old_el_ws); // todo old vs new for par
               }

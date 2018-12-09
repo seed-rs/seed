@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-rebar = {path = "../../"}
+seed = {path = "../../"}
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 

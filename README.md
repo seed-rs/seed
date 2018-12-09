@@ -1,4 +1,4 @@
-# Rebar
+# Seed
 
 **A Rust framework for creating webapps**
 
@@ -18,9 +18,11 @@ The wasm32-unknown-unknown target:
 And wasm-bindgen: 
 `cargo +nightly install wasm-bindgen-cli`
 
-To start, either clone [This quickstart repo](https://github.com/David-OConnor/rebar-quickstart) 
+To start, either clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart) 
 or create a new lib with Cargo:
 `cargo new --lib appname`
+
+Here and everywhere it appears in this guide, `appname` refers to the name of your app.
 
 You need an Html file that loads your app's compiled module, and provides a div with id 
 to load the framework into. It also needs the following code to load your WASM module -
@@ -50,13 +52,14 @@ to load the framework into. It also needs the following code to load your WASM m
         .catch(console.error);
 </script>
 ```
-Where `appname` in `appname.js` and `appname_bg.wasm` is replaced by your app's name.
-The Quickstart repo includes this file, but you still need to perform the rename.
+
+The Quickstart repo includes this file, but you will need to rename the two 
+occurances of `appname`.
 
 You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
 
-`Cargo.toml`needs `wasm-bindgen`, and `rebar` as depdendencies, and crate-type
+`Cargo.toml`needs `wasm-bindgen`, and `seed` as depdendencies, and crate-type
 of `"cdylib"`. Example:
 
 ```toml
@@ -70,7 +73,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-rebar = "^0.1.0"
+seed = "^0.1.0"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 
@@ -89,11 +92,11 @@ lib.rs:
 ```rust
 #[macro_use]
 // This is required to allow access to element-creation macros
-extern crate rebar;
+extern crate seed;
 
 /// Introduce The `El` type into the global namespace, as well as a trait used
 /// to make macros work.
-use rebar::prelude::*;
+use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
 
@@ -214,7 +217,7 @@ The Quickstart repo includes this, but you'll still need to do the rename. You c
 For development, you can view your app using a dev server, or by opening the HTML file in a browser.
 
 For example, after installing the  [http crate](https://crates.io/crates/https), run `http`.
-Or with Python 3 installed, run `python -m http.server` from your crate's root.
+Or with [Python](https://www.python.org/) installed, run `python -m http.server` from your crate's root.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 
@@ -225,7 +228,7 @@ To run an example located in the `examples` folder, navigate to that folder in a
 run the build script for your system (`build.sh` or `build.ps1`), then open the `index.html` file
 in a web browser. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package.crates.io instead of locally: Ie replace
-`rebar = { path = "../../"` with `rebar = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
+`seed = { path = "../../"` with `seed = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
 line.
 
 ## Guide
@@ -246,13 +249,13 @@ aren't required to build an interactive GUI.
 **Web fundamentals**: Experience building websites using HTML/CSS or other frameworks
 is required. Neither this guide nor the API docs describes how web pages are structured,
 or what different HTML/DOM elements, attributes, styles etc do. You'll need to know these before
-getting started. Rebar provides tools used to assemble and manipulate these fundamentals.
+getting started. Seed provides tools used to assemble and manipulate these fundamentals.
 Mozilla's [MDN web docs](https://developer.mozilla.org/en-US/docs/Learn)
 is a good place to start.
 
-**Other frontend frameworks** The design principles Rebar uses are similar to those
+**Other frontend frameworks** The design principles Seed uses are similar to those
 used by React, Elm, and Yew. People familiar with how to set up interactive web pages
-using these tools will likely have an easy time learning Rebar.
+using these tools will likely have an easy time learning Seed.
 
 
 ### App structure
@@ -284,7 +287,7 @@ impl Default for Model {
 }
 ```
  
-The first line, `#[derive(Clone)]` is required to let Rebar make copies or it, and
+The first line, `#[derive(Clone)]` is required to let Seed make copies or it, and
 display it internally. In this example, we provide 
 initialization via Rust’s `Default` trait, in order to keep the initialization code by the
  model itself. When we call `Model.default()`, it initializes with these values. We could 
@@ -335,7 +338,7 @@ enum Msg {
 ```
  
 The update [function]( https://doc.rust-lang.org/book/ch03-03-how-functions-work.html) 
-you pass to `rebar::vdom::run` describes how the state should change, upon
+you pass to `seed::vdom::run` describes how the state should change, upon
 receiving each type of Message. It is the only place where the model is changed. It accepts a message reference, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
@@ -369,7 +372,7 @@ sub-functions to aid code organization.
 [macros]( https://doc.rust-lang.org/book/appendix-04-macros.html) to simplify syntax. 
 
 ### Elements, attributes, styles, and events.
-When passing your layout to Rebar, attributes for DOM elements (eg id, class, src etc), 
+When passing your layout to Seed, attributes for DOM elements (eg id, class, src etc), 
 styles (eg display, color, font-size), and
 events (eg onclick, contextmenu, dblclick) are passed to DOM-macros (like div!{}) using
 unique types.
@@ -405,7 +408,7 @@ from the El struct. Note that `El` type is imported with the Prelude.
 
 
 ```rust
-    use rebar::dom_types::Tag;
+    use seed::dom_types::Tag;
     
     // heading and button here show two types of element constructors
     let mut heading = El::new(
@@ -437,7 +440,7 @@ and provide insight into what abstractions they perform:
 
 ```rust
 // todo: Events is Depricated; below ex is incorrect re that.
-use rebar::dom_types::{Attrs, Events, Style, Tag};
+use seed::dom_types::{Attrs, Events, Style, Tag};
 
 // Rust has no built-in HashMap literal syntax.
 let mut style = HashMap::new();
@@ -511,7 +514,7 @@ elements (element macros), and custom components (function calls).
 Fragments (`<>...</>` syntax in React and Yew) are components that represent multiple
 elements without a parent. This is useful to avoid
 unecessary divs, which may be undesirable on their own, and breaks things like tables and CSS-grid. 
-In Rebar, there's no special syntax; just have your component return a Vec of `El`s instead of 
+There's no special syntax; just have your component return a Vec of `El`s instead of 
 one, and pass them into the parent's `children` parameter via Rust's Vec methods
 like `extend`, or pass the whole Vec if there are no other children:
 
@@ -533,11 +536,11 @@ fn items() -> El<Msg> {
 
 ### Initializing your app
 To start your app, pass an instance of your model, the update function, the top-level component function 
-(not its output), and name of the div you wish to mount it to to the `rebar::vdom::run` function:
+(not its output), and name of the div you wish to mount it to to the `seed::vdom::run` function:
 ```rust
 #[wasm_bindgen]
 pub fn render() {
-    rebar::vdom::run(Model::default(), update, main_comp, "main");
+    seed::vdom::run(Model::default(), update, main_comp, "main");
 }
 ```
 This must be wrapped in a function named `render`, with the `#[wasm_bindgen]` invocation above.
@@ -556,8 +559,8 @@ use comments in them normally: either on their own line, or in line.
 
 
 ### Logging in the web browser
-To output to teh web browser's console (ie console.log() in JS), use `web_sys::console_log1`,
-or the `log` convenience function: `rebar::log("hello, world!")`
+To output to teh web browser's console (ie `console.log()` in JS), use `web_sys::console_log1`,
+or the `log` convenience function: `seed::log("hello, world!")`
 
 
 ### Serialization and deserialization
@@ -580,7 +583,7 @@ You can store page state locally using web_sys's [Storage struct](https://rustwa
 .
 
 ### Building a release version
-The configuration in the `Building and Running` section towards the top are intended
+The configuration in the [Building and Running](###building-and-running) section towards the top are intended
 for development: They produce large `.wasm` file sizes, and unoptimized performance.
 For your release version, you'll need to append `--release` to the `cargo build` command,
 and point your `wasm-bindgen` command to the `release` subdirectory vice `debug`.
@@ -631,12 +634,12 @@ project to one on that page that uses a framework you're familiar with.
 
 ### Influences
 This project is strongly influenced by Elm, React, and Redux. The overall layout
-of Rebar apps mimicks that of The Elm Architecture.
+of Seed apps mimicks that of The Elm Architecture.
 
 
 ### Why another entry in a saturated field?
 
-**There are already several Rust/WASM frameworks; why another?** 
+**There are already several Rust/WASM frameworks; why add another?** 
 
 My goal is for this to be easy to pick up from looking at a tutorial or documentation, regardless of your
 level of experience with Rust. I'm distinguising this package through clear examples
@@ -644,14 +647,14 @@ and documentation (see goals above), and using `wasm-bindgen` internally. I star
 project after being unable to get existing frameworks to work
 due to lack of documented examples, and inconsistency between documentation and 
 published versions. My intent is for anyone who's proficient in a frontend
-framework to get a standalone Rebar app working in the browser, using just the 
-Quickstart guide within a few minutes.
+framework to get a standalone app working in the browser within a few minutes, using just the 
+[Quickstart guide](##quickstart).
 
-Rebar approaches HTML-display syntax differently from existing packages: 
+Seed approaches HTML-display syntax differently from existing packages: 
 rather than use an HTML-like markup similar to JSX, 
 it uses Rust builtin types, thinly-wrapped by a macro for each DOM element.
 This decision may not appeal to everyone, 
-but I think it integrates more naturally with the Rust language.
+but I think it integrates more naturally with the language.
 
 **Why build a frontend in Rust over Elm or Javascript-based frameworks?**
 
@@ -666,17 +669,19 @@ benefits, or don't want to code business logic in a purely-functional langauge.
 Compared to React, for example, you may appreciate the consistency of how to write apps:
 There's no distinction between logic and display code; no restrictions on comments;
 no distinction between components and normal functions. The API is
-flexible, and avoids the OOP boilerplate associated with React.
+flexible, and avoids the OOP boilerplate.
 
 I also hope that config, building, and dependency-management is cleaner with Cargo and
 wasm-bindgen than with npm.
 
 ## Shoutouts
- - The WASM-Bindgen team: For building the tools this project relies on
+ - The [WASM-Bindgen](https://github.com/rustwasm/wasm-bindgen) team: 
+ For building the tools this project relies on
  - Alex Chrichton: For being extraodinarily helpful in the Rust / WASM community
- - The Elm team: For creating and standardizing the Elm architecture
- - Denis Kolodin: for creating the inspirational Yew framework
- - Utkarsh Kukreti, for through his Draco lib, helping me understand how wasm-bindgen's
+ - The [Elm](https://elm-lang.org/) team: For creating and standardizing the Elm architecture
+ - Denis Kolodin: for creating the inspirational [Yew framework](https://github.com/DenisKolodin/yew)
+ - Utkarsh Kukreti, for through his [Draco repo](https://github.com/utkarshkukreti/draco), 
+ helping me understand how wasm-bindgen's
  closure system can be used to update state.
 
 
