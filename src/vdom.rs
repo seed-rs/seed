@@ -37,7 +37,7 @@ pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     document: web_sys::Document,
     pub main_div: web_sys::Element,
     pub model: RefCell<Mdl>,
-    update: fn(&Ms, &Mdl) -> Mdl,
+    update: fn(Ms, &Mdl) -> Mdl,
     pub view: fn(&Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
 }
@@ -49,7 +49,7 @@ pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
 impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
-    pub fn new(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
+    pub fn new(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
                view: fn(&Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
 
         let window = web_sys::window().expect("no global `window` exists");
@@ -85,7 +85,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
     fn update_dom(&self, message: Ms) {
         // data.model is the old model; pass it to the update function created in the app,
         // which outputs an updated model.
-        let updated_model = (self.data.update)(&message, &self.data.model.borrow());
+        let updated_model = (self.data.update)(message, &self.data.model.borrow());
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
@@ -103,7 +103,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
         self.patch(&mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom, &self.data.main_div);
 
         // Now that we've re-rendered, replace our stored El with the new one;
-        // it will be used as the old El next update.
+        // it will be used as the old El next (.
         self.data.main_el_vdom.replace(topel_new_vdom);
     }
 

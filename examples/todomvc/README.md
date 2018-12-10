@@ -1,29 +1,31 @@
 # Rust & Seed TodoMVC Example
 
-todo - use this intead; more mdirect: https://github.com/tastejs/todomvc/tree/gh-pages/examples/elm
 
 > Rust is a systems programming language with a focus on safety, 
-especially safe concurrency. It can be used with WebAssembly to run
-in web browsers.
+especially safe concurrency.
 
-> _[Rust - https://www.rust-lang.org/](https://www.rust-lang.org)_
+> _[Rust](https://www.rust-lang.org)_
 
-> React is a JavaScript library for creating user interfaces. Its core principles are declarative code, efficiency, and flexibility. Simply specify what your component looks like and React will keep it up-to-date when the underlying data changes.
+>  wasm-bindgen, and its web-sys package allow Rust to be used in web browsers via WASM.
 
-> _[Seed - https://github.com/David-OConnor/seed/](https://github.com/David-OConnor/seed)_
+>  [Wasm-bindgen](https://rustwasm.github.io/wasm-bindgen/)
+
+>  Seed is a high-level framework for building websites using these tools.
+
+> _[Seed](https://github.com/David-OConnor/seed)_
 
 ## Learning Rust
 
-The [Rust website](https://www.rust-lang.org) is a great resource for getting started.
+The [Rust book](https://doc.rust-lang.org/book/index.html) is a great resource for getting started.
 
 Here are some links you may find helpful:
 
-* [Tutorial](http://www.typescriptlang.org/Tutorial)
-* [Code Playground](http://www.typescriptlang.org/Playground)
-* [Documentation](https://github.com/Microsoft/TypeScript/wiki)
-* [Applications built with TypeScript](http://www.typescriptlang.org/Samples)
-* [Blog](http://blogs.msdn.com/b/typescript)
-* [Source Code](https://github.com/Microsoft/TypeScript)
+* [Code Playground](https://play.rust-lang.org/)
+* [Rust Documentation](https://doc.rust-lang.org/)
+* [Rust Source Code](https://github.com/rust-lang/rust)
+* [wasm-bindgen Source Code](https://github.com/rustwasm/wasm-bindgen)
+* [Seed guide](https://github.com/David-OConnor/seed)
+* [Seed quickstart repo](https://github.com/David-OConnor/seed-quickstart)
 
 Articles and guides from the community:
 
@@ -32,53 +34,38 @@ Articles and guides from the community:
 
 Get help from other TypeScript users:
 
-* [TypeScript on StackOverflow](http://stackoverflow.com/questions/tagged/typescript)
-* [Forums](https://github.com/Microsoft/TypeScript/issues)
-* [TypeScript on Twitter](http://twitter.com/typescriptlang)
+* [TypeScript on StackOverflow](http://stackoverflow.com/questions/tagged/rust)
+* [Reddit](https://www.reddit.com/r/rust/)
+* [Gitter chat](https://gitter.im/rust-lang/rust)
 
 _If you have other helpful links to share, or find any of the links above no longer work, please [let us know](https://github.com/tastejs/todomvc/issues)._
-
-## Learning Seed
-
-The [React getting started documentation](http://facebook.github.io/react/docs/getting-started.html) is a great way to get started.
-
-Here are some links you may find helpful:
-
-* [Documentation](http://facebook.github.io/react/docs/getting-started.html)
-* [API Reference](http://facebook.github.io/react/docs/reference.html)
-* [Blog](http://facebook.github.io/react/blog/)
-* [React on GitHub](https://github.com/facebook/react)
-* [Support](http://facebook.github.io/react/support.html)
-
-Articles and guides from the community:
-
-* [How is Facebook's React JavaScript library](http://www.quora.com/React-JS-Library/How-is-Facebooks-React-JavaScript-library)
-* [React: Under the hood](http://www.quora.com/Pete-Hunt/Posts/React-Under-the-Hood)
-
-Get help from other React users:
-
-* [React on StackOverflow](http://stackoverflow.com/questions/tagged/reactjs)
-* [Discussion Forum](https://discuss.reactjs.org/)
-
-_If you have other helpful links to share, or find any of the links above no longer work, please [let us know](https://github.com/tastejs/todomvc/issues)._
-
 
 
 ## Running
 
-A standalone TypeScript compiler is available on NPM.
+This package requires you to install [Rust](https://www.rust-lang.org/en-US/) - This will
+enable the CLI commands below:
 
-	npm install typescript
+ You'll need a recent version of Rust's nightly toolchain:
 
-To compile the TypeScript in this project:
+    rustup update
+    rustup default nightly
 
-	# from examples/typescript-react
-	$ tsc -p js
+The wasm32-unknown-unknown target:
 
-To be able to run the output JS files in the browser:
+    rustup target add wasm32-unknown-unknown --toolchain nightly
 
-	# from examples/typescript-react
-	$ npm install -g browserify
-	$ browserify js/app.js -o js/bundle.js
+And wasm-bindgen: 
 
-To run the app, spin up an HTTP server (e.g. `python -m SimpleHTTPServer`) and visit http://localhost/.../myexample/.
+    Cargo +nightly install wasm-bindgen-cli
+
+Build using one of the two following commands:
+
+    build.sh
+or
+
+    build.ps1
+    
+Open index.html in a web browser, or with a dev server, eg
+
+    python -m http.server

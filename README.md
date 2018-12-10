@@ -5,7 +5,7 @@
 ## Quickstart
 
 ### Setup
-This package requires you to install [Rust](https://www.rust-lang.org/en-US/) - This will
+This package requires you to install [Rust](https://www.rust-lang.org) - This will
 enable the CLI commands below:
 
  You'll need a recent version of Rust's nightly toolchain:
@@ -18,8 +18,14 @@ The wasm32-unknown-unknown target:
 And wasm-bindgen: 
 `cargo +nightly install wasm-bindgen-cli`
 
-To start, either clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
-or create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
+
+### The theoretical minimum
+To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
+run `build.sh` or `build.ps1` in a terminal, and open `index.html`. Once you change your project name, you'll
+need to tweak the Html file and build script, as described below.
+
+### A little deeper
+Or, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
 appname` should be replaced with the name of your app.
 
 You need an Html file that loads your app's compiled module, and provides a div with id 
@@ -120,7 +126,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: &Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: &Model) -> Model {
     match msg {
         Msg::Increment => {
             Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
@@ -170,9 +176,9 @@ fn view(model: &Model) -> El<Msg> {
                 "border" => "2px solid #004422"; "padding" => 20
             },
             vec![
-                // We can use normal Rust code in the view.
+                // We can use normal Rust code and comments in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ vec![ simple_ev("click", Msg::Increment) ], "-" ],
+                button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
                 button![ vec![ simple_ev("click", Msg::Decrement) ], "-" ],
 
                 // Optionally-displaying an element
@@ -336,7 +342,7 @@ enum Msg {
  
 The update [function]( https://doc.rust-lang.org/book/ch03-03-how-functions-work.html) 
 you pass to `seed::run` describes how the state should change, upon
-receiving each type of Message. It is the only place where the model is changed. It accepts a message reference, and model 
+receiving each type of Message. It is the only place where the model is changed. It accepts a message, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
  
@@ -344,7 +350,7 @@ Example:
 
 ```rust
 // Sole source of updating the model; returns a whole new model.
-fn update(msg: &Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: &Model) -> Model {
     match msg {
         Msg::Increment => {
             Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
@@ -367,16 +373,17 @@ sub-functions to aid code organization.
  Visual layout (ie HTML/DOM elements) is described declaratively in Rust, but uses 
 [macros]( https://doc.rust-lang.org/book/appendix-04-macros.html) to simplify syntax. 
 
-### Elements, attributes, styles, and events.
+### Elements, attributes, styles
 When passing your layout to Seed, attributes for DOM elements (eg id, class, src etc), 
 styles (eg display, color, font-size), and
 events (eg onclick, contextmenu, dblclick) are passed to DOM-macros (like div!{}) using
 unique types.
 
-Views are described using El structs, defined in the `dom_types` module. They're most-easily created
+Views are described using El structs, defined in the`seed::dom_types` module. They're most-easily created
 with a shorthand using macros. These macros can take any combination of the following 5 argument types:
 (0 or 1 of each) `Attrs`, `Style`, `Vec<Listener>`, `Vec<El>` (children), and `&str` (text). Attrs, and Style
-are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`,.
+are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`. Attrs,
+Style, and Listener are all defined in `seed::dom_types`.
 
 `Attrs`, and `Style` values can be owned `Strings`, `&str`s, or when applicable, numerical and 
 boolean values. Eg: `input![ attrs!{"disabled" => false]` and `input![ attrs!{"disabled" => "false"]` 
@@ -386,35 +393,34 @@ If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font
 once created, a `Style` instance holds all its values as `Strings`; eg that `16` above will be stored
 as `"16px"`; keep this in mind if editing a style that you made outside an element macro.
 
+### Events
+
 Event syntax may change in the future. Currently, events are a `Vec` of dom_types::Listener'
 objects, created using the following four functions exposed in the prelude: `simple_ev`,
 `input_ev`, `keyboard_ev`, and `raw_ev`. The first two are demonstrated in the example in the quickstart section.
 
 `simple_ev` takes two arguments: an event trigger (eg "click", "contextmenu" etc), and an instance
-of your `Msg` enum that does not accept data. (eg Msg::Increment). The other three event-creation-funcs
+of your `Msg` enum. (eg Msg::Increment). The other three event-creation-funcs
 take a trigger, and a [closure](https://doc.rust-lang.org/book/ch13-01-closures.html) (An anonymous function,
-similar to an arrow func in JS) that returns a Msg enum that accepts data. (eg Msg::ChangeWWC).
+similar to an arrow func in JS) that returns a Msg enum.
 
 `simple_ev` does not pass any information about the event, only that it fired.
 Example: ```simple_ev("dblclick", Msg::ClickClick)```
 
-
-`input_ev` passes the event target's value field, eg what a user typed in an input field. Its associated
-Enum instance must accept String as its type, eg `ChangeWWC(String)`.
+`input_ev` passes the event target's value field, eg what a user typed in an input field.
 Example: ```simple_ev("input", |text| NewWords(text))```
 
-`keyboard_ev` returns a `[web_sys::KeyboardEvent](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.KeyboardEvent.html),
-which exposes several getter methods like `key_code` and `key`. Its Enum must accept a `web_sys::KeyboardEvent`,
-eg `KeyPressed(web_sys::KeyboardEvent)`.
+`keyboard_ev` returns a [web_sys::KeyboardEvent](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.KeyboardEvent.html),
+which exposes several getter methods like `key_code` and `key`.
 Example: ```simple_ev("keydown", |event| PutTheHammerDown(event))```
 
-`raw_ev` returns the raw event object. It lets you access any part of any type of
-event, albeit with some unpleasant syntax. Its Enum must accept a `web_sys::KeyboardEvent`.
+`raw_ev` returns a [web_sys::Event](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Event.html). It lets you access any part of any type of
+event, albeit with some unpleasant syntax. Its Enum should accept a `web_sys::KeyboardEvent`.
 If you wish to do something like prevent_default(), or anything note listed above, 
 you need to take this approach.
 
-Example syntax to handle input and keyboard events using this instead of the 
-`input_ev` and `keyboard_ev` funcs:
+Example syntax to handle input and keyboard events `using raw_ev` instead of
+`input_ev` and `keyboard_ev`:
 ```rust
 use wasm_bindgen::JsCast;
 
@@ -431,18 +437,57 @@ Msg::KeyPress(event) => {
     let keyboard_event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
     let code = keyboard_vent.key_code();
     // ...
+    
+    vec![ 
+        raw_ev("input", |ev| Msg::TextEntry(ev)),
+        raw_ev("keydown", |ev| Msg::KeyPress(ev)),
+    ]
 }
 ```
-Hopefully, you should be able to do most of what you wish with the simpler event funcs.
-If there's a type of event you think would benefit from a similar func, submit
-an issue or PR.
+It's likely you'll be able to do most of what you wish with the simpler event funcs.
+If there's a type of event or use you think would benefit from a similar func, submit
+an issue or PR. In the descriptions above for all event-creation funcs, we assumed minimal code in the closure,
+and more code in the update func's match arms. For example, to process a keyboard event,
+these two approaches are equivalent:
 
-The syntax above may change to a single macro that infers what the type of event 
+```rust
+enum Msg {
+    KeyDown(web_sys::KeyboardEvent)
+}
+
+// ... (in update)
+KeyDown(event) => {
+    let code = event.key_code()
+}
+
+// ... In view
+vec![ keyboard_ev("keydown", |ev| KeyDown(ev)]
+```
+and
+```rust
+enum Msg {
+    KeyDown(u32)
+    // ...
+}
+
+// ... (in update)
+KeyDown(code) => {
+    // ...
+}
+
+// ... In view
+vec![ keyboard_ev("keydown", |ev| KeyDown(ev.key_code()))]
+```
+
+You can pass more than one variable to the `Msg` enum via the closure, as long
+as it's set up appropriate in `Msg`'s definitino.
+
+Event syntax may be improved later with the addition of a single macro that infers what the type of event 
 is based on the trigger, and avoids the use of manually creating a `Vec` to store the
-`Listener`s.
+`Listener`s. For examples of all of the above (except raw_ev), check out the todomvc example.
 
 This gawky approach is caused by a conflict between Rust's type system, and the way DOM events
-are handled. For example, you may wish to read an input field by reading the event target's
+are handled. For example, you may wish to pull text from an input field by reading the event target's
 value field. However, not all targets contain value; it may have to be represented as
 an `HtmlInputElement`. (See [the web-sys ref](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.EventTarget.html), 
 and [Mdn ref](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget); there's no value field)) Another example:
@@ -477,7 +522,7 @@ from the El struct. Note that `El` type is imported with the Prelude.
         Style::empty(), 
         Vec::new(),
         "Some things",
-        vec::New()
+        Vec::New()
     );  
     
     let mut button = El::empty(Tag::Button);
@@ -491,7 +536,6 @@ from the El struct. Note that `El` type is imported with the Prelude.
     el.children = children;
     
     el
-    
 ```
 
 The following equivalent example shows creating the required structs without constructors,
@@ -499,7 +543,6 @@ to demonstrate that the macros and constructors above represent normal Rust stru
 and provide insight into what abstractions they perform:
 
 ```rust
-// todo: Events is Depricated; below ex is incorrect re that.
 use seed::dom_types::{Attrs, Events, Style, Tag};
 
 // Rust has no built-in HashMap literal syntax.
@@ -518,7 +561,7 @@ El {
             tag: Tag::H2,
             attrs: Attrs { vals: HashMap::new() },
             style: Style { vals: HashMap::new() },
-            events: Vec::new();
+            listeners: Vec::new();
             text: Some(String::from("Some Things")),
             children: Vec::new()
         },
@@ -526,7 +569,7 @@ El {
             tag: Tag::button,
             attrs: Attrs { vals: HashMap::new() },
             style: Style { vals: HashMap::new() },
-            events: Vec::new(),
+            listeners: Vec::new();
             text: None,
             children: Vec::new(),
         } 
@@ -678,13 +721,15 @@ Compiler errors, and panics.
 
 1: Errors while building, which will be displayed in the terminal 
 where you ran `cargo build`, or the build script. Rust's compiler usually provides
-helpful messages, so try to work through these using the information available.
+helpful messages, so try to work through these using the information available. Examples include
+syntax errors, passing a func/struct etc the wrong type of item, and running afoul of the 
+borrow checker.
 
 2: Runtime panics. These are more difficult to deal with, especially in the web browser.
 Their hallmark is a message that starts with `RuntimeError: "unreachable executed"`, and correspond
 to a panic in the rust code. (For example, a problem while using `unwrap()`). There's
 currently no neat way to identify which part of the code panicked; until this is sorted out,
-you may try to narrow it down using `seed.log()` commands.
+you may try to narrow it down using `seed.log()` commands. Ideally, you won't experience these.
 
 ### Reference
 - [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)

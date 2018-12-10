@@ -20,7 +20,7 @@ mod vdom;
 
 
 /// The entry point for the app
-pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(&Ms, &Mdl) -> Mdl,
+pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
           view: fn(&Mdl) -> dom_types::El<Ms>, main_div_id: &str) {
     let app = vdom::App::new(model, update, view, main_div_id);
 

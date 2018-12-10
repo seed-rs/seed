@@ -35,7 +35,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: &Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: &Model) -> Model {
     match msg {
         Msg::Increment => {
             Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
@@ -85,9 +85,9 @@ fn view(model: &Model) -> El<Msg> {
                 "border" => "2px solid #004422"; "padding" => 20
             },
             vec![
-                // We can use normal Rust code in the view.
+                // We can use normal Rust code and comments in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ vec![ simple_ev("click", Msg::Increment) ], "-" ],
+                button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
                 button![ vec![ simple_ev("click", Msg::Decrement) ], "-" ],
 
                 // Optionally-displaying an element

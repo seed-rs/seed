@@ -462,9 +462,9 @@ pub struct El<Ms: Clone + 'static> {
 
 impl<Ms: Clone + 'static> El<Ms> {
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
-               text: &str, children: Vec<El<Ms>>) -> Self {
+               listeners: Vec<Listener<Ms>>, text: &str, children: Vec<El<Ms>>) -> Self {
         Self {tag, attrs, style, text: Some(text.into()), children,
-            el_ws: None, listeners: Vec::new(), key: None, id: None, nest_level: None}
+            el_ws: None, listeners, key: None, id: None, nest_level: None}
     }
 
     pub fn empty(tag: Tag) -> Self {
