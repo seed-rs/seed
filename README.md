@@ -84,12 +84,9 @@ Guide section below. Its structure closely resembles [The Elm Architecture](http
 
 *lib.rs*:
 ```rust
-#[macro_use]
-// This is required to allow access to element-creation macros
-extern crate seed;
 
-/// Introduce The `El` type into the global namespace, as well as a trait used
-/// to make macros work.
+#[macro_use]
+extern crate seed;
 use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
@@ -99,7 +96,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone)]
 struct Model {
     count: i32,
-    what_we_count: String,
+    what_we_count: String
 }
 
 // Setup a default here, for initialization later.
@@ -119,27 +116,28 @@ impl Default for Model {
 enum Msg {
     Increment,
     Decrement,
-    ChangeWWC(String)
+    ChangeWWC(String),
 }
 
-// Sole source of updating the model; returns a whole new model.
+/// The sole source of updating the model; returns a fresh one.
 fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
         Msg::Increment => {
-            Model {count: model.count + 1, what_we_count: model.what_we_count}
+            Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
         },
         Msg::Decrement => {
-            Model {count: model.count - 1, what_we_count: model.what_we_count}
+            Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
         },
         Msg::ChangeWWC(text) => {
-            Model {count: model.count, what_we_count: text}
-        },
+            Model {count: model.count, what_we_count: text.clone()}
+        }
     }
 }
 
 
 // View
 
+/// A simple component.
 fn success_level(clicks: i32) -> El<Msg> {
     let descrip = match clicks {
         0 ... 3 => "Not very many 🙁",
@@ -150,11 +148,12 @@ fn success_level(clicks: i32) -> El<Msg> {
     p![ descrip ]
 }
 
-// Top-level component we pass to the virtual dom. Must accept the model as its
-// only argument, and output a single El.
+/// The top-level component we pass to the virtual dom. Must accept a ref to the model as its
+/// only argument, and output a single El.
 fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
+    // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style!{
             "display" => "flex";
             "flex-direction" => "column";
@@ -165,20 +164,28 @@ fn view(model: &Model) -> El<Msg> {
         h1![ "The Grand Total" ],
         div![
             style!{
+                // Example of conditional logic in a style.
                 "color" => if model.count > 4 {"purple"} else {"gray"};
-                "border" => "2px solid #004422"
+                // When passing numerical values to style!, "px" is implied.
+                "border" => "2px solid #004422"; "padding" => 20
             },
             vec![
+                // We can use normal Rust code in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ events!{"click" => Msg::Increment}, "+" ],
-                button![ events!{"click" => Msg::Decrement}, "-" ]
+                button![ vec![ simple_ev("click", Msg::Increment) ], "-" ],
+                button![ vec![ simple_ev("click", Msg::Decrement) ], "-" ],
+
+                // Optionally-displaying an element
+                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+
             ] ],
-        success_level(model.count),
+        success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count}, events!{
-                "change" => |ev| Msg::ChangeWWC(ev)
-        } ]
+        input![ attrs!{"value" => model.what_we_count},
+                vec![ input_ev("input", |text| Msg::ChangeWWC(text)) ]
+        ]
+
     ] ]
 }
 
@@ -339,16 +346,15 @@ Example:
 // Sole source of updating the model; returns a whole new model.
 fn update(msg: &Msg, model: &Model) -> Model {
     match msg {
-        &Msg::Increment => {
-            Model {count: model.count + 1, what_we_count: model.what_we_count}
+        Msg::Increment => {
+            Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
         },
-        &Msg::Decrement => {
-            Model {count: model.count - 1, what_we_count: model.what_we_count}
+        Msg::Decrement => {
+            Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
         },
-        &Msg::ChangeWWC() => {
-//            Model {count: model.count, what_we_count: ev.target.value}
-            Model {count: model.count, what_we_count: "thing"}
-        },
+        Msg::ChangeWWC(text) => {
+            Model {count: model.count, what_we_count: text.clone()}
+        }
     }
 }
 ```
@@ -369,9 +375,8 @@ unique types.
 
 Views are described using El structs, defined in the `dom_types` module. They're most-easily created
 with a shorthand using macros. These macros can take any combination of the following 5 argument types:
-(0 or 1 of each) `Attrs`, `Style`, `Events`, `Vec<El>` (children), and `&str` (text). Attrs, Style, and Events
-are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`, and `events!{}`. All
-elements present must be aranged in the order above: eg `Events` can never be before `Attrs`.
+(0 or 1 of each) `Attrs`, `Style`, `Vec<Listener>`, `Vec<El>` (children), and `&str` (text). Attrs, and Style
+are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`,.
 
 `Attrs`, and `Style` values can be owned `Strings`, `&str`s, or when applicable, numerical and 
 boolean values. Eg: `input![ attrs!{"disabled" => false]` and `input![ attrs!{"disabled" => "false"]` 
@@ -381,12 +386,78 @@ If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font
 once created, a `Style` instance holds all its values as `Strings`; eg that `16` above will be stored
 as `"16px"`; keep this in mind if editing a style that you made outside an element macro.
 
+Event syntax may change in the future. Currently, events are a `Vec` of dom_types::Listener'
+objects, created using the following four functions exposed in the prelude: `simple_ev`,
+`input_ev`, `keyboard_ev`, and `raw_ev`. The first two are demonstrated in the example in the quickstart section.
+
+`simple_ev` takes two arguments: an event trigger (eg "click", "contextmenu" etc), and an instance
+of your `Msg` enum that does not accept data. (eg Msg::Increment). The other three event-creation-funcs
+take a trigger, and a [closure](https://doc.rust-lang.org/book/ch13-01-closures.html) (An anonymous function,
+similar to an arrow func in JS) that returns a Msg enum that accepts data. (eg Msg::ChangeWWC).
+
+`simple_ev` does not pass any information about the event, only that it fired.
+Example: ```simple_ev("dblclick", Msg::ClickClick)```
+
+
+`input_ev` passes the event target's value field, eg what a user typed in an input field. Its associated
+Enum instance must accept String as its type, eg `ChangeWWC(String)`.
+Example: ```simple_ev("input", |text| NewWords(text))```
+
+`keyboard_ev` returns a `[web_sys::KeyboardEvent](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.KeyboardEvent.html),
+which exposes several getter methods like `key_code` and `key`. Its Enum must accept a `web_sys::KeyboardEvent`,
+eg `KeyPressed(web_sys::KeyboardEvent)`.
+Example: ```simple_ev("keydown", |event| PutTheHammerDown(event))```
+
+`raw_ev` returns the raw event object. It lets you access any part of any type of
+event, albeit with some unpleasant syntax. Its Enum must accept a `web_sys::KeyboardEvent`.
+If you wish to do something like prevent_default(), or anything note listed above, 
+you need to take this approach.
+
+Example syntax to handle input and keyboard events using this instead of the 
+`input_ev` and `keyboard_ev` funcs:
+```rust
+use wasm_bindgen::JsCast;
+
+// ...
+
+(in update func)
+Msg::TextEntry(event) => {
+    let target = event.target.unwrap();
+    let input_el = target.dyn_ref::<web_sys::HtmlInputElement>;
+    let text = input_el.value();
+    //...
+}
+Msg::KeyPress(event) => {
+    let keyboard_event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
+    let code = keyboard_vent.key_code();
+    // ...
+}
+```
+Hopefully, you should be able to do most of what you wish with the simpler event funcs.
+If there's a type of event you think would benefit from a similar func, submit
+an issue or PR.
+
+The syntax above may change to a single macro that infers what the type of event 
+is based on the trigger, and avoids the use of manually creating a `Vec` to store the
+`Listener`s.
+
+This gawky approach is caused by a conflict between Rust's type system, and the way DOM events
+are handled. For example, you may wish to read an input field by reading the event target's
+value field. However, not all targets contain value; it may have to be represented as
+an `HtmlInputElement`. (See [the web-sys ref](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.EventTarget.html), 
+and [Mdn ref](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget); there's no value field)) Another example:
+If we wish to read the key_code of an event, we must first cast it as a KeyboardEvent; pure Events
+(web_sys and DOM) do not contain this field.
+
+
+### Element-creation macros, under the hood
+
 For example, the following code returns an `El` representing a few DOM elements displayed
 in a flexbox layout:
 ```rust
     div![ style!{"display" => "flex"; "flex-direction" => "column"}, vec![
         h3![ "Some things" ],
-        button![ events!{"click" => |_| Msg::SayHi}, "Click me!" ]
+        button![ "Click me!" ]  // todo add event example back.
     ] ]
 ```
 
@@ -396,7 +467,6 @@ Attrs, Style and Events are thinly-wrapped HashMaps. They can be created indepen
 passed to the macros separately. The following code is equivalent; it uses constructors
 from the El struct. Note that `El` type is imported with the Prelude.
 
-
 ```rust
     use seed::dom_types::Tag;
     
@@ -405,7 +475,7 @@ from the El struct. Note that `El` type is imported with the Prelude.
         Tag::H2, 
         Attrs::empty(), 
         Style::empty(), 
-        events::Empty,
+        Vec::new(),
         "Some things",
         vec::New()
     );  
@@ -448,7 +518,7 @@ El {
             tag: Tag::H2,
             attrs: Attrs { vals: HashMap::new() },
             style: Style { vals: HashMap::new() },
-            events: Events { vals: Vec::new() },
+            events: Vec::new();
             text: Some(String::from("Some Things")),
             children: Vec::new()
         },
@@ -456,9 +526,9 @@ El {
             tag: Tag::button,
             attrs: Attrs { vals: HashMap::new() },
             style: Style { vals: HashMap::new() },
-            events: Events { vals: vec![("click", |_| Msg::SayHi)] },
+            events: Vec::new(),
             text: None,
-            children: Vec::new()
+            children: Vec::new(),
         } 
     ]
 }
@@ -615,6 +685,13 @@ Their hallmark is a message that starts with `RuntimeError: "unreachable execute
 to a panic in the rust code. (For example, a problem while using `unwrap()`). There's
 currently no neat way to identify which part of the code panicked; until this is sorted out,
 you may try to narrow it down using `seed.log()` commands.
+
+### Reference
+- [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)
+- [Mozilla MDN web docs](https://developer.mozilla.org/en-US/)
+- [web-sys api](https://rustwasm.github.io/wasm-bindgen/api/web_sys/) (A good partner for the MDN docs - most DOM items have web-sys equivalents used internally)
+- [Rust book](https://doc.rust-lang.org/book/index.html)
+- [Rust standard library api](https://doc.rust-lang.org/std/)
 
 ## About
 

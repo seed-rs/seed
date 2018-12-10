@@ -3,8 +3,6 @@
 
 use std::collections::HashMap;
 
-use std::borrow::Cow;
-
 use web_sys;
 use wasm_bindgen::{prelude::*, JsCast};
 
@@ -40,7 +38,7 @@ pub trait UpdateListener<T> {
 //}
 
 
-pub fn simple_event<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener<Ms> {
+pub fn simple_ev<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     listener.add_handler_simple(message);
 //    let handler = Box::new(|_| message);
@@ -49,16 +47,36 @@ pub fn simple_event<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener
     listener
 }
 
-pub fn input_event<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms> {
+pub fn input_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     // handler must be boxed before passing to Listener's add method.
     listener.add_handler_input(Box::new(handler));
     listener
 }
 
+pub fn raw_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms> {
+    let mut listener = Listener::empty(trigger.into());
+    // handler must be boxed before passing to Listener's add method.
+    listener.add_handler_raw(Box::new(handler));
+
+//    if trigger == "keydown" {
+//        listener.add_handler_kb(Box::new(handler))
+//    } else {
+//        listener.add_handler_fancy(Box::new(handler));
+//    }
+    listener
+}
+
+pub fn keyboard_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms> {
+    let mut listener = Listener::empty(trigger.into());
+    // handler must be boxed before passing to Listener's add method.
+    listener.handler_keyboard(Box::new(handler));
+    listener
+}
+
 
 pub struct Listener<Ms: Clone> {
-    pub trigger: Cow<'static, str>,
+    pub trigger: String,  // todo why cow?
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
 }
 
@@ -67,52 +85,54 @@ pub struct Listener<Ms: Clone> {
 impl<Ms: Clone + 'static> Listener<Ms> {
     pub fn empty(event: Event) -> Self {
         Self {
-            trigger: String::from(event.as_str()).into(),
+            trigger: String::from(event.as_str()),
             handler: None
         }
     }
 
+    /// Add a handler that doesn't process any details about the event, other
+    /// than it happened. The message Enum should not take a value.
     fn add_handler_simple(&mut self, message: Ms) {
-        let mut handler = || message;
-//        let handler: impl FnMut(web_sys::Event) -> Ms + 'static = |_| message;
-        let closure = move |event: web_sys::Event| {
-           handler.clone()()
-        };
-
+        let handler = || message;
+        let closure = move |event: web_sys::Event| handler.clone()();
         self.handler = Some(Box::new(closure));
     }
 
+     /// Add a handler that takes the event target's value as text; use this
+     /// wiht input, textarea, and select elements.
      fn add_handler_input(&mut self, mut handler: Box<FnMut(String) -> Ms + 'static>){
+         // We need to extract event.target.value, but value doesn't exist for generic
+         // event targets. We must cast as the appropriate type.
+         // todo: See if there's a way around this awkward behavior.
         let closure = move |event: web_sys::Event| {
             if let Some(target) = event.target() {
-                let val =  (target.unchecked_ref() as &web_sys::HtmlInputElement).value().into();
-                return handler(val)
+                if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+                    return handler(input.value());
+                }
+                if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+                    return handler(input.value());
+                }
+                if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+                    return handler(input.value());
+                }
             }
-            handler("".into())
+            handler(String::new())
         };
 
+         self.handler = Some(Box::new(closure));
+     }
+
+    fn add_handler_raw(&mut self, mut handler: Box<FnMut(web_sys::Event) -> Ms + 'static>){
+        let closure = move |event: web_sys::Event| handler(event);
         self.handler = Some(Box::new(closure));
     }
 
-//    pub fn new_input(event: Event, mut handler: impl FnMut(String) -> Ms + 'static) -> Self {
-//        // todo delete this method?
-//        let func = move |event: web_sys::Event| {
-//            if let Some(target) = event.target() {
-//                if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-//                    return handler(input.value());
-//                }
-//                if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-//                    return handler(input.value());
-//                }
-//                if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-//                    return handler(input.value());
-//                }
-//            }
-//            handler("".into())
-//        };
-//
-//        Self::new(event, func)
-//    }
+    fn handler_keyboard(&mut self, mut handler: Box<FnMut(web_sys::KeyboardEvent) -> Ms + 'static>){
+        let closure = move |event: web_sys::Event| {
+            return handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone());
+        };
+        self.handler = Some(Box::new(closure));
+    }
 
     /// This method is where the processing logic for events happens.
     fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
@@ -334,6 +354,12 @@ make_events! {
     Drag => "drag", DragEnd => "dragend", DragEnter => "dragenter", DragStart => "dragstart", DragLeave => "dragleave",
     DragOver => "dragover", Drop => "drop",
 
+    AudioProcess => "audioprocess", CanPlay => "canplay", CanPlayThrough => "canplaythrough", Complete => "complete",
+    DurationChange => "durationchange", Emptied => "emptied", Ended => "ended", LoadedData => "loadeddata",
+    LoadedMetaData => "loadedmetadata", Pause => "pause", Play => "play", Playing => "playing", RateChagne => "ratechange",
+    Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
+    VolumeChange => "volumechange",
+
     // todo finish this
 
     Change => "change",
@@ -419,7 +445,6 @@ pub struct El<Ms: Clone + 'static> {
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
-    //    pub events: Events<Ms>,
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 

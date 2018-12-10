@@ -918,20 +918,44 @@ macro_rules! style {
 //
 
 
-
+///// Attempt to apply the correct input type based on its trigger.
 //#[macro_export]
-//macro_rules! events {
-//    { $($event_str:expr => $handler:expr);* } => {
+//macro_rules! ev2 {
+//    { $event_str:expr, $handler:expr } => {
 //        {
-//            let mut result = Vec::new();
-//                $ (
-////                    result.push(($event_str, $handler));
-//                    let mut listener = seed::dom_types::Listener::empty($event_str.into());
-////                    $handler.update_l(&mut listener);
-//                    Box::new($handler).update_l(&mut listener);
-//                    result.push(listener);
-//                 )*
-//            result
+//            match event_str {
+//                "input" => seed::dom_types::input_ev($event_str, $handler),
+////                "change" => seed::dom_types::input_ev($event_str, $handler),
+////
+////                "keydown" => seed::dom_types::keyboard_ev($event_str, $handler),
+////
+////                "click" => seed::dom_types::ev($event_str, $handler),
+////                "auxclick" => seed::dom_types::ev($event_str, $handler),
+////                "dblclick" => seed::dom_types::ev($event_str, $handler),
+////                "contextmenu" => seed::dom_types::input_ev($event_str, $handler),
+//
+//                _ => seed::dom_types::raw_ev($event_str, $handler),
+//
+//            }
 //        }
 //    };
+//}
+
+
+///// Attempt to apply the correct input type based on its trigger.
+//#[macro_export]
+//macro_rules! ev2 {
+//    { input, $handler:expr } => {
+//        {
+//            seed::dom_types::input_ev("input", $handler),
+//        }
+//    };
+//    { click, $handler:expr } => {
+//        {
+//            seed::dom_types::simple_ev("click", $handler),
+//        }
+//    };
+//
+//
+//
 //}

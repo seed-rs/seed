@@ -16,18 +16,7 @@ mod vdom;
 // todo streamlined input handling for text etc
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
-
 // todo keyed elements??
-
-// todo can I replace this with something like pub use in the future?
-pub fn simple_event<Ms: Clone + 'static>(trigger: &str, message: Ms) -> dom_types::Listener<Ms> {
-    dom_types::simple_event(trigger, message)
-}
-
-pub fn input_event<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) ->
-        Ms + 'static) -> dom_types::Listener<Ms> {
-    dom_types::input_event(trigger, handler)
-}
 
 
 /// The entry point for the app
@@ -65,5 +54,6 @@ pub fn log(text: &str) {
 /// often in the output type of components), and UpdateEl, which is required
 /// for our element-creation macros.
 pub mod prelude {
-    pub use crate::dom_types::{El, UpdateEl, UpdateListener};
+    pub use crate::dom_types::{El, UpdateEl, UpdateListener,
+                               simple_ev, input_ev, keyboard_ev, raw_ev};
 }
