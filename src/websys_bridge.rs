@@ -1,10 +1,36 @@
 //! This file contains interactions with web_sys.
 
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::vdom::Mailbox;
 use crate::dom_types;
 
+/// Add a shim to make check logic more natural than the DOM handles it.
+pub fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
+    let mut set_check = false;
+
+    if name == "checked" {
+        let input_el = el_ws.dyn_ref::<web_sys::HtmlInputElement>();
+        if let Some(el) = input_el {
+            match val {
+                "true" => {
+                    el.set_checked(true);
+                    set_check = true;
+                },
+                "false" => {
+                    el.set_checked(false);
+                    set_check = true;
+                },
+                _ => ()
+            }
+        }
+    }
+    if set_check == false {
+        el_ws.set_attribute(name, val).expect("Problem setting an atrribute.");
+    }
+
+}
 
 /// Create and return a web_sys Element from our virtual-dom El. The web_sys
 /// Element is a close analog to JS/DOM elements.
@@ -12,12 +38,12 @@ use crate::dom_types;
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
 pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web_sys::Document,
-                           mailbox: Mailbox<Ms>) -> web_sys::Element {
+                                 mailbox: Mailbox<Ms>) -> web_sys::Element {
     // Create the DOM-analog element; it won't render until attached to something.
     let el_ws = document.create_element(&el_vdom.tag.as_str()).unwrap();
 
     for (name, val) in &el_vdom.attrs.vals {
-        el_ws.set_attribute(name, val).unwrap();
+        set_attr_shim(&el_ws, name, val);
     }
 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;

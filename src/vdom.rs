@@ -156,7 +156,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
             }
 
             // Patch attributes.
-            patch_el_details(old, new, &old_el_ws, &self.data.document);
+            patch_el_details(old, new, &old_el_ws, &self.data.document, self.mailbox());
         }
 
         // If there are the same number of children, assume there's a 1-to-1 mapping,
@@ -285,7 +285,7 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>,
-                                   old_el_ws: &web_sys::Element, document: &web_sys::Document) {
+           old_el_ws: &web_sys::Element, document: &web_sys::Document, mailbox: Mailbox<Ms>) {
 
     if old.attrs != new.attrs {
         for (key, new_val) in &new.attrs.vals {
@@ -293,16 +293,16 @@ pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>,
                 Some(old_val) => {
                     // The value's different
                     if old_val != new_val {
-                        old_el_ws.set_attribute(key, new_val).expect("Replacing attribute");
+                        websys_bridge::set_attr_shim(&old_el_ws, key, new_val);
                     }
                 },
                 None => old_el_ws.set_attribute(key, new_val).expect("Adding a new attribute")
             }
         }
         // Remove attributes that aren't in the new vdom.
-        for (key, old_val) in &old.attrs.vals {
-            if new.attrs.vals.get(key).is_none() {
-                old_el_ws.remove_attribute(key).expect("Removing an attribute");
+        for (name, old_val) in &old.attrs.vals {
+            if new.attrs.vals.get(name).is_none() {
+                old_el_ws.remove_attribute(name).expect("Removing an attribute");
             }
         }
     }
@@ -345,5 +345,16 @@ pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>,
 
     }
 
-    // todo events.
+    for listener in &mut old.listeners {
+//        listener.detach(&old_el_ws);
+    }
+
+    // todo detach old ones too!
+    for listener in &mut new.listeners {
+//        listener.attach(&old_el_ws, mailbox.clone());
+    }
+
+//    if old.listeners != new.listeners {
+//        crate::log("WOAH");
+//    } else { crate::log("SAME")}
 }

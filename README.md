@@ -26,7 +26,8 @@ And wasm-bindgen:
 
 ### The theoretical minimum
 To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
-run `build.sh` or `build.ps1` in a terminal, and open `index.html`. Once you change your package name, you'll
+run `build.sh` or `build.ps1` in a terminal, and open `index.html`. (May need to use
+a local server depending on the browser) Once you change your package name, you'll
 need to tweak the Html file and build script, as described below.
 
 ### A little deeper
@@ -38,7 +39,7 @@ to load the framework into. It also needs the following code to load your WASM m
  Ie, the body should contain this:
  
  ```html
- <div id="main"></div>
+ <section id="main"></section>
 
 <script>
     delete WebAssembly.instantiateStreaming;
@@ -395,6 +396,11 @@ If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font
 `h2![ style!{"font-size" => "1.5em"} ]` for specifying font size in pixels or em respectively. Note that
 once created, a `Style` instance holds all its values as `Strings`; eg that `16` above will be stored
 as `"16px"`; keep this in mind if editing a style that you made outside an element macro.
+
+Additionally, setting an InputElement's `checked` property is done through normal attributes:
+```rust
+input![ attrs!{"type" => "checkbox"; "checked" => true ]
+```
 
 To edit Attrs or Styles you've created, you can edit their .vals HashMap. To add
 a new part to them, use their .add method:
@@ -844,8 +850,8 @@ wasm-bindgen than with npm.
 
 ## To-do
  - Router
+ - High-level fetch API
  - Local storage integration
  - Cleaner event syntax
- - More examples
- - Optimization 
+ - Virtual DOM optimization 
  

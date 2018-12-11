@@ -1,6 +1,8 @@
 //! Modelled after the todomvc project's Typescript-React example:
 //! https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react
 
+use std::cmp::Ordering;
+
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
@@ -12,7 +14,7 @@ use web_sys;
 const ENTER_KEY: u32 = 13;
 const ESCAPE_KEY: u32 = 27;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 enum Visible {
     All,
     Active,
@@ -21,10 +23,10 @@ enum Visible {
 
 // Model
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 struct Todo {
     id: u32,
-    name: String,
+    title: String,
     edit_text: String,
     completed: bool,
     editing: bool,
@@ -44,6 +46,8 @@ impl Todo {
 struct Model {
     todos: Vec<Todo>,
     visible: Visible,
+    edit_text: String,
+    editing: Option<u32>,
 //    local_storage: web_sys::Storage,
     // todo: key and on_changes ??
 }
@@ -60,8 +64,10 @@ impl Model {
     }
 
     fn shown_todos(&self) -> Vec<Todo> {
-        let todos = self.todos.clone();
-        todos.into_iter().filter(|t| t.visible(&self.visible)).collect()
+        let mut todos = self.todos.clone();
+        todos = todos.into_iter().filter(|t| t.visible(&self.visible)).collect();
+        todos.sort();  // I'm not sure what criteria this is using... Id?
+        todos
     }
 
     fn add_todo(&mut self, name: String) {
@@ -71,7 +77,7 @@ impl Model {
 
         self.todos.push( Todo {
             id,
-            name,
+            title: name,
             edit_text: String::new(), // what is this? todo
             completed: false,
             editing: false,
@@ -90,6 +96,8 @@ impl Default for Model {
         Self {
             todos: Vec::new(),
             visible: Visible::All,
+            edit_text: String::new(),
+            editing: None,
 //            local_storage,
         }
     }
@@ -99,26 +107,29 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     ClearCompleted,
-    Change(u32, String),
-    EditItem(u32),
-    KeyDown(u32),
-    KeyDownItem(web_sys::KeyboardEvent),
+    KeyDownItem(web_sys::KeyboardEvent),  // todo
     Destroy(u32),
     Toggle(u32),
-    ToggleAll,
+    ToggleAll,  // todo
     NewTodo(web_sys::Event), // keycode
-    Submit(u32),
+    SetVisibility(Visible),
+
+    EditItem(u32),
+    EditSubmit(u32),  // todo
+    EditChange(u32, String),  // todo
+    EditKeyDown(u32),  // todo
+
 }
 
 fn update(msg: Msg, model: &Model) -> Model {
     let mut model = model.clone();
-//    let mut todos = model.todos.clone();
+
     match msg {
         Msg::ClearCompleted => {
             model.todos = model.todos.into_iter().filter(|t| t.completed == false).collect();
         }
 
-        Msg::KeyDown(code) => {
+        Msg::EditKeyDown(code) => {
             if code == ESCAPE_KEY {
 //                Model {..model}
                 // todo props.oncancel?
@@ -126,6 +137,13 @@ fn update(msg: Msg, model: &Model) -> Model {
 //                update()
             }
         },
+        Msg::ToggleAll => {
+            // Mark all as completed, unless all are... then mark all as note completed.
+            let setting = if model.active_count() == 0 { false } else { true };
+            for todo in &mut model.todos {
+                todo.completed = setting;
+            }
+        }
         Msg::NewTodo(ev) => {
             // Add a todo_, if the enter key is pressed.
             // We handle text input after processing a key press, hence the
@@ -139,16 +157,16 @@ fn update(msg: Msg, model: &Model) -> Model {
                 let input_el = target.dyn_ref::<web_sys::HtmlInputElement>().unwrap();
                 let text = input_el.value().trim().to_string();
 
+                input_el.set_value("");
+
                 if text.len() > 0 {
                     model.add_todo(text);
+                    model.edit_text = String::new();
                 }
-                // todo: Clear this field.
             }
         },
-        Msg::ToggleAll => {
 
-        },
-        Msg::Submit(id) => {
+        Msg::EditSubmit(id) => {
 
         },
         Msg::Toggle(id) => {
@@ -160,6 +178,20 @@ fn update(msg: Msg, model: &Model) -> Model {
             model.todos = new_todos;
             model.todos.push(todo);
         },
+        Msg::SetVisibility(vis) => model.visible = vis,
+        Msg::Destroy(id) => {
+            // todo broken, sort of
+            log!("ID:", id);
+            for id1 in &model.todos {
+                log!("listing them: ", id1.id);
+            }
+            model.todos = model.todos.into_iter().filter(|t| t.id != id).collect()
+        },
+        Msg::EditItem(id) => {
+            model.editing = Some(id);
+            let mut todo = model.clone().todos.into_iter().find(|t| t.id == id).unwrap();
+            model.edit_text = todo.title;
+        }
 
         _ => ()
     };
@@ -168,7 +200,7 @@ fn update(msg: Msg, model: &Model) -> Model {
 
 // View
 
-fn todo_item(item: Todo) -> El<Msg> {
+fn todo_item(item: Todo, edit_text: String) -> El<Msg> {
     let mut att = attrs!{};
     if item.completed { att.add("class", "completed"); }
     if item.editing { att.add("class", "editing"); }
@@ -176,20 +208,20 @@ fn todo_item(item: Todo) -> El<Msg> {
     li![ att, vec![
         div![ attrs!{"class" => "view"}, vec![
             input![ 
-                attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => &item.completed.to_string() },
+                attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => item.completed },
                 vec![simple_ev("change", Msg::Toggle(item.id))]
             ],
 
-            label![ vec![simple_ev("dblclick", Msg::EditItem(item.id))], item.name ],
+            label![ vec![simple_ev("dblclick", Msg::EditItem(item.id))], item.title ],
             button![ attrs!{"class" => "destroy"}, vec![simple_ev("click", Msg::Destroy(item.id))] ]
         ] ],
 
         input![
-            attrs!{"class" => "edit"; "value" => item.name},
+            attrs!{"class" => "edidt"; "value" => edit_text},
             vec![
-                simple_ev("blur", Msg::Submit(item.id)), 
-                input_ev("change", |text| Msg::Change(1, text)),  // todo item id
-                keyboard_ev("keydown", |ev| Msg::KeyDown(ev.key_code())),
+                simple_ev("blur", Msg::EditSubmit(item.id)),
+                input_ev("change", |text| Msg::EditChange(1, text)),  // todo item id
+                keyboard_ev("keydown", |ev| Msg::EditKeyDown(ev.key_code())),
             ]
         ]
     ] ]
@@ -197,10 +229,9 @@ fn todo_item(item: Todo) -> El<Msg> {
 
 fn selection_li(text: &str, path: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![ vec![
-        a![ attrs!{"href" => path; "class" => match visible {
-            highlighter => "selected",
-            _ => ""
-        }}, text ]
+        a![ attrs!{"href" => path; "class" => if visible == highlighter {"selected"} else {""}},
+            vec![ simple_ev("click", Msg::SetVisibility(highlighter)) ], text
+            ]
     ] ]
 }
 
@@ -217,7 +248,7 @@ fn footer(model: &Model) -> El<Msg> {
 
     footer![ attrs!{"class" => "footer"}, vec![
         span![ attrs!{"class" => "todo-count"}, vec![
-            strong![ &model.todos.len().to_string() ],
+            strong![ model.active_count().to_string() ],
             span![ format!(" item{} left", optional_s) ]
         ]  ],
 
@@ -233,7 +264,8 @@ fn footer(model: &Model) -> El<Msg> {
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
 fn todo_app(model: Model) -> El<Msg> {
-    let mut todo_items: Vec<El<Msg>> = model.shown_todos().into_iter().map(|todo| todo_item(todo.clone())).collect();
+    let mut items: Vec<El<Msg>> = model.shown_todos().into_iter()
+        .map(|todo| todo_item(todo.clone(), model.edit_text.clone())).collect();
 
     let main = if !model.todos.is_empty() {
 
@@ -244,7 +276,7 @@ fn todo_app(model: Model) -> El<Msg> {
                 vec![simple_ev("change", Msg::ToggleAll)]
             ],
             label![ attrs!{"for" => "toggle-all"}, "Mark all as complete"],
-            ul![ attrs!{"class" => "todo-list"}, todo_items ],
+            ul![ attrs!{"class" => "todo-list"}, items ],
         ] ]
 
     } else { seed::empty() };

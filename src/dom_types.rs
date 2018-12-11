@@ -78,6 +78,8 @@ pub fn keyboard_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_s
 pub struct Listener<Ms: Clone> {
     pub trigger: String,  // todo why cow?
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
+    // We store closure here so we can detach it later.
+    pub closure: Option<Closure<FnMut(web_sys::Event)>>,
 }
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
@@ -86,7 +88,8 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     pub fn empty(event: Event) -> Self {
         Self {
             trigger: String::from(event.as_str()),
-            handler: None
+            handler: None,
+            closure: None,
         }
     }
 
@@ -137,20 +140,34 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     /// This method is where the processing logic for events happens.
     pub fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
-
+//        crate::log("step 1");
         let closure = Closure::wrap(
             Box::new(move |event: web_sys::Event| {
                 mailbox.send(handler(event))
             })
                 as Box<FnMut(web_sys::Event) + 'static>,
         );
+//        crate::log("step 2");
         (element.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("add_event_listener_with_callback");
 
-        closure.forget();
+        &closure.forget();
+//        self.closure = Some(closure);
+//        crate::log("step 3");
+
 //        self.handler.replace(handler);  // todo ?
     }
+
+
+    pub fn detach(&self, el_ws: &web_sys::Element) {
+        crate::log("Pre CLOSURE");
+        let closure = self.closure.as_ref().unwrap();
+        crate::log("POST CLOSURE");
+        (el_ws.as_ref() as &web_sys::EventTarget)
+            .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
+            .expect("remove_event_listener_with_callback");
+}
 }
 
 impl<Ms: Clone + 'static>  PartialEq for Listener<Ms> {
