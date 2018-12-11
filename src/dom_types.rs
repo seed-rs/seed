@@ -135,7 +135,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     }
 
     /// This method is where the processing logic for events happens.
-    fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
+    pub fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
 
         let closure = Closure::wrap(
@@ -245,6 +245,10 @@ impl Attrs {
         }
         result
     }
+
+    pub fn add(&mut self, key: &str, val: &str) {
+        self.vals.insert(key.to_string(), val.to_string());
+    }
 }
 
 
@@ -267,7 +271,6 @@ impl Style {
             };
         }
 
-
         Self { vals: new_vals }
     }
 
@@ -287,6 +290,10 @@ impl Style {
         }
 
         result
+    }
+
+    pub fn add(&mut self, key: &str, val: &str) {
+        self.vals.insert(key.to_string(), val.to_string());
     }
 }
 
@@ -457,7 +464,7 @@ pub struct El<Ms: Clone + 'static> {
     pub key: Option<u32>,
 
     // Event-handling
-    listeners: Vec<Listener<Ms>>,
+    pub listeners: Vec<Listener<Ms>>,
 }
 
 impl<Ms: Clone + 'static> El<Ms> {
@@ -501,42 +508,6 @@ impl<Ms: Clone + 'static> El<Ms> {
         let closing = String::from("\n</") + self.tag.as_str() + ">";
 
         opening + &text + &inner + &closing
-    }
-
-    /// Create, and return a web_sys Element, from our virtual-dom El. The web_sys
-    /// Element is a close analog to the DOM elements.
-    /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
-    /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
-    /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-    pub fn make_websys_el(&mut self, document: &web_sys::Document, mailbox: Mailbox<Ms>) -> web_sys::Element {
-//    pub fn make_websys_el(&mut self, el_map: HashMap<u32, web_sys::Element>, document: &web_sys::Document,
-//                          ids: &Vec<u32>, mailbox: Mailbox<Ms>) -> HashMap<u32, web_sys::Element> {
-        //
-        // todo do we want to repeat finding window/doc for each el like this??
-//        let window = web_sys::window().expect("no global `window` exists");
-//        let document = window.document().expect("should have a document on window");
-
-        let el_ws = document.create_element(&self.tag.as_str()).unwrap();
-        for (name, val) in &self.attrs.vals {
-            el_ws.set_attribute(name, val).unwrap();
-        }
-
-        // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
-        // merge the different parts of style here.
-        if self.style.vals.keys().len() > 0 {
-            el_ws.set_attribute("style", &self.style.as_str()).unwrap();
-        }
-
-        // We store text as Option<String>, but set_text_content uses Option<&str>.
-        // A naive match Some(t) => Some(&t) does not work.
-        // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
-        el_ws.set_text_content(self.text.as_ref().map(String::as_ref));
-
-        for listener in &mut self.listeners {
-            listener.attach(&el_ws, mailbox.clone());
-        }
-
-        el_ws
     }
 
     /// This is used to provide access to el_ws while recursively appending children to it.

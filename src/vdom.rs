@@ -1,7 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::{Cell, RefCell}, rc::Rc};
 
 use crate::dom_types;
 use crate::dom_types::{El};
+use crate::websys_bridge;
 
 
 // todo: Get rid of the clone assiated with MS everywhere if you can!
@@ -32,13 +33,16 @@ impl<Ms> Clone for Mailbox<Ms> {
     }
 }
 
+// todo: Examine what needs to be ref cells, rcs etc
+
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     document: web_sys::Document,
     pub main_div: web_sys::Element,
+    // Model is in a RefCell here so we can replace it in self.update_dom().
     pub model: RefCell<Mdl>,
     update: fn(Ms, &Mdl) -> Mdl,
-    pub view: fn(&Mdl) -> El<Ms>,
+    pub view: fn(Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
 }
 
@@ -48,9 +52,9 @@ pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
-impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
+impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
     pub fn new(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
-               view: fn(&Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
+               view: fn(Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
 
         let window = web_sys::window().expect("no global `window` exists");
         let document = window.document().expect("should have a document on window");
@@ -89,10 +93,13 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
-        let mut topel_new_vdom = (self.data.view)(&updated_model);
+        // We accept cloning here, for the benefit of making data easier to work
+        // with in the app.
+        let mut topel_new_vdom = (self.data.view)(updated_model.clone());
 
         // We're now done with this updated model; store it for use as the old
         // model for the next update.
+        // Note: It appears that this step is why we need data.model to be in a RefCell.
         self.data.model.replace(updated_model);
 
         // We setup the vdom (which populates web_sys els through it, but don't
@@ -143,7 +150,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
             // analyzing children
             if old.tag != new.tag {
                 parent.remove_child(&old_el_ws).expect("Problem removing this element");
-                attach(new, parent);
+                websys_bridge::attach(new, parent);
                 // We've re-rendered this child and all children; we're done with this recursion.
                 return
             }
@@ -170,7 +177,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
             if avail_old_children.is_empty() {
                 // One or more new children has been added, or much content has
                 // changed, or we've made a mistake: Attach new children.
-                attach(child_new, &old_el_ws);
+                websys_bridge::attach(child_new, &old_el_ws);
             } else {
 
                 // We still have old children to pick a match from. If we pick
@@ -218,7 +225,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
 
         // Create the web_sys element; add it to the working tree; store it in
         // its corresponding vdom El.
-        let el_ws = el_vdom.make_websys_el(&self.data.document, self.mailbox());
+        let el_ws = websys_bridge::make_websys_el(el_vdom, &self.data.document, self.mailbox());
         el_vdom.el_ws = Some(el_ws);
         for child in &mut el_vdom.children {
             // Raise the active level once per recursion.
@@ -226,7 +233,6 @@ impl<Ms: Clone + Sized + 'static, Mdl: Sized + 'static> App<Ms, Mdl> {
             id += 1;
         }
     }
-
 }
 
 impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for App<Ms, Mdl> {
@@ -237,43 +243,7 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
     }
 }
 
-/// Recursively remove all children.
-fn remove_children(el: &web_sys::Element) {
-    while let Some(child) = el.last_child() {
-        el.remove_child(&child).unwrap();
-    }
-}
-
-// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
-// it performs a rerender of the el and all children; eg a potentially-expensive op.
-// Consider this funcion a way
-pub fn attach<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys::Element) {
-    // No parent means we're operating on the top-level element; append it to the main div.
-    // This is how we call this function externally, ie not through recursion.
-
-    // Don't render if we're dealing with a dummy element.
-    // todo get this working. it produes panics
-//    if el_vdom.is_dummy() == true { return }
-
-    let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
-
-    crate::log("Rendering element in attach");
-    // Purge existing children.
-//    parent.remove_child(&el_ws).expect("Missing el_ws");
-    // Append its child while it's out of its element.
-    parent.append_child(&el_ws).unwrap();
-
-    for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
-        attach(child, &el_ws)
-    }
-
-    // Replace the web_sys el... Indiana-Jones-style.
-    el_vdom.el_ws.replace(el_ws);
-}
-
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
-///
 fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
     // todo: No magic numbers
     let mut score = 0.;

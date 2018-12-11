@@ -1,12 +1,19 @@
+//! https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
+//! https://serde.rs/
+
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde;
 extern crate serde_json;
+
+use seed::fetch;
+
+use std::collections::HashMap;
 
 
 // Model
@@ -14,25 +21,46 @@ extern crate serde_json;
 
 // Note that you can apply Serialize and Deserialize to your model directly,
 // eg if you'd like to receive or pass all of its data.
-#[derive(Serialize, Deserialize)]
+// Why is clone required?b
+#[derive(Serialize, Deserialize, Clone)]
 struct Data {
-
+    val: i32,
+    text: String,
 }
 
 #[derive(Clone)]
 struct Model {
-    pub val: i32,
     data: Data,
 }
+
 
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-        Self {
-            val: 0,
-            data: Data {
+        let url = "https://seed-example.herokuapp.com/data";
+        let mut headers = HashMap::new();
+        headers.insert("Content-type", "application/json");
 
-            }
+        let server_data = fetch::fetch(fetch::Method::Get, url, None, Some(headers));
+
+
+        let closure = Closure::wrap(
+            Box::new(move |v| {
+                crate::log(v);
+            })
+        );
+
+
+
+
+        server_data.then(&closure);;
+
+//        Msg::Replace(data);
+
+//        seed::log(server_data.into());
+
+        Self {
+            data: Data { val: 0, text: String::new() }
         }
     }
 }
@@ -42,13 +70,13 @@ impl Default for Model {
 
 #[derive(Clone)]
 enum Msg {
-    Increment,
+    Replace(Data),
 }
 
-fn update(msg: &Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Increment => {
-            Model {val: model.val + 1}
+        Msg::Replace(data) => {
+            Model {data}
         },
     }
 }
@@ -57,10 +85,10 @@ fn update(msg: &Msg, model: &Model) -> Model {
 // View
 
 fn view(model: &Model) -> El<Msg> {
-    div![ "Hello World" ]
+    div![ format!("Hello World. Val: {}, text: {}", model.data.val, model.data.text) ]
 }
 
 #[wasm_bindgen]
 pub fn render() {
-    rebar::run(Model::default(), update, view, "main");
+    seed::run(Model::default(), update, view, "main");
 }

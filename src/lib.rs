@@ -4,9 +4,16 @@
 
 pub mod dom_types;
 
-mod dom_shortcuts;
-//mod fetch;
+
+pub mod shortcuts;
+
+pub mod fetch;
 mod vdom;
+mod websys_bridge;
+
+// For fetch:
+#[macro_use]
+extern crate serde_derive;
 
 
 //// todos:
@@ -20,19 +27,18 @@ mod vdom;
 
 
 /// The entry point for the app
-pub fn run<Ms: Clone + Sized + 'static, Mdl: Sized + 'static>(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
-          view: fn(&Mdl) -> dom_types::El<Ms>, main_div_id: &str) {
-    let app = vdom::App::new(model, update, view, main_div_id);
+pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
+          view: fn(Mdl) -> dom_types::El<Ms>, main_div_id: &str)
+    where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
+{
+    let app = vdom::App::new(model.clone(), update, view, main_div_id);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    let mut main_el_vdom = (app.data.view)(&app.data.model.borrow());
+    let mut main_el_vdom = (app.data.view)(model);
     app.setup_vdom(&mut main_el_vdom, 0, 0);
     // Attach all children: This is where our initial render occurs.
-    vdom::attach(&mut main_el_vdom, &app.data.main_div);
+    websys_bridge::attach(&mut main_el_vdom, &app.data.main_div);
 
-    // todo really: You shouldn't need to attach here. Will be handled by patch
-// todo try it again. and maybe have a helper func to update the model, setup_vdom, run patch etc??
-// todo or maybe i'm wrong
     app.data.main_el_vdom.replace(main_el_vdom);
 }
 
@@ -49,6 +55,7 @@ pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
 pub fn log(text: &str) {
     web_sys::console::log_1(&text.into());
 }
+
 
 /// Introduce El into the global namespace for convenience (It will be repeated
 /// often in the output type of components), and UpdateEl, which is required

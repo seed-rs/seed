@@ -959,3 +959,22 @@ macro_rules! style {
 //
 //
 //}
+
+
+/// A convenience function for logging to the web browser's console.  We use
+/// a macro instead of a function to allow flexible input types, and multiple
+/// inputs.
+#[macro_export]
+macro_rules! log {
+    { $($expr:expr),* } => {
+        {
+            let mut text = String::new();
+            $(
+                text += &$expr.to_string();
+                text += " ";
+            )*
+            web_sys::console::log_1(&text.into());
+        }
+     };
+}
+

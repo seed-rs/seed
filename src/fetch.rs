@@ -1,82 +1,173 @@
-extern crate futures;
-extern crate js_sys;
-extern crate wasm_bindgen;
-extern crate wasm_bindgen_futures;
-extern crate web_sys;
-#[macro_use]
-extern crate serde_derive;
+//! High-level interface for web_sys HTTP requests.
+//! See https://rustwasm.github.io/wasm-bindgen/reference/js-promises-and-rust-futures.html
+//! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Request.html
+//! https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/
+
+//#[macro_use]
+//extern crate serde_derive;
+
+use std::collections::HashMap;
 
 use futures::{future, Future};
-use js_sys::Promise;
+//use js_sys;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
-use wasm_bindgen_futures::JsFuture;
+//use wasm_bindgen_futures::future_to_promise;
+use wasm_bindgen_futures;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 
-pub enum ReqMethod {
+
+/// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+pub enum Method {
     Get,
+    Head,
     Post,
     Put,
-    Delete
-    // todo others
+    Delete,
+    Connect,
+    Options,
+    Trace,
+    Patch
 }
 
-impl ReqMethod {
+impl Method {
     fn as_str(&self) -> &str {
         match self {
-            &ReqMethod::Get => "GET",
-            &ReqMethod::Post => "POST",
-            &ReqMethod::Put => "PUT",
-            &ReqMethod::Delete => "DELETE",
+            &Method::Get => "GET",
+            &Method::Head => "HEAD",
+            &Method::Post => "POST",
+            &Method::Put => "PUT",
+            &Method::Delete => "DELETE",
+            &Method::Connect => "CONNECT",
+            &Method::Options => "OPTIONS",
+            &Method::Trace => "TRACE",
+            &Method::Patch => "PATCH",
         }
     }
 }
 
 /// A wrapper over web_sys's fetch api, to simplify code
 /// https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-fn inner(url: &str, method: ReqMethod, payload: &str) {
+pub fn fetch(method: Method, url: &str, payload: Option<String>,
+//             headers: Option<HashMap<&str, &str>>,
+//             cl: impl FnMut(wasm_bindgen::JsValue) -> future::FutureResult) -> js_sys::Promise {
+             headers: Option<HashMap<&str, &str>>, cl: impl FnMut(wasm_bindgen::JsValue)) -> js_sys::Promise {
+//             headers: Option<HashMap<&str, &str>>) -> wasm_bindgen_futures::JsFuture {
+//             headers: Option<HashMap<&str, &str>>) -> wasm_bindgen_futures::JsFuture {
     let mut opts = RequestInit::new();
     opts.method(method.as_str());
     opts.mode(RequestMode::Cors);
 
     let request = Request::new_with_str_and_init(url, &opts).unwrap();
 
-    request
-        .headers()
-        .set("Accept", "application/vnd.github.v3+json")
-        .unwrap();
+    // Set headers:
+    // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Headers.html
+    // https://developer.mozilla.org/en-US/docs/Web/API/Headers/set
+    if let Some(h) = headers {
+        let req_headers = request.headers();
+        for (name, value) in &h {
+            req_headers.set(&name, &value);
+        }
+    }
+//    req_headers.unwrap();
 
     let window = web_sys::window().unwrap();
     let request_promise = window.fetch_with_request(&request);
 
-    let future = JsFuture::from(request_promise)
+    let future = wasm_bindgen_futures::JsFuture::from(request_promise)
         .and_then(|resp_value| {
             // `resp_value` is a `Response` object.
             assert!(resp_value.is_instance_of::<Response>());
             let resp: Response = resp_value.dyn_into().unwrap();
             resp.json()
         })
-        .and_then(|json_value: Promise| {
+        .and_then(|json_value: js_sys::Promise| {
             // Convert this other `Promise` into a rust `Future`.
-            JsFuture::from(json_value)
-        })
-        .and_then(|json| {
-            // Use serde to parse the JSON into a struct.
-            let branch_info: Branch = json.into_serde().unwrap();
-
-            // Send the `Branch` struct back to JS as an `Object`.
-            future::ok(JsValue::from_serde(&branch_info).unwrap())
+            wasm_bindgen_futures::JsFuture::from(json_value)
         });
 
+//        .and_then(cl);
+
+
+//        .and_then(|json| {
+//            // Use serde to parse the JSON into a struct.
+////            let branch_info: T = json.into_serde().unwrap();
+//
+//            // Send the `Branch` struct back to JS as an `Object`.
+//            future::ok(JsValue::from_serde(&branch_info).unwrap())
+//        });
+
     // Convert this Rust `Future` back into a JS `Promise`.
-    future_to_promise(future)
+
+//    future
+    wasm_bindgen_futures::future_to_promise(future)
 }
 
-pub fn fetch() {
 
-}
 
-pub fn post() {
+//
+///// A wrapper over web_sys's fetch api, to simplify code
+///// https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
+//pub fn fetch<T>(method: ReqMethod, url: &str, payload: Option<String>,
+//         headers: HashMap<String, String>, ex: T) -> T
+//    where T: serde::Serialize + serde::Deserialize
+//{
+//    let mut opts = RequestInit::new();
+//    opts.method(method.as_str());
+//    opts.mode(RequestMode::Cors);
+//
+//    let request = Request::new_with_str_and_init(url, &opts).unwrap();
+//
+//    // Set headers:
+//    // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Headers.html
+//    // https://developer.mozilla.org/en-US/docs/Web/API/Headers/set
+//    let req_headers = request.headers();
+//    for (name, value) in &headers {
+//        req_headers.set(&name, &value);
+//    }
+////    req_headers.unwrap();
+//
+//    let window = web_sys::window().unwrap();
+//    let request_promise = window.fetch_with_request(&request);
+//
+//
+//    let result: T;
+//
+//    let future = JsFuture::from(request_promise)
+//        .and_then(|resp_value| {
+//            // `resp_value` is a `Response` object.
+//            assert!(resp_value.is_instance_of::<Response>());
+//            let resp: Response = resp_value.dyn_into().unwrap();
+//            resp.json()
+//        })
+//        .and_then(|json_value: js_sys::Promise| {
+//            // Convert this other `Promise` into a rust `Future`.
+//            JsFuture::from(json_value)
+//        })
+//        .and_then(|json| {
+//            // Use serde to parse the JSON into a struct.
+//            result = json.into_serde().unwrap();
+//
+//            // Send the `Branch` struct back to JS as an `Object`.
+////            future::ok(JsValue::from_serde(&branch_info).unwrap())
+//        });
+//    result
+//
+//    // Convert this Rust `Future` back into a JS `Promise`.
+////    wasm_bindgen_futures::future_to_promise(future)
+//}
 
-}
+
+
+
+
+
+
+// todo add these back once you've stabilized your api.
+//pub fn get(url: &str, payload: Option<String>, headers: HashMap<String, String>) {
+//    fetch(ReqMethod::Post, url, payload, headers)
+//}
+//
+//pub fn post(url: &str, payload: Option<String>, headers: HashMap<String, String>) {
+//    fetch(ReqMethod::Post, url, payload, headers)
+//}

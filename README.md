@@ -2,6 +2,11 @@
 
 **A Rust framework for creating web apps**
 
+[![](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
+[![](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
+[![API Documentation on docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
+
+
 ## Quickstart
 
 ### Setup
@@ -21,21 +26,18 @@ And wasm-bindgen:
 
 ### The theoretical minimum
 To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
-run `build.sh` or `build.ps1` in a terminal, and open `index.html`. Once you change your project name, you'll
+run `build.sh` or `build.ps1` in a terminal, and open `index.html`. Once you change your package name, you'll
 need to tweak the Html file and build script, as described below.
 
 ### A little deeper
 Or, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
 appname` should be replaced with the name of your app.
 
-You need an Html file that loads your app's compiled module, and provides a div with id 
+You need an Html file that loads your app's compiled module, and provides an element with id 
 to load the framework into. It also needs the following code to load your WASM module -
  Ie, the body should contain this:
  
- (todo: Once the --out-name flag is enabled on bindgen, simplify this section, explaining how
- the quickstart repo works immediately by running the build script, and opening the HTML file)
-
-```html
+ ```html
  <div id="main"></div>
 
 <script>
@@ -56,7 +58,7 @@ to load the framework into. It also needs the following code to load your WASM m
 ```
 
 The quickstart repo includes this file, but you will need to rename the two 
-occurances of `appname`. You will eventually need to modify this file to 
+occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
 
 `Cargo.toml`needs `wasm-bindgen`, `web-sys`, and `seed` as depdendencies, and crate-type
@@ -85,8 +87,9 @@ serde_json = "1.0.33"
 ```
 
 ### A short example
-Here's an example app demonstrating syntax. Descriptions of its parts are in the
-Guide section below. Its structure closely resembles [The Elm Architecture](https://guide.elm-lang.org/architecture/).
+Here's an example demonstrating structure and syntax; it can be found in working form
+under `examples/counter`. Descriptions of its parts are in the
+Guide section below. Its structure follows [The Elm Architecture](https://guide.elm-lang.org/architecture/).
 
 *lib.rs*:
 ```rust
@@ -217,12 +220,10 @@ folder, and populates the pkg folder with your WASM module, a Typescript definit
 and a Javascript file used to link your module from HTML.
 
 You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows).
-The Quickstart repo includes this, but you'll still need to do the rename. You can then use
+The Quickstart repo includes these, but you'll still need to do the rename. You can then use
 `./build.sh` or `.\build.ps1`
 
-For development, you can view your app using a dev server, or by opening the HTML file in a browser.
-
-For example, after installing the  [http crate](https://crates.io/crates/https), run `http`.
+For development, you can view your app using a dev server, or by opening the HTML file in a browser. For example, after installing the  [http crate](https://crates.io/crates/https), run `http`.
 Or with [Python](https://www.python.org/) installed, run `python -m http.server` from your crate's root.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
@@ -268,10 +269,10 @@ using these tools will likely have an easy time learning this.
 **Model**
 
 Each app must contain a model [struct]( https://doc.rust-lang.org/book/ch05-00-structs.html), 
-which contains the app’s state and data. It should contain 
-[owned data](https://doc.rust-lang.org/book/2018-edition/ch04-00-understanding-ownership.html). References
+which contains the app’s state and data. It must derive `Clone`, and should contain 
+[owned data](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html). References
 with a static [lifetime](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html) may work,
-but will be more difficult to work with. Example:
+but may be more difficult to work with. Example:
 
 ```rust
 #[derive(Clone)]
@@ -291,8 +292,7 @@ impl Default for Model {
 }
 ```
  
-The first line, `#[derive(Clone)]` is required to let Seed make copies or it, and
-display it internally. In this example, we provide 
+In this example, we provide 
 initialization via Rust’s `Default` trait, in order to keep the initialization code by the
  model itself. When we call `Model.default()`, it initializes with these values. We could 
  also initialize it using a constructor method, or a struct literal. Note the use of `into()` 
@@ -302,7 +302,7 @@ The model holds all data used by the app, and will be replaced with updated vers
 Use owned data in the model; eg `String` instead of `&'static str`.
 
  The model may be split into sub-structs to organize it – this is especially useful as the app grows. 
-The sub-structs must also implement `Clone`:
+Sub-structs must implement `Clone`:
  
 
 ```rust
@@ -345,6 +345,9 @@ you pass to `seed::run` describes how the state should change, upon
 receiving each type of Message. It is the only place where the model is changed. It accepts a message, and model 
 reference as parameters, and returns a Model instance. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
+ 
+ 
+ *todo: Demonstrate example patterns, eg when to clone, ..operator, refs/not etc*
  
 Example:
 
@@ -393,6 +396,13 @@ If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font
 once created, a `Style` instance holds all its values as `Strings`; eg that `16` above will be stored
 as `"16px"`; keep this in mind if editing a style that you made outside an element macro.
 
+To edit Attrs or Styles you've created, you can edit their .vals HashMap. To add
+a new part to them, use their .add method:
+```rust
+let mut attributes = attrs!{};
+attributes.add("class", "truckloads");
+```
+
 ### Events
 
 Event syntax may change in the future. Currently, events are a `Vec` of dom_types::Listener'
@@ -428,8 +438,8 @@ use wasm_bindgen::JsCast;
 
 (in update func)
 Msg::TextEntry(event) => {
-    let target = event.target.unwrap();
-    let input_el = target.dyn_ref::<web_sys::HtmlInputElement>;
+    let target = event.target().unwrap();
+    let input_el = target.dyn_ref::<web_sys::HtmlInputElement>().unwrap();
     let text = input_el.value();
     //...
 }
@@ -458,6 +468,7 @@ enum Msg {
 // ... (in update)
 KeyDown(event) => {
     let code = event.key_code()
+    // ...
 }
 
 // ... In view
@@ -467,7 +478,6 @@ and
 ```rust
 enum Msg {
     KeyDown(u32)
-    // ...
 }
 
 // ... (in update)
@@ -480,7 +490,7 @@ vec![ keyboard_ev("keydown", |ev| KeyDown(ev.key_code()))]
 ```
 
 You can pass more than one variable to the `Msg` enum via the closure, as long
-as it's set up appropriate in `Msg`'s definitino.
+as it's set up appropriate in `Msg`'s definition.
 
 Event syntax may be improved later with the addition of a single macro that infers what the type of event 
 is based on the trigger, and avoids the use of manually creating a `Vec` to store the
@@ -494,10 +504,13 @@ and [Mdn ref](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget); the
 If we wish to read the key_code of an event, we must first cast it as a KeyboardEvent; pure Events
 (web_sys and DOM) do not contain this field.
 
+The Todomvc example has a number of event-handling examples, including use of raw_ev, 
+where it handles text input triggered by a key press, and uses prevent_default().
+
 
 ### Element-creation macros, under the hood
 
-For example, the following code returns an `El` representing a few DOM elements displayed
+The following code returns an `El` representing a few DOM elements displayed
 in a flexbox layout:
 ```rust
     div![ style!{"display" => "flex"; "flex-direction" => "column"}, vec![
@@ -507,13 +520,14 @@ in a flexbox layout:
 ```
 
 The only magic parts of this are the macros used to simplify syntax for creating these
-things: text are normal rust borrowed strings; children are Vecs of sub-elements; 
-Attrs, Style and Events are thinly-wrapped HashMaps. They can be created independently, and
+things: text are [Options](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#the-option-enum-and-its-advantages-over-null-values)
+ of Rust borrowed Strings; `Listeners` are stored in Vecs; children are Vecs of sub-elements;
+`Attr`s and `Style` are thinly-wrapped HashMaps. They can be created independently, and
 passed to the macros separately. The following code is equivalent; it uses constructors
 from the El struct. Note that `El` type is imported with the Prelude.
 
 ```rust
-    use seed::dom_types::Tag;
+    use seed::dom_types::{El, Attrs, Style, Tag};
     
     // heading and button here show two types of element constructors
     let mut heading = El::new(
@@ -526,8 +540,6 @@ from the El struct. Note that `El` type is imported with the Prelude.
     );  
     
     let mut button = El::empty(Tag::Button);
-    button.add_event("click", |_| Msg::SayHi);
-
     let children = vec![heading, button];
     
     let mut elements = El::empty(Tag::Div);
@@ -540,10 +552,10 @@ from the El struct. Note that `El` type is imported with the Prelude.
 
 The following equivalent example shows creating the required structs without constructors,
 to demonstrate that the macros and constructors above represent normal Rust structs,
-and provide insight into what abstractions they perform:
+and provides insight into what abstractions they perform:
 
 ```rust
-use seed::dom_types::{Attrs, Events, Style, Tag};
+use seed::dom_types::{El, Attrs, Style, Tag};
 
 // Rust has no built-in HashMap literal syntax.
 let mut style = HashMap::new();
@@ -598,7 +610,7 @@ For example, you could break up the above example like this:
     
     div![ style!{"display" => "flex"; flex-direction: "column"}, vec![
         text_display("Some things"),
-        button![ events!{"click" => |_| Msg::SayHi}, "Click me!" ]
+        button![ vec![ simple_ev("click", Msg::SayHi) ], "Click me!" ]
     ] ]
 ```
 
@@ -647,7 +659,7 @@ div![ vec![
     if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
 ] ]
 ```
-For more complicated construsts, you may wish to create the `children` `Vec` separately,
+For more complicated construsts, you may wish to create the `children` Vec separately,
 push what components are needed, and pass it into the element macro.
 
 
@@ -676,8 +688,9 @@ use comments in them normally: either on their own line, or in line.
 
 
 ### Logging in the web browser
-To output to teh web browser's console (ie `console.log()` in JS), use `web_sys::console_log1`,
-or the `log` convenience function: `seed::log("hello, world!")`
+To output to the web browser's console (ie `console.log()` in JS), use `web_sys::console_log1`,
+or the `log` macro that wraps it, which is imported in the seed prelude: 
+`log!("On the shoulders of", 5, "giants".to_string())`
 
 
 ### Serialization and deserialization
@@ -729,7 +742,8 @@ borrow checker.
 Their hallmark is a message that starts with `RuntimeError: "unreachable executed"`, and correspond
 to a panic in the rust code. (For example, a problem while using `unwrap()`). There's
 currently no neat way to identify which part of the code panicked; until this is sorted out,
-you may try to narrow it down using `seed.log()` commands. Ideally, you won't experience these.
+you may try to narrow it down using `seed.log()` commands. They're usually associated with
+`unwrap()` or `expect()` calls.
 
 ### Reference
 - [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)
@@ -737,6 +751,7 @@ you may try to narrow it down using `seed.log()` commands. Ideally, you won't ex
 - [web-sys api](https://rustwasm.github.io/wasm-bindgen/api/web_sys/) (A good partner for the MDN docs - most DOM items have web-sys equivalents used internally)
 - [Rust book](https://doc.rust-lang.org/book/index.html)
 - [Rust standard library api](https://doc.rust-lang.org/std/)
+- [Seed's API docs](https://docs.rs/seed)
 
 ## About
 
@@ -830,6 +845,7 @@ wasm-bindgen than with npm.
 ## To-do
  - Router
  - Local storage integration
+ - Cleaner event syntax
  - More examples
  - Optimization 
  

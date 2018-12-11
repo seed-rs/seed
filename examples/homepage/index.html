@@ -10,7 +10,7 @@
 
     <!--<link rel="stylesheet" type="text/css" href="./style.css">-->
 
-    <title>Server interaction</title>
+    <title>Counter example</title>
 
 </head>
 <body>
@@ -29,7 +29,7 @@
     delete WebAssembly.instantiateStreaming;
 </script>
 
-<script src='./pkg/server_interaction.js'></script>
+<script src='./pkg/counter.js'></script>
 
 <script>
     // the `wasm_bindgen` global is set to the exports of the Rust module
@@ -40,7 +40,7 @@
     }
     // here we tell bindgen the path to the wasm file so it can run
     // initialization and return to us a promise when it's done
-    wasm_bindgen('./pkg/server_interaction_bg.wasm')
+    wasm_bindgen('./pkg/counter_bg.wasm')
         .then(run)
         .catch(console.error);
 </script>
