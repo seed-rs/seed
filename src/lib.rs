@@ -2,6 +2,8 @@
 
 #![allow(unused_macros)]
 
+use wasm_bindgen::JsCast;
+
 pub mod dom_types;
 
 
@@ -24,6 +26,35 @@ extern crate serde_derive;
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
+
+
+/// Convenience function used in event handling: Convert an event target
+/// to an input element; eg so you can take its value.
+pub fn to_input(target: &web_sys::EventTarget ) -> &web_sys::HtmlInputElement {
+    // This might be more appropriate for web_sys::bridge, but I'd
+    // like to expose it without making websys_bridge public.
+    target.dyn_ref::<web_sys::HtmlInputElement>().expect("Unable to cast as an input element")
+}
+
+/// See to_input
+pub fn to_textarea(target: &web_sys::EventTarget ) -> &web_sys::HtmlTextAreaElement {
+    // This might be more appropriate for web_sys::bridge, but I'd
+    // like to expose it without making websys_bridge public.
+    target.dyn_ref::<web_sys::HtmlTextAreaElement>().expect("Unable to cast as a textarea element")
+}
+
+/// See to_input
+pub fn to_select(target: &web_sys::EventTarget ) -> &web_sys::HtmlSelectElement {
+    // This might be more appropriate for web_sys::bridge, but I'd
+    // like to expose it without making websys_bridge public.
+    target.dyn_ref::<web_sys::HtmlSelectElement>().expect("Unable to cast as a select element")
+}
+
+pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
+    // This might be more appropriate for web_sys::bridge, but I'd
+    // like to expose it without making websys_bridge public.
+    event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
+}
 
 
 /// The entry point for the app

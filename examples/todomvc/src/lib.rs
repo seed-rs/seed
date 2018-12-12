@@ -128,8 +128,7 @@ enum Msg {
     EditItem(usize),
     EditSubmit(usize),
     EditChange(String),
-//    EditKeyDown(usize, u32),  // item position, keycode
-    EditKeyDown(u32),  // item position, keycode
+    EditKeyDown(usize, u32),  // item position, keycode
 }
 
 fn update(msg: Msg, model: &Model) -> Model {
@@ -157,13 +156,12 @@ fn update(msg: Msg, model: &Model) -> Model {
             // Add a todo_, if the enter key is pressed.
             // We handle text input after processing a key press, hence the
             // raw event logic here.
-            let keyboard_ev = ev.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
-            let code = keyboard_ev.key_code();
+            let code = seed::to_kbevent(&ev).key_code();
 
             if code == ENTER_KEY {
                 ev.prevent_default();
                 let target = ev.target().unwrap();
-                let input_el = target.dyn_ref::<web_sys::HtmlInputElement>().unwrap();
+                let input_el = seed::to_input(&target);
                 let text = input_el.value().trim().to_string();
 
                 if text.len() > 0 {
@@ -193,14 +191,7 @@ fn update(msg: Msg, model: &Model) -> Model {
             }
         },
         Msg::EditChange(text) => model.edit_text = text,
-
-        // Ideally, we'd pass posit and code, but ran into an issue where we can't
-        // pass non-closure-input items in closures in some cases due to lifetime issues.
-        // We can work around it in this case by inferring position from which todo
-        // is being edited.
-//        Msg::EditKeyDown(posit, code) => {
-        Msg::EditKeyDown(code) => {
-            let posit = model.todos.iter().position(|t| t.editing == true).unwrap();
+        Msg::EditKeyDown(posit, code) => {
             if code == ESCAPE_KEY {
                 model.edit_text = model.todos[posit].title.clone();
                 for todo in &mut model.todos {
@@ -239,10 +230,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
                 vec![
                     simple_ev("blur", Msg::EditSubmit(posit)),
                     input_ev("input", |text| Msg::EditChange(text)),
-                    // This approach would be more elegant, but I can't get it working due to
-                    // lifetime issues.
-//                    keyboard_ev("keydown", |ev| Msg::EditKeyDown(posit, ev.key_code())),
-                    keyboard_ev("keydown", |ev| Msg::EditKeyDown(ev.key_code())),
+                    keyboard_ev("keydown", move |ev| Msg::EditKeyDown(posit, ev.key_code())),
                 ]
             ]
         } else { seed::empty() }

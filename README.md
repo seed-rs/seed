@@ -458,36 +458,36 @@ Example: ```simple_ev("input", |text| NewWords(text))```
 which exposes several getter methods like `key_code` and `key`.
 Example: ```simple_ev("keydown", |event| PutTheHammerDown(event))```
 
-`raw_ev` returns a [web_sys::Event](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Event.html). It lets you access any part of any type of
-event, albeit with some unpleasant syntax. Its Enum should accept a `web_sys::KeyboardEvent`.
+`raw_ev` returns a [web_sys::Event](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Event.html). 
+It lets you access any part of any type of
+event, albeit with more verbose syntax.
 If you wish to do something like prevent_default(), or anything note listed above, 
-you need to take this approach.
+you need to take this approach. Note that for many common operations, like taking
+the value of an input element after an `input` or `change` event, you have to deal with
+casting from the native event or target to the specific one. Seed provides convenience
+functions to handle this. They wrap wasm-bindgen's .dyn_ref() and .dyn_into(), from its
+[JsCast](https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/trait.JsCast.html) trait.
 
-Example syntax to handle input and keyboard events `using raw_ev` instead of
-`input_ev` and `keyboard_ev`:
+Example syntax showing how you might use raw_ev; processing an input and handling a keyboard
+event, while using prevent_default:
 ```rust
-use wasm_bindgen::JsCast;
-
-// ...
-
-(in update func)
-Msg::TextEntry(event) => {
-    let target = event.target().unwrap();
-    let input_el = target.dyn_ref::<web_sys::HtmlInputElement>().unwrap();
-    let text = input_el.value();
-    //...
-}
+// (in update func)
 Msg::KeyPress(event) => {
-    let keyboard_event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
-    let code = keyboard_vent.key_code();
-    // ...
+    let code = seed::to_kbevent(&ev).key_code();
+
+    let target = event.target();
+    let text = seed::to_input(&target).value();
     
+    // ...
+    // In view
     vec![ 
-        raw_ev("input", |ev| Msg::TextEntry(ev)),
-        raw_ev("keydown", |ev| Msg::KeyPress(ev)),
+        raw_ev("input", |ev| Msg::KeyPress(ev)),
     ]
 }
 ```
+Seed also provides `to_textarea` and `to_select` functions, which you'd use as
+`to_input`.
+
 It's likely you'll be able to do most of what you wish with the simpler event funcs.
 If there's a type of event or use you think would benefit from a similar func, submit
 an issue or PR. In the descriptions above for all event-creation funcs, we assumed minimal code in the closure,
@@ -524,7 +524,13 @@ vec![ keyboard_ev("keydown", |ev| KeyDown(ev.key_code()))]
 ```
 
 You can pass more than one variable to the `Msg` enum via the closure, as long
-as it's set up appropriate in `Msg`'s definition.
+as it's set up appropriate in `Msg`'s definition. Note that if you pass a value to the enum
+other than what's between ||, you may receive an error about lifetimes. This is corrected by
+making the closure a move type. Eg:
+```rust
+keyboard_ev("keydown", move |ev| Msg::EditKeyDown(id, ev.key_code()))
+```
+Where `id` is a value defined earlier.
 
 Event syntax may be improved later with the addition of a single macro that infers what the type of event 
 is based on the trigger, and avoids the use of manually creating a `Vec` to store the
@@ -699,7 +705,7 @@ push what components are needed, and pass it into the element macro.
 
 ### Initializing your app
 To start your app, pass an instance of your model, the update function, the top-level component function 
-(not its output), and name of the div you wish to mount it to to the `seed::run` function:
+(not its output), and name of the element (Usually a Div or Section) you wish to mount it to to the `seed::run` function:
 ```rust
 #[wasm_bindgen]
 pub fn render() {
@@ -747,7 +753,7 @@ Seed will implement a high-level fetch API in the future, wrapping web-sys's.
 ### Local storage
 You can store page state locally using web_sys's [Storage struct](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html)
 
-Seed provides convenience functions `seed::storage::get_storage, which returns 
+Seed provides convenience functions `seed::storage::get_storage`, which returns 
 the `web_sys::storage` object, and `seed::storage::store_data` to store an arbitrary
 Rust data structure that implements serde's Serialize. Example use:
 

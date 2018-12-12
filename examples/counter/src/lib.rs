@@ -67,6 +67,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 /// only argument, and output a single El.
 fn view(model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
+    let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
     // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style!{
@@ -86,7 +87,7 @@ fn view(model: Model) -> El<Msg> {
             },
             vec![
                 // We can use normal Rust code and comments in the view.
-                h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
+                h3![ text ],
                 button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
                 button![ vec![ simple_ev("click", Msg::Decrement) ], "-" ],
 
