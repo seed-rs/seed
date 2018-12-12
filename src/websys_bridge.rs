@@ -101,3 +101,81 @@ pub fn remove_children(el: &web_sys::Element) {
         el.remove_child(&child).unwrap();
     }
 }
+
+/// Update the attributes, style, text, and events of an element. Does not
+/// process children, and assumes the tag is the same. Assume we've identfied
+/// the most-correct pairing between new and old.
+pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_types::El<Ms>,
+           old_el_ws: &web_sys::Element, document: &web_sys::Document, mailbox: Mailbox<Ms>) {
+
+    if old.attrs != new.attrs {
+        for (key, new_val) in &new.attrs.vals {
+            match old.attrs.vals.get(key) {
+                Some(old_val) => {
+                    // The value's different
+                    if old_val != new_val {
+                        set_attr_shim(&old_el_ws, key, new_val);
+                    }
+                },
+                None => old_el_ws.set_attribute(key, new_val).expect("Adding a new attribute")
+            }
+        }
+        // Remove attributes that aren't in the new vdom.
+        for (name, old_val) in &old.attrs.vals {
+            if new.attrs.vals.get(name).is_none() {
+                old_el_ws.remove_attribute(name).expect("Removing an attribute");
+            }
+        }
+    }
+
+    // Patch style.
+    if old.style != new.style {
+        // We can't patch each part of style; rewrite the whole attribute.
+        old_el_ws.set_attribute("style", &new.style.as_str())
+            .expect("Setting style");
+    }
+
+
+    // Patch text
+    if old.text != new.text {
+        // This is not as straightforward as it looks: There can be multiple text nodes
+        // in the DOM, even though our API only allows for 1 per element. If we
+        // naively run set_text_content(), all child nodes will be removed.
+        // Text is stored in special Text nodes that don't have a direct-relation to
+        // the vdom.
+
+        let text = new.text.clone().unwrap_or_default();
+
+        if old.text.is_none() {
+            // There's no old node to find: Add it.
+            let new_next_node = document.create_text_node(&text);
+            old_el_ws.append_child(&new_next_node).unwrap();
+        } else {
+            // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
+            let children = old_el_ws.child_nodes();
+            for i in 0..children.length() {
+                let node = children.item(i).unwrap();
+                // We've found it; there will be not more than 1 text node.
+                if node.node_type() == 3 {
+                    node.set_text_content(Some(&text));
+                    break;
+                }
+            }
+        }
+
+
+    }
+
+    for listener in &mut old.listeners {
+//        listener.detach(&old_el_ws);
+    }
+
+    // todo detach old ones too!
+    for listener in &mut new.listeners {
+//        listener.attach(&old_el_ws, mailbox.clone());
+    }
+
+//    if old.listeners != new.listeners {
+//        crate::log("WOAH");
+//    } else { crate::log("SAME")}
+}

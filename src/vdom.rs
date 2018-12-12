@@ -38,7 +38,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     document: web_sys::Document,
-    pub main_div: web_sys::Element,
+    pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update_dom().
     pub model: RefCell<Mdl>,
     update: fn(Ms, &Mdl) -> Mdl,
@@ -59,13 +59,13 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         let window = web_sys::window().expect("no global `window` exists");
         let document = window.document().expect("should have a document on window");
 
-        let main_div = document.get_element_by_id(parent_div_id).unwrap();
+        let mount_point = document.get_element_by_id(parent_div_id).unwrap();
 
 
         Self {
             data: Rc::new(Data {
                 document,
-                main_div: main_div.clone(),
+                mount_point: mount_point.clone(),
                 model: RefCell::new(model),
                 update,
                 view,
@@ -106,8 +106,15 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         // render them with attach_children; we try to do it cleverly via patch().
         self.setup_vdom(&mut topel_new_vdom, 0, 0);
 
+
+//        self.data.mount_point.set_inner_html("");
+//        let el_ws = websys_bridge::make_websys_el(&mut self.data.main_el_vdom.borrow_mut(), &self.data.document, self.mailbox());
+//        self.data.mount_point.append_child(&el_ws);
+
+//        self.data.mount_point.append_child(&self.data.main_el_vdom.borrow().el_ws.unwrap()).unwrap();
+
         // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
-        self.patch(&mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom, &self.data.main_div);
+        self.patch(&mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom, &self.data.mount_point);
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next (.
@@ -156,7 +163,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
             }
 
             // Patch attributes.
-            patch_el_details(old, new, &old_el_ws, &self.data.document, self.mailbox());
+            websys_bridge::patch_el_details(old, new, &old_el_ws, &self.data.document, self.mailbox());
         }
 
         // If there are the same number of children, assume there's a 1-to-1 mapping,
@@ -245,116 +252,44 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
 fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
-    // todo: No magic numbers
+    // children_to_eval is the number of children to look at on each nest level.
+    let children_to_eval = 3;
+    // Don't weight children as heavily as the parent. This effect acculates the further down we go.
+    let child_score_significance = 0.6;
+
     let mut score = 0.;
 
     // Tags are not likely to change! Good indicator of it being the wrong element.
-    if old.tag == new.tag { score += 0.3 };
+    if old.tag == new.tag { score += 0.3 } else { score -= 0.3 };
     // Attrs are not likely to change.
     // todo: Compare attrs more directly.
-    if old.attrs == new.attrs { score += 0.15 };
+    if old.attrs == new.attrs { score += 0.15 } else { score -= 0.15 };
     // Style is likely to change.
-    if old.style == new.style { score += 0.05 };
+    if old.style == new.style { score += 0.05 } else { score -= 0.05 };
     // Text is likely to change, but may still be a good indicator.
-    if old.text == new.text { score += 0.05 };
+    if old.text == new.text { score += 0.05 } else { score -= 0.05 };
 
-    // todo nest level?
     // For children length, don't do it based on the difference, since children that actually change in
     // len may have very large changes. But having identical length is a sanity check.
     if old.children.len() == new.children.len() {
         score += 0.1
-    } else if (old.children.len() as i16 - new.children.len() as i16).abs() == 1 {
-        // Perhaps we've added or removed a child.
-        score += 0.05
-    }
+//    } else if (old.children.len() as i16 - new.children.len() as i16).abs() == 1 {
+//        // Perhaps we've added or removed a child.
+//        score += 0.05  // todo non-even transaction
+    } else { score -= 0.1 }
     // Same id implies it may have been added in the same order.
-    if old.id.expect("Missing id") == new.id.expect("Missing id") { score += 0.15 };
+    if old.id.expect("Missing id") == new.id.expect("Missing id") { score += 0.15 } else { score -= 0.15 };
 
-    // todo check children a level or two down.
-    // todo check types of children
-    let _old_tags: Vec<&dom_types::Tag> = old.children.iter().map(|c| &c.tag).collect();
-    let _new_tags: Vec<&dom_types::Tag> = new.children.iter().map(|c| &c.tag).collect();
+    // For now, just look at the first child: Easier to code, and still helps.
+    // Doing indefinite recursion of first child for now. Weight each child
+    // subsequently-less.  This is effective for some common HTML patterns.
+//    for posit in 0..children_to_eval {
+//        if let Some(child_old) = &old.children.get(posit) {
+//            if let Some(child_new) = &old.children.get(posit) {
+//                score += child_score_significance * match_score(child_old, child_new);
+//            }
+//        }
+//    }
 
-    // todo: Recursively (or shallowly?) score children? we really must think of the children
-    // todo seriously; we'll make lots of mistakes otherwise
     score
-}
-
-
-/// Update the attributes, style, text, and events of an element. Does not
-/// process children, and assumes the tag is the same. Assume we've identfied
-/// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>,
-           old_el_ws: &web_sys::Element, document: &web_sys::Document, mailbox: Mailbox<Ms>) {
-
-    if old.attrs != new.attrs {
-        for (key, new_val) in &new.attrs.vals {
-            match old.attrs.vals.get(key) {
-                Some(old_val) => {
-                    // The value's different
-                    if old_val != new_val {
-                        websys_bridge::set_attr_shim(&old_el_ws, key, new_val);
-                    }
-                },
-                None => old_el_ws.set_attribute(key, new_val).expect("Adding a new attribute")
-            }
-        }
-        // Remove attributes that aren't in the new vdom.
-        for (name, old_val) in &old.attrs.vals {
-            if new.attrs.vals.get(name).is_none() {
-                old_el_ws.remove_attribute(name).expect("Removing an attribute");
-            }
-        }
-    }
-
-    // Patch style.
-    if old.style != new.style {
-        // We can't patch each part of style; rewrite the whole attribute.
-        old_el_ws.set_attribute("style", &new.style.as_str())
-            .expect("Setting style");
-    }
-
-
-    // Patch text
-    if old.text != new.text {
-        // This is not as straightforward as it looks: There can be multiple text nodes
-        // in the DOM, even though our API only allows for 1 per element. If we
-        // naively run set_text_content(), all child nodes will be removed.
-        // Text is stored in special Text nodes that don't have a direct-relation to
-        // the vdom.
-
-        let text = new.text.clone().unwrap_or_default();
-
-        if old.text.is_none() {
-            // There's no old node to find: Add it.
-            let new_next_node = document.create_text_node(&text);
-            old_el_ws.append_child(&new_next_node).unwrap();
-        } else {
-            // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
-            let children = old_el_ws.child_nodes();
-            for i in 0..children.length() {
-                let node = children.item(i).unwrap();
-                // We've found it; there will be not more than 1 text node.
-                if node.node_type() == 3 {
-                    node.set_text_content(Some(&text));
-                    break;
-                }
-            }
-        }
-
-
-    }
-
-    for listener in &mut old.listeners {
-//        listener.detach(&old_el_ws);
-    }
-
-    // todo detach old ones too!
-    for listener in &mut new.listeners {
-//        listener.attach(&old_el_ws, mailbox.clone());
-    }
-
-//    if old.listeners != new.listeners {
-//        crate::log("WOAH");
-//    } else { crate::log("SAME")}
 }

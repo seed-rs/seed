@@ -1,7 +1,7 @@
 //! Modelled after the todomvc project's Typescript-React example:
 //! https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react
 
-use std::cmp::Ordering;
+//use std::cmp::Ordering;
 
 #[macro_use]
 extern crate seed;
@@ -9,6 +9,11 @@ use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
+
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
 
 const ENTER_KEY: u32 = 13;
@@ -23,11 +28,9 @@ enum Visible {
 
 // Model
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 struct Todo {
-    id: u32,
     title: String,
-    edit_text: String,
     completed: bool,
     editing: bool,
 }
@@ -47,9 +50,7 @@ struct Model {
     todos: Vec<Todo>,
     visible: Visible,
     edit_text: String,
-    editing: Option<u32>,
-//    local_storage: web_sys::Storage,
-    // todo: key and on_changes ??
+    local_storage: web_sys::Storage,
 }
 
 impl Model {
@@ -71,34 +72,44 @@ impl Model {
     }
 
     fn add_todo(&mut self, name: String) {
-        let ids: Vec<u32> = self.todos.iter().map(|t| t.id).collect();
-        // max() will fail if there are no todos.
-        let id = if let Some(id_) = ids.into_iter().max() {id_ + 1} else {0};
-
         self.todos.push( Todo {
-            id,
             title: name,
-            edit_text: String::new(), // what is this? todo
+//            edit_text: String::new(), // what is this? todo
             completed: false,
             editing: false,
-        })
+        });
     }
 
+    fn sync_storage(&self) {
+        // todo: Every item that adds, deletes, or changes a today re-serializes and stores
+        // todo the whole model. Effective, but probably quite slow!
+        seed::storage::store_data(&self.local_storage, "seed-todo-data", &self.todos);
+    }
 }
 
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-        let window = web_sys::window().unwrap();
-        let local_storage = window.local_storage().unwrap().unwrap();
-//        local_storage.fetch_local_storage();
+        let local_storage = seed::storage::get_storage().unwrap();
+
+//        let todos: Vec<Todo> = match local_storage.get_item("seed-todo-data") {
+//            Some(Ok(tds)) => {
+//                serde_json::from_str(&tds).unwrap()
+//            },
+//            None => Vec::new(),
+//        };
+
+//        let x: String = local_storage.get_item("seed-todo-data").unwrap().unwrap();
+//        let todos: Vec<Todo> = serde_json::from_str(&x).unwrap();
+//
+//
+        let todos = Vec::new();
 
         Self {
-            todos: Vec::new(),
+            todos,
             visible: Visible::All,
             edit_text: String::new(),
-            editing: None,
-//            local_storage,
+            local_storage,
         }
     }
 }
@@ -106,37 +117,35 @@ impl Default for Model {
 // Update
 #[derive(Clone)]
 enum Msg {
+    // usize here corresponds to indicies of todos in the Vec they live in.
     ClearCompleted,
-    KeyDownItem(web_sys::KeyboardEvent),  // todo
-    Destroy(u32),
-    Toggle(u32),
-    ToggleAll,  // todo
-    NewTodo(web_sys::Event), // keycode
+    Destroy(usize),
+    Toggle(usize),
+    ToggleAll,
+    NewTodo(web_sys::Event),
     SetVisibility(Visible),
 
-    EditItem(u32),
-    EditSubmit(u32),  // todo
-    EditChange(u32, String),  // todo
-    EditKeyDown(u32),  // todo
-
+    EditItem(usize),
+    EditSubmit(usize),
+    EditChange(String),
+//    EditKeyDown(usize, u32),  // item position, keycode
+    EditKeyDown(u32),  // item position, keycode
 }
 
 fn update(msg: Msg, model: &Model) -> Model {
     let mut model = model.clone();
 
+
     match msg {
         Msg::ClearCompleted => {
             model.todos = model.todos.into_iter().filter(|t| t.completed == false).collect();
-        }
-
-        Msg::EditKeyDown(code) => {
-            if code == ESCAPE_KEY {
-//                Model {..model}
-                // todo props.oncancel?
-            } else if code == ENTER_KEY {
-//                update()
-            }
+            model.sync_storage();
         },
+        Msg::Destroy(posit) => {
+            model.todos.remove(posit);
+            model.sync_storage();
+        },
+        Msg::Toggle(posit) => model.todos[posit].completed = !model.todos[posit].completed,
         Msg::ToggleAll => {
             // Mark all as completed, unless all are... then mark all as note completed.
             let setting = if model.active_count() == 0 { false } else { true };
@@ -157,73 +166,86 @@ fn update(msg: Msg, model: &Model) -> Model {
                 let input_el = target.dyn_ref::<web_sys::HtmlInputElement>().unwrap();
                 let text = input_el.value().trim().to_string();
 
-                input_el.set_value("");
-
                 if text.len() > 0 {
                     model.add_todo(text);
-                    model.edit_text = String::new();
+                    input_el.set_value("");
+                    model.sync_storage();
                 }
             }
         },
-
-        Msg::EditSubmit(id) => {
-
-        },
-        Msg::Toggle(id) => {
-            // todo This works, but is a mess of cloning. Clean up!
-            let mut todo = model.clone().todos.into_iter().find(|t| t.id == id).unwrap();
-            todo.completed = !todo.completed;
-
-            let new_todos: Vec<Todo> = model.clone().todos.into_iter().filter(|t| t.id != id).collect();
-            model.todos = new_todos;
-            model.todos.push(todo);
-        },
         Msg::SetVisibility(vis) => model.visible = vis,
-        Msg::Destroy(id) => {
-            // todo broken, sort of
-            log!("ID:", id);
-            for id1 in &model.todos {
-                log!("listing them: ", id1.id);
-            }
-            model.todos = model.todos.into_iter().filter(|t| t.id != id).collect()
-        },
-        Msg::EditItem(id) => {
-            model.editing = Some(id);
-            let mut todo = model.clone().todos.into_iter().find(|t| t.id == id).unwrap();
-            model.edit_text = todo.title;
-        }
 
-        _ => ()
+        Msg::EditItem(posit) => {
+            for todo in &mut model.todos {
+                todo.editing = false;
+            }
+            model.todos[posit].editing = true;
+            model.edit_text = (&model.todos[posit].title).to_string();
+        },
+        Msg::EditSubmit(posit) => {
+            if model.edit_text.len() > 0 {
+                model.todos[posit].title = model.edit_text.clone();
+                model.todos[posit].editing = false;
+                model.edit_text = model.edit_text.trim().to_string();
+                model.sync_storage();
+            } else {
+                model.todos.remove(posit);
+            }
+        },
+        Msg::EditChange(text) => model.edit_text = text,
+
+        // Ideally, we'd pass posit and code, but ran into an issue where we can't
+        // pass non-closure-input items in closures in some cases due to lifetime issues.
+        // We can work around it in this case by inferring position from which todo
+        // is being edited.
+//        Msg::EditKeyDown(posit, code) => {
+        Msg::EditKeyDown(code) => {
+            let posit = model.todos.iter().position(|t| t.editing == true).unwrap();
+            if code == ESCAPE_KEY {
+                model.edit_text = model.todos[posit].title.clone();
+                for todo in &mut model.todos {
+                    todo.editing = false;
+                }
+            } else if code == ENTER_KEY {
+                model = update(Msg::EditSubmit(posit), &model);
+            }
+        },
     };
     model
 }
 
 // View
 
-fn todo_item(item: Todo, edit_text: String) -> El<Msg> {
+fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     let mut att = attrs!{};
     if item.completed { att.add("class", "completed"); }
     if item.editing { att.add("class", "editing"); }
+    att.add("key", &item.title);
 
     li![ att, vec![
         div![ attrs!{"class" => "view"}, vec![
             input![ 
                 attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => item.completed },
-                vec![simple_ev("change", Msg::Toggle(item.id))]
+                vec![simple_ev("click", Msg::Toggle(posit))]
             ],
 
-            label![ vec![simple_ev("dblclick", Msg::EditItem(item.id))], item.title ],
-            button![ attrs!{"class" => "destroy"}, vec![simple_ev("click", Msg::Destroy(item.id))] ]
+            label![ vec![simple_ev("dblclick", Msg::EditItem(posit))], item.title ],
+            button![ attrs!{"class" => "destroy"}, vec![simple_ev("click", Msg::Destroy(posit))] ]
         ] ],
 
-        input![
-            attrs!{"class" => "edidt"; "value" => edit_text},
-            vec![
-                simple_ev("blur", Msg::EditSubmit(item.id)),
-                input_ev("change", |text| Msg::EditChange(1, text)),  // todo item id
-                keyboard_ev("keydown", |ev| Msg::EditKeyDown(ev.key_code())),
+        if item.editing == true {
+            input![
+                attrs!{"class" => "edit"; "value" => edit_text},
+                vec![
+                    simple_ev("blur", Msg::EditSubmit(posit)),
+                    input_ev("input", |text| Msg::EditChange(text)),
+                    // This approach would be more elegant, but I can't get it working due to
+                    // lifetime issues.
+//                    keyboard_ev("keydown", |ev| Msg::EditKeyDown(posit, ev.key_code())),
+                    keyboard_ev("keydown", |ev| Msg::EditKeyDown(ev.key_code())),
+                ]
             ]
-        ]
+        } else { seed::empty() }
     ] ]
 }
 
@@ -264,8 +286,12 @@ fn footer(model: &Model) -> El<Msg> {
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
 fn todo_app(model: Model) -> El<Msg> {
-    let mut items: Vec<El<Msg>> = model.shown_todos().into_iter()
-        .map(|todo| todo_item(todo.clone(), model.edit_text.clone())).collect();
+    // We use the item's position in its Vec to identify it, because this allows
+    // simple in-place modification through indexing.
+    let items: Vec<El<Msg>> = model.shown_todos()
+        .into_iter()
+        .enumerate()
+        .map(|(posit, todo)| todo_item(todo.clone(), posit, model.edit_text.clone())).collect();
 
     let main = if !model.todos.is_empty() {
 
@@ -285,13 +311,17 @@ fn todo_app(model: Model) -> El<Msg> {
         header![ attrs!{"class" => "header"}, vec![
             h1![ "todos" ],
             input![
-                attrs!{"class" => "new-todo"; "placeholder" => "What needs to be done?";
-                       "auto-focus" => true},
+                attrs!{
+                    "class" => "new-todo";
+                    "placeholder" => "What needs to be done?";
+                    "auto-focus" => true
+                },
                 vec![ raw_ev("keydown", |ev| Msg::NewTodo(ev)) ]
             ]
         ] ],
         main,
-        if model.active_count() > 0 || model.completed_count() > 0 { footer(&model) } else { seed::empty() }
+        if model.active_count() > 0 || model.completed_count() > 0
+            { footer(&model) } else { seed::empty() }
     ] ]
 }
 

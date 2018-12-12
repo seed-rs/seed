@@ -326,7 +326,7 @@ struct Model {
 }
 ```
 
- **Update**
+**Update**
 
 The Message is an [enum]( https://doc.rust-lang.org/book/ch06-00-enums.html) which 
 categorizes each type of interaction with the app. Its fields may hold a value, or not. 
@@ -350,6 +350,13 @@ reference as parameters, and returns a Model instance. This function signature c
  
  *todo: Demonstrate example patterns, eg when to clone, ..operator, refs/not etc*
  
+ While the signature of the update function is fixed (Accepts a Msg and ref to the model; outputs
+ a new model), and will usually involve a match pattern, with an arm for each Msg, there
+ are many ways you can structure this function. Some may be easier to write (eg, cloning
+ the model at the top, and mutating it as needed), and others may be more efficient,
+ or appeal to specific aesthetics. (Eg the immutable design patterns).
+ 
+ 
 Example:
 
 ```rust
@@ -370,8 +377,29 @@ fn update(msg: Msg, model: &Model) -> Model {
 ```
 As with the model, only one update function is passed to the app, but it may be split into 
 sub-functions to aid code organization.
- 
 
+ Note that you can perform updates recursively, ie have one update trigger another. For example,
+ here's a non-recursive approach, where functions do_things() and do_other_things() each
+ act on an &Model, and output a Model:
+ ```rust
+fn update(fn update(msg: Msg, model: &Model) -> Model {
+    match msg {
+        Msg::A => do_things(model),
+        Msg::B => do_other_things(do_things(model)),
+    }
+}
+ ```
+Here's a recursive equivalent:
+ ```rust
+fn update(fn update(msg: Msg, model: &Model) -> Model {
+    match msg {
+        Msg::A => do_things(model),
+        Msg::B => do_other_things(update(Msg::A, model)),
+    }
+}
+ ```
+
+ 
 **View**
 
  Visual layout (ie HTML/DOM elements) is described declaratively in Rust, but uses 
@@ -500,7 +528,7 @@ as it's set up appropriate in `Msg`'s definition.
 
 Event syntax may be improved later with the addition of a single macro that infers what the type of event 
 is based on the trigger, and avoids the use of manually creating a `Vec` to store the
-`Listener`s. For examples of all of the above (except raw_ev), check out the todomvc example.
+`Listener`s. For examples of all of the above (except raw_ev), check out the [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc).
 
 This gawky approach is caused by a conflict between Rust's type system, and the way DOM events
 are handled. For example, you may wish to pull text from an input field by reading the event target's
@@ -510,7 +538,7 @@ and [Mdn ref](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget); the
 If we wish to read the key_code of an event, we must first cast it as a KeyboardEvent; pure Events
 (web_sys and DOM) do not contain this field.
 
-The Todomvc example has a number of event-handling examples, including use of raw_ev, 
+The [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc) has a number of event-handling examples, including use of raw_ev, 
 where it handles text input triggered by a key press, and uses prevent_default().
 
 
@@ -714,9 +742,38 @@ with Serde.
 Check out the `server_interaction` examples for an example of how to send and receive
 data from the server in JSON.
 
+Seed will implement a high-level fetch API in the future, wrapping web-sys's.
+
 ### Local storage
 You can store page state locally using web_sys's [Storage struct](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html)
-.
+
+Seed provides convenience functions `seed::storage::get_storage, which returns 
+the `web_sys::storage` object, and `seed::storage::store_data` to store an arbitrary
+Rust data structure that implements serde's Serialize. Example use:
+
+```rust
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+
+// ...
+#[derive(Serialize, Deserialize)]
+struct Data {
+    // Arbitrary data (All sub-structs etc must also implement Serialize and Deserialize)
+}
+
+let storage = seed::storage::get_storage();
+seed::storage::store(storage, "my-data", Data::new());
+
+// ...
+
+let loaded_serialized = storage.get_item("my-data").unwrap().unwrap();
+let data = serde_json::from_str(&loaded_serialized).unwrap();
+
+```
+
+
 
 ### Building a release version
 The configuration in the [Building and Running](###building-and-running) section towards the top are intended
@@ -789,7 +846,7 @@ are worth it.
 
 
 ### Where to start if you're familiar with existing frontend frameworks
-The Todo MVC example (examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
+The [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
 which has example code in my frameworks that do the same thing. Compare the example in this
 project to one on that page that uses a framework you're familiar with.
 
@@ -848,10 +905,15 @@ wasm-bindgen than with npm.
  closure system can be used to update state.
 
 
-## To-do
+## Features to add
  - Router
  - High-level fetch API
- - Local storage integration
  - Cleaner event syntax
  - Virtual DOM optimization 
+ - Docs/tutorial website example to replace this readme
+ - High-level CSS-grid/Flexbox API ?
  
+ ## Bugs to fix
+ - Events do not patch properly
+ - Other hard-to-pin patching bugs
+ - Text renders above children instead of below

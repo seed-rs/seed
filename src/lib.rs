@@ -8,6 +8,7 @@ pub mod dom_types;
 pub mod shortcuts;
 
 pub mod fetch;
+pub mod storage;
 mod vdom;
 mod websys_bridge;
 
@@ -15,12 +16,11 @@ mod websys_bridge;
 #[macro_use]
 extern crate serde_derive;
 
-
 //// todos:
+// Passing values to enums that have arguments without lifetime issues.
 // todo router
 // todo local storage
 // todo vdom patching
-// todo streamlined input handling for text etc
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
@@ -28,16 +28,16 @@ extern crate serde_derive;
 
 /// The entry point for the app
 pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
-          view: fn(Mdl) -> dom_types::El<Ms>, main_div_id: &str)
+          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
-    let app = vdom::App::new(model.clone(), update, view, main_div_id);
+    let app = vdom::App::new(model.clone(), update, view, mount_point_id);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut main_el_vdom = (app.data.view)(model);
     app.setup_vdom(&mut main_el_vdom, 0, 0);
     // Attach all children: This is where our initial render occurs.
-    websys_bridge::attach(&mut main_el_vdom, &app.data.main_div);
+    websys_bridge::attach(&mut main_el_vdom, &app.data.mount_point);
 
     app.data.main_el_vdom.replace(main_el_vdom);
 }
