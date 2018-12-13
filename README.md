@@ -13,15 +13,11 @@
 This package requires you to install [Rust](https://www.rust-lang.org) - This will
 enable the CLI commands below:
 
- You'll need a recent version of Rust's nightly toolchain:
-`rustup update`
-`rustup default nightly`,
+ You'll need a recent version of Rust: `rustup update`
 
-The wasm32-unknown-unknown target:
-`rustup target add wasm32-unknown-unknown --toolchain nightly`
+The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
-And wasm-bindgen: 
-`cargo +nightly install wasm-bindgen-cli`
+And wasm-bindgen: `cargo install wasm-bindgen-cli`
 
 
 ### The theoretical minimum
@@ -193,7 +189,6 @@ fn view(model: Model) -> El<Msg> {
         input![ attrs!{"value" => model.what_we_count},
                 vec![ input_ev("input", Msg::ChangeWWC) ]
         ]
-
     ] ]
 }
 
@@ -362,9 +357,9 @@ fn update(msg: Msg, model: Model) -> Model {
  be more efficient, or appeal to specific aesthetics. While the example above
  it straightforward, this becomes import with more complicated updates.
  
- The signature suggests taking an immutable-design/functional approach. This can be verbose,
- when modifying collections, but is a common pattern with Elm and Redux. Unlike in a pure functional language,
- side-effects (eg things other that happen other than updating the model) don't require special 
+ The signature suggests taking an immutable-design/functional approach. This can be verbose
+ when modifying collections, but is a common pattern in Elm and Redux. Unlike in a pure functional language,
+ side-effects (ie things other that happen other than updating the model) don't require special 
  handling. Example, from the todomvc example:
 ```rust
 fn update(msg: Msg, model: Model) -> Model {
@@ -393,16 +388,17 @@ fn update(msg: Msg, model: Model) -> Model {
         Msg::ToggleAll => {
             let completed = model.active_count() != 0;
             let todos = model.todos.into_iter()
-                .map(|t| Todo{completed, ..t});
+                .map(|t| Todo {completed, ..t})
+                .collect();
             Model {todos, ..model}
         }
     }
 }
  ```
-Note that when able, we don't mutate data. In the first two Msgs, we filter the todos,
+In this example, we avoid mutating data. In the first two Msgs, we filter the todos,
 then pass them to a new model using [struct update syntax](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax)
 .  In the third Msg, we mutate todos, but don't mutate the model itself. In the fourth,
-we build a new todos list using a functional technique.
+we build a new todo list using a functional technique.
 
 Alternatively, we could write the same update function like this:
 ```rust
@@ -929,7 +925,10 @@ than others. It neither uses completely natural (ie macro-free) Rust code, nor
 an HTML-like abstraction (eg JSX or templates). My intent is to make the code close 
 to natural Rust, while streamlining the syntax in a way suited for creating 
 a visual layout with minimal repetition. The macros used here are thin wrappers
-for constructors, and don't conceal much.
+for constructors, and don't conceal much. Specifically, the element-creation macros
+allow for accepting a variable number of arguments, and the attrs/style marcros are 
+essentially HashMap literals, with wrappers that let el macros know to distinguish
+them.
 
 The relative lack of resemblance to HTML be offputting at first, but the learning
 curve is shallow, and I think the macro syntax used to create elements, attributes etc

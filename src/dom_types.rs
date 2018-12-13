@@ -37,16 +37,15 @@ pub trait UpdateListener<T> {
 //    }
 //}
 
-
+/// Create an event that passes no data, other than it occured. Foregoes using a closure,
+/// in favor of pointing to a message directly.
 pub fn simple_ev<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     listener.add_handler_simple(message);
-//    let handler = Box::new(|_| message);
-//    listener.add_handler_input(handler);
-
     listener
 }
 
+/// Create an event that passes String of field text, for fast input handling.
 pub fn input_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     // handler must be boxed before passing to Listener's add method.
@@ -54,19 +53,17 @@ pub fn input_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) 
     listener
 }
 
+/// Create an event that passes a web_sys::Event, allowing full control of
+/// event-handling
 pub fn raw_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     // handler must be boxed before passing to Listener's add method.
     listener.add_handler_raw(Box::new(handler));
-
-//    if trigger == "keydown" {
-//        listener.add_handler_kb(Box::new(handler))
-//    } else {
-//        listener.add_handler_fancy(Box::new(handler));
-//    }
     listener
 }
 
+/// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
+/// to items like key_code() and key().
 pub fn keyboard_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     // handler must be boxed before passing to Listener's add method.
@@ -74,7 +71,7 @@ pub fn keyboard_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_s
     listener
 }
 
-
+/// Event-handling for Elements
 pub struct Listener<Ms: Clone> {
     pub trigger: String,  // todo why cow?
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
@@ -236,7 +233,7 @@ pub enum _Attr {
     Width,
 }
 
-//#[derive(Clone, Debug)]
+/// A thinly-wrapped HashMap holding DOM attributes
 #[derive(Clone, PartialEq)]
 pub struct Attrs {
     // todo enum of only allowed attrs?
@@ -267,7 +264,8 @@ impl Attrs {
 }
 
 
-// Handle Style separately from Attrs, since it commonly involves multiple parts.
+/// Handle Style separately from Attrs, since it commonly involves multiple parts,
+/// and has a different semantic meaning.
 #[derive(Clone, PartialEq)]
 pub struct Style {
     // todo enum for key?

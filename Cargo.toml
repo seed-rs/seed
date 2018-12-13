@@ -1,6 +1,6 @@
 [package]
 name = "seed"
-version = "0.1.1"
+version = "0.1.2"
 description = "A frontend framework for Rust, via WebAssembly"
 authors = ["DavidOConnor <david.alan.oconnor@gmail.com>"]
 license = "MIT"
@@ -8,12 +8,12 @@ repository = "https://www.github.com/David-OConnor/seed"
 homepage = "https://www.github.com/David-OConnor/seed"
 documentation = "https://docs.rs/seed"
 readme = "README.md"
-keywords = ["wasm", "frontend", "framework", "web", "bindgen"]
+keywords = ["wasm", "webassembly", "frontend", "framework", "web", "bindgen"]
 categories = ["wasm", "web-programming"]
 edition = "2018"
 
 [dependencies]
-wasm-bindgen = {version = "^0.2.29", features = ["nightly", "serde-serialize"]}
+wasm-bindgen = {version = "^0.2.29", features = ["serde-serialize"]}
 js-sys = "0.3.5"
 console_error_panic_hook = "^0.1.5"
 
