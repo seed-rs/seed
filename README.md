@@ -57,6 +57,10 @@ to load the framework into. It also needs the following code to load your WASM m
         .catch(console.error);
 </script>
 ```
+The `delete WebAssembly.instantiateStreaming;` line is a bit of a hack, but without it,
+only a handfull of dev servers will work. Eg Rust[https](https://crates.io/crates/https)
+will, but Python's http.server, webpack's dev server, and opening the html file directly will fail with a MIME
+type error. Do not use this line in production.
 
 The quickstart repo includes this file, but you will need to rename the two 
 occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
@@ -452,19 +456,47 @@ similar to an arrow func in JS) that returns a Msg enum.
 Example: ```simple_ev("dblclick", Msg::ClickClick)```
 
 `input_ev` passes the event target's value field, eg what a user typed in an input field.
-Example: ```simple_ev("input", |text| NewWords(text))```
+Example: 
+```rust
+enum Msg {
+    NewWords(String)
+}
+// ...
+input_ev("input", Msg::NewWords)
+```
 
 `keyboard_ev` returns a [web_sys::KeyboardEvent](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.KeyboardEvent.html),
 which exposes several getter methods like `key_code` and `key`.
-Example: ```simple_ev("keydown", |event| PutTheHammerDown(event))```
+Example:
+```rust
+enum Msg {
+    PutTheHammerDown(web_sys::KeyboardEvent)
+}
+// ...
+keyboard_ev_ev("input", Msg::PutTheHammerDown)
+```
+
+Note that in the examples for input_ev and keyboard_ev, the syntax is simplified since
+we're only passing the field text, and keyboard event respectively to the Enum. The input_ev
+example is shorthand for ```input_ev("input, |text| Msg::NewWords(text)```. If you were
+to pass something other than, or more than just the input text (Or KeyboardEvent for keyboard_ev, 
+or Event for raw_ev described below),
+you can't use this shorthand, and would have to do something like this intead:
+```rust
+enum Msg {
+    NewWords(String, u32)
+}
+// ...
+input_ev("input", |text| Msg::NewWords(text, 0))
+```
 
 `raw_ev` returns a [web_sys::Event](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Event.html). 
 It lets you access any part of any type of
 event, albeit with more verbose syntax.
-If you wish to do something like prevent_default(), or anything note listed above, 
+If you wish to do something like prevent_default(), or anything not listed above, 
 you need to take this approach. Note that for many common operations, like taking
 the value of an input element after an `input` or `change` event, you have to deal with
-casting from the native event or target to the specific one. Seed provides convenience
+casting from a generic event or target to the specific one. Seed provides convenience
 functions to handle this. They wrap wasm-bindgen's .dyn_ref() and .dyn_into(), from its
 [JsCast](https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/trait.JsCast.html) trait.
 
@@ -481,12 +513,20 @@ Msg::KeyPress(event) => {
     // ...
     // In view
     vec![ 
-        raw_ev("input", |ev| Msg::KeyPress(ev)),
+        raw_ev("input", Msg::KeyPress),
     ]
 }
 ```
 Seed also provides `to_textarea` and `to_select` functions, which you'd use as
 `to_input`.
+
+This extra step is caused by a conflict between Rust's type system, and the way DOM events
+are handled. For example, you may wish to pull text from an input field by reading the event target's
+value field. However, not all targets contain value; it may have to be represented as
+an `HtmlInputElement`. (See [the web-sys ref](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.EventTarget.html), 
+and [Mdn ref](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget); there's no value field)) Another example:
+If we wish to read the key_code of an event, we must first cast it as a KeyboardEvent; pure Events
+(web_sys and DOM) do not contain this field.
 
 It's likely you'll be able to do most of what you wish with the simpler event funcs.
 If there's a type of event or use you think would benefit from a similar func, submit
@@ -506,7 +546,7 @@ KeyDown(event) => {
 }
 
 // ... In view
-vec![ keyboard_ev("keydown", |ev| KeyDown(ev)]
+vec![ keyboard_ev("keydown", Msg::KeyDown]
 ```
 and
 ```rust
@@ -535,14 +575,6 @@ Where `id` is a value defined earlier.
 Event syntax may be improved later with the addition of a single macro that infers what the type of event 
 is based on the trigger, and avoids the use of manually creating a `Vec` to store the
 `Listener`s. For examples of all of the above (except raw_ev), check out the [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc).
-
-This gawky approach is caused by a conflict between Rust's type system, and the way DOM events
-are handled. For example, you may wish to pull text from an input field by reading the event target's
-value field. However, not all targets contain value; it may have to be represented as
-an `HtmlInputElement`. (See [the web-sys ref](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.EventTarget.html), 
-and [Mdn ref](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget); there's no value field)) Another example:
-If we wish to read the key_code of an event, we must first cast it as a KeyboardEvent; pure Events
-(web_sys and DOM) do not contain this field.
 
 The [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc) has a number of event-handling examples, including use of raw_ev, 
 where it handles text input triggered by a key press, and uses prevent_default().
@@ -583,11 +615,11 @@ from the El struct. Note that `El` type is imported with the Prelude.
     let children = vec![heading, button];
     
     let mut elements = El::empty(Tag::Div);
-    el.add_style("display", "flex");
-    el.add_style("flex-direction", "column");
-    el.children = children;
+    elements.add_style("display", "flex");
+    elements.add_style("flex-direction", "column");
+    elements.children = children;
     
-    el
+    elements
 ```
 
 The following equivalent example shows creating the required structs without constructors,
@@ -807,12 +839,10 @@ helpful messages, so try to work through these using the information available. 
 syntax errors, passing a func/struct etc the wrong type of item, and running afoul of the 
 borrow checker.
 
-2: Runtime panics. These are more difficult to deal with, especially in the web browser.
-Their hallmark is a message that starts with `RuntimeError: "unreachable executed"`, and correspond
-to a panic in the rust code. (For example, a problem while using `unwrap()`). There's
-currently no neat way to identify which part of the code panicked; until this is sorted out,
-you may try to narrow it down using `seed.log()` commands. They're usually associated with
-`unwrap()` or `expect()` calls.
+2: Runtime [panics](https://doc.rust-lang.org/book/ch09-01-unrecoverable-errors-with-panic.html). 
+These show up as console errors in the web browser. Example:
+`panicked at 'assertion failed: index < len',`, and provide a traceback. (For example, a problem while using `unwrap()`). 
+ They're often associated with`unwrap()` or `expect()` calls.
 
 ### Reference
 - [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)

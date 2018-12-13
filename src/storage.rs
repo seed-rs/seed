@@ -6,9 +6,6 @@
 //! Example syntax:
 //! https://github.com/rustwasm/wasm-bindgen/blob/master/examples/todomvc/src/store.rs
 
-use js_sys::JSON;
-use wasm_bindgen::prelude::*;
-
 extern crate serde;
 extern crate serde_json;
 
@@ -19,7 +16,7 @@ pub fn get_storage() -> Option<web_sys::Storage> {
         Ok(Some(local_storage)) => {
             Some(local_storage)
         },
-        Err(E) => None,
+        Err(_) => None,
         Ok(None) => None
     }
 }

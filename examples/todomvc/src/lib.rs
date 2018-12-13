@@ -1,19 +1,13 @@
 //! Modelled after the todomvc project's Typescript-React example:
 //! https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react
 
-//use std::cmp::Ordering;
-
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use web_sys;
 
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 
 
 const ENTER_KEY: u32 = 13;
@@ -25,6 +19,7 @@ enum Visible {
     Active,
     Completed,
 }
+
 
 // Model
 
@@ -55,7 +50,7 @@ struct Model {
 
 impl Model {
     fn completed_count(&self) -> i32 {
-        let completed: Vec<&Todo> = self.todos.iter().filter(|i| i.completed == true).collect();
+        let completed: Vec<&Todo> = self.todos.iter().filter(|i| i.completed).collect();
         completed.len() as i32
     }
 
@@ -74,7 +69,6 @@ impl Model {
     fn add_todo(&mut self, name: String) {
         self.todos.push( Todo {
             title: name,
-//            edit_text: String::new(), // what is this? todo
             completed: false,
             editing: false,
         });
@@ -134,10 +128,9 @@ enum Msg {
 fn update(msg: Msg, model: &Model) -> Model {
     let mut model = model.clone();
 
-
     match msg {
         Msg::ClearCompleted => {
-            model.todos = model.todos.into_iter().filter(|t| t.completed == false).collect();
+            model.todos = model.todos.into_iter().filter(|t| !t.completed).collect();
             model.sync_storage();
         },
         Msg::Destroy(posit) => {
@@ -147,7 +140,7 @@ fn update(msg: Msg, model: &Model) -> Model {
         Msg::Toggle(posit) => model.todos[posit].completed = !model.todos[posit].completed,
         Msg::ToggleAll => {
             // Mark all as completed, unless all are... then mark all as note completed.
-            let setting = if model.active_count() == 0 { false } else { true };
+            let setting = model.active_count() != 0;
             for todo in &mut model.todos {
                 todo.completed = setting;
             }
@@ -164,7 +157,7 @@ fn update(msg: Msg, model: &Model) -> Model {
                 let input_el = seed::to_input(&target);
                 let text = input_el.value().trim().to_string();
 
-                if text.len() > 0 {
+                if text.is_empty() {
                     model.add_todo(text);
                     input_el.set_value("");
                     model.sync_storage();
@@ -181,14 +174,14 @@ fn update(msg: Msg, model: &Model) -> Model {
             model.edit_text = (&model.todos[posit].title).to_string();
         },
         Msg::EditSubmit(posit) => {
-            if model.edit_text.len() > 0 {
+            if model.edit_text.is_empty() {
                 model.todos[posit].title = model.edit_text.clone();
                 model.todos[posit].editing = false;
                 model.edit_text = model.edit_text.trim().to_string();
-                model.sync_storage();
             } else {
                 model.todos.remove(posit);
             }
+            model.sync_storage();
         },
         Msg::EditChange(text) => model.edit_text = text,
         Msg::EditKeyDown(posit, code) => {
@@ -224,12 +217,12 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
             button![ attrs!{"class" => "destroy"}, vec![simple_ev("click", Msg::Destroy(posit))] ]
         ] ],
 
-        if item.editing == true {
+        if item.editing {
             input![
                 attrs!{"class" => "edit"; "value" => edit_text},
                 vec![
                     simple_ev("blur", Msg::EditSubmit(posit)),
-                    input_ev("input", |text| Msg::EditChange(text)),
+                    input_ev("input", Msg::EditChange),
                     keyboard_ev("keydown", move |ev| Msg::EditKeyDown(posit, ev.key_code())),
                 ]
             ]
@@ -287,7 +280,7 @@ fn todo_app(model: Model) -> El<Msg> {
             input![
                 attrs!{"id" => "toggle-all"; "class" => "toggle-all"; "type" => "checkbox";
                        "checked" => model.active_count() == 0},
-                vec![simple_ev("change", Msg::ToggleAll)]
+                vec![simple_ev("click", Msg::ToggleAll)]
             ],
             label![ attrs!{"for" => "toggle-all"}, "Mark all as complete"],
             ul![ attrs!{"class" => "todo-list"}, items ],
@@ -304,7 +297,7 @@ fn todo_app(model: Model) -> El<Msg> {
                     "placeholder" => "What needs to be done?";
                     "auto-focus" => true
                 },
-                vec![ raw_ev("keydown", |ev| Msg::NewTodo(ev)) ]
+                vec![ raw_ev("keydown", Msg::NewTodo) ]
             ]
         ] ],
         main,

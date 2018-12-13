@@ -2,14 +2,14 @@
 
 #![allow(unused_macros)]
 
+use std::panic;
+
 use wasm_bindgen::JsCast;
 
 pub mod dom_types;
-
-
-pub mod shortcuts;
-
 pub mod fetch;
+#[macro_use]
+pub mod shortcuts;
 pub mod storage;
 mod vdom;
 mod websys_bridge;
@@ -71,6 +71,8 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
     websys_bridge::attach(&mut main_el_vdom, &app.data.mount_point);
 
     app.data.main_el_vdom.replace(main_el_vdom);
+
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
 /// Create an element flagged in a way that it will not be rendered. Useful

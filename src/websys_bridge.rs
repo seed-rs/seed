@@ -1,6 +1,4 @@
 //! This file contains interactions with web_sys.
-
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::vdom::Mailbox;
@@ -26,7 +24,7 @@ pub fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
             }
         }
     }
-    if set_check == false {
+    if !set_check {
         el_ws.set_attribute(name, val).expect("Problem setting an atrribute.");
     }
 
@@ -40,7 +38,7 @@ pub fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web_sys::Document,
                                  mailbox: Mailbox<Ms>) -> web_sys::Element {
     // Create the DOM-analog element; it won't render until attached to something.
-    let el_ws = document.create_element(&el_vdom.tag.as_str()).unwrap();
+    let el_ws = document.create_element(&el_vdom.tag.as_str()).expect("Probelem creating web-sys El");
 
     for (name, val) in &el_vdom.attrs.vals {
         set_attr_shim(&el_ws, name, val);
@@ -49,7 +47,7 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-        el_ws.set_attribute("style", &el_vdom.style.as_str()).unwrap();
+        el_ws.set_attribute("style", &el_vdom.style.as_str()).expect("Problem setting style");
     }
 
     // We store text as Option<String>, but set_text_content uses Option<&str>.
@@ -106,7 +104,7 @@ pub fn remove_children(el: &web_sys::Element) {
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_types::El<Ms>,
-           old_el_ws: &web_sys::Element, document: &web_sys::Document, mailbox: Mailbox<Ms>) {
+           old_el_ws: &web_sys::Element, document: &web_sys::Document) {
 
     if old.attrs != new.attrs {
         for (key, new_val) in &new.attrs.vals {
@@ -121,7 +119,7 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
             }
         }
         // Remove attributes that aren't in the new vdom.
-        for (name, old_val) in &old.attrs.vals {
+        for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
                 old_el_ws.remove_attribute(name).expect("Removing an attribute");
             }
@@ -162,8 +160,6 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
                 }
             }
         }
-
-
     }
 
     for listener in &mut old.listeners {

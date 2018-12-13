@@ -7,10 +7,10 @@
 //extern crate serde_derive;
 
 use std::collections::HashMap;
+use::std::hash::BuildHasher;
 
 use futures::{future, Future};
 //use js_sys;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 //use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures;
@@ -32,26 +32,26 @@ pub enum Method {
 
 impl Method {
     fn as_str(&self) -> &str {
-        match self {
-            &Method::Get => "GET",
-            &Method::Head => "HEAD",
-            &Method::Post => "POST",
-            &Method::Put => "PUT",
-            &Method::Delete => "DELETE",
-            &Method::Connect => "CONNECT",
-            &Method::Options => "OPTIONS",
-            &Method::Trace => "TRACE",
-            &Method::Patch => "PATCH",
+        match *self {
+            Method::Get => "GET",
+            Method::Head => "HEAD",
+            Method::Post => "POST",
+            Method::Put => "PUT",
+            Method::Delete => "DELETE",
+            Method::Connect => "CONNECT",
+            Method::Options => "OPTIONS",
+            Method::Trace => "TRACE",
+            Method::Patch => "PATCH",
         }
     }
 }
 
 /// A wrapper over web_sys's fetch api, to simplify code
 /// https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-pub fn fetch(method: Method, url: &str, payload: Option<String>,
+pub fn fetch<S: BuildHasher>(method: Method, url: &str, payload: Option<String>,
 //             headers: Option<HashMap<&str, &str>>,
 //             cl: impl FnMut(wasm_bindgen::JsValue) -> future::FutureResult) -> js_sys::Promise {
-             headers: Option<HashMap<&str, &str>>, cl: impl FnMut(wasm_bindgen::JsValue)) -> js_sys::Promise {
+             headers: Option<HashMap<&str, &str, S>>, cl: impl FnMut(wasm_bindgen::JsValue)) -> js_sys::Promise {
 //             headers: Option<HashMap<&str, &str>>) -> wasm_bindgen_futures::JsFuture {
 //             headers: Option<HashMap<&str, &str>>) -> wasm_bindgen_futures::JsFuture {
     let mut opts = RequestInit::new();
@@ -66,7 +66,7 @@ pub fn fetch(method: Method, url: &str, payload: Option<String>,
     if let Some(h) = headers {
         let req_headers = request.headers();
         for (name, value) in &h {
-            req_headers.set(&name, &value);
+            req_headers.set(&name, &value).unwrap();
         }
     }
 //    req_headers.unwrap();

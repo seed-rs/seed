@@ -1,7 +1,7 @@
 use std::{cell::{Cell, RefCell}, rc::Rc};
 
 use crate::dom_types;
-use crate::dom_types::{El};
+use crate::dom_types::El;
 use crate::websys_bridge;
 
 
@@ -114,7 +114,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
 //        self.data.mount_point.append_child(&self.data.main_el_vdom.borrow().el_ws.unwrap()).unwrap();
 
         // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
-        self.patch(&mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom, &self.data.mount_point);
+        patch(&self.data.document, &mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom, &self.data.mount_point);
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next (.
@@ -126,99 +126,6 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         Mailbox::new(move |message| {
             cloned.update_dom(message);
         })
-    }
-
-    // Note: Attached to the struct due to use of mailbox method.
-    fn patch(&self, old: &mut El<Ms>, new: &mut El<Ms>, parent: &web_sys::Element) {
-        // Todo: Current sceme is that if the parent changes, redraw all children...
-        // todo fix this later.
-        // We make an assumption that most of the page is not dramatically changed
-        // by each event, to optimize.
-        // todo: There are a lot of ways you could make this more sophisticated.
-
-        // Assume setup_vdom has been run on the new el, but only the old vdom's nodes are attached.
-
-        // todo only redraw teh whole subtree if children are diff; if it's
-        // todo just text or attrs etc, patch them.
-
-        // take removes the interior value from the Option; otherwise we run into problems
-        // about not being able to remove from borrowed content.
-        // We remove it from the old el_vodom now, and at the end... add it to the new one.
-        // We don't run attach_children() when patching, hence this approach.
-
-//        if new.is_dummy() == true { return }
-
-        let old_el_ws = old.el_ws.take().expect("No old elws");
-
-        if old != new {
-            // Something about this element itself is different: patch it.
-            // At this step, we already assume we have the right element - either
-            // by entering this func directly for the top-level, or recursively after
-            // analyzing children
-            if old.tag != new.tag {
-                parent.remove_child(&old_el_ws).expect("Problem removing this element");
-                websys_bridge::attach(new, parent);
-                // We've re-rendered this child and all children; we're done with this recursion.
-                return
-            }
-
-            // Patch attributes.
-            websys_bridge::patch_el_details(old, new, &old_el_ws, &self.data.document, self.mailbox());
-        }
-
-        // If there are the same number of children, assume there's a 1-to-1 mapping,
-        // where we will not add or remove any; but patch as needed.
-
-        // A more sophisticated approach would be to find the best match of every
-        // combination of score of new vs old, then rank them somehow. (Eg even
-        // if old id=2 is the best match for the first new, if it's only a marginal
-        // winner, but a strong winner for the second, it makes sense to put it
-        // in the second, but we are not allowing it this opporunity as-is.
-        // One approach would be check all combinations, combine scores within each combo, and pick the one
-        // with the highest total score, but this increases with the factorial of
-        // child size!
-        // todo: Look into this improvement sometime after the initial release.
-
-        let avail_old_children = &mut old.children;
-        for child_new in &mut new.children {
-            if avail_old_children.is_empty() {
-                // One or more new children has been added, or much content has
-                // changed, or we've made a mistake: Attach new children.
-                websys_bridge::attach(child_new, &old_el_ws);
-            } else {
-
-                // We still have old children to pick a match from. If we pick
-                // incorrectly, or there is no "good" match, we'll have some
-                // patching and/or attaching (rendering) to do in subsequent recursions.
-                let mut scores: Vec<(u32, f32)> = avail_old_children.iter()
-                    .map(|c| (c.id.unwrap(), match_score(c, child_new))).collect();
-
-                // should put highest score at the end.
-                 scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
-
-                // Sorting children vice picking the best one makes this easier to handle
-                // without irking the borrow checker, despite appearing less counter-intuitive,
-                // due to the convenient pop method.
-                avail_old_children.sort_by(|b, a| {
-                    scores.iter().find(|s| s.0 == b.id.unwrap()).unwrap().1.partial_cmp(
-                        &scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1
-                    ).unwrap()
-                });
-
-                let mut best_match = avail_old_children.pop().expect("Probably popping");
-
-                self.patch(&mut best_match, child_new, &old_el_ws); // todo old vs new for par
-              }
-        }
-
-        // Now purge any existing children; they're not part of the new model.
-        for child in avail_old_children {
-            let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
-            old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
-            child.el_ws.replace(child_el_ws);
-        }
-
-        new.el_ws = Some(old_el_ws);
     }
 
     /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
@@ -250,12 +157,106 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
     }
 }
 
+fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>, parent: &web_sys::Element)
+    where Ms: Clone + Sized + 'static
+{
+    // Todo: Current sceme is that if the parent changes, redraw all children...
+    // todo fix this later.
+    // We make an assumption that most of the page is not dramatically changed
+    // by each event, to optimize.
+    // todo: There are a lot of ways you could make this more sophisticated.
+
+    // Assume setup_vdom has been run on the new el, but only the old vdom's nodes are attached.
+
+    // todo only redraw teh whole subtree if children are diff; if it's
+    // todo just text or attrs etc, patch them.
+
+    // take removes the interior value from the Option; otherwise we run into problems
+    // about not being able to remove from borrowed content.
+    // We remove it from the old el_vodom now, and at the end... add it to the new one.
+    // We don't run attach_children() when patching, hence this approach.
+
+//        if new.is_dummy() == true { return }
+
+    let old_el_ws = old.el_ws.take().expect("No old elws");
+
+    if old != new {
+        // Something about this element itself is different: patch it.
+        // At this step, we already assume we have the right element - either
+        // by entering this func directly for the top-level, or recursively after
+        // analyzing children
+        if old.tag != new.tag {
+            parent.remove_child(&old_el_ws).expect("Problem removing this element");
+            websys_bridge::attach(new, parent);
+            // We've re-rendered this child and all children; we're done with this recursion.
+            return
+        }
+
+        // Patch attributes.
+        websys_bridge::patch_el_details(old, new, &old_el_ws, document);
+    }
+
+    // If there are the same number of children, assume there's a 1-to-1 mapping,
+    // where we will not add or remove any; but patch as needed.
+
+    // A more sophisticated approach would be to find the best match of every
+    // combination of score of new vs old, then rank them somehow. (Eg even
+    // if old id=2 is the best match for the first new, if it's only a marginal
+    // winner, but a strong winner for the second, it makes sense to put it
+    // in the second, but we are not allowing it this opporunity as-is.
+    // One approach would be check all combinations, combine scores within each combo, and pick the one
+    // with the highest total score, but this increases with the factorial of
+    // child size!
+    // todo: Look into this improvement sometime after the initial release.
+
+    let avail_old_children = &mut old.children;
+    for child_new in &mut new.children {
+        if avail_old_children.is_empty() {
+            // One or more new children has been added, or much content has
+            // changed, or we've made a mistake: Attach new children.
+            websys_bridge::attach(child_new, &old_el_ws);
+        } else {
+
+            // We still have old children to pick a match from. If we pick
+            // incorrectly, or there is no "good" match, we'll have some
+            // patching and/or attaching (rendering) to do in subsequent recursions.
+            let mut scores: Vec<(u32, f32)> = avail_old_children.iter()
+                .map(|c| (c.id.unwrap(), match_score(c, child_new))).collect();
+
+            // should put highest score at the end.
+            scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
+
+            // Sorting children vice picking the best one makes this easier to handle
+            // without irking the borrow checker, despite appearing less counter-intuitive,
+            // due to the convenient pop method.
+            avail_old_children.sort_by(|b, a| {
+                scores.iter().find(|s| s.0 == b.id.unwrap()).unwrap().1.partial_cmp(
+                    &scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1
+                ).unwrap()
+            });
+
+            let mut best_match = avail_old_children.pop().expect("Probably popping");
+
+            patch(document, &mut best_match, child_new, &old_el_ws); // todo old vs new for par
+        }
+    }
+
+    // Now purge any existing children; they're not part of the new model.
+    for child in avail_old_children {
+        let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
+        old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
+        child.el_ws.replace(child_el_ws);
+    }
+
+    new.el_ws = Some(old_el_ws);
+}
+
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
 fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
     // children_to_eval is the number of children to look at on each nest level.
-    let children_to_eval = 3;
+//    let children_to_eval = 3;
     // Don't weight children as heavily as the parent. This effect acculates the further down we go.
-    let child_score_significance = 0.6;
+//    let child_score_significance = 0.6;
 
     let mut score = 0.;
 
@@ -292,4 +293,56 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 //    }
 
     score
+}
+
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    use crate as seed;  // required for macros to work.
+    use crate::dom_types::{UpdateListener, UpdateEl};
+
+    fn make_doc() -> web_sys::Document {
+        let window = web_sys::window().unwrap();
+        window.document().unwrap()
+    }
+
+    #[derive(Clone)]
+    enum Msg {}
+
+
+    #[test]
+    fn el_added() {
+        // todo macros not working here.
+        let old_vdom: El<Msg> = div![ "text", vec![
+            li![ "child1" ],
+        ] ];
+
+        let new_vdom: El<Msg> = div![ "text", vec![
+            li![ "child1" ],
+            li![ "child2" ]
+        ] ];
+
+        let doc = make_doc();
+        let old_ws = doc.create_element("div").unwrap();
+        let new_ws = doc.create_element("div").unwrap();
+
+        let child1 = doc.create_element("li").unwrap();
+        let child2 = doc.create_element("li").unwrap();
+        // todo make this match how you're setting text_content, eg could
+        // todo be adding a text node.
+        old_ws.set_text_content(Some("text"));
+        child1.set_text_content(Some("child1"));
+        child2.set_text_content(Some("child2"));
+
+        old_ws.append_child(&child1);
+        new_ws.append_child(&child1);
+        new_ws.append_child(&child2);
+
+//        let patched = patch();
+
+
+        assert_eq!(2 + 2, 4);
+    }
 }

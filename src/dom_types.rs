@@ -97,7 +97,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     /// than it happened. The message Enum should not take a value.
     fn add_handler_simple(&mut self, message: Ms) {
         let handler = || message;
-        let closure = move |event: web_sys::Event| handler.clone()();
+        let closure = move |_| handler.clone()();
         self.handler = Some(Box::new(closure));
     }
 
@@ -132,7 +132,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
 
     fn handler_keyboard(&mut self, mut handler: Box<FnMut(web_sys::KeyboardEvent) -> Ms + 'static>){
         let closure = move |event: web_sys::Event| {
-            return handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone());
+            handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
         };
         self.handler = Some(Box::new(closure));
     }
@@ -152,7 +152,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("add_event_listener_with_callback");
 
-        &closure.forget();
+        closure.forget();
 //        self.closure = Some(closure);
 //        crate::log("step 3");
 
@@ -518,7 +518,8 @@ impl<Ms: Clone + 'static> El<Ms> {
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
 
-        let opening = String::from("<") + self.tag.as_str() + &self.attrs.as_str() + " style=\"" + &self.style.as_str() + & ">\n";
+        let opening = String::from("<") + self.tag.as_str() + &self.attrs.as_str() +
+            " style=\"" + &self.style.as_str() + ">\n";
 
         let inner = self.children.iter().fold(String::new(), |result, child| result + &child._html());
 
@@ -547,12 +548,12 @@ impl<Ms: Clone + 'static> El<Ms> {
     /// system, but we don't want to render anything.
     pub fn is_dummy(&self) -> bool {
     if let Tag::Del = self.tag {
-        if let Some(val) = self.attrs.vals.get("dummy-element") {
+        if self.attrs.vals.get("dummy-element").is_some() {
             return true;
         }
     }
-    return false;
-}
+    false
+    }
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
