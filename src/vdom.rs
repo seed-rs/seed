@@ -1,4 +1,4 @@
-use std::{cell::{Cell, RefCell}, rc::Rc};
+use std::{cell::{RefCell}, rc::Rc};
 
 use crate::dom_types;
 use crate::dom_types::El;
@@ -41,7 +41,7 @@ pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update_dom().
     pub model: RefCell<Mdl>,
-    update: fn(Ms, &Mdl) -> Mdl,
+    update: fn(Ms, Mdl) -> Mdl,
     pub view: fn(Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
 }
@@ -53,7 +53,7 @@ pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
 impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
-    pub fn new(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
+    pub fn new(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
                view: fn(Mdl) -> El<Ms>, parent_div_id: &str) -> Self {
 
         let window = web_sys::window().expect("no global `window` exists");
@@ -89,7 +89,12 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
     fn update_dom(&self, message: Ms) {
         // data.model is the old model; pass it to the update function created in the app,
         // which outputs an updated model.
-        let updated_model = (self.data.update)(message, &self.data.model.borrow());
+
+        // We clone the model before running update, and again before passing it
+        // to the view func, instead of using refs, to improve API syntax.
+        // This approach may have performance impacts of unknown magnitude.
+        let model_to_update = self.data.model.borrow().clone();
+        let updated_model = (self.data.update)(message, model_to_update);
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
@@ -148,6 +153,18 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         }
     }
 }
+
+
+// trying this approach leads to lifetime problems.
+//fn mailbox<Ms, Mdl>(app: &'static App<Ms, Mdl>) -> Mailbox<Ms>
+//    where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static {
+//    Mailbox::new(move |message| {
+//        app.clone().update_dom(message);
+//    })
+//
+//}
+
+
 
 impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {

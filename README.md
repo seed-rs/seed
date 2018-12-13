@@ -57,9 +57,9 @@ to load the framework into. It also needs the following code to load your WASM m
         .catch(console.error);
 </script>
 ```
-The `delete WebAssembly.instantiateStreaming;` line is a bit of a hack, but without it,
-only a handfull of dev servers will work. Eg Rust[https](https://crates.io/crates/https)
-will, but Python's http.server, webpack's dev server, and opening the html file directly will fail with a MIME
+The `delete WebAssembly.instantiateStreaming;` line is an unsavory hack, but without it,
+only a handfull of dev servers will work. Eg the Rust crate [https](https://crates.io/crates/https)
+works, but Python's [http.server](https://docs.python.org/3/library/http.server.html), webpack's dev server, and opening the html file directly will fail with a MIME
 type error. Do not use this line in production.
 
 The quickstart repo includes this file, but you will need to rename the two 
@@ -80,7 +80,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.1.0"
+seed = "^0.1.1"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 
@@ -134,17 +134,11 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Increment => {
-            Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
-        },
-        Msg::Decrement => {
-            Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
-        },
-        Msg::ChangeWWC(text) => {
-            Model {count: model.count, what_we_count: text.clone()}
-        }
+        Msg::Increment => Model {count: model.count + 1, ..model},
+        Msg::Decrement => Model {count: model.count - 1, ..model},
+        Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model }
     }
 }
 
@@ -164,7 +158,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept a ref to the model as its
 /// only argument, and output a single El.
-fn view(model: &Model) -> El<Msg> {
+fn view(model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
     // Attrs, Style, Events, and children may be defined separately.
@@ -197,7 +191,7 @@ fn view(model: &Model) -> El<Msg> {
 
         h3![ "What precisely is it we're counting?" ],
         input![ attrs!{"value" => model.what_we_count},
-                vec![ input_ev("input", |text| Msg::ChangeWWC(text)) ]
+                vec![ input_ev("input", Msg::ChangeWWC) ]
         ]
 
     ] ]
@@ -347,46 +341,101 @@ enum Msg {
  
 The update [function]( https://doc.rust-lang.org/book/ch03-03-how-functions-work.html) 
 you pass to `seed::run` describes how the state should change, upon
-receiving each type of Message. It is the only place where the model is changed. It accepts a message, and model 
-reference as parameters, and returns a Model instance. This function signature cannot be changed.
+receiving each type of Message. It is the only place where the model is changed. It accepts a message, 
+and model as parameters, and returns a model. This function signature cannot be changed.
  Note that it doesn’t update the model in place: It returns a new one.
- 
- 
- *todo: Demonstrate example patterns, eg when to clone, ..operator, refs/not etc*
- 
- While the signature of the update function is fixed (Accepts a Msg and ref to the model; outputs
- a new model), and will usually involve a match pattern, with an arm for each Msg, there
- are many ways you can structure this function. Some may be easier to write (eg, cloning
- the model at the top, and mutating it as needed), and others may be more efficient,
- or appeal to specific aesthetics. (Eg the immutable design patterns).
- 
- 
+
 Example:
 
 ```rust
-// Sole source of updating the model; returns a whole new model.
-fn update(msg: Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Increment => {
-            Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
-        },
-        Msg::Decrement => {
-            Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
-        },
-        Msg::ChangeWWC(text) => {
-            Model {count: model.count, what_we_count: text.clone()}
-        }
+        Msg::Increment => Model {count: model.count + 1, ..model},
+        Msg::SetCount(count) => Model {count, ..model},
     }
 }
 ```
+
+ While the signature of the update function is fixed (Accepts a Msg and ref to the model; outputs
+ a new model), and will usually involve a match pattern, with an arm for each Msg, there
+ are many ways you can structure this function. Some may be easier to write, and others may 
+ be more efficient, or appeal to specific aesthetics. While the example above
+ it straightforward, this becomes import with more complicated updates.
+ 
+ The signature suggests taking an immutable-design/functional approach. This can be verbose,
+ when modifying collections, but is a common pattern with Elm and Redux. Unlike in a pure functional language,
+ side-effects (eg things other that happen other than updating the model) don't require special 
+ handling. Example, from the todomvc example:
+```rust
+fn update(msg: Msg, model: Model) -> Model {
+    match msg {
+        Msg::ClearCompleted => {
+            let todos = model.todos.into_iter()
+                .filter(|t| !t.completed)
+                .collect();
+            Model {todos, ..model}
+        },
+        Msg::Destroy(posit) => {
+            let todos = model.todos.into_iter().enumerate()
+                .filter(|(i, t)| i != &posit)
+                .map(|(i, t)| t)
+                .collect();
+            Model {todos, ..model}
+        },
+        Msg::Toggle(posit) => {
+            let mut todos = model.todos;
+            let mut todo = todos.remove(posit);
+            todo.completed = !todo.completed;
+            todos.insert(posit, todo);
+
+            Model {todos, ..model}
+        },
+        Msg::ToggleAll => {
+            let completed = model.active_count() != 0;
+            let todos = model.todos.into_iter()
+                .map(|t| Todo{completed, ..t});
+            Model {todos, ..model}
+        }
+    }
+}
+ ```
+Note that when able, we don't mutate data. In the first two Msgs, we filter the todos,
+then pass them to a new model using [struct update syntax](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax)
+.  In the third Msg, we mutate todos, but don't mutate the model itself. In the fourth,
+we build a new todos list using a functional technique.
+
+Alternatively, we could write the same update function like this:
+```rust
+fn update(msg: Msg, model: Model) -> Model {
+    let mut model = model;
+    match msg {
+        Msg::ClearCompleted => {
+            model.todos = model.todos.into_iter().filter(|t| !t.completed).collect();
+        },
+        Msg::Destroy(posit) => {
+            model.todos.remove(posit);
+        },
+        Msg::Toggle(posit) => model.todos[posit].completed = !model.todos[posit].completed,
+        Msg::ToggleAll => {
+            let completed = model.active_count() != 0;
+            for todo in &mut model.todos {
+                todo.completed = completed;
+        }
+}
+    };
+    model
+ ```
+This approach, where we mutate the model in the update function, is much more concise when
+handling collections.
+
 As with the model, only one update function is passed to the app, but it may be split into 
 sub-functions to aid code organization.
 
- Note that you can perform updates recursively, ie have one update trigger another. For example,
- here's a non-recursive approach, where functions do_things() and do_other_things() each
- act on an &Model, and output a Model:
+Note that you can perform updates recursively, ie have one update trigger another. For example,
+here's a non-recursive approach, where functions do_things() and do_other_things() each
+act on an Model, and output a Model:
  ```rust
-fn update(fn update(msg: Msg, model: &Model) -> Model {
+fn update(fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::A => do_things(model),
         Msg::B => do_other_things(do_things(model)),
@@ -395,7 +444,7 @@ fn update(fn update(msg: Msg, model: &Model) -> Model {
  ```
 Here's a recursive equivalent:
  ```rust
-fn update(fn update(msg: Msg, model: &Model) -> Model {
+fn update(fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::A => do_things(model),
         Msg::B => do_other_things(update(Msg::A, model)),
@@ -443,9 +492,10 @@ attributes.add("class", "truckloads");
 
 ### Events
 
-Event syntax may change in the future. Currently, events are a `Vec` of dom_types::Listener'
+Event syntax may change in the future. Currently, events are a `Vec` of `dom_types::Listener`
 objects, created using the following four functions exposed in the prelude: `simple_ev`,
-`input_ev`, `keyboard_ev`, and `raw_ev`. The first two are demonstrated in the example in the quickstart section.
+`input_ev`, `keyboard_ev`, and `raw_ev`. The first is demonstrated in the example in the quickstart section,
+and all are demonstrated in the todomvc example.
 
 `simple_ev` takes two arguments: an event trigger (eg "click", "contextmenu" etc), and an instance
 of your `Msg` enum. (eg Msg::Increment). The other three event-creation-funcs
@@ -453,7 +503,14 @@ take a trigger, and a [closure](https://doc.rust-lang.org/book/ch13-01-closures.
 similar to an arrow func in JS) that returns a Msg enum.
 
 `simple_ev` does not pass any information about the event, only that it fired.
-Example: ```simple_ev("dblclick", Msg::ClickClick)```
+Example: 
+```rust
+enum Msg {
+    ClickClick
+}
+// ...
+simple_ev("dblclick", Msg::ClickClick)`
+```
 
 `input_ev` passes the event target's value field, eg what a user typed in an input field.
 Example: 
@@ -477,17 +534,18 @@ keyboard_ev_ev("input", Msg::PutTheHammerDown)
 ```
 
 Note that in the examples for input_ev and keyboard_ev, the syntax is simplified since
-we're only passing the field text, and keyboard event respectively to the Enum. The input_ev
-example is shorthand for ```input_ev("input, |text| Msg::NewWords(text)```. If you were
+we're only passing the field text, and keyboard event respectively to the Msg. The input_ev
+example is Rust shorthand for ```input_ev("input, |text| Msg::NewWords(text)```. If you were
 to pass something other than, or more than just the input text (Or KeyboardEvent for keyboard_ev, 
 or Event for raw_ev described below),
-you can't use this shorthand, and would have to do something like this intead:
+you can't use this shorthand, and would have to do something like this intead,
+explicitly writing the closure:
 ```rust
 enum Msg {
     NewWords(String, u32)
 }
 // ...
-input_ev("input", |text| Msg::NewWords(text, 0))
+input_ev("input", move |text| Msg::NewWords(text, 0))
 ```
 
 `raw_ev` returns a [web_sys::Event](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Event.html). 
@@ -505,9 +563,10 @@ event, while using prevent_default:
 ```rust
 // (in update func)
 Msg::KeyPress(event) => {
+    event.prevent_default();
     let code = seed::to_kbevent(&ev).key_code();
-
-    let target = event.target();
+    // ..
+    let target = event.target().unwrap();
     let text = seed::to_input(&target).value();
     
     // ...

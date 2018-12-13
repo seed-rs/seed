@@ -35,17 +35,11 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: &Model) -> Model {
+fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Increment => {
-            Model {count: model.count + 1, what_we_count: model.what_we_count.clone()}
-        },
-        Msg::Decrement => {
-            Model {count: model.count - 1, what_we_count: model.what_we_count.clone()}
-        },
-        Msg::ChangeWWC(text) => {
-            Model {count: model.count, what_we_count: text.clone()}
-        }
+        Msg::Increment => Model {count: model.count + 1, ..model},
+        Msg::Decrement => Model {count: model.count - 1, ..model},
+        Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model }
     }
 }
 
@@ -98,10 +92,10 @@ fn view(model: Model) -> El<Msg> {
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count},
-                vec![ input_ev("input", Msg::ChangeWWC) ]
+        input![
+            attrs!{"value" => model.what_we_count},
+            vec![ input_ev("input", Msg::ChangeWWC) ]
         ]
-
     ] ]
 }
 

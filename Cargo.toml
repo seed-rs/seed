@@ -1,6 +1,6 @@
 [package]
 name = "seed"
-version = "0.1.0"
+version = "0.1.1"
 description = "A frontend framework for Rust, via WebAssembly"
 authors = ["DavidOConnor <david.alan.oconnor@gmail.com>"]
 license = "MIT"

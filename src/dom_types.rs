@@ -140,21 +140,19 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     /// This method is where the processing logic for events happens.
     pub fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
         let mut handler = self.handler.take().unwrap();
-//        crate::log("step 1");
+
         let closure = Closure::wrap(
             Box::new(move |event: web_sys::Event| {
                 mailbox.send(handler(event))
             })
                 as Box<FnMut(web_sys::Event) + 'static>,
         );
-//        crate::log("step 2");
         (element.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("add_event_listener_with_callback");
 
         closure.forget();
 //        self.closure = Some(closure);
-//        crate::log("step 3");
 
 //        self.handler.replace(handler);  // todo ?
     }

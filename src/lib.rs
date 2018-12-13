@@ -58,7 +58,7 @@ pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
 
 
 /// The entry point for the app
-pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, &Mdl) -> Mdl,
+pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
           view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {

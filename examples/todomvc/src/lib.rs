@@ -66,14 +66,6 @@ impl Model {
         todos
     }
 
-    fn add_todo(&mut self, name: String) {
-        self.todos.push( Todo {
-            title: name,
-            completed: false,
-            editing: false,
-        });
-    }
-
     fn sync_storage(&self) {
         // todo: Every item that adds, deletes, or changes a today re-serializes and stores
         // todo the whole model. Effective, but probably quite slow!
@@ -125,77 +117,106 @@ enum Msg {
     EditKeyDown(usize, u32),  // item position, keycode
 }
 
-fn update(msg: Msg, model: &Model) -> Model {
-    let mut model = model.clone();
-
+fn update(msg: Msg, model: Model) -> Model {
+    // We take a verbose immutable-design/functional approach in this example.
+    // Alternatively, you could re-declare model as mutable at the top, and mutate
+    // what we need in each match leg. See the Update section of the guide for details.
+    model.sync_storage();  // Doing it here will miss the most recent update...
     match msg {
         Msg::ClearCompleted => {
-            model.todos = model.todos.into_iter().filter(|t| !t.completed).collect();
-            model.sync_storage();
+            let todos = model.todos.into_iter()
+                .filter(|t| !t.completed)
+                .collect();
+            Model {todos, ..model}
         },
         Msg::Destroy(posit) => {
-            model.todos.remove(posit);
-            model.sync_storage();
+            let todos = model.todos.into_iter()
+                .enumerate()
+                .filter(|(i, _)| i != &posit)
+                // We only used the enumerate to find the right todo; remove it.
+                .map(|(_, t)| t)
+                .collect();
+            Model {todos, ..model}
         },
-        Msg::Toggle(posit) => model.todos[posit].completed = !model.todos[posit].completed,
+        Msg::Toggle(posit) => {
+            let mut todos = model.todos;
+            let mut todo = todos.remove(posit);
+            todo.completed = !todo.completed;
+            todos.insert(posit, todo);
+
+            Model {todos, ..model}
+        },
         Msg::ToggleAll => {
-            // Mark all as completed, unless all are... then mark all as note completed.
-            let setting = model.active_count() != 0;
-            for todo in &mut model.todos {
-                todo.completed = setting;
-            }
+            // Mark all as completed, unless all are: mark all as not completed.
+            let completed = model.active_count() != 0;
+            let todos = model.todos.into_iter()
+                .map(|t| Todo{completed, ..t})
+                .collect();
+            Model {todos, ..model}
         }
         Msg::NewTodo(ev) => {
             // Add a todo_, if the enter key is pressed.
             // We handle text input after processing a key press, hence the
             // raw event logic here.
             let code = seed::to_kbevent(&ev).key_code();
-
-            if code == ENTER_KEY {
-                ev.prevent_default();
-                let target = ev.target().unwrap();
-                let input_el = seed::to_input(&target);
-                let text = input_el.value().trim().to_string();
-
-                if text.is_empty() {
-                    model.add_todo(text);
-                    input_el.set_value("");
-                    model.sync_storage();
-                }
+            if code != ENTER_KEY {
+                return model
             }
-        },
-        Msg::SetVisibility(vis) => model.visible = vis,
+            ev.prevent_default();
+
+            let target = ev.target().unwrap();
+            let input_el = seed::to_input(&target);
+            let title = input_el.value().trim().to_string();
+
+            if !title.is_empty() {
+                let mut todos = model.todos.clone();
+                todos.push(Todo {
+                    title,
+                    completed: false,
+                    editing: false,
+                });
+                input_el.set_value("");
+                Model {todos, ..model}
+            } else { model }
+        }
+        Msg::SetVisibility(visible) => Model {visible, ..model },
 
         Msg::EditItem(posit) => {
-            for todo in &mut model.todos {
-                todo.editing = false;
-            }
-            model.todos[posit].editing = true;
-            model.edit_text = (&model.todos[posit].title).to_string();
+            let mut todos: Vec<Todo> = model.todos.into_iter()
+                .map(|t| Todo{editing: false, ..t})
+                .collect();
+
+            let mut todo = todos.remove(posit);
+            todo.editing = true;
+            todos.insert(posit, todo.clone());
+
+            Model {todos, edit_text: todo.title, ..model}
         },
         Msg::EditSubmit(posit) => {
             if model.edit_text.is_empty() {
-                model.todos[posit].title = model.edit_text.clone();
-                model.todos[posit].editing = false;
-                model.edit_text = model.edit_text.trim().to_string();
+                update(Msg::Destroy(posit), model)
             } else {
-                model.todos.remove(posit);
+                let mut todos = model.todos;
+                let mut todo = todos.remove(posit);
+                todo.editing = false;
+                todo.title = model.edit_text.clone();
+                todos.insert(posit, todo);
+
+                Model {todos, edit_text: model.edit_text.trim().to_string(), ..model}
             }
-            model.sync_storage();
         },
-        Msg::EditChange(text) => model.edit_text = text,
+        Msg::EditChange(edit_text) => Model {edit_text, ..model},
         Msg::EditKeyDown(posit, code) => {
             if code == ESCAPE_KEY {
-                model.edit_text = model.todos[posit].title.clone();
-                for todo in &mut model.todos {
-                    todo.editing = false;
-                }
+                let todos = model.todos.clone().into_iter()
+                    .map(|t| Todo {editing: false, ..t})
+                    .collect();
+                Model {todos, edit_text: model.todos[posit].title.clone(), ..model}
             } else if code == ENTER_KEY {
-                model = update(Msg::EditSubmit(posit), &model);
-            }
+                update(Msg::EditSubmit(posit), model)
+            } else {model}
         },
-    };
-    model
+    }
 }
 
 // View
