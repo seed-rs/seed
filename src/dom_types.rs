@@ -172,7 +172,8 @@ impl<Ms: Clone + 'static>  PartialEq for Listener<Ms> {
     }
 }
 
-/// UpdateEl is used to distinguish arguments in element-creation macros.
+/// UpdateEl is used to distinguish arguments in element-creation macros, and handle
+/// each type appropriately.
 pub trait UpdateEl<T> {
     // T is the type of thing we're updating; eg attrs, style, events etc.
     fn update(self, el: &mut T);
@@ -180,7 +181,14 @@ pub trait UpdateEl<T> {
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for Attrs {
     fn update(self, el: &mut El<Ms>) {
+        // todo decide if you want to allow multiples and compose them.
         el.attrs = self;
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for &Attrs {
+    fn update(self, el: &mut El<Ms>) {
+        el.attrs = self.clone();
     }
 }
 
@@ -190,9 +198,23 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Style {
     }
 }
 
+impl<Ms: Clone> UpdateEl<El<Ms>> for &Style {
+    fn update(self, el: &mut El<Ms>) {
+        el.style = self.clone();
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for Listener<Ms> {
+    fn update(self, el: &mut El<Ms>) {
+        el.listeners.push(self)
+    }
+}
+
 impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     fn update(self, el: &mut El<Ms>) {
-        el.listeners = self;
+        for listener in self.into_iter() {
+            el.listeners.push(listener)
+        }
     }
 }
 
@@ -204,7 +226,9 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
-        el.children = self;
+        for child in self.into_iter() {
+            el.children.push(child);
+        }
     }
 }
 

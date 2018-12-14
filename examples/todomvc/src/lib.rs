@@ -231,21 +231,19 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
         div![ attrs!{"class" => "view"},
             input![ 
                 attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => item.completed },
-                vec![simple_ev("click", Msg::Toggle(posit))]
+                simple_ev("click", Msg::Toggle(posit))
             ],
 
-            label![ vec![simple_ev("dblclick", Msg::EditItem(posit))], item.title ],
-            button![ attrs!{"class" => "destroy"}, vec![simple_ev("click", Msg::Destroy(posit))] ]
+            label![ simple_ev("dblclick", Msg::EditItem(posit)), item.title ],
+            button![ attrs!{"class" => "destroy"}, simple_ev("click", Msg::Destroy(posit))]
         ],
 
         if item.editing {
             input![
                 attrs!{"class" => "edit"; "value" => edit_text},
-                vec![
                     simple_ev("blur", Msg::EditSubmit(posit)),
                     input_ev("input", Msg::EditChange),
                     keyboard_ev("keydown", move |ev| Msg::EditKeyDown(posit, ev.key_code())),
-                ]
             ]
         } else { seed::empty() }
     ]
@@ -254,7 +252,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
 fn selection_li(text: &str, path: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![
         a![ attrs!{"href" => path; "class" => if visible == highlighter {"selected"} else {""}},
-            vec![ simple_ev("click", Msg::SetVisibility(highlighter)) ], text
+            simple_ev("click", Msg::SetVisibility(highlighter)), text
         ]
     ]
 }
@@ -265,7 +263,7 @@ fn footer(model: &Model) -> El<Msg> {
     let clear_button = if model.completed_count() > 0 {
         button![
             attrs!{"class" => "clear-completed"},
-            vec![simple_ev("click", Msg::ClearCompleted)],
+            simple_ev("click", Msg::ClearCompleted),
             "Clear completed"
         ]
     } else { seed::empty() };
@@ -300,7 +298,7 @@ fn todo_app(model: Model) -> El<Msg> {
             input![
                 attrs!{"id" => "toggle-all"; "class" => "toggle-all"; "type" => "checkbox";
                        "checked" => model.active_count() == 0},
-                vec![simple_ev("click", Msg::ToggleAll)]
+                simple_ev("click", Msg::ToggleAll)
             ],
             label![ attrs!{"for" => "toggle-all"}, "Mark all as complete"],
             ul![ attrs!{"class" => "todo-list"}, items ]
@@ -317,7 +315,7 @@ fn todo_app(model: Model) -> El<Msg> {
                     "placeholder" => "What needs to be done?";
                     "auto-focus" => true
                 },
-                vec![ raw_ev("keydown", Msg::NewTodo) ]
+                raw_ev("keydown", Msg::NewTodo)
             ]
         ],
         main,

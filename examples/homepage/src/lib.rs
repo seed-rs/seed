@@ -60,16 +60,15 @@ fn header(version: &str) -> El<Msg> {
         "cursor" => "pointer";
         "font-size" => "1.2em"
     };
-    // todo sort out allowing refs to styles.
 
     div![ style!{"display" => "flex"; "justify-content" => "right"},
         ul![
-            a![ link_style.clone(), "Guide", vec![ simple_ev("click", Msg::ChangePage(Page::Guide)) ] ],
-            a![ link_style.clone(), "Changelog", vec![ simple_ev("click", Msg::ChangePage(Page::Changelog)) ] ],
-            a![ link_style.clone(), "Repo", attrs!{"href" => "https://github.com/David-OConnor/seed"} ],
-            a![ link_style.clone(), "Quickstart repo", attrs!{"href" => "https://github.com/David-OConnor/seed-quickstart"} ],
-            a![ link_style.clone(), "Crate", attrs!{"href" => "https://crates.io/crates/seed"} ],
-            a![ link_style.clone(), "API docs", attrs!{"href" => format!("https://docs.rs/seed/{}/seed/", version)} ]
+            a![ &link_style, "Guide", simple_ev("click", Msg::ChangePage(Page::Guide)) ],
+            a![ &link_style, "Changelog", simple_ev("click", Msg::ChangePage(Page::Changelog)) ],
+            a![ &link_style, "Repo", attrs!{"href" => "https://github.com/David-OConnor/seed"} ],
+            a![ &link_style, "Quickstart repo", attrs!{"href" => "https://github.com/David-OConnor/seed-quickstart"} ],
+            a![ &link_style, "Crate", attrs!{"href" => "https://crates.io/crates/seed"} ],
+            a![ &link_style, "API docs", attrs!{"href" => format!("https://docs.rs/seed/{}/seed/", version)} ]
         ]
     ]
 }
@@ -84,7 +83,7 @@ fn guide(sections: Vec<(&str, El<Msg>)>, guide_page: usize) -> El<Msg> {
     },
         div![ style!{"display" => "flex"}, menu_items ],
         div![ style!{"display" => "flex"}
-        ],
+        ]
 
     ]
 }
@@ -112,18 +111,17 @@ fn view(model: Model) -> El<Msg> {
         "grid-template-rows" => "100px auto 100px"
         },
             section![ style!{"grid-row" => "1 / 2"; "grid-column" => "1 / 2"},
-                header(version),
+                header(version)
             ],
             section![ style!{"grid-row" => "2 / 3"; "grid-column" => "1 / 2"},
                 match model.page {
                     Page::Guide => guide(sections, model.guide_page),
                     Page::Changelog => changelog(changelog_entries),
-                },
+                }
             ],
             section![ style!{"grid-row" => "3 / 4"; "grid-column" => "1 / 2"},
                 footer()
             ]
-
     ]
 }
 

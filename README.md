@@ -178,8 +178,8 @@ fn view(model: Model) -> El<Msg> {
             },
                 // We can use normal Rust code and comments in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
-                button![ vec![ simple_ev("click", Msg::Decrement) ], "-" ],
+                button![ simple_ev("click", Msg::Increment), "+" ],
+                button![ simple_ev("click", Msg::Decrement), "-" ],
 
                 // Optionally-displaying an element
                 if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
@@ -189,7 +189,7 @@ fn view(model: Model) -> El<Msg> {
 
         h3![ "What precisely is it we're counting?" ],
         input![ attrs!{"value" => model.what_we_count},
-                vec![ input_ev("input", Msg::ChangeWWC) ]
+                input_ev("input", Msg::ChangeWWC)
         ]
     ]
 }
@@ -472,18 +472,19 @@ extern crate seed;
 div![]
 ```
 These macros accept any combination (0 or 1 per) of the following parameters:
-- One [Attrs](https://docs.rs/seed/0.1.2/seed/dom_types/struct.Attrs.html) struct
-- One [Style](https://docs.rs/seed/0.1.2/seed/dom_types/struct.Style.html) struct
-- One Vec of [Listener](https://docs.rs/seed/0.1.2/seed/dom_types/struct.Listener.html) structs, which handle events
-- One String or &str representing node text
-- One or more [El](https://docs.rs/seed/0.1.2/seed/dom_types/struct.El.html) structs, representing a child
+- One [Attrs](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Attrs.html) struct
+- One [Style](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Style.html) struct
+- One or more [Listener](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Listener.html) structs, which handle events
+- One or more Vecs of Listener structs
+- One String or &str representing a node text
+- One or more [El](https://docs.rs/seed/0.1.3/seed/dom_types/struct.El.html) structs, representing a child
 - One or more Vecs of El structs, representing multiple children
 
 The parameters can be passed in any order; the compiler knows how to handle them
-based on their types.
+based on their types. Children are rendered in the order passed.
 
-Views are described using [El structs](https://docs.rs/seed/0.1.2/seed/dom_types/struct.El.html), 
-defined in the [seed::dom_types](https://docs.rs/seed/0.1.2/seed/dom_types/index.html) module. They're most-easily created
+Views are described using [El structs](https://docs.rs/seed/0.1.3/seed/dom_types/struct.El.html), 
+defined in the [seed::dom_types](https://docs.rs/seed/0.1.3/seed/dom_types/index.html) module. They're most-easily created
 with a shorthand using macros.
 
 `Attrs` and `Style` are thinly-wrapped hashmaps created with their own macros: `attrs{}` and `style!{}`
@@ -501,10 +502,6 @@ div![ attrs!{"class" => "hardly-any"},
 Note that you can create any of the above items inside an element macro, or create it separately,
 and pass it in.
 
-Temporary trap: Trailing commas are not allowed in element-creation macros, and 
-trailing semicolons are not allowed in attrs and style macros. They'll trigger a compiler error.
-This will be fixed in the future.
-
 Values passed to `attrs`, and `style` macros can be owned `Strings`, `&str`s, or when applicable, numerical and 
 boolean values. Eg: `input![ attrs!{"disabled" => false]` and `input![ attrs!{"disabled" => "false"]` 
 are equivalent. If a numerical value is used in a `Style`, 'px' will be automatically appended.
@@ -513,7 +510,23 @@ If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font
 once created, a `Style` instance holds all its values as `Strings`; eg that `16` above will be stored
 as `"16px"`; keep this in mind if editing a style that you made outside an element macro.
 
-Additionally, setting an InputElement's `checked` property is done through normal attributes:
+Styles and Attrs can be passed as refs as well, which is useful if you need to pass
+the same one more than once:
+```rust
+ let item_style = style!{
+        "margin-top" => 10;
+        "font-size" => "1.2em"
+    };
+
+    div![
+        ul![
+            li![ &item_style, "Item 1", ],
+            li![ &item_style, "Item 2", ],
+        ]
+    ]
+```
+
+Setting an InputElement's `checked` property is done through normal attributes:
 ```rust
 input![ attrs!{"type" => "checkbox"; "checked" => true ]
 ```
@@ -551,8 +564,8 @@ fn view(model: Model) -> El<Msg> {
 
 ### Events
 
-Event syntax may change in the future. Currently, events are a `Vec` of `dom_types::Listener`
-objects, created using the following four functions exposed in the prelude: `simple_ev`,
+Events are created by passing a a [Listener](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Listener.html),
+, or vec of Listeners, created using the following four functions exposed in the prelude: `simple_ev`,
 `input_ev`, `keyboard_ev`, and `raw_ev`. The first is demonstrated in the example in the quickstart section,
 and all are demonstrated in the todomvc example.
 
@@ -630,9 +643,7 @@ Msg::KeyPress(event) => {
     
     // ...
     // In view
-    vec![ 
-        raw_ev("input", Msg::KeyPress),
-    ]
+    raw_ev("input", Msg::KeyPress),
 }
 ```
 Seed also provides `to_textarea` and `to_select` functions, which you'd use as
@@ -664,7 +675,7 @@ KeyDown(event) => {
 }
 
 // ... In view
-vec![ keyboard_ev("keydown", Msg::KeyDown]
+keyboard_ev("keydown", Msg::KeyDown
 ```
 and
 ```rust
@@ -678,7 +689,7 @@ KeyDown(code) => {
 }
 
 // ... In view
-vec![ keyboard_ev("keydown", |ev| KeyDown(ev.key_code()))]
+keyboard_ev("keydown", |ev| KeyDown(ev.key_code()))
 ```
 
 You can pass more than one variable to the `Msg` enum via the closure, as long
@@ -711,7 +722,7 @@ in a flexbox layout:
 
 The only magic parts of this are the macros used to simplify syntax for creating these
 things: text are [Options](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#the-option-enum-and-its-advantages-over-null-values)
- of Rust borrowed Strings; `Listeners` are stored in Vecs; children are Vecs of sub-elements;
+ of Rust borrowed Strings; `Listeners` are stored in Vecs; children are elements and/or Vecs of;
 `Attr`s and `Style` are thinly-wrapped HashMaps. They can be created independently, and
 passed to the macros separately. The following code is equivalent; it uses constructors
 from the El struct. Note that `El` type is imported with the Prelude.
@@ -791,7 +802,7 @@ organize your code. In practice, they feel similar to components in React, but a
 functions used to create elements that end up in the `children` property of
 parent elements.
 
-For example, you could break up the above example like this:
+For example, you could break up one of the above examples like this:
 
 ```rust
     fn text_display(text: &str) -> El<Msg> {
@@ -800,13 +811,13 @@ For example, you could break up the above example like this:
     
     div![ style!{"display" => "flex"; flex-direction: "column"},
         text_display("Some things"),
-        button![ vec![ simple_ev("click", Msg::SayHi) ], "Click me!" ]
+        button![ simple_ev("click", Msg::SayHi), "Click me!" ]
     ]
 ```
 
 The text_display() component returns a single El that is inserted into its parents'
 `children` Vec; you can use this in patterns as you would in React. You can also use
-functions that return Vecs or Tuples of Els, which you can incorporate into other components
+functions that return Vecs of Els, which you can incorporate into other components
 using normal Rust code. See Fragments
 section below. Rust's type system
 ensures that only `El`s  can end up as children, so if your app compiles,
@@ -820,8 +831,8 @@ Fragments (`<>...</>` syntax in React and Yew) are components that represent mul
 elements without a parent. This is useful to avoid
 unecessary divs, which may be undesirable on their own, and breaks things like tables and CSS-grid. 
 There's no special syntax; just have your component return a Vec of `El`s instead of 
-one, and pass them into the parent's `children` parameter via Rust's Vec methods
-like `extend`, or pass the whole Vec if there are no other children:
+one, and add it to the parent's element macro; on its own like in the example below,
+ or with other children, or Vecs of children.
 
 ```rust
 fn cols() -> Vec<El<Msg>> {

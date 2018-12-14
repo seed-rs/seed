@@ -81,8 +81,8 @@ fn view(model: Model) -> El<Msg> {
             },
                 // We can use normal Rust code and comments in the view.
                 h3![ text ],
-                button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
-                button![ vec![ simple_ev("click", Msg::Decrement) ], "-" ],
+                button![ simple_ev("click", Msg::Increment), "+" ],
+                button![ simple_ev("click", Msg::Decrement), "-" ],
 
                 // Optionally-displaying an element
                 if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
@@ -93,7 +93,7 @@ fn view(model: Model) -> El<Msg> {
         h3![ "What precisely is it we're counting?" ],
         input![
             attrs!{"value" => model.what_we_count},
-            vec![ input_ev("input", Msg::ChangeWWC) ]
+            input_ev("input", Msg::ChangeWWC)
         ]
     ]
 }

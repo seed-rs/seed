@@ -26,8 +26,7 @@ extern crate serde_derive;
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
-// todo allow trailing ; in attrs/style
-// todo allow children without a vec??
+// todo composable styles and attrs?
 
 
 /// Convenience function used in event handling: Convert an event target
