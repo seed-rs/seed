@@ -13,7 +13,7 @@ extern crate serde_derive;
 const ENTER_KEY: u32 = 13;
 const ESCAPE_KEY: u32 = 27;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 enum Visible {
     All,
     Active,
@@ -278,9 +278,9 @@ fn footer(model: &Model) -> El<Msg> {
 
         ul![ attrs!{"class" => "filters"}, vec![
             // todo fix cloning here.
-            selection_li("All", "#/", model.visible.clone(), Visible::All),
-            selection_li("Active", "#/active", model.visible.clone(), Visible::Active),
-            selection_li("Completed", "#/completed", model.visible.clone(), Visible::Completed),
+            selection_li("All", "#/", model.visible, Visible::All),
+            selection_li("Active", "#/active", model.visible, Visible::Active),
+            selection_li("Completed", "#/completed", model.visible, Visible::Completed),
         ] ],
         clear_button
     ] ]

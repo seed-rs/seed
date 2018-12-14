@@ -37,7 +37,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
-    document: web_sys::Document,
+    pub document: web_sys::Document,  // todo take off pub if you no longer use it in init
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update_dom().
     pub model: RefCell<Mdl>,
@@ -89,7 +89,6 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
     fn update_dom(&self, message: Ms) {
         // data.model is the old model; pass it to the update function created in the app,
         // which outputs an updated model.
-
         // We clone the model before running update, and again before passing it
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
@@ -111,22 +110,31 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         // render them with attach_children; we try to do it cleverly via patch().
         self.setup_vdom(&mut topel_new_vdom, 0, 0);
 
-
 //        self.data.mount_point.set_inner_html("");
 //        let el_ws = websys_bridge::make_websys_el(&mut self.data.main_el_vdom.borrow_mut(), &self.data.document, self.mailbox());
 //        self.data.mount_point.append_child(&el_ws);
 
 //        self.data.mount_point.append_child(&self.data.main_el_vdom.borrow().el_ws.unwrap()).unwrap();
 
+
+        // Detach all old listeners before patching. We'll re-add them as required during patching.
+        // We'll get a runtime panic if any are left un-removed.
+        detach_all_listeners(&mut self.data.main_el_vdom.borrow_mut());
+
         // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
-        patch(&self.data.document, &mut self.data.main_el_vdom.borrow_mut(), &mut topel_new_vdom, &self.data.mount_point);
+        patch(
+            &self.data.document,
+            &mut self.data.main_el_vdom.borrow_mut(),
+            &mut topel_new_vdom, &self.data.mount_point,
+            self.mailbox()
+        );
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next (.
         self.data.main_el_vdom.replace(topel_new_vdom);
     }
 
-    fn mailbox(&self) -> Mailbox<Ms> {
+    pub fn mailbox(&self) -> Mailbox<Ms> {
         let cloned = self.clone();
         Mailbox::new(move |message| {
             cloned.update_dom(message);
@@ -174,19 +182,52 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
     }
 }
 
-fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>, parent: &web_sys::Element)
+// todo should this be here, or in a diff module?
+/// Recursively attach event-listeners. Run this at init.
+pub fn attach_all_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>)
     where Ms: Clone + Sized + 'static
 {
+    let el_ws = el.el_ws.take().expect("Missing el_ws on init");
+
+    for listener in &mut el.listeners {
+        listener.attach(&el_ws, mailbox.clone());
+    }
+    for child in &mut el.children {
+        attach_all_listeners(child, mailbox.clone())
+    }
+
+   el.el_ws.replace(el_ws);
+}
+
+// todo should this be here, or in a diff module?
+/// Recursively detach event-listeners. Run this before patching.
+pub fn detach_all_listeners<Ms: Clone + Sized + 'static>(el: &mut dom_types::El<Ms>) {
+    let el_ws = el.el_ws.take().expect("Missing el_ws on init");
+
+    for listener in &mut el.listeners {
+        listener.detach(&el_ws);
+    }
+    for child in &mut el.children {
+        detach_all_listeners(child)
+    }
+
+   el.el_ws.replace(el_ws);
+}
+
+// todo take off pub if you no longer call this from lib.
+pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
+              parent: &web_sys::Element, mailbox: Mailbox<Ms>)
+    where Ms: Clone + Sized + 'static
+{
+    // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // Todo: Current sceme is that if the parent changes, redraw all children...
     // todo fix this later.
     // We make an assumption that most of the page is not dramatically changed
     // by each event, to optimize.
     // todo: There are a lot of ways you could make this more sophisticated.
 
-    // Assume setup_vdom has been run on the new el, but only the old vdom's nodes are attached.
-
-    // todo only redraw teh whole subtree if children are diff; if it's
-    // todo just text or attrs etc, patch them.
+    // Assume setup_vdom has been run on the new el, all listeners have been removed
+    // from the old el_ws, and the only the old el vdom's elements are still attached.
 
     // take removes the interior value from the Option; otherwise we run into problems
     // about not being able to remove from borrowed content.
@@ -197,14 +238,27 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>, p
 
     let old_el_ws = old.el_ws.take().expect("No old elws");
 
+    // Before running patch, we've stripped
+    for listener in &mut new.listeners {
+        listener.attach(&old_el_ws, mailbox.clone());
+    }
+
     if old != new {
+        log!("NOT identical");
         // Something about this element itself is different: patch it.
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
         // analyzing children
+
+        // If the tag's different, we must redraw the element and its children; there's
+        // no way to patch one element type into another.
+        // todo forcing a rerender for differnet listeners is potentially sloppy,
+        // todo, but I'm not sure how to patch them, or deal with them.
         if old.tag != new.tag {
-            parent.remove_child(&old_el_ws).expect("Problem removing this element");
-            websys_bridge::attach(new, parent);
+            parent.remove_child(&old_el_ws).expect("Problem removing an element");
+            websys_bridge::attach_els(new, parent);
+            let mut new = new;
+            attach_all_listeners(&mut new, mailbox.clone());
             // We've re-rendered this child and all children; we're done with this recursion.
             return
         }
@@ -213,6 +267,7 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>, p
         websys_bridge::patch_el_details(old, new, &old_el_ws, document);
     }
 
+    // Now pair up children as best we can.
     // If there are the same number of children, assume there's a 1-to-1 mapping,
     // where we will not add or remove any; but patch as needed.
 
@@ -231,7 +286,10 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>, p
         if avail_old_children.is_empty() {
             // One or more new children has been added, or much content has
             // changed, or we've made a mistake: Attach new children.
-            websys_bridge::attach(child_new, &old_el_ws);
+            log!("Found a new child.");
+            websys_bridge::attach_els(child_new, &old_el_ws);
+            let mut child_new = child_new;
+            attach_all_listeners(&mut child_new, mailbox.clone());
         } else {
 
             // We still have old children to pick a match from. If we pick
@@ -254,12 +312,15 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>, p
 
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
-            patch(document, &mut best_match, child_new, &old_el_ws); // todo old vs new for par
+            log!("Guessed a match");
+            // todo do we really need to clone the mb again ehre? Keep this under control!
+            patch(document, &mut best_match, child_new, &old_el_ws, mailbox.clone()); // todo old vs new for par
         }
     }
 
     // Now purge any existing children; they're not part of the new model.
     for child in avail_old_children {
+        log!("Removing an old child");
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
         old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
         child.el_ws.replace(child_el_ws);

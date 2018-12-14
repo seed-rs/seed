@@ -5,7 +5,7 @@ use crate::vdom::Mailbox;
 use crate::dom_types;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
-pub fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
+fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
     let mut set_check = false;
 
     if name == "checked" {
@@ -27,7 +27,6 @@ pub fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
     if !set_check {
         el_ws.set_attribute(name, val).expect("Problem setting an atrribute.");
     }
-
 }
 
 /// Create and return a web_sys Element from our virtual-dom El. The web_sys
@@ -38,7 +37,7 @@ pub fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web_sys::Document,
                                  mailbox: Mailbox<Ms>) -> web_sys::Element {
     // Create the DOM-analog element; it won't render until attached to something.
-    let el_ws = document.create_element(&el_vdom.tag.as_str()).expect("Probelem creating web-sys El");
+    let el_ws = document.create_element(&el_vdom.tag.as_str()).expect("Problem creating web-sys El");
 
     for (name, val) in &el_vdom.attrs.vals {
         set_attr_shim(&el_ws, name, val);
@@ -55,9 +54,12 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web
     // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
     el_ws.set_text_content(el_vdom.text.as_ref().map(String::as_ref));
 
-    for listener in &mut el_vdom.listeners {
-        listener.attach(&el_ws, mailbox.clone());
-    }
+    // Don't attach listeners here: It'll cause a conflict when you try to
+    // attach a second time. ?
+    // todo delete these lines once events are sorted
+//    for listener in &mut el_vdom.listeners {
+//        listener.attach(&el_ws, mailbox.clone());
+//    }
 
     el_ws
 }
@@ -65,7 +67,7 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Element) {
+pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Element) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
@@ -75,7 +77,7 @@ pub fn attach<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Elem
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
-    crate::log("Rendering element in attach");
+//    crate::log("Rendering element in attach");
     // Purge existing children.
 //    parent.remove_child(&el_ws).expect("Missing el_ws");
     // Append its child while it's out of its element.
@@ -86,7 +88,7 @@ pub fn attach<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Elem
 
     for child in &mut el_vdom.children {
         // Raise the active level once per recursion.
-        attach(child, &el_ws)
+        attach_els(child, &el_ws)
     }
 
     // Replace the web_sys el... Indiana-Jones-style.
@@ -161,17 +163,4 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
             }
         }
     }
-
-    for listener in &mut old.listeners {
-//        listener.detach(&old_el_ws);
-    }
-
-    // todo detach old ones too!
-    for listener in &mut new.listeners {
-//        listener.attach(&old_el_ws, mailbox.clone());
-    }
-
-//    if old.listeners != new.listeners {
-//        crate::log("WOAH");
-//    } else { crate::log("SAME")}
 }

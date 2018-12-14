@@ -45,7 +45,7 @@ pub fn simple_ev<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener<Ms
     listener
 }
 
-/// Create an event that passes String of field text, for fast input handling.
+/// Create an event that passes a String of field text, for fast input handling.
 pub fn input_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms> {
     let mut listener = Listener::empty(trigger.into());
     // handler must be boxed before passing to Listener's add method.
@@ -118,7 +118,6 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             }
             handler(String::new())
         };
-
          self.handler = Some(Box::new(closure));
      }
 
@@ -136,7 +135,8 @@ impl<Ms: Clone + 'static> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
-        let mut handler = self.handler.take().unwrap();
+        // This and detach taken from Draco.
+        let mut handler = self.handler.take().expect("Can't find old handler");
 
         let closure = Closure::wrap(
             Box::new(move |event: web_sys::Event| {
@@ -148,21 +148,20 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("add_event_listener_with_callback");
 
-        closure.forget();
-//        self.closure = Some(closure);
+        // Store the closure so we can detach it later. Not detaching it (when an element
+        // is removed?) will cause a panic.
+        self.closure = Some(closure);
 
 //        self.handler.replace(handler);  // todo ?
     }
 
-
     pub fn detach(&self, el_ws: &web_sys::Element) {
-        crate::log("Pre CLOSURE");
+        // This and attach taken from Draco.
         let closure = self.closure.as_ref().unwrap();
-        crate::log("POST CLOSURE");
         (el_ws.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("remove_event_listener_with_callback");
-}
+    }
 }
 
 impl<Ms: Clone + 'static>  PartialEq for Listener<Ms> {
@@ -315,6 +314,8 @@ macro_rules! make_events {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($event_camel:ident => $event:expr),+ } => {
 
+        /// The Event enum restricts element-creation to only valid event names, as defined here:
+        /// https://developer.mozilla.org/en-US/docs/Web/Events
         #[derive(Clone)]
         pub enum Event {
             $(
@@ -395,7 +396,8 @@ macro_rules! make_tags {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($tag_camel:ident => $tag:expr),+ } => {
 
-//        #[derive(PartialEq)]
+        /// The Tag enum restricts element-creation to only valid tags, as defined here:
+        /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
         #[derive(Clone, PartialEq)]
         pub enum Tag {
             $(
@@ -455,7 +457,7 @@ make_tags! {
     Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template"
 }
 
-/// The Element component of our virtual DOM.
+/// An component in our virtual DOM.
 pub struct El<Ms: Clone + 'static> {
     // M sis a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -576,12 +578,12 @@ impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
-            self.attrs == other.attrs &&
-            self.style == other.style &&
-            self.text == other.text &&
-            self.listeners == other.listeners &&
-            // TOdo not sure how nest-level should be used. Is it a given based on
-            // todo how we iterate? Sanity-check for now.
-            self.nest_level == other.nest_level
+        self.attrs == other.attrs &&
+        self.style == other.style &&
+        self.text == other.text &&
+        self.listeners == other.listeners &&
+        // TOdo not sure how nest-level should be used. Is it a given based on
+        // todo how we iterate? Sanity-check for now.
+        self.nest_level == other.nest_level
     }
 }

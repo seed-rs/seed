@@ -22,7 +22,12 @@
       <sourceFolder url="file://$MODULE_DIR$/examples/server_interaction/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/examples/server_interaction/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/examples/server_interaction/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/homepage/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/homepage/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/homepage/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/homepage/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/examples/counter/target" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/homepage/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/server_interaction/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/todomvc/target" />
       <excludeFolder url="file://$MODULE_DIR$/proc_macros/target" />

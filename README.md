@@ -10,7 +10,7 @@
 ## Quickstart
 
 ### Setup
-This package requires you to install [Rust](https://www.rust-lang.org) - This will
+This package requires you to install [Rust](https://www.rust-lang.org/tools/install) - This will
 enable the CLI commands below:
 
  You'll need a recent version of Rust: `rustup update`
@@ -54,9 +54,12 @@ to load the framework into. It also needs the following code to load your WASM m
 </script>
 ```
 The `delete WebAssembly.instantiateStreaming;` line is an unsavory hack, but without it,
-only a handfull of dev servers will work. Eg the Rust crate [https](https://crates.io/crates/https)
-works, but Python's [http.server](https://docs.python.org/3/library/http.server.html), webpack's dev server, and opening the html file directly will fail with a MIME
-type error. Do not use this line in production.
+Most dev servers, and opening the html file directly won't work. If you'd like to avoid this, 
+delete that line, install
+[Python](https://www.python.org/downloads/), and run `python server.py`. This
+file is included in the quickstart repo, and in each example folder. It's a shim
+that allows Python's dev server to work with the WASM mime type. Linux users may have
+to run `python3 server.py`.
 
 The quickstart repo includes this file, but you will need to rename the two 
 occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
@@ -200,7 +203,7 @@ pub fn render() {
 ```
 
 ### Building and running
-To build your app, run the following two commands:
+To build your app, create a `pkg` subdirectory, and run the following two commands:
 
 ```
 cargo build --target wasm32-unknown-unknown
@@ -217,8 +220,8 @@ You may wish to create a build script with these two lines. (`build.sh` for Linu
 The Quickstart repo includes these, but you'll still need to do the rename. You can then use
 `./build.sh` or `.\build.ps1`
 
-For development, you can view your app using a dev server, or by opening the HTML file in a browser. For example, after installing the  [http crate](https://crates.io/crates/https), run `http`.
-Or with [Python](https://www.python.org/) installed, run `python -m http.server` from your crate's root.
+For development, you can view your app using a shimmed Python dev server described above,
+(Run `python server.py`) or by opening the HTML file in a browser.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
@@ -226,7 +229,7 @@ In the future, I'd like the build script and commands above to be replaced by [w
 ### Running included examples
 To run an example located in the `examples` folder, navigate to that folder in a terminal, 
 run the build script for your system (`build.sh` or `build.ps1`), then open the `index.html` file
-in a web browser. Note that if you copy an example to a separate folder, you'll need
+in a web browser, or use the Python dev server. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
 `seed = { path = "../../"` with `seed = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
 line.
@@ -398,7 +401,8 @@ fn update(msg: Msg, model: Model) -> Model {
 In this example, we avoid mutating data. In the first two Msgs, we filter the todos,
 then pass them to a new model using [struct update syntax](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax)
 .  In the third Msg, we mutate todos, but don't mutate the model itself. In the fourth,
-we build a new todo list using a functional technique.
+we build a new todo list using a functional technique. The [docs for Rust Iterators](https://doc.rust-lang.org/std/iter/trait.Iterator.html)
+show helpful methods for functional iterator manipulation.
 
 Alternatively, we could write the same update function like this:
 ```rust
@@ -406,7 +410,9 @@ fn update(msg: Msg, model: Model) -> Model {
     let mut model = model;
     match msg {
         Msg::ClearCompleted => {
-            model.todos = model.todos.into_iter().filter(|t| !t.completed).collect();
+            model.todos = model.todos.into_iter()
+            .filter(|t| !t.completed)
+            .collect();
         },
         Msg::Destroy(posit) => {
             model.todos.remove(posit);
@@ -417,12 +423,13 @@ fn update(msg: Msg, model: Model) -> Model {
             for todo in &mut model.todos {
                 todo.completed = completed;
         }
-}
     };
     model
+}
  ```
-This approach, where we mutate the model in the update function, is much more concise when
-handling collections.
+This approach, where we mutate the model directly, is much more concise when
+handling collections. How-to: Reassign `model` as mutable at the start of `update`. 
+Return `model` at the end. Mutate it during the match legs.
 
 As with the model, only one update function is passed to the app, but it may be split into 
 sub-functions to aid code organization.
@@ -457,10 +464,11 @@ fn update(fn update(msg: Msg, model: Model) -> Model {
 ### Elements, attributes, styles
 When passing your layout to Seed, attributes for DOM elements (eg id, class, src etc), 
 styles (eg display, color, font-size), and
-events (eg onclick, contextmenu, dblclick) are passed to DOM-macros (like div!{}) using
+events (eg click, contextmenu, dblclick) are passed to element-creation macros (like div![]) using
 unique types.
 
-Views are described using El structs, defined in the`seed::dom_types` module. They're most-easily created
+Views are described using [El structs](https://docs.rs/seed/0.1.2/seed/dom_types/struct.El.html), 
+defined in the [seed::dom_types](https://docs.rs/seed/0.1.2/seed/dom_types/index.html) module. They're most-easily created
 with a shorthand using macros. These macros can take any combination of the following 5 argument types:
 (0 or 1 of each) `Attrs`, `Style`, `Vec<Listener>`, `Vec<El>` (children), and `&str` (text). Attrs, and Style
 are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`. Attrs,
@@ -484,6 +492,31 @@ a new part to them, use their .add method:
 ```rust
 let mut attributes = attrs!{};
 attributes.add("class", "truckloads");
+```
+
+Example of the style tag, and how you can use pattern-matching in views:
+```rust
+fn view(model: Model) -> El<Msg> {
+    div![ style!{
+        "display" => "grid";
+        "grid-template-columns" => "auto";
+        "grid-template-rows" => "100px auto 100px"
+        }, vec![
+            section![ style!{"grid-row" => "1 / 2"}, vec![
+                header(),
+            ] ],
+            section![ attrs!{"grid-row" => "2 / 3"}, vec![
+                match model.page {
+                    Page::Guide => guide(),
+                    Page::Changelog => changelog(),
+                },
+            ] ],
+            section![ style!{"grid-row" => "3 / 4"}, vec![
+                footer()
+            ] ]
+        ]
+    ]
+}
 ```
 
 ### Events
@@ -897,7 +930,8 @@ borrow checker.
 2: Runtime [panics](https://doc.rust-lang.org/book/ch09-01-unrecoverable-errors-with-panic.html). 
 These show up as console errors in the web browser. Example:
 `panicked at 'assertion failed: index < len',`, and provide a traceback. (For example, a problem while using `unwrap()`). 
- They're often associated with`unwrap()` or `expect()` calls.
+ They're often associated with`unwrap()` or `expect()` calls. Try to use expect(), with a useful
+ error message instead of unwrap(): It your message will show in the console.
 
 ### Reference
 - [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)
@@ -906,6 +940,7 @@ These show up as console errors in the web browser. Example:
 - [Rust book](https://doc.rust-lang.org/book/index.html)
 - [Rust standard library api](https://doc.rust-lang.org/std/)
 - [Seed's API docs](https://docs.rs/seed)
+- [Learn Rust](https://www.rust-lang.org/learn)
 
 ## About
 
@@ -974,7 +1009,7 @@ but I think it integrates more naturally with the language.
 
 You may prefer writing in Rust, and using packages from Cargo vis npm. Getting started with
 this framework will, in most cases be faster, and require less config and setup overhead than
-with JS frameworks.
+with JS frameworks. You like the advantages of compile-time error-checking.
 
 You may choose 
 this approach over Elm if you're already comfortable with Rust, want the performance 

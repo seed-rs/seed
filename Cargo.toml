@@ -8,7 +8,7 @@ repository = "https://www.github.com/David-OConnor/seed"
 homepage = "https://www.github.com/David-OConnor/seed"
 documentation = "https://docs.rs/seed"
 readme = "README.md"
-keywords = ["wasm", "webassembly", "frontend", "framework", "web", "bindgen"]
+keywords = ["wasm", "webassembly", "frontend", "framework", "web"]
 categories = ["wasm", "web-programming"]
 edition = "2018"
 
@@ -60,6 +60,7 @@ features = [
 [workspace]
 members = [
     "examples/counter",
-    "examples/todomvc",
+    "examples/homepage",
     "examples/server_interaction",
+    "examples/todomvc",
 ]

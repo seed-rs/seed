@@ -56,7 +56,6 @@ pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
     event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
 }
 
-
 /// The entry point for the app
 pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
           view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str)
@@ -65,13 +64,17 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
     let app = vdom::App::new(model.clone(), update, view, mount_point_id);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    let mut main_el_vdom = (app.data.view)(model);
-    app.setup_vdom(&mut main_el_vdom, 0, 0);
+    let mut topel_vdom = (app.data.view)(model);
+    app.setup_vdom(&mut topel_vdom, 0, 0);
+
+    vdom::attach_all_listeners(&mut topel_vdom, app.mailbox());
+
     // Attach all children: This is where our initial render occurs.
-    websys_bridge::attach(&mut main_el_vdom, &app.data.mount_point);
+    websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
 
-    app.data.main_el_vdom.replace(main_el_vdom);
+    app.data.main_el_vdom.replace(topel_vdom);
 
+    // Allows panic messages to output to the browser console.error.
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
@@ -92,7 +95,7 @@ pub fn log(text: &str) {
 
 /// Introduce El into the global namespace for convenience (It will be repeated
 /// often in the output type of components), and UpdateEl, which is required
-/// for our element-creation macros.
+/// for element-creation macros.
 pub mod prelude {
     pub use crate::dom_types::{El, UpdateEl, UpdateListener,
                                simple_ev, input_ev, keyboard_ev, raw_ev};
