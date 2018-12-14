@@ -59,13 +59,6 @@ impl Model {
         self.todos.len() as i32 - self.completed_count()
     }
 
-    fn shown_todos(&self) -> Vec<Todo> {
-        let mut todos = self.todos.clone();
-        todos = todos.into_iter().filter(|t| t.visible(&self.visible)).collect();
-        todos.sort();  // I'm not sure what criteria this is using... Id?
-        todos
-    }
-
     fn sync_storage(&self) {
         // todo: Every item that adds, deletes, or changes a today re-serializes and stores
         // todo the whole model. Effective, but probably quite slow!
@@ -285,12 +278,15 @@ fn footer(model: &Model) -> El<Msg> {
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
 fn todo_app(model: Model) -> El<Msg> {
-    // We use the item's position in its Vec to identify it, because this allows
-    // simple in-place modification through indexing.
-    let items: Vec<El<Msg>> = model.shown_todos()
+    // We use the item's position in model.todos to identify it, because this allows
+    // simple in-place modification through indexing. This is different from its
+    // position in visible todos, hence the two-step process.
+    let todo_els: Vec<El<Msg>> = model.todos.clone()
         .into_iter()
         .enumerate()
-        .map(|(posit, todo)| todo_item(todo.clone(), posit, model.edit_text.clone())).collect();
+        .filter(|(posit, todo)| todo.visible(&model.visible))
+        .map(|(posit, todo)| todo_item(todo.clone(), posit, model.edit_text.clone()))
+        .collect();
 
     let main = if !model.todos.is_empty() {
 
@@ -301,7 +297,7 @@ fn todo_app(model: Model) -> El<Msg> {
                 simple_ev("click", Msg::ToggleAll)
             ],
             label![ attrs!{"for" => "toggle-all"}, "Mark all as complete"],
-            ul![ attrs!{"class" => "todo-list"}, items ]
+            ul![ attrs!{"class" => "todo-list"}, todo_els ]
         ]
 
     } else { seed::empty() };

@@ -30,7 +30,8 @@ need to tweak the Html file and build script, as described below.
 Or, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
 appname` should be replaced with the name of your app.
 
-You need an Html file that loads your app's compiled module, and provides an element with id 
+If not using the quickstart repo, create an Html file that loads your app's compiled module, 
+and provides an element with id 
 to load the framework into. It also needs the following code to load your WASM module -
  Ie, the body should contain this:
  
@@ -65,8 +66,10 @@ The quickstart repo includes this file, but you will need to rename the two
 occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
 
-`Cargo.toml`needs `wasm-bindgen`, `web-sys`, and `seed` as depdendencies, and crate-type
-of `"cdylib"`. Example:
+`Cargo.toml`, which is a file created by Cargo that describes your app, needs `wasm-bindgen`, `web-sys`, and `
+seed` added as depdendencies,
+ and crate-type
+of `"cdylib"`. (The version in the quickstart repo has these set up already) Example:
 
 ```toml
 [package]
@@ -79,7 +82,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.1.1"
+seed = "^0.1.4"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 
@@ -188,9 +191,7 @@ fn view(model: Model) -> El<Msg> {
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count},
-                input_ev("input", Msg::ChangeWWC)
-        ]
+        input![ attrs!{"value" => model.what_we_count}, input_ev("input", Msg::ChangeWWC) ]
     ]
 }
 
@@ -325,7 +326,9 @@ struct Model {
 
 The Message is an [enum]( https://doc.rust-lang.org/book/ch06-00-enums.html) which 
 categorizes each type of interaction with the app. Its fields may hold a value, or not. 
-We’ve abbreviated it as `Msg` here for brevity. Example:
+We’ve abbreviated it as `Msg` here for brevity. If you're not familiar with enums,
+think of one as a set of options; in other languages, you might use an integer, or string 
+for this, but an enum is explicitly limited in which values it can take. Example:
 
 ```rust
 #[derive(Clone)]
@@ -373,7 +376,8 @@ fn update(msg: Msg, model: Model) -> Model {
             Model {todos, ..model}
         },
         Msg::Destroy(posit) => {
-            let todos = model.todos.into_iter().enumerate()
+            let todos = model.todos.into_iter()
+                .enumerate()
                 .filter(|(i, t)| i != &posit)
                 .map(|(i, t)| t)
                 .collect();
@@ -472,19 +476,19 @@ extern crate seed;
 div![]
 ```
 These macros accept any combination (0 or 1 per) of the following parameters:
-- One [Attrs](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Attrs.html) struct
-- One [Style](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Style.html) struct
-- One or more [Listener](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Listener.html) structs, which handle events
+- One [Attrs](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Attrs.html) struct
+- One [Style](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Style.html) struct
+- One or more [Listener](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Listener.html) structs, which handle events
 - One or more Vecs of Listener structs
 - One String or &str representing a node text
-- One or more [El](https://docs.rs/seed/0.1.3/seed/dom_types/struct.El.html) structs, representing a child
+- One or more [El](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html) structs, representing a child
 - One or more Vecs of El structs, representing multiple children
 
 The parameters can be passed in any order; the compiler knows how to handle them
 based on their types. Children are rendered in the order passed.
 
-Views are described using [El structs](https://docs.rs/seed/0.1.3/seed/dom_types/struct.El.html), 
-defined in the [seed::dom_types](https://docs.rs/seed/0.1.3/seed/dom_types/index.html) module. They're most-easily created
+Views are described using [El structs](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html), 
+defined in the [seed::dom_types](https://docs.rs/seed/0.1.4/seed/dom_types/index.html) module. They're most-easily created
 with a shorthand using macros.
 
 `Attrs` and `Style` are thinly-wrapped hashmaps created with their own macros: `attrs{}` and `style!{}`
@@ -562,9 +566,12 @@ fn view(model: Model) -> El<Msg> {
 }
 ```
 
+Overall: we leverage of Rust's strict type system to flexibly-create the view
+using normal Rust code.
+
 ### Events
 
-Events are created by passing a a [Listener](https://docs.rs/seed/0.1.3/seed/dom_types/struct.Listener.html),
+Events are created by passing a a [Listener](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Listener.html),
 , or vec of Listeners, created using the following four functions exposed in the prelude: `simple_ev`,
 `input_ev`, `keyboard_ev`, and `raw_ev`. The first is demonstrated in the example in the quickstart section,
 and all are demonstrated in the todomvc example.
@@ -602,7 +609,7 @@ enum Msg {
     PutTheHammerDown(web_sys::KeyboardEvent)
 }
 // ...
-keyboard_ev_ev("input", Msg::PutTheHammerDown)
+keyboard_ev("input", Msg::PutTheHammerDown)
 ```
 
 Note that in the examples for input_ev and keyboard_ev, the syntax is simplified since
@@ -716,7 +723,7 @@ in a flexbox layout:
 ```rust
     div![ style!{"display" => "flex"; "flex-direction" => "column"},
         h3![ "Some things" ],
-        button![ "Click me!" ]  // todo add event example back.
+        button![ "Click me!" ]
     ]
 ```
 
@@ -756,6 +763,8 @@ to demonstrate that the macros and constructors above represent normal Rust stru
 and provides insight into what abstractions they perform:
 
 ```rust
+// We didn't provide an example of a Listener/style: These are
+// more complicated to show using literals.
 use seed::dom_types::{El, Attrs, Style, Tag};
 
 // Rust has no built-in HashMap literal syntax.
@@ -766,7 +775,7 @@ style.insert("flex-direction", "column");
 El {
     tag: Tag::Div,
     attrs: Attrs { vals: HashMap::new() },
-    style,
+    style: Style { vals: style },
     events: Events { vals: Vec::new() },
     text: None,
     children: vec![
@@ -866,7 +875,7 @@ push what components are needed, and pass it into the element macro.
 
 ### Initializing your app
 To start your app, pass an instance of your model, the update function, the top-level component function 
-(not its output), and name of the element (Usually a Div or Section) you wish to mount it to to the `seed::run` function:
+(not its output), and id of the element (Usually a Div or Section) you wish to mount it to to the `seed::run` function:
 ```rust
 #[wasm_bindgen]
 pub fn render() {
@@ -1067,23 +1076,21 @@ wasm-bindgen than with npm.
 ## Shoutouts
  - The [WASM-Bindgen](https://github.com/rustwasm/wasm-bindgen) team: 
  For building the tools this project relies on
- - Alex Chrichton: For being extraodinarily helpful in the Rust / WASM community
+ - Alex Chrichton, for being extraodinarily helpful in the Rust / WASM community
  - The [Elm](https://elm-lang.org/) team: For creating and standardizing the Elm architecture
  - Denis Kolodin: for creating the inspirational [Yew framework](https://github.com/DenisKolodin/yew)
  - Utkarsh Kukreti, for through his [Draco repo](https://github.com/utkarshkukreti/draco), 
  helping me understand how wasm-bindgen's
  closure system can be used to update state.
+ -Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
 
 
 ## Features to add
  - Router
  - High-level fetch API
- - Cleaner event syntax
  - Virtual DOM optimization 
  - Docs/tutorial website example to replace this readme
  - High-level CSS-grid/Flexbox API ?
  
  ## Bugs to fix
- - Events do not patch properly
- - Other hard-to-pin patching bugs
  - Text renders above children instead of below

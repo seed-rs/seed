@@ -119,7 +119,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
 
         // Detach all old listeners before patching. We'll re-add them as required during patching.
         // We'll get a runtime panic if any are left un-removed.
-        detach_all_listeners(&mut self.data.main_el_vdom.borrow_mut());
+        detach_listeners(&mut self.data.main_el_vdom.borrow_mut());
 
         // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
         patch(
@@ -152,7 +152,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
 
         // Create the web_sys element; add it to the working tree; store it in
         // its corresponding vdom El.
-        let el_ws = websys_bridge::make_websys_el(el_vdom, &self.data.document, self.mailbox());
+        let el_ws = websys_bridge::make_websys_el(el_vdom, &self.data.document);
         el_vdom.el_ws = Some(el_ws);
         for child in &mut el_vdom.children {
             // Raise the active level once per recursion.
@@ -184,16 +184,16 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
 
 // todo should this be here, or in a diff module?
 /// Recursively attach event-listeners. Run this at init.
-pub fn attach_all_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>)
+pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>)
     where Ms: Clone + Sized + 'static
 {
-    let el_ws = el.el_ws.take().expect("Missing el_ws on init");
+    let el_ws = el.el_ws.take().expect("Missing el_ws on attach_all_listeners");
 
     for listener in &mut el.listeners {
         listener.attach(&el_ws, mailbox.clone());
     }
     for child in &mut el.children {
-        attach_all_listeners(child, mailbox.clone())
+        attach_listeners(child, mailbox.clone())
     }
 
    el.el_ws.replace(el_ws);
@@ -201,14 +201,16 @@ pub fn attach_all_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>
 
 // todo should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
-pub fn detach_all_listeners<Ms: Clone + Sized + 'static>(el: &mut dom_types::El<Ms>) {
-    let el_ws = el.el_ws.take().expect("Missing el_ws on init");
+pub fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
+    where Ms: Clone + Sized + 'static
+{
+    let el_ws = el.el_ws.take().expect("Missing el_ws on detach_all_listeners");
 
     for listener in &mut el.listeners {
         listener.detach(&el_ws);
     }
     for child in &mut el.children {
-        detach_all_listeners(child)
+        detach_listeners(child)
     }
 
    el.el_ws.replace(el_ws);
@@ -238,13 +240,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
 
     let old_el_ws = old.el_ws.take().expect("No old elws");
 
-    // Before running patch, we've stripped
-    for listener in &mut new.listeners {
-        listener.attach(&old_el_ws, mailbox.clone());
-    }
-
     if old != new {
-        log!("NOT identical");
         // Something about this element itself is different: patch it.
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
@@ -258,13 +254,22 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
             parent.remove_child(&old_el_ws).expect("Problem removing an element");
             websys_bridge::attach_els(new, parent);
             let mut new = new;
-            attach_all_listeners(&mut new, mailbox.clone());
+            attach_listeners(&mut new, mailbox.clone());
             // We've re-rendered this child and all children; we're done with this recursion.
             return
         }
 
         // Patch attributes.
         websys_bridge::patch_el_details(old, new, &old_el_ws, document);
+    }
+
+    // Before running patch, assume we've removed all listeners from the old element.
+    // Perform this attachment after we've verified we can patch this element, ie
+    // it has the same tag - otherwise  we'd have to detach after the parent.remove_child step.
+    // Note that unlike the attach_listeners function, this only attaches for the currently
+    // element.
+    for listener in &mut new.listeners {
+        listener.attach(&old_el_ws, mailbox.clone());
     }
 
     // Now pair up children as best we can.
@@ -286,12 +291,10 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
         if avail_old_children.is_empty() {
             // One or more new children has been added, or much content has
             // changed, or we've made a mistake: Attach new children.
-            log!("Found a new child.");
             websys_bridge::attach_els(child_new, &old_el_ws);
             let mut child_new = child_new;
-            attach_all_listeners(&mut child_new, mailbox.clone());
+            attach_listeners(&mut child_new, mailbox.clone());
         } else {
-
             // We still have old children to pick a match from. If we pick
             // incorrectly, or there is no "good" match, we'll have some
             // patching and/or attaching (rendering) to do in subsequent recursions.
@@ -312,7 +315,6 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
 
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
-            log!("Guessed a match");
             // todo do we really need to clone the mb again ehre? Keep this under control!
             patch(document, &mut best_match, child_new, &old_el_ws, mailbox.clone()); // todo old vs new for par
         }
@@ -320,7 +322,6 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
 
     // Now purge any existing children; they're not part of the new model.
     for child in avail_old_children {
-        log!("Removing an old child");
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
         old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
         child.el_ws.replace(child_el_ws);

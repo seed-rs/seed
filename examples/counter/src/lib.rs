@@ -91,10 +91,7 @@ fn view(model: Model) -> El<Msg> {
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![
-            attrs!{"value" => model.what_we_count},
-            input_ev("input", Msg::ChangeWWC)
-        ]
+        input![ attrs!{"value" => model.what_we_count}, input_ev("input", Msg::ChangeWWC) ]
     ]
 }
 

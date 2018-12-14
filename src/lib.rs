@@ -22,7 +22,6 @@ extern crate serde_derive;
 // Passing values to enums that have arguments without lifetime issues.
 // todo router
 // todo local storage
-// todo vdom patching
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
@@ -68,7 +67,7 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
     let mut topel_vdom = (app.data.view)(model);
     app.setup_vdom(&mut topel_vdom, 0, 0);
 
-    vdom::attach_all_listeners(&mut topel_vdom, app.mailbox());
+    vdom::attach_listeners(&mut topel_vdom, app.mailbox());
 
     // Attach all children: This is where our initial render occurs.
     websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
@@ -88,7 +87,8 @@ pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
     el
 }
 
-/// A convenience function for logging to the web browser's console.
+/// A convenience function for logging to the web browser's console.  See also
+/// the log! macro, which is more flexible.
 pub fn log(text: &str) {
     web_sys::console::log_1(&text.into());
 }

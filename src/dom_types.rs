@@ -73,7 +73,7 @@ pub fn keyboard_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_s
 
 /// Event-handling for Elements
 pub struct Listener<Ms: Clone> {
-    pub trigger: String,  // todo why cow?
+    pub trigger: String,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
@@ -219,6 +219,7 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
+    // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.text = Some(self.into());
     }
@@ -237,7 +238,6 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for El<Ms> {
         el.children.push(self)
     }
 }
-
 
 
 //#[derive(Debug)]
@@ -265,9 +265,29 @@ pub enum _Attr {
 /// A thinly-wrapped HashMap holding DOM attributes
 #[derive(Clone, PartialEq)]
 pub struct Attrs {
+    // todo: Custom implm where we ignore checked.
     // todo enum of only allowed attrs?
     pub vals: HashMap<String, String>
 }
+
+//impl PartialEq for Attrs {
+//    fn eq(&self, other: &Self) -> bool {
+//        for (key, val) in &self.vals {
+//            if key == "Checked".into() {
+//                continue
+//            }
+//            match other.vals.get(key).unwrap() {
+//                Some(other_val) => {
+//                    if val != other_val { return false }
+//                },
+//                None => return false,
+//            }
+//        }
+//        // todo iter through remaining other keys.
+//        true
+//    }
+//}
+
 
 impl Attrs {
     pub fn new(vals: HashMap<String, String>) -> Self {

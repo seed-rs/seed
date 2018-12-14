@@ -58,7 +58,9 @@ fn header(version: &str) -> El<Msg> {
         "margin-right" => 20;
         "font-weight" => "bold";
         "cursor" => "pointer";
-        "font-size" => "1.2em"
+        "font-size" => "1.2em";
+        "color" => "black";
+        "text-decoration" => "none";
     };
 
     div![ style!{"display" => "flex"; "justify-content" => "right"},
@@ -109,19 +111,19 @@ fn view(model: Model) -> El<Msg> {
         "display" => "grid";
         "grid-template-columns" => "auto";
         "grid-template-rows" => "100px auto 100px"
-        },
-            section![ style!{"grid-row" => "1 / 2"; "grid-column" => "1 / 2"},
-                header(version)
-            ],
-            section![ style!{"grid-row" => "2 / 3"; "grid-column" => "1 / 2"},
-                match model.page {
-                    Page::Guide => guide(sections, model.guide_page),
-                    Page::Changelog => changelog(changelog_entries),
-                }
-            ],
-            section![ style!{"grid-row" => "3 / 4"; "grid-column" => "1 / 2"},
-                footer()
-            ]
+    },
+        section![ style!{"grid-row" => "1 / 2"; "grid-column" => "1 / 2"},
+            header(version)
+        ],
+        section![ style!{"grid-row" => "2 / 3"; "grid-column" => "1 / 2"},
+            match model.page {
+                Page::Guide => guide(sections, model.guide_page),
+                Page::Changelog => changelog(changelog_entries),
+            }
+        ],
+        section![ style!{"grid-row" => "3 / 4"; "grid-column" => "1 / 2"},
+            footer()
+        ]
     ]
 }
 
