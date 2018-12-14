@@ -19,10 +19,10 @@ use crate::vdom::Mailbox;  // todo temp
 
 // TODO REATTACK when you need box
 
-pub trait UpdateListener<T> {
-    // T is the type of thing we're updating; eg attrs, style, events etc.
-    fn update_l(self, el: &mut T);
-}
+//pub trait UpdateListener<T> {
+//    // T is the type of thing we're updating; eg attrs, style, events etc.
+//    fn update_l(self, el: &mut T);
+//}
 
 //
 //impl<Ms: Clone + 'static, F> UpdateListener<Listener<Ms>> for Box<F> where F: FnMut(String) -> Ms + 'static {
@@ -205,6 +205,12 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
 impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         el.children = self;
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for El<Ms> {
+    fn update(self, el: &mut El<Ms>) {
+        el.children.push(self)
     }
 }
 

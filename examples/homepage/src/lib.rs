@@ -54,30 +54,24 @@ fn update(msg: Msg, model: Model) -> Model {
 
 fn header(version: &str) -> El<Msg> {
     let link_style = style!{
-        "margin" => "auto";
+        "margin-left" => 20;
+        "margin-right" => 20;
         "font-weight" => "bold";
-        "pointer" => "cursor"
+        "cursor" => "pointer";
+        "font-size" => "1.2em"
     };
+    // todo sort out allowing refs to styles.
 
-    div![ style!{"display" => "flex"}, vec![
-        ul![ vec![
-            span![ link_style, "Guide", vec![ simple_ev("ch5ck", Msg::ChangePage(Page::Guide)) ] ],
-            span![ "Changelog", vec![ simple_ev("ch5ck", Msg::ChangePage(Page::Changelog)) ] ],
-
-            span![ link_style, "Repo", vec![
-                a![ attrs!{"href" => "https://github.com/David-OConnor/seed"} ]
-             ] ],
-            span![ link_style, "Quickstart repo", vec![
-                a![ attrs!{"href" => "https://github.com/David-OConnor/seed-quickstart"} ]
-            ] ],
-            span![ link_style, "Crate", vec![
-                a![ attrs!{"href" => "https://crates.io/crates/seed"} ],
-            ] ],
-            span![ link_style, "API docs", vec![
-                a![ attrs!{"href" => format!("https://docs.rs/seed/{}/seed/", version)} ]
-            ] ]
-        ] ]
-    ] ]
+    div![ style!{"display" => "flex"; "justify-content" => "right"},
+        ul![
+            a![ link_style.clone(), "Guide", vec![ simple_ev("click", Msg::ChangePage(Page::Guide)) ] ],
+            a![ link_style.clone(), "Changelog", vec![ simple_ev("click", Msg::ChangePage(Page::Changelog)) ] ],
+            a![ link_style.clone(), "Repo", attrs!{"href" => "https://github.com/David-OConnor/seed"} ],
+            a![ link_style.clone(), "Quickstart repo", attrs!{"href" => "https://github.com/David-OConnor/seed-quickstart"} ],
+            a![ link_style.clone(), "Crate", attrs!{"href" => "https://crates.io/crates/seed"} ],
+            a![ link_style.clone(), "API docs", attrs!{"href" => format!("https://docs.rs/seed/{}/seed/", version)} ]
+        ]
+    ]
 }
 
 fn guide(sections: Vec<(&str, El<Msg>)>, guide_page: usize) -> El<Msg> {
@@ -87,12 +81,12 @@ fn guide(sections: Vec<(&str, El<Msg>)>, guide_page: usize) -> El<Msg> {
         "display" => "grid";
         "grid-template-columns" => "300px auto";
         "grid-temlate-rows" => "auto"
-    }, vec![
+    },
         div![ style!{"display" => "flex"}, menu_items ],
         div![ style!{"display" => "flex"}
         ],
 
-    ] ]
+    ]
 }
 
 fn changelog(entries: Vec<El<Msg>>) -> El<Msg> {
@@ -100,9 +94,9 @@ fn changelog(entries: Vec<El<Msg>>) -> El<Msg> {
 }
 
 fn footer() -> El<Msg> {
-    div![ style!{"display" => "flex"}, vec![
-        h6![ "© 2019 David O'Connor"]
-    ] ]
+    div![ style!{"display" => "flex"; "justify-content" => "center"},
+        h4![ "© 2019 David O'Connor"]
+    ]
 }
 
 
@@ -116,20 +110,20 @@ fn view(model: Model) -> El<Msg> {
         "display" => "grid";
         "grid-template-columns" => "auto";
         "grid-template-rows" => "100px auto 100px"
-        }, vec![
-            section![ style!{"grid-row" => "1 / 2"; "grid-column" => "1 / 2"}, vec![
+        },
+            section![ style!{"grid-row" => "1 / 2"; "grid-column" => "1 / 2"},
                 header(version),
-            ] ],
-            section![ style!{"grid-row" => "2 / 3"; "grid-column" => "1 / 2"}, vec![
+            ],
+            section![ style!{"grid-row" => "2 / 3"; "grid-column" => "1 / 2"},
                 match model.page {
                     Page::Guide => guide(sections, model.guide_page),
                     Page::Changelog => changelog(changelog_entries),
                 },
-            ] ],
-            section![ style!{"grid-row" => "3 / 4"; "grid-column" => "1 / 2"}, vec![
+            ],
+            section![ style!{"grid-row" => "3 / 4"; "grid-column" => "1 / 2"},
                 footer()
-            ] ]
-        ]
+            ]
+
     ]
 }
 

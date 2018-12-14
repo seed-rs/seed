@@ -227,8 +227,8 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     if item.editing { att.add("class", "editing"); }
     att.add("key", &item.title);
 
-    li![ att, vec![
-        div![ attrs!{"class" => "view"}, vec![
+    li![ att,
+        div![ attrs!{"class" => "view"},
             input![ 
                 attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => item.completed },
                 vec![simple_ev("click", Msg::Toggle(posit))]
@@ -236,7 +236,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
 
             label![ vec![simple_ev("dblclick", Msg::EditItem(posit))], item.title ],
             button![ attrs!{"class" => "destroy"}, vec![simple_ev("click", Msg::Destroy(posit))] ]
-        ] ],
+        ],
 
         if item.editing {
             input![
@@ -248,15 +248,15 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
                 ]
             ]
         } else { seed::empty() }
-    ] ]
+    ]
 }
 
 fn selection_li(text: &str, path: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
-    li![ vec![
+    li![
         a![ attrs!{"href" => path; "class" => if visible == highlighter {"selected"} else {""}},
             vec![ simple_ev("click", Msg::SetVisibility(highlighter)) ], text
-            ]
-    ] ]
+        ]
+    ]
 }
 
 fn footer(model: &Model) -> El<Msg> {
@@ -270,20 +270,19 @@ fn footer(model: &Model) -> El<Msg> {
         ]
     } else { seed::empty() };
 
-    footer![ attrs!{"class" => "footer"}, vec![
-        span![ attrs!{"class" => "todo-count"}, vec![
+    footer![ attrs!{"class" => "footer"},
+        span![ attrs!{"class" => "todo-count"},
             strong![ model.active_count().to_string() ],
             span![ format!(" item{} left", optional_s) ]
-        ]  ],
+        ],
 
-        ul![ attrs!{"class" => "filters"}, vec![
-            // todo fix cloning here.
+        ul![ attrs!{"class" => "filters"},
             selection_li("All", "#/", model.visible, Visible::All),
             selection_li("Active", "#/active", model.visible, Visible::Active),
-            selection_li("Completed", "#/completed", model.visible, Visible::Completed),
-        ] ],
+            selection_li("Completed", "#/completed", model.visible, Visible::Completed)
+        ],
         clear_button
-    ] ]
+    ]
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
@@ -297,20 +296,20 @@ fn todo_app(model: Model) -> El<Msg> {
 
     let main = if !model.todos.is_empty() {
 
-        section![ attrs!{"class" => "main"}, vec![
+        section![ attrs!{"class" => "main"},
             input![
                 attrs!{"id" => "toggle-all"; "class" => "toggle-all"; "type" => "checkbox";
                        "checked" => model.active_count() == 0},
                 vec![simple_ev("click", Msg::ToggleAll)]
             ],
             label![ attrs!{"for" => "toggle-all"}, "Mark all as complete"],
-            ul![ attrs!{"class" => "todo-list"}, items ],
-        ] ]
+            ul![ attrs!{"class" => "todo-list"}, items ]
+        ]
 
     } else { seed::empty() };
 
-    div![ vec![
-        header![ attrs!{"class" => "header"}, vec![
+    div![
+        header![ attrs!{"class" => "header"},
             h1![ "todos" ],
             input![
                 attrs!{
@@ -320,11 +319,11 @@ fn todo_app(model: Model) -> El<Msg> {
                 },
                 vec![ raw_ev("keydown", Msg::NewTodo) ]
             ]
-        ] ],
+        ],
         main,
         if model.active_count() > 0 || model.completed_count() > 0
             { footer(&model) } else { seed::empty() }
-    ] ]
+    ]
 }
 
 

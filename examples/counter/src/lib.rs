@@ -70,7 +70,7 @@ fn view(model: Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-     div![ outer_style, vec![
+    div![ outer_style,
         h1![ "The Grand Total" ],
         div![
             style!{
@@ -79,7 +79,6 @@ fn view(model: Model) -> El<Msg> {
                 // When passing numerical values to style!, "px" is implied.
                 "border" => "2px solid #004422"; "padding" => 20
             },
-            vec![
                 // We can use normal Rust code and comments in the view.
                 h3![ text ],
                 button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
@@ -88,7 +87,7 @@ fn view(model: Model) -> El<Msg> {
                 // Optionally-displaying an element
                 if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
 
-            ] ],
+            ],
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
@@ -96,7 +95,7 @@ fn view(model: Model) -> El<Msg> {
             attrs!{"value" => model.what_we_count},
             vec![ input_ev("input", Msg::ChangeWWC) ]
         ]
-    ] ]
+    ]
 }
 
 

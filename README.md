@@ -167,7 +167,7 @@ fn view(model: Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-     div![ outer_style, vec![
+     div![ outer_style,
         h1![ "The Grand Total" ],
         div![
             style!{
@@ -176,7 +176,6 @@ fn view(model: Model) -> El<Msg> {
                 // When passing numerical values to style!, "px" is implied.
                 "border" => "2px solid #004422"; "padding" => 20
             },
-            vec![
                 // We can use normal Rust code and comments in the view.
                 h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
                 button![ vec![ simple_ev("click", Msg::Increment) ], "+" ],
@@ -185,14 +184,14 @@ fn view(model: Model) -> El<Msg> {
                 // Optionally-displaying an element
                 if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
 
-            ] ],
+            ],
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
         input![ attrs!{"value" => model.what_we_count},
                 vec![ input_ev("input", Msg::ChangeWWC) ]
         ]
-    ] ]
+    ]
 }
 
 
@@ -462,19 +461,51 @@ fn update(fn update(msg: Msg, model: Model) -> Model {
 [macros]( https://doc.rust-lang.org/book/appendix-04-macros.html) to simplify syntax. 
 
 ### Elements, attributes, styles
-When passing your layout to Seed, attributes for DOM elements (eg id, class, src etc), 
-styles (eg display, color, font-size), and
-events (eg click, contextmenu, dblclick) are passed to element-creation macros (like div![]) using
-unique types.
+Elements are created using macros, named by the lowercase name of
+each element, and imported into the global namespace:
+```rust
+#[macro_use]
+extern crate seed;
+
+// ...
+
+div![]
+```
+These macros accept any combination (0 or 1 per) of the following parameters:
+- One [Attrs](https://docs.rs/seed/0.1.2/seed/dom_types/struct.Attrs.html) struct
+- One [Style](https://docs.rs/seed/0.1.2/seed/dom_types/struct.Style.html) struct
+- One Vec of [Listener](https://docs.rs/seed/0.1.2/seed/dom_types/struct.Listener.html) structs, which handle events
+- One String or &str representing node text
+- One or more [El](https://docs.rs/seed/0.1.2/seed/dom_types/struct.El.html) structs, representing a child
+- One or more Vecs of El structs, representing multiple children
+
+The parameters can be passed in any order; the compiler knows how to handle them
+based on their types.
 
 Views are described using [El structs](https://docs.rs/seed/0.1.2/seed/dom_types/struct.El.html), 
 defined in the [seed::dom_types](https://docs.rs/seed/0.1.2/seed/dom_types/index.html) module. They're most-easily created
-with a shorthand using macros. These macros can take any combination of the following 5 argument types:
-(0 or 1 of each) `Attrs`, `Style`, `Vec<Listener>`, `Vec<El>` (children), and `&str` (text). Attrs, and Style
-are most-easily created usign the following macros respectively: `attrs!{}`, `style!{}`. Attrs,
-Style, and Listener are all defined in `seed::dom_types`.
+with a shorthand using macros.
 
-`Attrs`, and `Style` values can be owned `Strings`, `&str`s, or when applicable, numerical and 
+`Attrs` and `Style` are thinly-wrapped hashmaps created with their own macros: `attrs{}` and `style!{}`
+respectively.
+
+Example:
+```rust
+let things = vec![ h4![ "thing1" ], h4![ "thing2" ] ];
+
+div![ attrs!{"class" => "hardly-any"}, 
+    things,
+    h4![ "thing3?" ]
+]
+```
+Note that you can create any of the above items inside an element macro, or create it separately,
+and pass it in.
+
+Temporary trap: Trailing commas are not allowed in element-creation macros, and 
+trailing semicolons are not allowed in attrs and style macros. They'll trigger a compiler error.
+This will be fixed in the future.
+
+Values passed to `attrs`, and `style` macros can be owned `Strings`, `&str`s, or when applicable, numerical and 
 boolean values. Eg: `input![ attrs!{"disabled" => false]` and `input![ attrs!{"disabled" => "false"]` 
 are equivalent. If a numerical value is used in a `Style`, 'px' will be automatically appended.
 If you don't want this behavior, use a `String` or`&str`. Eg: `h2![ style!{"font-size" => 16} ]` , or
@@ -501,19 +532,18 @@ fn view(model: Model) -> El<Msg> {
         "display" => "grid";
         "grid-template-columns" => "auto";
         "grid-template-rows" => "100px auto 100px"
-        }, vec![
-            section![ style!{"grid-row" => "1 / 2"}, vec![
-                header(),
-            ] ],
-            section![ attrs!{"grid-row" => "2 / 3"}, vec![
-                match model.page {
-                    Page::Guide => guide(),
-                    Page::Changelog => changelog(),
-                },
-            ] ],
-            section![ style!{"grid-row" => "3 / 4"}, vec![
-                footer()
-            ] ]
+        },
+        section![ style!{"grid-row" => "1 / 2"},
+            header(),
+        ],
+        section![ attrs!{"grid-row" => "2 / 3"},
+            match model.page {
+                Page::Guide => guide(),
+                Page::Changelog => changelog(),
+            },
+        ],
+        section![ style!{"grid-row" => "3 / 4"},
+            footer()
         ]
     ]
 }
@@ -673,10 +703,10 @@ where it handles text input triggered by a key press, and uses prevent_default()
 The following code returns an `El` representing a few DOM elements displayed
 in a flexbox layout:
 ```rust
-    div![ style!{"display" => "flex"; "flex-direction" => "column"}, vec![
+    div![ style!{"display" => "flex"; "flex-direction" => "column"},
         h3![ "Some things" ],
         button![ "Click me!" ]  // todo add event example back.
-    ] ]
+    ]
 ```
 
 The only magic parts of this are the macros used to simplify syntax for creating these
@@ -768,10 +798,10 @@ For example, you could break up the above example like this:
         h3![ text ]
     }  
     
-    div![ style!{"display" => "flex"; flex-direction: "column"}, vec![
+    div![ style!{"display" => "flex"; flex-direction: "column"},
         text_display("Some things"),
         button![ vec![ simple_ev("click", Msg::SayHi) ], "Click me!" ]
-    ] ]
+    ]
 ```
 
 The text_display() component returns a single El that is inserted into its parents'
@@ -803,7 +833,7 @@ fn cols() -> Vec<El<Msg>> {
 }
 
 fn items() -> El<Msg> {
-    table![ vec![
+    table![
         tr![ cols() ]
     ]
 }
@@ -815,9 +845,9 @@ branches must return `El`s to satisfy Rust's type system. Seed provides the
 `empty()` function, which creates a VDOM element that will not be rendered:
 
 ```rust
-div![ vec![
+div![
     if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
-] ]
+]
 ```
 For more complicated construsts, you may wish to create the `children` Vec separately,
 push what components are needed, and pass it into the element macro.

@@ -26,6 +26,8 @@ extern crate serde_derive;
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
+// todo allow trailing ; in attrs/style
+// todo allow children without a vec??
 
 
 /// Convenience function used in event handling: Convert an event target
@@ -97,6 +99,5 @@ pub fn log(text: &str) {
 /// often in the output type of components), and UpdateEl, which is required
 /// for element-creation macros.
 pub mod prelude {
-    pub use crate::dom_types::{El, UpdateEl, UpdateListener,
-                               simple_ev, input_ev, keyboard_ev, raw_ev};
+    pub use crate::dom_types::{El, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev};
 }
