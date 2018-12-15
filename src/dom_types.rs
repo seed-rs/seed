@@ -10,6 +10,9 @@ use wasm_bindgen::{prelude::*, JsCast};
 use crate::vdom::Mailbox;  // todo temp
 
 
+use regex::Regex;
+
+
 // todo cleanup enums vs &strs for restricting events/styles/attrs to
 // todo valid ones.
 
@@ -548,12 +551,20 @@ impl<Ms: Clone + 'static> El<Ms> {
     /// Create an element that will display markdown from the text you pass to it, as HTML
     pub fn from_markdown(markdown: &str) -> Self {
         let parser = pulldown_cmark::Parser::new(markdown);
-        let mut html_buf = String::new();
-        pulldown_cmark::html::push_html(&mut html_buf, parser);
+        let mut html_text = String::new();
+        pulldown_cmark::html::push_html(&mut html_text, parser);
+//
+//        let ss = SyntaxSet::load_defaults_newlines();
+//        let sr = SyntaxReference::load_defaults_newlines();
+//        let ts = ThemeSet::load_defaults();
+//
+//        let re = Regex::new(r"<code>(.*)</code>").expect("Error creating Regex");
+//
+//        let highlighted_html = syntect::html::highlighted_html_for_string(text,  ss, sr, ts);
 
         let mut result = Self::empty(Tag::Span);
         result.markdown = true;
-        result.text = Some(html_buf);
+        result.text = Some(html_text);
         result
     }
 

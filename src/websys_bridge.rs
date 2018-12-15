@@ -149,19 +149,26 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
 
         let text = new.text.clone().unwrap_or_default();
 
-        if old.text.is_none() {
-            // There's no old node to find: Add it.
-            let new_next_node = document.create_text_node(&text);
-            old_el_ws.append_child(&new_next_node).unwrap();
+        if new.markdown {
+            old_el_ws.set_inner_html(&text)
         } else {
-            // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
-            let children = old_el_ws.child_nodes();
-            for i in 0..children.length() {
-                let node = children.item(i).unwrap();
-                // We've found it; there will be not more than 1 text node.
-                if node.node_type() == 3 {
-                    node.set_text_content(Some(&text));
-                    break;
+
+            if old.text.is_none() {
+                // There's no old node to find: Add it.
+                let new_next_node = document.create_text_node(&text);
+
+
+                old_el_ws.append_child(&new_next_node).unwrap();
+            } else {
+                // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
+                let children = old_el_ws.child_nodes();
+                for i in 0..children.length() {
+                    let node = children.item(i).unwrap();
+                    // We've found it; there will be not more than 1 text node.
+                    if node.node_type() == 3 {
+                        node.set_text_content(Some(&text));
+                        break;
+                    }
                 }
             }
         }

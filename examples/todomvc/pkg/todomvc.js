@@ -132,14 +132,6 @@ __exports.__widl_f_set_attribute_Element = function(arg0, arg1, arg2, arg3, arg4
     }
 };
 
-const __widl_f_prevent_default_Event_target = typeof Event === 'undefined' ? null : Event.prototype.preventDefault || function() {
-    throw new Error(`wasm-bindgen: Event.preventDefault does not exist`);
-};
-
-__exports.__widl_f_prevent_default_Event = function(arg0) {
-    __widl_f_prevent_default_Event_target.call(getObject(arg0));
-};
-
 function GetOwnOrInheritedPropertyDescriptor(obj, id) {
     while (obj) {
         let desc = Object.getOwnPropertyDescriptor(obj, id);
@@ -148,6 +140,23 @@ function GetOwnOrInheritedPropertyDescriptor(obj, id) {
     }
 return {}
 }
+
+const __widl_f_set_inner_html_Element_target = GetOwnOrInheritedPropertyDescriptor(typeof Element === 'undefined' ? null : Element.prototype, 'innerHTML').set || function() {
+    throw new Error(`wasm-bindgen: Element.innerHTML does not exist`);
+};
+
+__exports.__widl_f_set_inner_html_Element = function(arg0, arg1, arg2) {
+    let varg1 = getStringFromWasm(arg1, arg2);
+    __widl_f_set_inner_html_Element_target.call(getObject(arg0), varg1);
+};
+
+const __widl_f_prevent_default_Event_target = typeof Event === 'undefined' ? null : Event.prototype.preventDefault || function() {
+    throw new Error(`wasm-bindgen: Event.preventDefault does not exist`);
+};
+
+__exports.__widl_f_prevent_default_Event = function(arg0) {
+    __widl_f_prevent_default_Event_target.call(getObject(arg0));
+};
 
 const __widl_f_target_Event_target = GetOwnOrInheritedPropertyDescriptor(typeof Event === 'undefined' ? null : Event.prototype, 'target').get || function() {
     throw new Error(`wasm-bindgen: Event.target does not exist`);
@@ -488,9 +497,9 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper469 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(28);
-    const d = wasm.__wbg_function_table.get(29);
+__exports.__wbindgen_closure_wrapper452 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(4);
+    const d = wasm.__wbg_function_table.get(5);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
