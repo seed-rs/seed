@@ -1,26 +1,32 @@
 body {
-    background-color: #f2c495;
+    background-color: #5c2018;
     /*font-family: 'Karla', sans-serif;*/
+    color: #f3e0dc;
+}
+/*https://visme.co/blog/website-color-schemes/*/  #35
+/*  #4285f4   5c2018   bc4639   d4a59a    f3e0dc */
+
+
+/*  Looks like we need to set all of these for a... */
+a{
+    color: #f3e0dc;
+    text-decoration: none;
 }
 
+a:link {
+    color: #f3e0dc;
+    text-decoration: none;
+}
 
-/*@media (min-width: 0px) {*/
-/*body {*/
-/*background-image: url("../images/background-slim.jpg");*/
-/*}*/
-/*}*/
+a:visited {
+    color: #f3e0dc;
+    text-decoration: none;
+}
 
-/*@media (min-width: 800px) {*/
-/*body {*/
-/*background-image: url("../images/background-portrait.jpg");*/
-/*}*/
-/*}*/
-
-/*@media (min-width: 1100px) {*/
-/*body {*/
-/*background-image: url("../images/background.jpg");*/
-/*}*/
-/*}*/
+a:hover {
+    color: #d4a59a;
+    text-decoration: underline;
+}
 
 div {
     font-family: 'Karla', sans-serif;
@@ -74,17 +80,6 @@ textarea {
 
     font-family: 'Karla', sans-serif;
     font-size: 14px;
-}
-
-.card {
-    padding: 5px 12px;
-    height: 2em;
-    margin-left: 30px;
-    margin-right: 30px;
-    border: 1px solid black;
-    width: 320px;
-    font-family: 'Karla', sans-serif;
-    font-size: medium;
 }
 
 select {

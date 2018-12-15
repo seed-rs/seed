@@ -11,8 +11,6 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
-use seed::fetch;
-
 use std::collections::HashMap;
 
 
@@ -40,20 +38,22 @@ impl Default for Model {
         let url = "https://seed-example.herokuapp.com/data";
         let mut headers = HashMap::new();
         headers.insert("Content-type", "application/json");
+        // todo don't do this in production
+//        headers.insert("Access-Control-Allow-Origin", "*");
+        headers.insert("Access-Control-Allow-Origin", "https://seed-example.herokuapp.com");
 
-        let server_data = fetch::fetch(fetch::Method::Get, url, None, Some(headers));
-
-
-        let closure = Closure::wrap(
-            Box::new(move |v| {
-                crate::log(v);
-            })
-        );
+        let data = seed::fetch::fetch(seed::fetch::Method::Get, url, None, Some(headers));
 
 
+//        let closure = Closure::wrap(
+//            Box::new(move |v| {
+//                seed::log(v);
+//            })
+//        );
 
 
-        server_data.then(&closure);;
+
+//        server_data.then(&closure);;
 
 //        Msg::Replace(data);
 
@@ -75,16 +75,14 @@ enum Msg {
 
 fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Replace(data) => {
-            Model {data}
-        },
+        Msg::Replace(data) => Model {data},
     }
 }
 
 
 // View
 
-fn view(model: &Model) -> El<Msg> {
+fn view(model: Model) -> El<Msg> {
     div![ format!("Hello World. Val: {}, text: {}", model.data.val, model.data.text) ]
 }
 

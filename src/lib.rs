@@ -89,8 +89,8 @@ pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
 
 /// A convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
-pub fn log(text: &str) {
-    web_sys::console::log_1(&text.into());
+pub fn log<S: ToString>(text: S) {
+    web_sys::console::log_1(&text.to_string().into());
 }
 
 

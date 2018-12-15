@@ -298,7 +298,6 @@ impl Attrs {
         Self { vals: HashMap::new() }
     }
 
-    // todo from/into instead of as_str?
     pub fn as_str(&self) -> String {
         let mut result = String::new();
         for (key, val) in &self.vals {
@@ -348,7 +347,6 @@ impl Style {
             for (key, val) in &self.vals {
                 result += &format!("{k}: {v}; ", k = key, v = val);
             }
-            result += "\"";
         }
 
         result

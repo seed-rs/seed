@@ -285,7 +285,7 @@ fn todo_app(model: Model) -> El<Msg> {
         .into_iter()
         .enumerate()
         .filter(|(posit, todo)| todo.visible(&model.visible))
-        .map(|(posit, todo)| todo_item(todo.clone(), posit, model.edit_text.clone()))
+        .map(|(posit, todo)| todo_item(todo, posit, model.edit_text.clone()))
         .collect();
 
     let main = if !model.todos.is_empty() {

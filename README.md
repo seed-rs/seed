@@ -10,7 +10,7 @@
 ## Quickstart
 
 ### Setup
-This package requires you to install [Rust](https://www.rust-lang.org/tools/install) - This will
+This framework requires you to install [Rust](https://www.rust-lang.org/tools/install) - This will
 enable the CLI commands below:
 
  You'll need a recent version of Rust: `rustup update`
@@ -22,8 +22,10 @@ And wasm-bindgen: `cargo install wasm-bindgen-cli`
 
 ### The theoretical minimum
 To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
-run `build.sh` or `build.ps1` in a terminal, and open `index.html`. (May need to use
-a local server depending on the browser) Once you change your package name, you'll
+run `build.sh` or `build.ps1` in a terminal, then start a dev server that supports WASM.
+For example, with [Python](https://www.python.org/downloads/) installed, run `python server.py`.
+(Linux users may need to run `python3 server.py`.)
+Once you change your package name, you'll
 need to tweak the Html file and build script, as described below.
 
 ### A little deeper
@@ -54,13 +56,6 @@ to load the framework into. It also needs the following code to load your WASM m
         .catch(console.error);
 </script>
 ```
-The `delete WebAssembly.instantiateStreaming;` line is an unsavory hack, but without it,
-Most dev servers, and opening the html file directly won't work. If you'd like to avoid this, 
-delete that line, install
-[Python](https://www.python.org/downloads/), and run `python server.py`. This
-file is included in the quickstart repo, and in each example folder. It's a shim
-that allows Python's dev server to work with the WASM mime type. Linux users may have
-to run `python3 server.py`.
 
 The quickstart repo includes this file, but you will need to rename the two 
 occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
@@ -221,7 +216,8 @@ The Quickstart repo includes these, but you'll still need to do the rename. You 
 `./build.sh` or `.\build.ps1`
 
 For development, you can view your app using a shimmed Python dev server described above,
-(Run `python server.py`) or by opening the HTML file in a browser.
+(Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/server.py), and Run 
+`python server.py`) or by opening the HTML file in a browser.
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
@@ -682,7 +678,7 @@ KeyDown(event) => {
 }
 
 // ... In view
-keyboard_ev("keydown", Msg::KeyDown
+keyboard_ev("keydown", Msg::KeyDown)
 ```
 and
 ```rust
@@ -1082,7 +1078,7 @@ wasm-bindgen than with npm.
  - Utkarsh Kukreti, for through his [Draco repo](https://github.com/utkarshkukreti/draco), 
  helping me understand how wasm-bindgen's
  closure system can be used to update state.
- -Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
+ - Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
 
 
 ## Features to add

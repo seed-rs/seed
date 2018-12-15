@@ -1,7 +1,6 @@
 //! This file contains interactions with web_sys.
 use wasm_bindgen::JsCast;
 
-use crate::vdom::Mailbox;
 use crate::dom_types;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
