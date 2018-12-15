@@ -8,7 +8,6 @@ extern crate seed;
 use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
-use pulldown_cmark;
 
 // Model
 
@@ -21,8 +20,7 @@ enum Page {
 #[derive(Clone)]
 struct GuideSection {
     title: String,
-//    element: El<Msg>
-    html: String,
+    element: El<Msg>
 }
 
 #[derive(Clone)]
@@ -42,13 +40,8 @@ impl Default for Model {
         ];
 
         for (title, md_text) in md_texts {
-            let parser = pulldown_cmark::Parser::new(&md_text);
-            let mut html_buf = String::new();
-            pulldown_cmark::html::push_html(&mut html_buf, parser);
-//            let mut element = div![];
-//            element.el_ws;
-
-            guide_sections.push(GuideSection{title: title.to_string(), html: html_buf});
+            let mut element = El::from_markdown(&md_text);
+            guide_sections.push(GuideSection{title: title.to_string(), element});
         }
 
         Self {
@@ -124,14 +117,6 @@ fn guide(sections: Vec<GuideSection>, guide_page: usize) -> El<Msg> {
         h3![ &menu_style, simple_ev("click", Msg::ChangeGuidePage(i)), s.title ]
     ).collect();
 
-    // We manually set the inner_html here vice in init, since it may be rewritten
-    // by events.
-    let mut markdown_element = div![];
-    let el_websys = markdown_element.el_ws.take().unwrap();
-//    el_websys.set_inner_html(&sections[guide_page].clone().html);
-
-    markdown_element.el_ws.replace(el_websys);
-
     div![ style! {
         "display" => "grid";
         "grid-template-columns" => "300px auto";
@@ -139,15 +124,13 @@ fn guide(sections: Vec<GuideSection>, guide_page: usize) -> El<Msg> {
         "background-color" => "#d4a59a";
         "color" => "black";
     },
-        div![ style!{"display" => "flex"},
+        div![ style!{"display" => "flex"; "grid-column" => "1 / 2"},
             menu_items
         ],
 
-        markdown_element,
-//        div![ style!{"display" => "flex"},
-//            sections[guide_page].clone().html
-//        ]
-
+        div![ style!{"display" => "flex"; "grid-column" => "2 / 3"},
+            sections[guide_page].clone().element
+        ]
     ]
 }
 

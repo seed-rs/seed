@@ -50,7 +50,12 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web
     // We store text as Option<String>, but set_text_content uses Option<&str>.
     // A naive match Some(t) => Some(&t) does not work.
     // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
-    el_ws.set_text_content(el_vdom.text.as_ref().map(String::as_ref));
+    let text = el_vdom.text.as_ref().map(String::as_ref);
+    if el_vdom.markdown {
+        el_ws.set_inner_html(text.unwrap())
+    } else {
+        el_ws.set_text_content(text);
+    }
 
     // Don't attach listeners here: It'll cause a conflict when you try to
     // attach a second time. ?

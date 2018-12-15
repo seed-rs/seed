@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 
+use pulldown_cmark;
 use web_sys;
 use wasm_bindgen::{prelude::*, JsCast};
 
@@ -515,6 +516,7 @@ pub struct El<Ms: Clone + 'static> {
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
+    pub listeners: Vec<Listener<Ms>>,
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
@@ -524,37 +526,53 @@ pub struct El<Ms: Clone + 'static> {
     pub el_ws: Option<web_sys::Element>,
 
     // todo temp?
-    pub key: Option<u32>,
+//    pub key: Option<u32>,
 
-    // Event-handling
-    pub listeners: Vec<Listener<Ms>>,
+    pub markdown: bool,
 }
 
 impl<Ms: Clone + 'static> El<Ms> {
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
                listeners: Vec<Listener<Ms>>, text: &str, children: Vec<El<Ms>>) -> Self {
         Self {tag, attrs, style, text: Some(text.into()), children,
-            el_ws: None, listeners, key: None, id: None, nest_level: None}
+            el_ws: None, listeners, id: None, nest_level: None, markdown: false}
     }
 
+    /// Create an empty element, specifying only the tag
     pub fn empty(tag: Tag) -> Self {
         Self {tag, attrs: Attrs::empty(), style: Style::empty(),
             text: None, children: Vec::new(), el_ws: None,
-            listeners: Vec::new(), key: None, id: None, nest_level: None}
+            listeners: Vec::new(), id: None, nest_level: None, markdown: false}
     }
 
+    /// Create an element that will display markdown from the text you pass to it, as HTML
+    pub fn from_markdown(markdown: &str) -> Self {
+        let parser = pulldown_cmark::Parser::new(markdown);
+        let mut html_buf = String::new();
+        pulldown_cmark::html::push_html(&mut html_buf, parser);
+
+        let mut result = Self::empty(Tag::Span);
+        result.markdown = true;
+        result.text = Some(html_buf);
+        result
+    }
+
+    /// Add a new child to the element
     pub fn add_child(&mut self, element: El<Ms>) {
         self.children.push(element);
     }
 
+    /// Add an attribute (eg class, or href)
     pub fn add_attr(&mut self, key: String, val: String) {
         self.attrs.vals.insert(key, val);
     }
 
+    /// Add a new style (eg display, or height)
     pub fn add_style(&mut self, key: String, val: String) {
         self.style.vals.insert(key, val);
     }
 
+    /// Replace the element's text node. (ie between the HTML tags)
     pub fn set_text(&mut self, text: &str) {
         self.text = Some(text.into())
     }
@@ -580,13 +598,14 @@ impl<Ms: Clone + 'static> El<Ms> {
             tag: self.tag.clone(),
             attrs: Attrs::empty(),
             style: Style::empty(),
+            listeners: Vec::new(),
             text: None,
             children: Vec::new(),
-            key: None,
+//            key: None,
             id: None,
             nest_level: None,
             el_ws: self.el_ws.clone(),
-            listeners: Vec::new(),
+            markdown: self.markdown,
         }
     }
 
@@ -612,11 +631,12 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
             style: self.style.clone(),
             text: self.text.clone(),
             children: self.children.clone(),
-            key: self.key,
+//            key: self.key,
             id: self.id,
             nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
+            markdown: self.markdown,
         }
     }
 }

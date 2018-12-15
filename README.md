@@ -26,7 +26,7 @@ run `build.sh` or `build.ps1` in a terminal, then start a dev server that suppor
 For example, with [Python](https://www.python.org/downloads/) installed, run `python server.py`.
 (Linux users may need to run `python3 server.py`.)
 Once you change your package name, you'll
-need to tweak the Html file and build script, as described below.
+need to tweak the html file and build script, as described below.
 
 ### A little deeper
 Or, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
@@ -39,10 +39,6 @@ to load the framework into. It also needs the following code to load your WASM m
  
  ```html
  <section id="main"></section>
-
-<script>
-    delete WebAssembly.instantiateStreaming;
-</script>
 
 <script src='./pkg/appname.js'></script>
 
@@ -215,17 +211,17 @@ You may wish to create a build script with these two lines. (`build.sh` for Linu
 The Quickstart repo includes these, but you'll still need to do the rename. You can then use
 `./build.sh` or `.\build.ps1`
 
-For development, you can view your app using a shimmed Python dev server described above,
-(Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/server.py), and Run 
-`python server.py`) or by opening the HTML file in a browser.
+For development, you can view your app using a shimmed Python dev server described above.
+(Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/server.py)
+from the quickstart repo, and run `python server.py`).
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
 
 ### Running included examples
 To run an example located in the `examples` folder, navigate to that folder in a terminal, 
-run the build script for your system (`build.sh` or `build.ps1`), then open the `index.html` file
-in a web browser, or use the Python dev server. Note that if you copy an example to a separate folder, you'll need
+run the build script for your system (`build.sh` or `build.ps1`), then start a dev server
+ as described above. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
 `seed = { path = "../../"` with `seed = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
 line.
@@ -568,7 +564,7 @@ using normal Rust code.
 ### Events
 
 Events are created by passing a a [Listener](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Listener.html),
-, or vec of Listeners, created using the following four functions exposed in the prelude: `simple_ev`,
+or vec of Listeners, created using the following four functions exposed in the prelude: `simple_ev`,
 `input_ev`, `keyboard_ev`, and `raw_ev`. The first is demonstrated in the example in the quickstart section,
 and all are demonstrated in the todomvc example.
 
@@ -945,7 +941,29 @@ let data = serde_json::from_str(&loaded_serialized).unwrap();
 
 ```
 
+### Display markdown
+Seed supports creating elements from markdown text, using [pulldown-cmark](https://github.com/raphlinus/pulldown-cmark)
+internally. Use the [El::from_markdown()](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html#method.from_markdown)
+method to create an element that accepts a markdown &str as its only parameter.
 
+Example:
+```rust
+fn view(model: Model) -> El<Msg> {
+
+    let markdown = 
+"
+## Hello world
+
+Let's set the existence-of-God issue aside for a later volume,
+and just [learn to code](https://play.rust-lang.org/).
+";
+    
+    div![
+        El::from_markdown(markdown) 
+    ]
+}
+
+```
 
 ### Building a release version
 The configuration in the [Building and Running](###building-and-running) section towards the top are intended
