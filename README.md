@@ -364,7 +364,7 @@ fn update(msg: Msg, model: Model) -> Model {
  
  The signature suggests taking an immutable-design/functional approach. This can be verbose
  when modifying collections, but is a common pattern in Elm and Redux. Unlike in a pure functional language,
- side-effects (ie things other that happen other than updating the model) don't require special 
+ side-effects (ie other things that happen other than updating the model) don't require special 
  handling. Example, from the todomvc example:
 ```rust
 fn update(msg: Msg, model: Model) -> Model {
@@ -491,7 +491,7 @@ Views are described using [El structs](https://docs.rs/seed/0.1.4/seed/dom_types
 defined in the [seed::dom_types](https://docs.rs/seed/0.1.4/seed/dom_types/index.html) module. They're most-easily created
 with a shorthand using macros.
 
-`Attrs` and `Style` are thinly-wrapped hashmaps created with their own macros: `attrs{}` and `style!{}`
+`Attrs` and `Style` are thinly-wrapped hashmaps created with their own macros: `attrs!{}` and `style!{}`
 respectively.
 
 Example:
