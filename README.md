@@ -73,7 +73,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.1.4"
+seed = "^0.1.6"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 
@@ -469,19 +469,19 @@ extern crate seed;
 div![]
 ```
 These macros accept any combination (0 or 1 per) of the following parameters:
-- One [Attrs](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Attrs.html) struct
-- One [Style](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Style.html) struct
-- One or more [Listener](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Listener.html) structs, which handle events
+- One [Attrs](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Attrs.html) struct
+- One [Style](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Style.html) struct
+- One or more [Listener](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Listener.html) structs, which handle events
 - One or more Vecs of Listener structs
 - One String or &str representing a node text
-- One or more [El](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html) structs, representing a child
+- One or more [El](https://docs.rs/seed/0.1.6/seed/dom_types/struct.El.html) structs, representing a child
 - One or more Vecs of El structs, representing multiple children
 
 The parameters can be passed in any order; the compiler knows how to handle them
 based on their types. Children are rendered in the order passed.
 
-Views are described using [El structs](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html), 
-defined in the [seed::dom_types](https://docs.rs/seed/0.1.4/seed/dom_types/index.html) module. They're most-easily created
+Views are described using [El structs](https://docs.rs/seed/0.1.6/seed/dom_types/struct.El.html), 
+defined in the [seed::dom_types](https://docs.rs/seed/0.1.6/seed/dom_types/index.html) module. They're most-easily created
 with a shorthand using macros.
 
 `Attrs` and `Style` are thinly-wrapped hashmaps created with their own macros: `attrs!{}` and `style!{}`
@@ -564,7 +564,7 @@ using normal Rust code.
 
 ### Events
 
-Events are created by passing a a [Listener](https://docs.rs/seed/0.1.4/seed/dom_types/struct.Listener.html),
+Events are created by passing a a [Listener](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Listener.html),
 or vec of Listeners, created using the following four functions exposed in the prelude: `simple_ev`,
 `input_ev`, `keyboard_ev`, and `raw_ev`. The first is demonstrated in the example in the quickstart section,
 and all are demonstrated in the todomvc example.
@@ -944,7 +944,7 @@ let data = serde_json::from_str(&loaded_serialized).unwrap();
 
 ### Display markdown
 Seed supports creating elements from markdown text, using [pulldown-cmark](https://github.com/raphlinus/pulldown-cmark)
-internally. Use the [El::from_markdown()](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html#method.from_markdown)
+internally. Use the [El::from_markdown()](https://docs.rs/seed/0.1.6/seed/dom_types/struct.El.html#method.from_markdown)
 method to create an element that accepts a markdown &str as its only parameter, and displays
 it normally as html.
 
