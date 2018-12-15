@@ -1,0 +1,12 @@
+/target
+**/*.rs.bk
+Cargo.lock
+
+# Pycharm
+*.iws
+workspace.xml
+
+**/node_modules/
+**/target/
+**.log
+

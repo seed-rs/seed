@@ -25,7 +25,7 @@ extern crate serde_derive;
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
-// todo composable styles and attrs?
+// todo composable styles and attrs. Perhaps it's adding multiple ones, or maybe merge methods.
 
 
 /// Convenience function used in event handling: Convert an event target

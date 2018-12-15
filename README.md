@@ -235,11 +235,12 @@ and example code alone. For business logic behind the GUI, more study may be req
 The official [Rust Book](https://doc.rust-lang.org/book/index.html) is a good
 place to start.
 
-You'll be able to go with just the basic Rust syntax common to most programming
-languages, eg conditionals, equalities, iteration, collections, and how Rust's borrow system applies
+You should be able to get by with just the basic Rust syntax common to most programming
+languages, eg conditionals, equalities, iteration, collections - and how Rust's borrow system applies
 to strings. A skim through the first few chapters of the Book, and the examples here should provide 
 what you need. Rust's advanced and specialized features like lifetimes, generics, smartpointers, and traits
-aren't required to build an interactive GUI.
+aren't required to build an interactive GUI. If you run into a syntax or borrowing/ownership
+problem, the compiler will often recommend a fix.
 
 **Web fundamentals**: Experience building websites using HTML/CSS or other frameworks
 is required. Neither this guide nor the API docs describes how web pages are structured,
@@ -248,7 +249,7 @@ getting started. Seed provides tools used to assemble and manipulate these funda
 Mozilla's [MDN web docs](https://developer.mozilla.org/en-US/docs/Learn)
 is a good place to start.
 
-**Other frontend frameworks** The design principles Seed uses are similar to those
+**Other frontend frameworks**: The design principles Seed uses are similar to those
 used by React, Elm, and Yew. People familiar with how to set up interactive web pages
 using these tools will likely have an easy time learning this.
 
@@ -944,7 +945,8 @@ let data = serde_json::from_str(&loaded_serialized).unwrap();
 ### Display markdown
 Seed supports creating elements from markdown text, using [pulldown-cmark](https://github.com/raphlinus/pulldown-cmark)
 internally. Use the [El::from_markdown()](https://docs.rs/seed/0.1.4/seed/dom_types/struct.El.html#method.from_markdown)
-method to create an element that accepts a markdown &str as its only parameter.
+method to create an element that accepts a markdown &str as its only parameter, and displays
+it normally as html.
 
 Example:
 ```rust
@@ -1102,6 +1104,7 @@ wasm-bindgen than with npm.
 ## Features to add
  - Router
  - High-level fetch API
+ - Composable or mergable styles and attrs
  - Virtual DOM optimization 
  - Docs/tutorial website example to replace this readme
  - High-level CSS-grid/Flexbox API ?

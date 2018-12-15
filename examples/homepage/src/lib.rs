@@ -1,5 +1,5 @@
 //! The Seed homepage - hosting the guide, and acting as an example. Contains
-//! simple interactions, and lots of view markup.
+//! simple interactions, markdown elements, and lots of view markup.
 
 mod book;
 
@@ -106,7 +106,7 @@ fn title() -> El<Msg> {
 }
 
 fn guide(sections: Vec<GuideSection>, guide_page: usize) -> El<Msg> {
-    let menu_style = style!{
+    let menu_item_style = style!{
         "margin" => "auto";
         "cursor" => "pointer";
     };
@@ -114,28 +114,55 @@ fn guide(sections: Vec<GuideSection>, guide_page: usize) -> El<Msg> {
         .iter()
         .enumerate()
         .map(|(i, s)|
-        h3![ &menu_style, simple_ev("click", Msg::ChangeGuidePage(i)), s.title ]
+        h3![ &menu_item_style, simple_ev("click", Msg::ChangeGuidePage(i)), s.title ]
     ).collect();
 
     div![ style! {
         "display" => "grid";
-        "grid-template-columns" => "300px auto";
-        "grid-temlate-rows" => "auto";
-        "background-color" => "#d4a59a";
+        "grid-template-columns" => "200px auto";
+//        "grid-template-rows" => "1fr";
         "color" => "black";
+        "grid-auto-rows" => "1fr";
+        "align-items" => "start";
+//        "padding" => 20;
     },
-        div![ style!{"display" => "flex"; "grid-column" => "1 / 2"},
+        div![ style!{"display" => "flex"; "flex-direction" => "column";
+                     "grid-column" => "1 / 2";
+//                      "grid-row" => "1 / 2";
+                      "justify-content" => "flex-start";
+                     "background-color" => "#bc4639"; "padding" => 20;},
             menu_items
         ],
 
-        div![ style!{"display" => "flex"; "grid-column" => "2 / 3"},
+        div![ style!{"display" => "flex"; "grid-column" => "2 / 3";
+//                     "grid-row" => "1 / 2";
+                     "padding" => 40; "background-color" => "#d4a59a";},
             sections[guide_page].clone().element
         ]
     ]
 }
 
+fn changelog_entry(version: &str, changes: Vec<&str>) -> El<Msg> {
+    let changes: Vec<El<Msg>> = changes.iter().map(|c| li![ c ]).collect();
+    div![
+        h2![ version ],
+        ul![
+            changes
+        ]
+    ]
+}
+
 fn changelog(entries: Vec<El<Msg>>) -> El<Msg> {
-    div![ style!{"display" => "flex"}, entries ]
+    div![ style!{
+            "display" => "flex";
+            "flex-direction" => "column";
+            "align-items" => "center";
+            "background-color" => "#d4a59a";
+            "padding" => 50;
+            "color" => "black";
+    },
+        entries
+    ]
 }
 
 fn footer() -> El<Msg> {
@@ -146,49 +173,25 @@ fn footer() -> El<Msg> {
 
 
 
-
-fn quickstart() -> El<Msg> {
-    div![
-        h2![ "Quickstart" ],
-
-        h3![ "Setup" ],
-        p![ " This framework requires you to install [Rust](https://www.rust-lang.org/tools/install) - This will
-enable the CLI commands below:
-
- You'll need a recent version of Rust: `rustup update`
-
-The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
-
-And wasm-bindgen: `cargo install wasm-bindgen-cli`"
-        ],
-        h3![ "The theoretical minium"],
-
-        span![
-"
-## Test
-
-```
-log!(TEST)
-```
-
-"
-
-        ]
-
-    ]
-}
-
-
 fn view(model: Model) -> El<Msg> {
     let version = "0.1.4";
-    let changelog_entries = vec![];
+    let changelog_entries = vec![
+        changelog_entry("v0.1.0", vec![ "Initial release" ]),
+    ];
 
-    div![ style!{
-        // todo: How do we do areas?
-        "display" => "grid";
-        "grid-template-columns" => "auto";
-        "grid-template-rows" => "100px auto auto 100px"
-    },
+    div![
+//        style!{
+//            // todo: How do we do areas?
+//            "display" => "grid";
+//            "grid-template-columns" => "auto";
+//            "grid-template-rows" => "100px auto auto 100px"
+//        },
+        style!{
+            // todo: How do we do areas?
+            "display" => "flex";
+            "flex-direction" => "column";
+        },
+
         section![ style!{"grid-row" => "1 / 2"; "grid-column" => "1 / 2"},
             header(version)
         ],
