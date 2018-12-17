@@ -3,6 +3,7 @@
 //! See https://rustwasm.github.io/wasm-bindgen/reference/js-promises-and-rust-futures.html
 //! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Request.html
 //! https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/
+//! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html
 
 //#[macro_use]
 //extern crate serde_derive;
@@ -16,7 +17,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 //use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures;
-use web_sys::{Request, RequestInit, RequestMode, Response};
+use web_sys::{Response};
 
 
 // todo debuggins
@@ -62,16 +63,18 @@ pub fn fetch<S>(method: Method, url: &str, payload: Option<String>,
 //             headers: Option<HashMap<&str, &str>>,
 //             cl: impl FnMut(wasm_bindgen::JsValue) -> future::FutureResult) -> js_sys::Promise {
 //             headers: Option<HashMap<&str, &str, S>>, cl: impl FnMut(wasm_bindgen::JsValue)) -> js_sys::Promise
-             headers: Option<HashMap<&str, &str, S>>) -> js_sys::Promise
+//             headers: Option<HashMap<&str, &str, S>>) -> js_sys::Promise
+             headers: Option<HashMap<&str, &str, S>>)
 //             headers: Option<HashMap<&str, &str>>) -> wasm_bindgen_futures::JsFuture {
 //             headers: Option<HashMap<&str, &str>>) -> wasm_bindgen_futures::JsFuture {
     where S: BuildHasher
 {
-    let mut opts = RequestInit::new();
+    let mut opts = web_sys::RequestInit::new();
     opts.method(method.as_str());
-    opts.mode(RequestMode::Cors);
-
-    let request = Request::new_with_str_and_init(url, &opts).unwrap();
+    // https://rustwasm.github.io/wasm-bindgen/api/web_sys/enum.RequestMode.html
+    // We get a CORS error without this setting.
+    opts.mode(web_sys::RequestMode::NoCors);
+    let request = web_sys::Request::new_with_str_and_init(url, &opts).unwrap();
 
     // Set headers:
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Headers.html
@@ -82,43 +85,52 @@ pub fn fetch<S>(method: Method, url: &str, payload: Option<String>,
             req_headers.set(&name, &value).unwrap();
         }
     }
-//    req_headers.unwrap();
 
     let window = web_sys::window().unwrap();
     let request_promise = window.fetch_with_request(&request);
+
+
 
     let future = wasm_bindgen_futures::JsFuture::from(request_promise)
         .and_then(|resp_value| {
             // `resp_value` is a `Response` object.
             assert!(resp_value.is_instance_of::<Response>());
             let resp: Response = resp_value.dyn_into().unwrap();
+
+            crate::log("RESP");
+
+//            crate::log(resp.status());
+//            let text = resp.text().unwrap();
+//            let text2 = text.as_string().unwrap();
+//            crate::log(text2);
+
             resp.json()
-        })
-        .and_then(|json_value: js_sys::Promise| {
-            // Convert this other `Promise` into a rust `Future`.
-            wasm_bindgen_futures::JsFuture::from(json_value)
-        })
+        });
+//        .and_then(|json_value: js_sys::Promise| {
+//            // Convert this other `Promise` into a rust `Future`.
+//            wasm_bindgen_futures::JsFuture::from(json_value)
+//        })
 
 //        .and_then(cl);
 
 
-        .and_then(|json| {
-            // Use serde to parse the JSON into a struct.
-            let data: Data = json.into_serde().unwrap();
-
-
-            crate::log(data.text.clone());
-
-
-
-            // Send the `Branch` struct back to JS as an `Object`.
-            future::ok(JsValue::from_serde(&data).unwrap())
-        });
+//        .and_then(|json| {
+//            // Use serde to parse the JSON into a struct.
+//            let data: Data = json.into_serde().unwrap();
+//
+//
+//            crate::log(data.text.clone());
+//
+//
+//
+//            // Send the `Branch` struct back to JS as an `Object`.
+//            future::ok(JsValue::from_serde(&data).unwrap())
+//        });
 
     // Convert this Rust `Future` back into a JS `Promise`.
 
 //    future
-    wasm_bindgen_futures::future_to_promise(future)
+//    wasm_bindgen_futures::future_to_promise(future)
 }
 
 

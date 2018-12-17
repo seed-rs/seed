@@ -23,8 +23,8 @@ And wasm-bindgen: `cargo install wasm-bindgen-cli`
 ### The theoretical minimum
 To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
 run `build.sh` or `build.ps1` in a terminal, then start a dev server that supports WASM.
-For example, with [Python](https://www.python.org/downloads/) installed, run `python server.py`.
-(Linux users may need to run `python3 server.py`.)
+For example, with [Python](https://www.python.org/downloads/) installed, run `python serve.py`.
+(Linux users may need to run `python3 serve.py`.)
 Once you change your package name, you'll
 need to tweak the html file and build script, as described below.
 
@@ -170,13 +170,13 @@ fn view(model: Model) -> El<Msg> {
                 // When passing numerical values to style!, "px" is implied.
                 "border" => "2px solid #004422"; "padding" => 20
             },
-                // We can use normal Rust code and comments in the view.
-                h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ simple_ev("click", Msg::Increment), "+" ],
-                button![ simple_ev("click", Msg::Decrement), "-" ],
+            // We can use normal Rust code and comments in the view.
+            h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
+            button![ simple_ev("click", Msg::Increment), "+" ],
+            button![ simple_ev("click", Msg::Decrement), "-" ],
 
-                // Optionally-displaying an element
-                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+            // Optionally-displaying an element
+            if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
 
             ],
         success_level(model.count),  // Incorporating a separate component
@@ -212,8 +212,8 @@ The Quickstart repo includes these, but you'll still need to do the rename. You 
 `./build.sh` or `.\build.ps1`
 
 For development, you can view your app using a shimmed Python dev server described above.
-(Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/server.py)
-from the quickstart repo, and run `python server.py`).
+(Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
+from the quickstart repo, and run `python serve.py`).
 
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
@@ -468,7 +468,7 @@ extern crate seed;
 
 div![]
 ```
-These macros accept any combination (0 or 1 per) of the following parameters:
+These macros accept any combination of the following parameters:
 - One [Attrs](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Attrs.html) struct
 - One [Style](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Style.html) struct
 - One or more [Listener](https://docs.rs/seed/0.1.6/seed/dom_types/struct.Listener.html) structs, which handle events
@@ -525,10 +525,10 @@ the same one more than once:
 
 Setting an InputElement's `checked` property is done through normal attributes:
 ```rust
-input![ attrs!{"type" => "checkbox"; "checked" => true ]
+input![ attrs!{"type" => "checkbox"; "checked" => true} ]
 ```
 
-To edit Attrs or Styles you've created, you can edit their .vals HashMap. To add
+To change Attrs or Styles you've created, edit their .vals HashMap. To add
 a new part to them, use their .add method:
 ```rust
 let mut attributes = attrs!{};
@@ -558,6 +558,19 @@ fn view(model: Model) -> El<Msg> {
     ]
 }
 ```
+
+We can combine Attrs and Style instances using their `merge` methods, which take
+an &Attrs and &Style respectively. This can be used to compose styles from reusable parts. 
+Example:
+```rust
+let base_style = !style{"color" => "lavender"};
+
+div![
+    h1![ &base_style.merge(&style!{"grid-row" => "1 / 2"}) "First row" ],
+    h1![ &base_style.merge(&style!{"grid-row" => "2 / 3"}) "Second row" ],
+]
+```
+
 
 Overall: we leverage of Rust's strict type system to flexibly-create the view
 using normal Rust code.
@@ -885,10 +898,6 @@ function run() {
 ```
 Note that you don't need to pass your Msg enum; it's inferred from the update function.
 
-### Comments in the view
-The Element-creation macros used to create views are normal Rust code, you can
-use comments in them normally: either on their own line, or in line.
-
 
 ### Logging in the web browser
 To output to the web browser's console (ie `console.log()` in JS), use `web_sys::console_log1`,
@@ -942,11 +951,12 @@ let data = serde_json::from_str(&loaded_serialized).unwrap();
 
 ```
 
-### Display markdown
+### Display markdown and raw HTML
 Seed supports creating elements from markdown text, using [pulldown-cmark](https://github.com/raphlinus/pulldown-cmark)
 internally. Use the [El::from_markdown()](https://docs.rs/seed/0.1.6/seed/dom_types/struct.El.html#method.from_markdown)
 method to create an element that accepts a markdown &str as its only parameter, and displays
-it normally as html.
+it normally as html. Note that it does not support syntax highlighting. You can render raw HTML with `El::from_html(html)`, where `html` is a 
+&str of HTML.
 
 Example:
 ```rust
@@ -958,12 +968,25 @@ fn view(model: Model) -> El<Msg> {
 
 Let's set the existence-of-God issue aside for a later volume,
 and just [learn to code](https://play.rust-lang.org/).
-";
+"
+;
+
+    let html = 
+"
+<div>
+    <p>It is a truth universally acknowledged, that a single man in 
+    possession of a good fortune, must be in want of a good time./p>
+</div>
+"
+;
     
     div![
         El::from_markdown(markdown) 
+        El::from_html(html) 
     ]
 }
+
+
 
 ```
 
@@ -1016,8 +1039,8 @@ of your familiarity with Rust.
 
 - Complete documentation that always matches the current version. Getting examples working, and
  starting a project should be painless, and require nothing beyond this guide.
-
-- An API that's easy to read, write, and understand.
+ 
+- Concise, flexibilty vew syntax that's easy to read and write.
 
 
 ### A note on view syntax
@@ -1081,10 +1104,10 @@ You may choose
 this approach over Elm if you're already comfortable with Rust, want the performance 
 benefits, or don't want to code business logic in a purely-functional langauge.
 
-Compared to React, for example, you may appreciate the consistency of how to write apps:
+Compared with React, you may appreciate the consistency of how to write apps:
 There's no distinction between logic and display code; no restrictions on comments;
 no distinction between components and normal functions. The API is
-flexible, and avoids the OOP boilerplate.
+flexible, and avoids OOP boilerplate.
 
 I also hope that config, building, and dependency-management is cleaner with Cargo and
 wasm-bindgen than with npm.

@@ -110,7 +110,7 @@ enum Msg {
     EditKeyDown(usize, u32),  // item position, keycode
 }
 
-fn update(msg: Msg, model: Model) -> Model {
+fn update(history: &History<Model, Msg>, msg: Msg, model: Model) -> Model {
     // We take a verbose immutable-design/functional approach in this example.
     // Alternatively, you could re-declare model as mutable at the top, and mutate
     // what we need in each match leg. See the Update section of the guide for details.
@@ -323,5 +323,5 @@ fn todo_app(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, todo_app, "main");
+    seed::run(Model::default(), update, todo_app, "main", None);
 }

@@ -35,12 +35,10 @@ struct Model {
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-        let url = "https://seed-example.herokuapp.com/data";
+//        let url = "https://seed-example.herokuapp.com/data";
+        let url = "https://api.github.com/repos/rust-lang/rust/branches/master";
         let mut headers = HashMap::new();
-        headers.insert("Content-type", "application/json");
-        // todo don't do this in production
-//        headers.insert("Access-Control-Allow-Origin", "*");
-        headers.insert("Access-Control-Allow-Origin", "https://seed-example.herokuapp.com");
+//        headers.insert("Content-Type", "application/json");
 
         let data = seed::fetch::fetch(seed::fetch::Method::Get, url, None, Some(headers));
 
@@ -73,7 +71,7 @@ enum Msg {
     Replace(Data),
 }
 
-fn update(msg: Msg, model: Model) -> Model {
+fn update(history: &mut History<Model, Msg>, msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Replace(data) => Model {data},
     }
@@ -88,5 +86,5 @@ fn view(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, view, "main");
+    seed::run(Model::default(), update, view, "main", None);
 }

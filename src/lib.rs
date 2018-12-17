@@ -2,6 +2,7 @@
 
 #![allow(unused_macros)]
 
+use std::collections::HashMap;
 use std::panic;
 
 use wasm_bindgen::JsCast;
@@ -50,6 +51,8 @@ pub fn to_select(target: &web_sys::EventTarget ) -> &web_sys::HtmlSelectElement 
     target.dyn_ref::<web_sys::HtmlSelectElement>().expect("Unable to cast as a select element")
 }
 
+/// Convert a web_sys::Event to a web_sys::KeyboardEvent. Useful for extracting
+/// info like which key has been pressed, which is not available with normal Events.
 pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
     // This might be more appropriate for web_sys::bridge, but I'd
     // like to expose it without making websys_bridge public.
@@ -57,8 +60,8 @@ pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
 }
 
 /// The entry point for the app
-pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
-          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str)
+pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl) -> Mdl,
+          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, route_map: Option<HashMap<&str, Ms>>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
     let app = vdom::App::new(model.clone(), update, view, mount_point_id);
@@ -73,6 +76,22 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
     websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
 
     app.data.main_el_vdom.replace(topel_vdom);
+
+    // If a route map is inlcluded, update the state on page load, based
+    // on the starting URL. Must be set up on the server as well.
+    if let Some(r_map) = route_map {
+        // todo switch back to path name.
+        let window = web_sys::window().expect("no global `window` exists");
+        let path_name = window.location().href().expect("Can't find pathname");
+//        let path_name = window.location().pathname().expect("Can't find pathname");
+        for (route, message) in r_map.into_iter() {
+            if route == &path_name {
+                app.update_dom(message);
+                break;
+            }
+        }
+    }
+
 
     // Allows panic messages to output to the browser console.error.
     panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -96,7 +115,9 @@ pub fn log<S: ToString>(text: S) {
 
 /// Introduce El into the global namespace for convenience (It will be repeated
 /// often in the output type of components), and UpdateEl, which is required
-/// for element-creation macros.
+/// for element-creation macros, input event constructors, and the History struct.
 pub mod prelude {
     pub use crate::dom_types::{El, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev};
+    pub use crate::vdom::History;
+    pub use std::collections::HashMap;
 }

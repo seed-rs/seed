@@ -141,6 +141,15 @@ function GetOwnOrInheritedPropertyDescriptor(obj, id) {
 return {}
 }
 
+const __widl_f_set_inner_html_Element_target = GetOwnOrInheritedPropertyDescriptor(typeof Element === 'undefined' ? null : Element.prototype, 'innerHTML').set || function() {
+    throw new Error(`wasm-bindgen: Element.innerHTML does not exist`);
+};
+
+__exports.__widl_f_set_inner_html_Element = function(arg0, arg1, arg2) {
+    let varg1 = getStringFromWasm(arg1, arg2);
+    __widl_f_set_inner_html_Element_target.call(getObject(arg0), varg1);
+};
+
 const __widl_f_target_Event_target = GetOwnOrInheritedPropertyDescriptor(typeof Event === 'undefined' ? null : Event.prototype, 'target').get || function() {
     throw new Error(`wasm-bindgen: Event.target does not exist`);
 };
@@ -259,6 +268,21 @@ __exports.__widl_f_value_HTMLTextAreaElement = function(ret, arg0) {
 
 };
 
+const __widl_f_back_History_target = typeof History === 'undefined' ? null : History.prototype.back || function() {
+    throw new Error(`wasm-bindgen: History.back does not exist`);
+};
+
+__exports.__widl_f_back_History = function(arg0, exnptr) {
+    try {
+        __widl_f_back_History_target.call(getObject(arg0));
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+};
+
 const __widl_f_append_child_Node_target = typeof Node === 'undefined' ? null : Node.prototype.appendChild || function() {
     throw new Error(`wasm-bindgen: Node.appendChild does not exist`);
 };
@@ -333,6 +357,18 @@ __exports.__widl_f_length_NodeList = function(arg0) {
     return __widl_f_length_NodeList_target.call(getObject(arg0));
 };
 
+__exports.__widl_instanceof_PopStateEvent = function(idx) {
+    return getObject(idx) instanceof PopStateEvent ? 1 : 0;
+};
+
+const __widl_f_state_PopStateEvent_target = GetOwnOrInheritedPropertyDescriptor(typeof PopStateEvent === 'undefined' ? null : PopStateEvent.prototype, 'state').get || function() {
+    throw new Error(`wasm-bindgen: PopStateEvent.state does not exist`);
+};
+
+__exports.__widl_f_state_PopStateEvent = function(arg0) {
+    return addHeapObject(__widl_f_state_PopStateEvent_target.call(getObject(arg0)));
+};
+
 __exports.__widl_instanceof_Window = function(idx) {
     return getObject(idx) instanceof Window ? 1 : 0;
 };
@@ -342,6 +378,17 @@ __exports.__widl_f_document_Window = function(arg0) {
     const val = getObject(arg0).document;
     return isLikeNone(val) ? 0 : addHeapObject(val);
 
+};
+
+__exports.__widl_f_history_Window = function(arg0, exnptr) {
+    try {
+        return addHeapObject(getObject(arg0).history);
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
 };
 
 const __widl_f_log_1__target = console.log;
@@ -428,9 +475,11 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper765 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(2);
-    const d = wasm.__wbg_function_table.get(3);
+__exports.__wbindgen_cb_forget = dropObject;
+
+__exports.__wbindgen_closure_wrapper790 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(6);
+    const d = wasm.__wbg_function_table.get(7);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

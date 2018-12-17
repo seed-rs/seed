@@ -10,7 +10,7 @@ use wasm_bindgen::{prelude::*, JsCast};
 use crate::vdom::Mailbox;  // todo temp
 
 
-use regex::Regex;
+//use regex::Regex;
 
 
 // todo cleanup enums vs &strs for restricting events/styles/attrs to
@@ -20,8 +20,6 @@ use regex::Regex;
 // todo once you sort out events/listeners etc, organize/tidy this module.
 // todo and reacttack when you need = 'static.
 
-
-// TODO REATTACK when you need box
 
 //pub trait UpdateListener<T> {
 //    // T is the type of thing we're updating; eg attrs, style, events etc.
@@ -302,7 +300,8 @@ impl Attrs {
         Self { vals: HashMap::new() }
     }
 
-    pub fn as_str(&self) -> String {
+    /// Create an HTML-compatible string representation
+    pub fn to_string(&self) -> String {
         let mut result = String::new();
         for (key, val) in &self.vals {
             result += &format!(" {k}=\"{v}\"", k=key, v=val);
@@ -310,8 +309,18 @@ impl Attrs {
         result
     }
 
+    /// Add a new key, value pair
     pub fn add(&mut self, key: &str, val: &str) {
         self.vals.insert(key.to_string(), val.to_string());
+    }
+
+    /// Combine with another Attrs; if there's a conflict, use the other one.
+    pub fn merge(&self, other: &Self) -> Self {
+        let mut result = self.clone();
+        for (key, val) in &other.vals {
+            result.vals.insert(key.clone(), val.clone());
+        }
+        result
     }
 }
 
@@ -345,7 +354,7 @@ impl Style {
 
     /// Output style as a string, as would be set in the DOM as the attribute value
     /// for 'style'. Eg: "display: flex; font-size: 1.5em"
-    pub fn as_str(&self) -> String {
+    pub fn to_string(&self) -> String {
         let mut result = String::new();
         if self.vals.keys().len() > 0 {
             for (key, val) in &self.vals {
@@ -358,6 +367,15 @@ impl Style {
 
     pub fn add(&mut self, key: &str, val: &str) {
         self.vals.insert(key.to_string(), val.to_string());
+    }
+
+    /// Combine with another Style; if there's a conflict, use the other one.
+    pub fn merge(&self, other: &Self) -> Self {
+        let mut result = self.clone();
+        for (key, val) in &other.vals {
+            result.vals.insert(key.clone(), val.clone());
+        }
+        result
     }
 }
 
@@ -531,21 +549,21 @@ pub struct El<Ms: Clone + 'static> {
     // todo temp?
 //    pub key: Option<u32>,
 
-    pub markdown: bool,
+    pub raw_html: bool,
 }
 
 impl<Ms: Clone + 'static> El<Ms> {
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
                listeners: Vec<Listener<Ms>>, text: &str, children: Vec<El<Ms>>) -> Self {
         Self {tag, attrs, style, text: Some(text.into()), children,
-            el_ws: None, listeners, id: None, nest_level: None, markdown: false}
+            el_ws: None, listeners, id: None, nest_level: None, raw_html: false}
     }
 
     /// Create an empty element, specifying only the tag
     pub fn empty(tag: Tag) -> Self {
         Self {tag, attrs: Attrs::empty(), style: Style::empty(),
             text: None, children: Vec::new(), el_ws: None,
-            listeners: Vec::new(), id: None, nest_level: None, markdown: false}
+            listeners: Vec::new(), id: None, nest_level: None, raw_html: false}
     }
 
     /// Create an element that will display markdown from the text you pass to it, as HTML
@@ -554,17 +572,37 @@ impl<Ms: Clone + 'static> El<Ms> {
         let mut html_text = String::new();
         pulldown_cmark::html::push_html(&mut html_text, parser);
 //
-//        let ss = SyntaxSet::load_defaults_newlines();
-//        let sr = SyntaxReference::load_defaults_newlines();
-//        let ts = ThemeSet::load_defaults();
+        // todo: Syntect crate is currently bugged with wasm target.
+//        let ss = syntect::parsing::SyntaxSet::load_defaults_newlines();
+//        let sr = ss.find_syntax_by_token("rust").unwrap();
+//        let ts = syntect::highlighting::Theme::default();
 //
-//        let re = Regex::new(r"<code>(.*)</code>").expect("Error creating Regex");
+//        let replacer = |match_group| {
+//            syntect::html::highlighted_html_for_string(
+//                match_group, &ss, sr, &ts
+//            )
+//        };
+
+//        let replacer = |match_grp: &regex::Captures| match_grp.name("code").unwrap().as_str();
+
+//        let re = Regex::new(r"<code>(?P<code>.*?)</code>").expect("Error creating Regex");
+//         re.replace_all(&html_text, replacer);
+
+//        crate::log(&html_text);
 //
 //        let highlighted_html = syntect::html::highlighted_html_for_string(text,  ss, sr, ts);
 
         let mut result = Self::empty(Tag::Span);
-        result.markdown = true;
+        result.raw_html = true;
         result.text = Some(html_text);
+        result
+    }
+
+    /// Create an element that will display raw HTML
+    pub fn from_html(html: &str) -> Self {
+        let mut result = Self::empty(Tag::Span);
+        result.raw_html = true;
+        result.text = Some(html.into());
         result
     }
 
@@ -593,8 +631,8 @@ impl<Ms: Clone + 'static> El<Ms> {
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
 
-        let opening = String::from("<") + self.tag.as_str() + &self.attrs.as_str() +
-            " style=\"" + &self.style.as_str() + ">\n";
+        let opening = String::from("<") + self.tag.as_str() + &self.attrs.to_string() +
+            " style=\"" + &self.style.to_string() + ">\n";
 
         let inner = self.children.iter().fold(String::new(), |result, child| result + &child._html());
 
@@ -616,7 +654,7 @@ impl<Ms: Clone + 'static> El<Ms> {
             id: None,
             nest_level: None,
             el_ws: self.el_ws.clone(),
-            markdown: self.markdown,
+            raw_html: self.raw_html,
         }
     }
 
@@ -647,7 +685,7 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
             nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
-            markdown: self.markdown,
+            raw_html: self.raw_html,
         }
     }
 }
