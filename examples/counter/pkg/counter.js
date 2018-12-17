@@ -268,13 +268,15 @@ __exports.__widl_f_value_HTMLTextAreaElement = function(ret, arg0) {
 
 };
 
-const __widl_f_back_History_target = typeof History === 'undefined' ? null : History.prototype.back || function() {
-    throw new Error(`wasm-bindgen: History.back does not exist`);
-};
-
-__exports.__widl_f_back_History = function(arg0, exnptr) {
+__exports.__widl_f_href_Location = function(ret, arg0, exnptr) {
     try {
-        __widl_f_back_History_target.call(getObject(arg0));
+
+        const retptr = passStringToWasm(getObject(arg0).href);
+        const retlen = WASM_VECTOR_LEN;
+        const mem = getUint32Memory();
+        mem[ret / 4] = retptr;
+        mem[ret / 4 + 1] = retlen;
+
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -357,18 +359,6 @@ __exports.__widl_f_length_NodeList = function(arg0) {
     return __widl_f_length_NodeList_target.call(getObject(arg0));
 };
 
-__exports.__widl_instanceof_PopStateEvent = function(idx) {
-    return getObject(idx) instanceof PopStateEvent ? 1 : 0;
-};
-
-const __widl_f_state_PopStateEvent_target = GetOwnOrInheritedPropertyDescriptor(typeof PopStateEvent === 'undefined' ? null : PopStateEvent.prototype, 'state').get || function() {
-    throw new Error(`wasm-bindgen: PopStateEvent.state does not exist`);
-};
-
-__exports.__widl_f_state_PopStateEvent = function(arg0) {
-    return addHeapObject(__widl_f_state_PopStateEvent_target.call(getObject(arg0)));
-};
-
 __exports.__widl_instanceof_Window = function(idx) {
     return getObject(idx) instanceof Window ? 1 : 0;
 };
@@ -378,6 +368,10 @@ __exports.__widl_f_document_Window = function(arg0) {
     const val = getObject(arg0).document;
     return isLikeNone(val) ? 0 : addHeapObject(val);
 
+};
+
+__exports.__widl_f_location_Window = function(arg0) {
+    return addHeapObject(getObject(arg0).location);
 };
 
 __exports.__widl_f_history_Window = function(arg0, exnptr) {
@@ -475,9 +469,7 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_cb_forget = dropObject;
-
-__exports.__wbindgen_closure_wrapper790 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper931 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(6);
     const d = wasm.__wbg_function_table.get(7);
     const cb = function(arg0) {

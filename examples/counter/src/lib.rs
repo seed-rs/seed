@@ -35,7 +35,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(history: &History<Model, Msg>, msg: Msg, model: Model) -> Model {
+fn update(history: &mut History<Model, Msg>, msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Increment => Model {count: model.count + 1, ..model},
         Msg::Decrement => Model {count: model.count - 1, ..model},

@@ -127,7 +127,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Model {
+fn update(history: &mut History<Model, Msg>,: Msg, model: Model) -> Model {
     match msg {
         Msg::Increment => Model {count: model.count + 1, ..model},
         Msg::Decrement => Model {count: model.count - 1, ..model},
@@ -189,7 +189,7 @@ fn view(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, view, "main");
+    seed::run(Model::default(), update, view, "main", None);
 }
 ```
 

@@ -297,6 +297,23 @@ __exports.__widl_f_key_code_KeyboardEvent = function(arg0) {
     return __widl_f_key_code_KeyboardEvent_target.call(getObject(arg0));
 };
 
+__exports.__widl_f_href_Location = function(ret, arg0, exnptr) {
+    try {
+
+        const retptr = passStringToWasm(getObject(arg0).href);
+        const retlen = WASM_VECTOR_LEN;
+        const mem = getUint32Memory();
+        mem[ret / 4] = retptr;
+        mem[ret / 4 + 1] = retlen;
+
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+};
+
 const __widl_f_append_child_Node_target = typeof Node === 'undefined' ? null : Node.prototype.appendChild || function() {
     throw new Error(`wasm-bindgen: Node.appendChild does not exist`);
 };
@@ -399,6 +416,21 @@ __exports.__widl_f_document_Window = function(arg0) {
 
 };
 
+__exports.__widl_f_location_Window = function(arg0) {
+    return addHeapObject(getObject(arg0).location);
+};
+
+__exports.__widl_f_history_Window = function(arg0, exnptr) {
+    try {
+        return addHeapObject(getObject(arg0).history);
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+};
+
 __exports.__widl_f_local_storage_Window = function(arg0, exnptr) {
     try {
 
@@ -497,7 +529,7 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper452 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper439 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(4);
     const d = wasm.__wbg_function_table.get(5);
     const cb = function(arg0) {

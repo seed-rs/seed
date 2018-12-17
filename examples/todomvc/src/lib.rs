@@ -110,7 +110,7 @@ enum Msg {
     EditKeyDown(usize, u32),  // item position, keycode
 }
 
-fn update(history: &History<Model, Msg>, msg: Msg, model: Model) -> Model {
+fn update(history: &mut History<Model, Msg>, msg: Msg, model: Model) -> Model {
     // We take a verbose immutable-design/functional approach in this example.
     // Alternatively, you could re-declare model as mutable at the top, and mutate
     // what we need in each match leg. See the Update section of the guide for details.
@@ -187,7 +187,7 @@ fn update(history: &History<Model, Msg>, msg: Msg, model: Model) -> Model {
         },
         Msg::EditSubmit(posit) => {
             if model.edit_text.is_empty() {
-                update(Msg::Destroy(posit), model)
+                update(history, Msg::Destroy(posit), model)
             } else {
                 let mut todos = model.todos;
                 let mut todo = todos.remove(posit);
@@ -206,7 +206,7 @@ fn update(history: &History<Model, Msg>, msg: Msg, model: Model) -> Model {
                     .collect();
                 Model {todos, edit_text: model.todos[posit].title.clone(), ..model}
             } else if code == ENTER_KEY {
-                update(Msg::EditSubmit(posit), model)
+                update(history, Msg::EditSubmit(posit), model)
             } else {model}
         },
     }
