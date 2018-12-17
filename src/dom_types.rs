@@ -302,11 +302,10 @@ impl Attrs {
 
     /// Create an HTML-compatible string representation
     pub fn as_str(&self) -> String {
-        let mut result = String::new();
-        for (key, val) in &self.vals {
-            result += &format!(" {k}=\"{v}\"", k=key, v=val);
-        }
-        result
+        self.vals.iter()
+            .map(|(k,v)|format!("{}=\"{}\"", k, v))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 
     /// Add a new key, value pair
@@ -355,14 +354,11 @@ impl Style {
     /// Output style as a string, as would be set in the DOM as the attribute value
     /// for 'style'. Eg: "display: flex; font-size: 1.5em"
     pub fn as_str(&self) -> String {
-        let mut result = String::new();
-        if self.vals.keys().len() > 0 {
-            for (key, val) in &self.vals {
-                result += &format!("{k}: {v}; ", k = key, v = val);
-            }
-        }
-
-        result
+        self.vals
+            .iter()
+            .map(|(k,v)|format!("{}:{};",k,v))
+            .collect::<Vec<_>>()
+            .join(";")
     }
 
     pub fn add(&mut self, key: &str, val: &str) {
