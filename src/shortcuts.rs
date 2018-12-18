@@ -853,7 +853,54 @@ macro_rules! iframe {
     };
 }
 
-//// End element-creaion macros.
+#[macro_export]
+macro_rules! svg {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty(seed::dom_types::Tag::Svg);
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! line {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty(seed::dom_types::Tag::Line);
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! rect {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty(seed::dom_types::Tag::Rect);
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! circle {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty(seed::dom_types::Tag::Circle);
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+//// End element-creation macros.
 
 
 /// Provide a shortcut for creating attributes.
