@@ -499,8 +499,10 @@ macro_rules! make_tags {
     }
 }
 
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-/// Grouped here by category on Mozilla's page, linked above.
+/// Comprehensive lists:
+/// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+/// - https://developer.mozilla.org/en-US/docs/Web/SVG/Element
+/// Grouped here by category on Mozilla's pages, linked above.
 make_tags! {
     Address => "address", Article => "article", Aside => "aside", Footer => "footer",
     Header => "header", H1 => "h1",
@@ -538,7 +540,81 @@ make_tags! {
 
     Content => "content", Element => "element", Shadow => "shadow", Slot => "slot", Template => "template",
 
-    Svg => "svg", Line => "line", Rect => "rect", Circle => "circle"
+    // -------- SVG Tags -------- //
+
+    // Animation elements
+    Animate => "animate", AnimateColor => "animateColor", AnimateMotion => "animateMotion",
+    AnimateTransform => "animateTransform", Discard => "discard", Mpath => "mpath", Set => "set",
+
+    // Shape elements
+    Circle => "circle", Ellipse => "ellipse", Line => "line", Polygon => "polygon",
+    Polyline => "polyline", Rect => "rect", Mesh => "mesh", Path => "path",
+
+    // Container elements
+    Defs => "defs", G => "g", Marker => "marker", Mask => "mask", MissingGlyph => "missing-glyph",
+    Pattern => "pattern", Svg => "svg", Switch => "switch", Symbol => "symbol", Unknown => "unknown",
+
+    // Descriptive elements
+    Desc => "desc", Metadata => "metadata", Title => "title",
+
+    // Filter primitive elements
+    FeBlend             => "feBlend",
+    FeColorMatrix       => "feColorMatrix",
+    FeComponentTransfer => "feComponentTransfer",
+    FeComposite         => "feComposite",
+    FeConvolveMatrix    => "feConvolveMatrix",
+    FeDiffuseLighting   => "feDiffuseLighting",
+    FeDisplacementMap   => "feDisplacementMap",
+    FeDropShadow        => "feDropShadow",
+    FeFlood             => "feFlood",
+    FeFuncA             => "feFuncA",
+    FeFuncB             => "feFuncB",
+    FeFuncG             => "feFuncG",
+    FeFuncR             => "feFuncR",
+    FeGaussianBlur      => "feGaussianBlur",
+    FeImage             => "feImage",
+    FeMerge             => "feMerge",
+    FeMergeNode         => "feMergeNode",
+    FeMorphology        => "feMorphology",
+    FeOffset            => "feOffset",
+    FeSpecularLighting  => "feSpecularLighting",
+    FeTile              => "feTile",
+    FeTurbulence        => "feTurbulence",
+
+    // Light source elements
+    FeDistantLight => "feDistantLight", FePointLight => "fePointLight",  FeSpotLight => "feSpotLight",
+
+    // Font elements
+    Font => "font",
+    FontFace => "font-face",
+    FontFaceFormat => "font-face-format",
+    FontFaceName => "font-face-name",
+    FontFaceSrc => "font-face-src",
+    FontFaceUri => "font-face-uri",
+    HKern => "hkern",
+    VKern => "vkern",
+
+    // Gradient elements
+    LinearGradient => "linearGradient", MeshGradient => "meshGradient",
+    RadialGradient => "radialGradient", Stop => "stop",
+
+    // Graphics elements
+    Image => "image",
+
+    // Graphics referencing elements
+    Use => "use",
+
+    // Paint server elements
+    Hatch => "hatch", SolidColor => "solidcolor",
+
+    // Text content elements
+    AltGlyph => "altGlyph", AltGlyphDef => "altGlyphDef", AltGlyphItem => "altGlyphItem", Glyph => "glyph",
+    GlyphRef => "glyphRef", TextPath => "textPath", Text => "text", TRef => "tref", TSpan => "tspan",
+
+    // Uncategorized elements
+    ClipPath => "clipPath", ColorProfile => "color-profile", Cursor => "cursor", Filter => "filter",
+    ForeignObject => "foreignObject", HatchPath => "hatchpath", MeshPatch => "meshpatch", MeshRow => "meshrow",
+    Style => "style", View => "view"
 }
 
 /// An component in our virtual DOM.
