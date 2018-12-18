@@ -44,7 +44,7 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-        el_ws.set_attribute("style", &el_vdom.style.as_str()).expect("Problem setting style");
+        el_ws.set_attribute("style", &el_vdom.style.to_string()).expect("Problem setting style");
     }
 
     // We store text as Option<String>, but set_text_content uses Option<&str>.
@@ -128,7 +128,7 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        old_el_ws.set_attribute("style", &new.style.as_str())
+        old_el_ws.set_attribute("style", &new.style.to_string())
             .expect("Setting style");
     }
 

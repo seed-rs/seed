@@ -301,7 +301,7 @@ impl Attrs {
     }
 
     /// Create an HTML-compatible string representation
-    pub fn as_str(&self) -> String {
+    pub fn to_string(&self) -> String {
         self.vals.iter()
             .map(|(k,v)|format!("{}=\"{}\"", k, v))
             .collect::<Vec<_>>()
@@ -353,7 +353,7 @@ impl Style {
 
     /// Output style as a string, as would be set in the DOM as the attribute value
     /// for 'style'. Eg: "display: flex; font-size: 1.5em"
-    pub fn as_str(&self) -> String {
+    pub fn to_string(&self) -> String {
         self.vals
             .iter()
             .map(|(k,v)|format!("{}:{};",k,v))
@@ -627,8 +627,8 @@ impl<Ms: Clone + 'static> El<Ms> {
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
 
-        let opening = String::from("<") + self.tag.as_str() + &self.attrs.as_str() +
-            " style=\"" + &self.style.as_str() + ">\n";
+        let opening = String::from("<") + self.tag.as_str() + &self.attrs.to_string() +
+            " style=\"" + &self.style.to_string() + ">\n";
 
         let inner = self.children.iter().fold(String::new(), |result, child| result + &child._html());
 

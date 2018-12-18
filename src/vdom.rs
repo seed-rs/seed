@@ -8,11 +8,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 
-
-// todo: Get rid of the clone assiated with MS everywhere if you can!
-
-
-
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
 }
