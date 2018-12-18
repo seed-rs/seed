@@ -858,7 +858,7 @@ macro_rules! svg {
     ( $($part:expr),* $(,)* ) => {
         {
             let mut el = El::empty(seed::dom_types::Tag::Svg);
-            el.namespace = Some(seed::dom_types::ns::SVG.into());
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -870,7 +870,7 @@ macro_rules! line {
     ( $($part:expr),* $(,)* ) => {
         {
             let mut el = El::empty(seed::dom_types::Tag::Line);
-            el.namespace = Some(seed::dom_types::ns::SVG.into());
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -882,7 +882,7 @@ macro_rules! rect {
     ( $($part:expr),* $(,)* ) => {
         {
             let mut el = El::empty(seed::dom_types::Tag::Rect);
-            el.namespace = Some(seed::dom_types::ns::SVG.into());
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -894,7 +894,7 @@ macro_rules! circle {
     ( $($part:expr),* $(,)* ) => {
         {
             let mut el = El::empty(seed::dom_types::Tag::Circle);
-            el.namespace = Some(seed::dom_types::ns::SVG.into());
+            el.namespace = Some(seed::dom_types::Namespace::Svg);
             $ ( $part.update(&mut el); )*
             el
         }

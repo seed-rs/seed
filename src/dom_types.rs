@@ -13,9 +13,21 @@ use crate::vdom::Mailbox;  // todo temp
 //use regex::Regex;
 
 /// Common Namespaces
-pub mod ns {
+#[derive(Debug,Clone,PartialEq)]
+pub enum Namespace {
     /// SVG Namespace
-    pub const SVG: &str = "http://www.w3.org/2000/svg";
+    Svg,
+    Custom(String)
+}
+
+impl Namespace {
+    pub fn as_str(&self) -> &str {
+        use self::Namespace::*;
+        match self{
+            Svg => "http://www.w3.org/2000/svg",
+            Custom(s) => s
+        }
+    }
 }
 
 // todo cleanup enums vs &strs for restricting events/styles/attrs to
@@ -532,7 +544,7 @@ make_tags! {
 
 /// An component in our virtual DOM.
 pub struct El<Ms: Clone + 'static> {
-    // M sis a message type, as in part of TEA.
+    // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
     // confusion with web_sys::Element.
 
@@ -543,7 +555,7 @@ pub struct El<Ms: Clone + 'static> {
     pub listeners: Vec<Listener<Ms>>,
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
-    pub namespace: Option<String>,
+    pub namespace: Option<Namespace>,
 
     // Things that get filled in later, to assist with rendering.
     pub id: Option<u32>,
@@ -558,9 +570,9 @@ pub struct El<Ms: Clone + 'static> {
 
 impl<Ms: Clone + 'static> El<Ms> {
     pub fn new(tag: Tag, attrs: Attrs, style: Style,
-               listeners: Vec<Listener<Ms>>, text: &str, children: Vec<El<Ms>>, namespace: Option<&str>) -> Self {
+               listeners: Vec<Listener<Ms>>, text: &str, children: Vec<El<Ms>>, namespace: Option<Namespace>) -> Self {
         Self {tag, attrs, style, text: Some(text.into()), children,
-            el_ws: None, listeners, id: None, nest_level: None, raw_html: false, namespace: namespace.map(|x|x.into())
+            el_ws: None, listeners, id: None, nest_level: None, raw_html: false, namespace
         }
     }
 

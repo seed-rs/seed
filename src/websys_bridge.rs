@@ -37,7 +37,7 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
     let el_ws = match el_vdom.namespace {
-        Some(ref ns) => document.create_element_ns(Some(ns), tag).expect("Problem creating web-sys El"),
+        Some(ref ns) => document.create_element_ns(Some(ns.as_str()), tag).expect("Problem creating web-sys El"),
         None => document.create_element(tag).expect("Problem creating web-sys El")
     };
 
