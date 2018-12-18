@@ -658,6 +658,13 @@ impl<Ms: Clone + 'static> El<Ms> {
             listeners: Vec::new(), id: None, nest_level: None, raw_html: false, namespace: None }
     }
 
+    /// Create an empty SVG element, specifying only the tag
+    pub fn empty_svg(tag: Tag) -> Self {
+        let mut el = El::empty(tag);
+        el.namespace = Some(Namespace::Svg);
+        el
+    }
+
     /// Create an element that will display markdown from the text you pass to it, as HTML
     pub fn from_markdown(markdown: &str) -> Self {
         let parser = pulldown_cmark::Parser::new(markdown);
