@@ -853,24 +853,13 @@ macro_rules! iframe {
     };
 }
 
-#[macro_export]
-macro_rules! svg {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Svg);
-            el.namespace = Some(seed::dom_types::Namespace::Svg);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
+// --- SVG shape elements ---
 
 #[macro_export]
 macro_rules! line {
     ( $($part:expr),* $(,)* ) => {
         {
-            let mut el = El::empty(seed::dom_types::Tag::Line);
-            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            let mut el = El::empty_svg(seed::dom_types::Tag::Line);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -881,8 +870,7 @@ macro_rules! line {
 macro_rules! rect {
     ( $($part:expr),* $(,)* ) => {
         {
-            let mut el = El::empty(seed::dom_types::Tag::Rect);
-            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            let mut el = El::empty_svg(seed::dom_types::Tag::Rect);
             $ ( $part.update(&mut el); )*
             el
         }
@@ -893,13 +881,269 @@ macro_rules! rect {
 macro_rules! circle {
     ( $($part:expr),* $(,)* ) => {
         {
-            let mut el = El::empty(seed::dom_types::Tag::Circle);
-            el.namespace = Some(seed::dom_types::Namespace::Svg);
+            let mut el = El::empty_svg(seed::dom_types::Tag::Circle);
             $ ( $part.update(&mut el); )*
             el
         }
     };
 }
+
+#[macro_export]
+macro_rules! ellipse {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Ellipse);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! polygon {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Polygon);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! polyline {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Polyline);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! mesh {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Mesh);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! path {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Path);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+// --- SVG container elements --- //
+
+// TODO:
+// Create the following macros
+// - missing-glyph
+// - pattern
+// - switch
+// - symbol
+// - unknown
+
+#[macro_export]
+macro_rules! svg {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Svg);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! g {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::G);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! defs {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Defs);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! marker {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Marker);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! mask {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Mask);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+// TODO:
+// - add SVG animation elements
+// - add SVG filter primitive elements
+// - add SVG descriptive elements
+// - add SVG font elements
+// - add SVG paint server elements
+
+// --- SVG gradient elements --- //
+
+#[macro_export]
+macro_rules! linear_gradient {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::LinearGradient);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! radial_gradient {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::RadialGradient);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! mesh_gradient {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::MeshGradient);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+
+#[macro_export]
+macro_rules! stop {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Stop);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+// --- SVG graphics elements --- //
+
+#[macro_export]
+macro_rules! image {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Image);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+// --- SVG graphics referencing elements --- /
+
+#[macro_export]
+macro_rules! r#use {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Use);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+// --- SVG text content elements --- //
+
+// TODO:
+// - altGlyph
+// - altGlyphDef
+// - altGlyphItem
+// - glyph
+// - glyphRef
+// - textPath
+
+#[macro_export]
+macro_rules! text {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::Text);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! tref {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::TRef);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! tspan {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty_svg(seed::dom_types::Tag::TSpan);
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+// TODO:
+// Add the following SVG element macros:
+//  - clipPath
+//  - color-profile
+//  - cursor
+//  - filter
+//  - foreignObject
+//  - hatchpath
+//  - meshpatch
+//  - meshrow
+//  - style
+//  - view
+
 //// End element-creation macros.
 
 
