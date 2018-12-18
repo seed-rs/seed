@@ -51,12 +51,27 @@ pub fn to_select(target: &web_sys::EventTarget ) -> &web_sys::HtmlSelectElement 
     target.dyn_ref::<web_sys::HtmlSelectElement>().expect("Unable to cast as a select element")
 }
 
+/// See to_input
+pub fn to_html_el(target: &web_sys::EventTarget ) -> &web_sys::HtmlElement {
+    // This might be more appropriate for web_sys::bridge, but I'd
+    // like to expose it without making websys_bridge public.
+    target.dyn_ref::<web_sys::HtmlElement>().expect("Unable to cast as an HTML element")
+}
+
 /// Convert a web_sys::Event to a web_sys::KeyboardEvent. Useful for extracting
 /// info like which key has been pressed, which is not available with normal Events.
 pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
     // This might be more appropriate for web_sys::bridge, but I'd
     // like to expose it without making websys_bridge public.
     event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
+}
+
+/// Convenience function to access the web_sys DOM document.
+pub fn document() -> web_sys::Document {
+    web_sys::window()
+        .expect("Can't find window")
+        .document()
+        .expect("Can't find document")
 }
 
 /// The entry point for the app

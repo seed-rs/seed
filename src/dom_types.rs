@@ -200,7 +200,6 @@ pub trait UpdateEl<T> {
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for Attrs {
     fn update(self, el: &mut El<Ms>) {
-        // todo decide if you want to allow multiples and compose them.
         el.attrs = self;
     }
 }

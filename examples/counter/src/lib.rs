@@ -32,6 +32,8 @@ enum Msg {
     Increment,
     Decrement,
     ChangeWWC(String),
+
+    Focus(&'static str),
 }
 
 /// The sole source of updating the model; returns a fresh one.
@@ -39,7 +41,14 @@ fn update(history: &mut History<Model, Msg>, msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Increment => Model {count: model.count + 1, ..model},
         Msg::Decrement => Model {count: model.count - 1, ..model},
-        Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model }
+        Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model },
+
+        Msg::Focus(el_id) => {
+            let input = seed::document().get_element_by_id(el_id).unwrap();
+            let input = seed::to_html_el(&input);
+            input.focus().unwrap();
+            model
+        }
     }
 }
 
@@ -91,7 +100,15 @@ fn view(model: Model) -> El<Msg> {
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count}, input_ev("input", Msg::ChangeWWC) ]
+        input![ attrs!{"value" => model.what_we_count}, input_ev("input", Msg::ChangeWWC) ],
+
+        // todo temp: testing.
+        input![ attrs!{"id" => "A"; "autofocus" => true} ],
+        input![ attrs!{"id" => "B"} ],
+        input![ attrs!{"id" => "C"} ],
+        button![ "Focus A", simple_ev("click", Msg::Focus("A")) ],
+        button![ "Focus B", simple_ev("click", Msg::Focus("B")) ],
+        button![ "Focus C", simple_ev("click", Msg::Focus("C")) ],
     ]
 }
 

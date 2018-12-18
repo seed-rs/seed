@@ -74,6 +74,23 @@ __exports.__widl_f_create_element_Document = function(arg0, arg1, arg2, exnptr) 
     }
 };
 
+const __widl_f_create_element_ns_Document_target = typeof Document === 'undefined' ? null : Document.prototype.createElementNS || function() {
+    throw new Error(`wasm-bindgen: Document.createElementNS does not exist`);
+};
+
+__exports.__widl_f_create_element_ns_Document = function(arg0, arg1, arg2, arg3, arg4, exnptr) {
+    let varg1 = arg1 == 0 ? undefined : getStringFromWasm(arg1, arg2);
+    let varg3 = getStringFromWasm(arg3, arg4);
+    try {
+        return addHeapObject(__widl_f_create_element_ns_Document_target.call(getObject(arg0), varg1, varg3));
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+};
+
 const __widl_f_create_text_node_Document_target = typeof Document === 'undefined' ? null : Document.prototype.createTextNode || function() {
     throw new Error(`wasm-bindgen: Document.createTextNode does not exist`);
 };
@@ -211,6 +228,36 @@ __exports.__widl_f_set_Headers = function(arg0, arg1, arg2, arg3, arg4, exnptr) 
     }
 };
 
+let cachedTextEncoder = new TextEncoder('utf-8');
+
+let WASM_VECTOR_LEN = 0;
+
+function passStringToWasm(arg) {
+
+    const buf = cachedTextEncoder.encode(arg);
+    const ptr = wasm.__wbindgen_malloc(buf.length);
+    getUint8Memory().set(buf, ptr);
+    WASM_VECTOR_LEN = buf.length;
+    return ptr;
+}
+
+__exports.__widl_f_href_Location = function(ret, arg0, exnptr) {
+    try {
+
+        const retptr = passStringToWasm(getObject(arg0).href);
+        const retlen = WASM_VECTOR_LEN;
+        const mem = getUint32Memory();
+        mem[ret / 4] = retptr;
+        mem[ret / 4 + 1] = retlen;
+
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+};
+
 const __widl_f_append_child_Node_target = typeof Node === 'undefined' ? null : Node.prototype.appendChild || function() {
     throw new Error(`wasm-bindgen: Node.appendChild does not exist`);
 };
@@ -316,6 +363,10 @@ __exports.__widl_f_document_Window = function(arg0) {
 
 };
 
+__exports.__widl_f_location_Window = function(arg0) {
+    return addHeapObject(getObject(arg0).location);
+};
+
 __exports.__widl_f_history_Window = function(arg0, exnptr) {
     try {
         return addHeapObject(getObject(arg0).history);
@@ -410,19 +461,6 @@ __exports.__wbindgen_is_symbol = function(i) {
     return typeof(getObject(i)) === 'symbol' ? 1 : 0;
 };
 
-let cachedTextEncoder = new TextEncoder('utf-8');
-
-let WASM_VECTOR_LEN = 0;
-
-function passStringToWasm(arg) {
-
-    const buf = cachedTextEncoder.encode(arg);
-    const ptr = wasm.__wbindgen_malloc(buf.length);
-    getUint8Memory().set(buf, ptr);
-    WASM_VECTOR_LEN = buf.length;
-    return ptr;
-}
-
 __exports.__wbindgen_string_get = function(i, len_ptr) {
     let obj = getObject(i);
     if (typeof(obj) !== 'string') return 0;
@@ -441,9 +479,9 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper670 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(7);
-    const d = wasm.__wbg_function_table.get(8);
+__exports.__wbindgen_closure_wrapper723 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(8);
+    const d = wasm.__wbg_function_table.get(9);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
@@ -465,7 +503,7 @@ __exports.__wbindgen_closure_wrapper670 = function(a, b, _ignored) {
     return addHeapObject(real);
 };
 
-__exports.__wbindgen_closure_wrapper1156 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper1298 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(40);
     const d = wasm.__wbg_function_table.get(41);
     const cb = function(arg0) {

@@ -35,7 +35,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 /// A wrapper for web_sys::History, with helper methods to simplify syntax.
 #[derive(Clone)]
 pub struct History<Mdl: Sized + 'static, Ms: 'static> {
-    history: web_sys::History,
+    pub history: web_sys::History,
     stored: HashMap<String, Mdl>,
     stored_m: HashMap<String, Ms>,
 }

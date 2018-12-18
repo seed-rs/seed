@@ -3,9 +3,26 @@ use wasm_bindgen::JsCast;
 
 use crate::dom_types;
 
+/// Reduces DRY
+/// todo can't find a suitable trait for this. Seems like set_autofocus is
+/// implemented individually for each of these el types.
+//fn autofocus_helper<E: JsCast>(el: E) {
+//    match val {
+//        "true" => {
+//            el.set_autofocus(true);
+//            set_special = true;
+//        },
+//        "false" => {
+//            el.set_autofocus(false);
+//            set_special = true;
+//        },
+//        _ => ()
+//    }
+//}
+
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
-    let mut set_check = false;
+    let mut set_special = false;
 
     if name == "checked" {
         let input_el = el_ws.dyn_ref::<web_sys::HtmlInputElement>();
@@ -13,17 +30,77 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
             match val {
                 "true" => {
                     el.set_checked(true);
-                    set_check = true;
                 },
                 "false" => {
                     el.set_checked(false);
-                    set_check = true;
                 },
                 _ => ()
             }
+            set_special = true;
         }
     }
-    if !set_check {
+    // todo DRY! Massive dry between checked and auto, and in autofocus.
+    // https://www.w3schools.com/tags/att_autofocus.asp
+    //todo needs to work for other type sof input!
+    else if name == "autofocus" {
+
+        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
+//            autofocus_helper(input)
+            crate::log(val);
+            crate::log("INPUT AUTO");
+            match val {
+                "true" => {
+                    input.set_autofocus(true);
+                },
+                "false" => {
+                    input.set_autofocus(false);
+                },
+                _ => ()
+            }
+            set_special = true;
+        }
+        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+//             autofocus_helper(input)
+            match val {
+                "true" => {
+                    input.set_autofocus(true);
+                },
+                "false" => {
+                    input.set_autofocus(false);
+                },
+                _ => ()
+            }
+            set_special = true;
+        }
+        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlSelectElement>() {
+//             autofocus_helper(input)
+            match val {
+                "true" => {
+                    input.set_autofocus(true);
+                },
+                "false" => {
+                    input.set_autofocus(false);
+                },
+                _ => ()
+            }
+            set_special = true;
+        }
+        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlButtonElement>() {
+//             autofocus_helper(input)
+            match val {
+                "true" => {
+                    input.set_autofocus(true);
+                },
+                "false" => {
+                    input.set_autofocus(false);
+                },
+                _ => ()
+            }
+            set_special = true;
+        }
+    }
+
+    if !set_special {
         el_ws.set_attribute(name, val).expect("Problem setting an atrribute.");
     }
 }
@@ -118,7 +195,7 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
                         set_attr_shim(&old_el_ws, key, new_val);
                     }
                 },
-                None => old_el_ws.set_attribute(key, new_val).expect("Adding a new attribute")
+                None =>  set_attr_shim(&old_el_ws, key, new_val),
             }
         }
         // Remove attributes that aren't in the new vdom.
