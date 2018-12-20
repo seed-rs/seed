@@ -1271,3 +1271,18 @@ macro_rules! log {
      };
 }
 
+
+#[macro_export]
+macro_rules! routes {
+    { $($key:expr => $value:expr);* $(;)* } => {
+        {
+            let mut vals = std::collections::HashMap::new();
+            $(
+                // We can handle arguments of multiple types by using this:
+                // Strings, &strs, bools, numbers etc.
+                vals.insert($key.to_string(), $value);
+            )*
+            seed::routing::Routes::new(vals)
+        }
+     };
+}

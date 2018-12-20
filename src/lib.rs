@@ -10,7 +10,7 @@ use wasm_bindgen::JsCast;
 
 pub mod dom_types;
 pub mod fetch;
-mod routing;
+pub mod routing;
 #[macro_use]
 pub mod shortcuts;
 pub mod storage;
@@ -79,23 +79,11 @@ pub fn document() -> web_sys::Document {
 /// App initialization: Collect its fundamental components, setup, and perform
 /// an initial render.
 pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
-          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, routes: Option<HashMap<&str, Ms>>)
+          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, routes: Option<routing::Routes<Ms>>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
 
-    // todo DRY with routing:
-//    let mut routes_owned = HashMap::new();
-//    for (route, msg) in routes.clone() {
-//        routes_owned.insert(route.to_string(), msg);
-//    }
-    let routes_owned = match routes.clone() {
-        Some(routes_inner) => {
-            Some(HashMap::new()) // todo temp
-        },
-        None => None
-    };
-
-    let mut app = vdom::App::new(model.clone(), update, view, mount_point_id, routes_owned);
+    let mut app = vdom::App::new(model.clone(), update, view, mount_point_id, routes.clone());
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
