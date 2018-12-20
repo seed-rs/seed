@@ -340,10 +340,10 @@ __exports.__widl_f_value_HTMLTextAreaElement = function(ret, arg0) {
 
 };
 
-__exports.__widl_f_href_Location = function(ret, arg0, exnptr) {
+__exports.__widl_f_pathname_Location = function(ret, arg0, exnptr) {
     try {
 
-        const retptr = passStringToWasm(getObject(arg0).href);
+        const retptr = passStringToWasm(getObject(arg0).pathname);
         const retlen = WASM_VECTOR_LEN;
         const mem = getUint32Memory();
         mem[ret / 4] = retptr;
@@ -431,6 +431,10 @@ __exports.__widl_f_length_NodeList = function(arg0) {
     return __widl_f_length_NodeList_target.call(getObject(arg0));
 };
 
+__exports.__widl_instanceof_PopStateEvent = function(idx) {
+    return getObject(idx) instanceof PopStateEvent ? 1 : 0;
+};
+
 __exports.__widl_instanceof_Window = function(idx) {
     return getObject(idx) instanceof Window ? 1 : 0;
 };
@@ -444,17 +448,6 @@ __exports.__widl_f_document_Window = function(arg0) {
 
 __exports.__widl_f_location_Window = function(arg0) {
     return addHeapObject(getObject(arg0).location);
-};
-
-__exports.__widl_f_history_Window = function(arg0, exnptr) {
-    try {
-        return addHeapObject(getObject(arg0).history);
-    } catch (e) {
-        const view = getUint32Memory();
-        view[exnptr / 4] = 1;
-        view[exnptr / 4 + 1] = addHeapObject(e);
-
-    }
 };
 
 const __widl_f_log_1__target = console.log;
@@ -541,7 +534,9 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper943 = function(a, b, _ignored) {
+__exports.__wbindgen_cb_forget = dropObject;
+
+__exports.__wbindgen_closure_wrapper1021 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(2);
     const d = wasm.__wbg_function_table.get(3);
     const cb = function(arg0) {

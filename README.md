@@ -10,7 +10,7 @@ The best place to learn is the [guide](https://seed-rs.org) - this readme is an 
 
 ## Quickstart
 
-### Setup
+## Setup
 This framework requires you to install [Rust](https://www.rust-lang.org/tools/install) - This will
 enable the CLI commands below:
 
@@ -21,7 +21,7 @@ The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 And wasm-bindgen: `cargo install wasm-bindgen-cli`
 
 
-### The theoretical minimum
+## The theoretical minimum
 To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
 run `build.sh` or `build.ps1` in a terminal, then start a dev server that supports WASM.
 For example, with [Python](https://www.python.org/downloads/) installed, run `python serve.py`.
@@ -29,7 +29,8 @@ For example, with [Python](https://www.python.org/downloads/) installed, run `py
 Once you change your package name, you'll
 need to tweak the html file and build script, as described below.
 
-### A little deeper
+
+## A little deeper
 Or, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
 appname` should be replaced with the name of your app.
 
@@ -82,10 +83,9 @@ web-sys = "^0.3.6"
 serde = "^1.0.80"
 serde_derive = "^1.0.80"
 serde_json = "1.0.33"
-
 ```
 
-### A short example
+## A short example
 Here's an example demonstrating structure and syntax; it can be found in working form
 under `examples/counter`. Descriptions of its parts are in the
 Guide section below. Its structure follows [The Elm Architecture](https://guide.elm-lang.org/architecture/).
@@ -128,7 +128,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(history: &mut History<Model, Msg>,: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Increment => Model {count: model.count + 1, ..model},
         Msg::Decrement => Model {count: model.count - 1, ..model},
@@ -190,11 +190,13 @@ fn view(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
+    // The final parameter is an optional routing map.
     seed::run(Model::default(), update, view, "main", None);
 }
 ```
+For truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/David-OConnor/seed-quickstart/blob/master/src/lib.rs)
 
-### Building and running
+## Building and running
 To build your app, create a `pkg` subdirectory, and run the following two commands:
 
 ```
@@ -210,7 +212,8 @@ and a Javascript file used to link your module from HTML.
 
 You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows).
 The Quickstart repo includes these, but you'll still need to do the rename. You can then use
-`./build.sh` or `.\build.ps1`
+`./build.sh` or `.\build.ps1` If you run into permission errors on `build.sh`, try this command
+to allow executing the file:`chmod +x build.sh`.
 
 For development, you can view your app using a shimmed Python dev server described above.
 (Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
@@ -219,6 +222,13 @@ from the quickstart repo, and run `python serve.py`).
 For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
 In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
 
+## Running included examples
+To run an example located in the `examples` folder, navigate to that folder in a terminal, 
+run the build script for your system (`build.sh` or `build.ps1`), then start a dev server
+ as described above. Note that if you copy an example to a separate folder, you'll need
+to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
+`seed = { path = "../../"` with `seed = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
+line.
 ## About
 
 ## Goals
@@ -239,10 +249,10 @@ to natural Rust, while streamlining the syntax in a way suited for creating
 a visual layout with minimal repetition. The macros used here are thin wrappers
 for constructors, and don't conceal much. Specifically, the element-creation macros
 allow for accepting a variable number of arguments, and the attrs/style marcros are 
-essentially HashMap literals, with wrappers that let el macros know to distinguish
+essentially HashMap literals, with wrappers that let el macros know how to distinguish
 them.
 
-The relative lack of resemblance to HTML be offputting at first, but the learning
+The lack of resemblance to HTML be offputting, but the learning
 curve is shallow, and I think the macro syntax used to create elements, attributes etc
 is close-enough to normal Rust syntax that it's easy to reason about how the code
 should come together, without compartmentalizing it into logic code and display code.
@@ -312,9 +322,10 @@ wasm-bindgen than with npm.
  - Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
 
 ### Features to add
- - Router
  - High-level fetch API
+ - Lifecycle hooks
  - SVG support
+ - More flexible routing
  - Virtual DOM optimization 
  - High-level CSS-grid/Flexbox API ?
  

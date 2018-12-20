@@ -77,12 +77,12 @@ pub fn document() -> web_sys::Document {
 
 /// App initialization: Collect its fundamental components, setup, and perform
 /// an initial render.
-pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl) -> Mdl,
+pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
           view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, route_map: Option<HashMap<&str, Ms>>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
 
-    let app = vdom::App::new(model.clone(), update, view, mount_point_id, route_map.clone());
+    let app = vdom::App::new(model.clone(), update, view, mount_point_id);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
@@ -108,10 +108,8 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl)
             }
         }
 
-
         // todo: Potentially split this routing hanlign to a sep func.
         // todo: Probably in its own module.
-
 
             // Convert to a map over owned strings, to prevent lifetime problems in the closure.
             let mut r_map2 = HashMap::new();
@@ -129,13 +127,9 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl)
                     let path = window.location().pathname().expect("Can't find pathname");
                     let path_trimmed = &path[1..path.len()].to_string();
 
-                    crate::log("path: ".to_string() + &path_trimmed);
-
                     if let Some(route_message) = r_map2.get(path_trimmed) {
-                        crate::log("FOUND MATCHING MSG");
                         app.update_dom(route_message.clone());
                     }
-
 
                     // todo: It looks like we could use either the event, or path name.
                     // todo path name might be easier, since
@@ -152,16 +146,23 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl)
 
         history_closure.forget();  // todo: Is this leaking memory?
 
-
-
-
-
-
-
     }
 
     // Allows panic messages to output to the browser console.error.
     panic::set_hook(Box::new(console_error_panic_hook::hook));
+}
+
+/// Push a new state to the window's history, and append a custom path to the url. This
+/// is an improtant client-side routing feature.
+/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
+/// https://developer.mozilla.org/en-US/docs/Web/API/History_API
+pub fn push_route(path: &str) {
+    let window = web_sys::window().expect("No global window exists");
+    let history = window.history().expect("Can't find history");
+    // The second parameter, title, is currently unused by Firefox at least.
+    // The first, an arbitrary state object, we could possibly use.
+    // todo: Look into using state
+    history.push_state_with_url(&JsValue::from_str(""), "", Some(path));
 }
 
 /// Create an element flagged in a way that it will not be rendered. Useful
@@ -185,6 +186,5 @@ pub fn log<S: ToString>(text: S) {
 /// for element-creation macros, input event constructors, and the History struct.
 pub mod prelude {
     pub use crate::dom_types::{El, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev};
-    pub use crate::vdom::History;
     pub use std::collections::HashMap;
 }

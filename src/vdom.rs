@@ -32,32 +32,6 @@ impl<Ms> Clone for Mailbox<Ms> {
     }
 }
 
-/// A wrapper for web_sys::History, with helper methods to simplify syntax.
-#[derive(Clone)]
-// todo I think this whole struct needs to go.
-pub struct History<Mdl: Sized + 'static, Ms: 'static> {
-    // todo consider rc/refells(s) so we don't need to pass as mutable to api
-    pub history: web_sys::History,
-    stored: HashMap<String, Mdl>,  // todo potentially delete this.
-    pub stored_msg: HashMap<String, Ms>, // todo actually I think this nee
-}
-
-impl <Mdl, Ms>History<Mdl, Ms> {
-//    pub fn push(&mut self, data: &str, url: &str, message: Ms, model: Mdl) {
-    pub fn push(&mut self, data: &str, url: &str, message: Ms) {
-        // The second argument, title, is unused currently by Firefox at least;
-        // may be implemented in the future.
-        self.history.push_state_with_url(&JsValue::from_str(data), "", Some(url));
-
-        // todo sloppy
-//        let window =
-
-
-//        self.stored.insert(data.into(), model);
-//        self.stored_msg.insert(data.into(), message);  // todo rename this
-    }
-}
-
 // todo: Examine what needs to be ref cells, rcs etc
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
@@ -66,14 +40,9 @@ pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update_dom().
     pub model: RefCell<Mdl>,
-    pub update: fn(&mut History<Mdl, Ms>, Ms, Mdl) -> Mdl,
+    pub update: fn(Ms, Mdl) -> Mdl,
     pub view: fn(Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
-
-
-    pub history: RefCell<History<Mdl, Ms>>,
-    pub pop_listeners: Vec<dom_types::Listener<Ms>>,
-    popstate_closure: RefCell<Option<Closure<FnMut(web_sys::Event)>>>,
 }
 
 pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
@@ -85,78 +54,13 @@ pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
 impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
     pub fn new(
         model: Mdl,
-        update: fn(&mut History<Mdl, Ms>, Ms, Mdl) -> Mdl,
+        update: fn(Ms, Mdl) -> Mdl,
         view: fn(Mdl) -> El<Ms>,
         parent_div_id: &str,
-        route_map: Option<HashMap<&str, Ms>>
     ) -> Self {
 
         let window = web_sys::window().expect("No global window exists");
         let document = window.document().expect("Can't find the window's document.");
-
-        let history = window.history().expect("Can't find window's history");
-        let mut history_wrapper = History { history, stored: HashMap::new(), stored_msg: HashMap::new()};
-
-//        if let Some(r_map) = route_map {
-//            for (route, message) in r_map.into_iter() {
-//                if route == &path {
-//                    app.update_dom(message);
-//                    break;
-//                }
-//            }
-//            history_wrapper.stored_msg.insert()
-//        }
-
-        if let Some(r_map) = route_map {
-//            let mut h2 = history_wrapper.clone();
-
-//            // Convert to a map over owned strings, to prevent lifetime problems in the closure.
-//            let mut r_map2 = HashMap::new();
-//            for (route, msg) in r_map {
-//                r_map2.insert(route.to_string(), msg);
-//            }
-//
-//            let history_closure = Closure::wrap(
-//                Box::new(move |event: web_sys::Event| {
-//                    let event = event.dyn_into::<web_sys::PopStateEvent>()
-//                        .expect("Unable to cast as a PopStateEvent");
-//                    crate::log("POP POP!");
-//
-//                    // We recreate window and document here since they're captured in a closure.
-//                    let window = web_sys::window().expect("no global `window` exists");
-//                    let path = window.location().pathname().expect("Can't find pathname");
-//                    let path_trimmed = &path[1..path.len()].to_string();
-//
-//                    crate::log("path: ".to_string() + &path_trimmed);
-//
-//                    if let Some(route_message) = r_map2.get(path_trimmed) {
-//                        crate::log("FOUND MATCHING MSG");
-////                        Self.update_dom(message);
-//                    }
-//
-//
-//                    // todo: It looks like we could use either the event, or path name.
-//                    // todo path name might be easier, since
-//                    if let Some(state) = event.state().as_string() {
-//                        crate::log("state: ".to_string() + &state);
-//
-//
-//
-//                    }
-//                })
-//                    as Box<FnMut(web_sys::Event) + 'static>,
-//            );
-//
-//            (window.as_ref() as &web_sys::EventTarget)
-//                .add_event_listener_with_callback("popstate", history_closure.as_ref().unchecked_ref())
-//                .expect("Problem adding popstate listener");
-//
-//        history_closure.forget();  // todo: Is this leaking memory?
-        }
-
-
-
-
 
         let mount_point = document.get_element_by_id(parent_div_id).unwrap();
 
@@ -169,12 +73,6 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
                 view,
 
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
-
-                // todo: Evaluate wheather you need history, and to pass it to
-                // todo update: Perhaps you just use a helper func in lib.rs instead
-                history: RefCell::new(history_wrapper),
-                pop_listeners: Vec::new(),
-                popstate_closure: RefCell::new(None),
             })
         }
     }
@@ -197,8 +95,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
-        let mut history = self.data.history.borrow().clone();
-        let updated_model = (self.data.update)(&mut history, message, model_to_update);
+        let updated_model = (self.data.update)(message, model_to_update);
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
@@ -230,61 +127,6 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next (.
         self.data.main_el_vdom.replace(topel_new_vdom);
-
-
-        // todo start routing troulbeshooting
-
-        let window = web_sys::window().expect("no global `window` exists");  // todo don't recreate this every time
-
-//        let old_popstate_closure = self.data.popstate_closure.as_ref().unwrap();
-//        let old_popstate_closure = self.data.popstate_closure.borrow();
-
-//        match self.data.popstate_closure.borrow() {
-//            Some(c) => (),
-//            None => (),
-//        }
-
-        // We old_popstate_closure will be none at the first update, so nothing to remove.
-//        if let Some(c) = old_popstate_closure {
-//        window.remove_event_listener_with_callback("popstate", c.as_ref().unchecked_ref())
-////        window.remove_event_listener_with_callback("popstate", old_popstate_closure.as_ref().unchecked_ref())
-//            .expect("Problem removing popstate listener");
-//        }
-//
-//        // todo: Dry between here and listener.attach may or may not be avoidable.
-//        let mut h2 = self.data.history.borrow_mut().clone();
-//            let popstate_closure = Closure::wrap(
-//            Box::new(move |event: web_sys::Event| {
-//                let event = event.dyn_into::<web_sys::PopStateEvent>()
-//                    .expect("Unable to cast as a PopStateEvent");
-//                crate::log("POP POP!");
-//
-////                crate::log(&document.location().expect("Can't find location"));
-////                if let Some(state) = event.state().as_string() {
-////                    crate::log("Event state: ".to_string() + &state);
-//////
-////                    let message = h2.stored_msg.get(&state).expect("Can't find msg for pop");
-////                    let mdl = h2.stored.get(&state).expect("Can't find mdl for pop");
-////                    let updated_model = (self.data.update)(&mut h2.clone(), message.clone(), mdl.clone());
-//
-////                    self.data.model.replace(mdl.clone());
-////
-////
-////                }
-//
-//            })
-//                as Box<FnMut(web_sys::Event) + 'static>,
-//        );
-//
-//        (window.as_ref() as &web_sys::EventTarget)
-//            .add_event_listener_with_callback("popstate", popstate_closure.as_ref().unchecked_ref())
-//            .expect("Problem adding popstate listener");
-//        self.data.popstate_closure.replace(Some(popstate_closure));
-
-        // todo end routing troubleshootin
-
-
-
     }
 
     pub fn mailbox(&self) -> Mailbox<Ms> {

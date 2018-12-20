@@ -71,7 +71,7 @@ enum Msg {
     Replace(Data),
 }
 
-fn update(history: &mut History<Model, Msg>, msg: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Replace(data) => Model {data},
     }
