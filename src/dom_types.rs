@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use pulldown_cmark;
 use web_sys;
-use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen::{closure::Closure, JsCast};
 
 use crate::vdom::Mailbox;  // todo temp
 

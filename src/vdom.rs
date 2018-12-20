@@ -1,11 +1,8 @@
 use std::{cell::{RefCell}, rc::Rc};
-use std::collections::HashMap;
 
 use crate::dom_types;
 use crate::dom_types::El;
 use crate::websys_bridge;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 
 
 pub struct Mailbox<Message: 'static> {

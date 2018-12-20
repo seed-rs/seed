@@ -350,10 +350,10 @@ __exports.__widl_f_key_code_KeyboardEvent = function(arg0) {
     return __widl_f_key_code_KeyboardEvent_target.call(getObject(arg0));
 };
 
-__exports.__widl_f_href_Location = function(ret, arg0, exnptr) {
+__exports.__widl_f_pathname_Location = function(ret, arg0, exnptr) {
     try {
 
-        const retptr = passStringToWasm(getObject(arg0).href);
+        const retptr = passStringToWasm(getObject(arg0).pathname);
         const retlen = WASM_VECTOR_LEN;
         const mem = getUint32Memory();
         mem[ret / 4] = retptr;
@@ -441,6 +441,10 @@ __exports.__widl_f_length_NodeList = function(arg0) {
     return __widl_f_length_NodeList_target.call(getObject(arg0));
 };
 
+__exports.__widl_instanceof_PopStateEvent = function(idx) {
+    return getObject(idx) instanceof PopStateEvent ? 1 : 0;
+};
+
 const __widl_f_set_item_Storage_target = typeof Storage === 'undefined' ? null : Storage.prototype.setItem || function() {
     throw new Error(`wasm-bindgen: Storage.setItem does not exist`);
 };
@@ -471,17 +475,6 @@ __exports.__widl_f_document_Window = function(arg0) {
 
 __exports.__widl_f_location_Window = function(arg0) {
     return addHeapObject(getObject(arg0).location);
-};
-
-__exports.__widl_f_history_Window = function(arg0, exnptr) {
-    try {
-        return addHeapObject(getObject(arg0).history);
-    } catch (e) {
-        const view = getUint32Memory();
-        view[exnptr / 4] = 1;
-        view[exnptr / 4 + 1] = addHeapObject(e);
-
-    }
 };
 
 __exports.__widl_f_local_storage_Window = function(arg0, exnptr) {
@@ -582,9 +575,11 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper444 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(8);
-    const d = wasm.__wbg_function_table.get(9);
+__exports.__wbindgen_cb_forget = dropObject;
+
+__exports.__wbindgen_closure_wrapper497 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(4);
+    const d = wasm.__wbg_function_table.get(5);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

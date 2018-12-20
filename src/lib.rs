@@ -10,6 +10,7 @@ use wasm_bindgen::JsCast;
 
 pub mod dom_types;
 pub mod fetch;
+mod routing;
 #[macro_use]
 pub mod shortcuts;
 pub mod storage;
@@ -78,11 +79,11 @@ pub fn document() -> web_sys::Document {
 /// App initialization: Collect its fundamental components, setup, and perform
 /// an initial render.
 pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
-          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, route_map: Option<HashMap<&str, Ms>>)
+          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, routes: Option<HashMap<&str, Ms>>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
 
-    let app = vdom::App::new(model.clone(), update, view, mount_point_id);
+    let mut app = vdom::App::new(model.clone(), update, view, mount_point_id);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
@@ -97,55 +98,9 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
 
     // If a route map is inlcluded, update the state on page load, based
     // on the starting URL. Must be set up on the server as well.
-    if let Some(r_map) = route_map {
-        // todo switch back to path name.
-        let window = web_sys::window().expect("no global `window` exists");
-        let path = window.location().pathname().expect("Can't find pathname");
-        for (route, route_message) in r_map.clone().into_iter() {
-            if route == &path {
-                app.update_dom(route_message);
-                break;
-            }
-        }
-
-        // todo: Potentially split this routing hanlign to a sep func.
-        // todo: Probably in its own module.
-
-            // Convert to a map over owned strings, to prevent lifetime problems in the closure.
-            let mut r_map2 = HashMap::new();
-            for (route, msg) in r_map {
-                r_map2.insert(route.to_string(), msg);
-            }
-
-            let history_closure = Closure::wrap(
-                Box::new(move |event: web_sys::Event| {
-                    let event = event.dyn_into::<web_sys::PopStateEvent>()
-                        .expect("Unable to cast as a PopStateEvent");
-
-                    // We recreate window and document here since they're captured in a closure.
-                    let window = web_sys::window().expect("no global `window` exists");
-                    let path = window.location().pathname().expect("Can't find pathname");
-                    let path_trimmed = &path[1..path.len()].to_string();
-
-                    if let Some(route_message) = r_map2.get(path_trimmed) {
-                        app.update_dom(route_message.clone());
-                    }
-
-                    // todo: It looks like we could use either the event, or path name.
-                    // todo path name might be easier, since
-//                    if let Some(state) = event.state().as_string() {
-//                        crate::log("state: ".to_string() + &state);
-//                    }
-                })
-                    as Box<FnMut(web_sys::Event) + 'static>,
-            );
-
-            (window.as_ref() as &web_sys::EventTarget)
-                .add_event_listener_with_callback("popstate", history_closure.as_ref().unchecked_ref())
-                .expect("Problem adding popstate listener");
-
-        history_closure.forget();  // todo: Is this leaking memory?
-
+    if let Some(routes_inner) = routes {
+        app = routing::initial(app, routes_inner.clone());
+        routing::setup_popstate_listener(app, routes_inner);
     }
 
     // Allows panic messages to output to the browser console.error.
@@ -157,12 +112,7 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
 /// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
 /// https://developer.mozilla.org/en-US/docs/Web/API/History_API
 pub fn push_route(path: &str) {
-    let window = web_sys::window().expect("No global window exists");
-    let history = window.history().expect("Can't find history");
-    // The second parameter, title, is currently unused by Firefox at least.
-    // The first, an arbitrary state object, we could possibly use.
-    // todo: Look into using state
-    history.push_state_with_url(&JsValue::from_str(""), "", Some(path));
+    routing::push(path);
 }
 
 /// Create an element flagged in a way that it will not be rendered. Useful
