@@ -123,10 +123,14 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
 /// is an improtant client-side routing feature.
 /// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
 /// https://developer.mozilla.org/en-US/docs/Web/API/History_API
-pub fn push_route<Ms>(path: &str, message: Ms)
-    where Ms: Clone + Sized + 'static
-{
-    routing::push(path, message);
+//pub fn push_route<Ms>(path: &str, message: Ms)
+//    where Ms: Clone + Sized + 'static
+//{
+//    routing::push(path, message);
+//}
+
+pub fn push_route(path: &str) {
+    routing::push(path);
 }
 
 /// Create an element flagged in a way that it will not be rendered. Useful
