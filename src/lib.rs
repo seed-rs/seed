@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 use std::panic;
 
+use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 pub mod dom_types;
@@ -74,12 +75,14 @@ pub fn document() -> web_sys::Document {
         .expect("Can't find document")
 }
 
-/// The entry point for the app
+/// App initialization: Collect its fundamental components, setup, and perform
+/// an initial render.
 pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl) -> Mdl,
           view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, route_map: Option<HashMap<&str, Ms>>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
-    let app = vdom::App::new(model.clone(), update, view, mount_point_id);
+
+    let app = vdom::App::new(model.clone(), update, view, mount_point_id, route_map.clone());
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
@@ -97,16 +100,65 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(&mut vdom::History<Mdl, Ms>, Ms, Mdl)
     if let Some(r_map) = route_map {
         // todo switch back to path name.
         let window = web_sys::window().expect("no global `window` exists");
-        let path_name = window.location().href().expect("Can't find pathname");
-//        let path_name = window.location().pathname().expect("Can't find pathname");
-        for (route, message) in r_map.into_iter() {
-            if route == &path_name {
-                app.update_dom(message);
+        let path = window.location().pathname().expect("Can't find pathname");
+        for (route, route_message) in r_map.clone().into_iter() {
+            if route == &path {
+                app.update_dom(route_message);
                 break;
             }
         }
-    }
 
+
+        // todo: Potentially split this routing hanlign to a sep func.
+        // todo: Probably in its own module.
+
+
+            // Convert to a map over owned strings, to prevent lifetime problems in the closure.
+            let mut r_map2 = HashMap::new();
+            for (route, msg) in r_map {
+                r_map2.insert(route.to_string(), msg);
+            }
+
+            let history_closure = Closure::wrap(
+                Box::new(move |event: web_sys::Event| {
+                    let event = event.dyn_into::<web_sys::PopStateEvent>()
+                        .expect("Unable to cast as a PopStateEvent");
+
+                    // We recreate window and document here since they're captured in a closure.
+                    let window = web_sys::window().expect("no global `window` exists");
+                    let path = window.location().pathname().expect("Can't find pathname");
+                    let path_trimmed = &path[1..path.len()].to_string();
+
+                    crate::log("path: ".to_string() + &path_trimmed);
+
+                    if let Some(route_message) = r_map2.get(path_trimmed) {
+                        crate::log("FOUND MATCHING MSG");
+                        app.update_dom(route_message.clone());
+                    }
+
+
+                    // todo: It looks like we could use either the event, or path name.
+                    // todo path name might be easier, since
+//                    if let Some(state) = event.state().as_string() {
+//                        crate::log("state: ".to_string() + &state);
+//                    }
+                })
+                    as Box<FnMut(web_sys::Event) + 'static>,
+            );
+
+            (window.as_ref() as &web_sys::EventTarget)
+                .add_event_listener_with_callback("popstate", history_closure.as_ref().unchecked_ref())
+                .expect("Problem adding popstate listener");
+
+        history_closure.forget();  // todo: Is this leaking memory?
+
+
+
+
+
+
+
+    }
 
     // Allows panic messages to output to the browser console.error.
     panic::set_hook(Box::new(console_error_panic_hook::hook));

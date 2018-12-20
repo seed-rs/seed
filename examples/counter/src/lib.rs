@@ -115,5 +115,6 @@ fn view(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
+    // The final parameter is an optional routing map.
     seed::run(Model::default(), update, view, "main", None);
 }

@@ -165,12 +165,11 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         );
         (element.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
-            .expect("add_event_listener_with_callback");
+            .expect("problem adding listener to element");
 
-        // Store the closure so we can detach it later. Not detaching it (when an element
-        // is removed?) will cause a panic.
+        // Store the closure so we can detach it later. Not detaching it when an element
+        // is removed will trigger a panic.
         self.closure = Some(closure);
-
 //        self.handler.replace(handler);  // todo ?
     }
 
@@ -179,7 +178,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         let closure = self.closure.as_ref().unwrap();
         (el_ws.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
-            .expect("remove_event_listener_with_callback");
+            .expect("problem removing listener from element");
     }
 }
 

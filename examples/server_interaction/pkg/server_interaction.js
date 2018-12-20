@@ -199,8 +199,28 @@ __exports.__widl_f_remove_event_listener_with_callback_EventTarget = function(ar
     }
 };
 
+__exports.__widl_instanceof_HTMLButtonElement = function(idx) {
+    return getObject(idx) instanceof HTMLButtonElement ? 1 : 0;
+};
+
+const __widl_f_set_autofocus_HTMLButtonElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLButtonElement === 'undefined' ? null : HTMLButtonElement.prototype, 'autofocus').set || function() {
+    throw new Error(`wasm-bindgen: HTMLButtonElement.autofocus does not exist`);
+};
+
+__exports.__widl_f_set_autofocus_HTMLButtonElement = function(arg0, arg1) {
+    __widl_f_set_autofocus_HTMLButtonElement_target.call(getObject(arg0), arg1 !== 0);
+};
+
 __exports.__widl_instanceof_HTMLInputElement = function(idx) {
     return getObject(idx) instanceof HTMLInputElement ? 1 : 0;
+};
+
+const __widl_f_set_autofocus_HTMLInputElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLInputElement === 'undefined' ? null : HTMLInputElement.prototype, 'autofocus').set || function() {
+    throw new Error(`wasm-bindgen: HTMLInputElement.autofocus does not exist`);
+};
+
+__exports.__widl_f_set_autofocus_HTMLInputElement = function(arg0, arg1) {
+    __widl_f_set_autofocus_HTMLInputElement_target.call(getObject(arg0), arg1 !== 0);
 };
 
 const __widl_f_set_checked_HTMLInputElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLInputElement === 'undefined' ? null : HTMLInputElement.prototype, 'checked').set || function() {
@@ -209,6 +229,30 @@ const __widl_f_set_checked_HTMLInputElement_target = GetOwnOrInheritedPropertyDe
 
 __exports.__widl_f_set_checked_HTMLInputElement = function(arg0, arg1) {
     __widl_f_set_checked_HTMLInputElement_target.call(getObject(arg0), arg1 !== 0);
+};
+
+__exports.__widl_instanceof_HTMLSelectElement = function(idx) {
+    return getObject(idx) instanceof HTMLSelectElement ? 1 : 0;
+};
+
+const __widl_f_set_autofocus_HTMLSelectElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLSelectElement === 'undefined' ? null : HTMLSelectElement.prototype, 'autofocus').set || function() {
+    throw new Error(`wasm-bindgen: HTMLSelectElement.autofocus does not exist`);
+};
+
+__exports.__widl_f_set_autofocus_HTMLSelectElement = function(arg0, arg1) {
+    __widl_f_set_autofocus_HTMLSelectElement_target.call(getObject(arg0), arg1 !== 0);
+};
+
+__exports.__widl_instanceof_HTMLTextAreaElement = function(idx) {
+    return getObject(idx) instanceof HTMLTextAreaElement ? 1 : 0;
+};
+
+const __widl_f_set_autofocus_HTMLTextAreaElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLTextAreaElement === 'undefined' ? null : HTMLTextAreaElement.prototype, 'autofocus').set || function() {
+    throw new Error(`wasm-bindgen: HTMLTextAreaElement.autofocus does not exist`);
+};
+
+__exports.__widl_f_set_autofocus_HTMLTextAreaElement = function(arg0, arg1) {
+    __widl_f_set_autofocus_HTMLTextAreaElement_target.call(getObject(arg0), arg1 !== 0);
 };
 
 const __widl_f_set_Headers_target = typeof Headers === 'undefined' ? null : Headers.prototype.set || function() {
@@ -382,6 +426,12 @@ __exports.__widl_f_fetch_with_request_Window = function(arg0, arg1) {
     return addHeapObject(getObject(arg0).fetch(getObject(arg1)));
 };
 
+const __widl_f_log_1__target = console.log;
+
+__exports.__widl_f_log_1_ = function(arg0) {
+    __widl_f_log_1__target(getObject(arg0));
+};
+
 __exports.__wbg_newnoargs_6a80f84471205fc8 = function(arg0, arg1) {
     let varg0 = getStringFromWasm(arg0, arg1);
     return addHeapObject(new Function(varg0));
@@ -479,9 +529,9 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper723 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(8);
-    const d = wasm.__wbg_function_table.get(9);
+__exports.__wbindgen_closure_wrapper715 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(7);
+    const d = wasm.__wbg_function_table.get(8);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
@@ -503,9 +553,9 @@ __exports.__wbindgen_closure_wrapper723 = function(a, b, _ignored) {
     return addHeapObject(real);
 };
 
-__exports.__wbindgen_closure_wrapper1298 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(40);
-    const d = wasm.__wbg_function_table.get(41);
+__exports.__wbindgen_closure_wrapper1320 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(41);
+    const d = wasm.__wbg_function_table.get(42);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
