@@ -83,7 +83,19 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
 
-    let mut app = vdom::App::new(model.clone(), update, view, mount_point_id);
+    // todo DRY with routing:
+//    let mut routes_owned = HashMap::new();
+//    for (route, msg) in routes.clone() {
+//        routes_owned.insert(route.to_string(), msg);
+//    }
+    let routes_owned = match routes.clone() {
+        Some(routes_inner) => {
+            Some(HashMap::new()) // todo temp
+        },
+        None => None
+    };
+
+    let mut app = vdom::App::new(model.clone(), update, view, mount_point_id, routes_owned);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
@@ -100,7 +112,7 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
     // on the starting URL. Must be set up on the server as well.
     if let Some(routes_inner) = routes {
         app = routing::initial(app, routes_inner.clone());
-        routing::setup_popstate_listener(app, routes_inner);
+        routing::update_popstate_listener(app, routes_inner);
     }
 
     // Allows panic messages to output to the browser console.error.
@@ -111,8 +123,10 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
 /// is an improtant client-side routing feature.
 /// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
 /// https://developer.mozilla.org/en-US/docs/Web/API/History_API
-pub fn push_route(path: &str) {
-    routing::push(path);
+pub fn push_route<Ms>(path: &str, message: Ms)
+    where Ms: Clone + Sized + 'static
+{
+    routing::push(path, message);
 }
 
 /// Create an element flagged in a way that it will not be rendered. Useful

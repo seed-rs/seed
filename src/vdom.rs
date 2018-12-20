@@ -1,4 +1,7 @@
+use std::collections::HashMap;
 use std::{cell::{RefCell}, rc::Rc};
+
+use wasm_bindgen::closure::Closure;
 
 use crate::dom_types;
 use crate::dom_types::El;
@@ -40,6 +43,8 @@ pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     pub update: fn(Ms, Mdl) -> Mdl,
     pub view: fn(Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
+    pub popstate_closure: RefCell<Option<Closure<FnMut(web_sys::Event)>>>,
+    routes: RefCell<Option<HashMap<String, Ms>>>
 }
 
 pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
@@ -54,6 +59,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         update: fn(Ms, Mdl) -> Mdl,
         view: fn(Mdl) -> El<Ms>,
         parent_div_id: &str,
+        routes: Option<HashMap<String, Ms>>,
     ) -> Self {
 
         let window = web_sys::window().expect("No global window exists");
@@ -68,8 +74,9 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
                 model: RefCell::new(model),
                 update,
                 view,
-
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
+                popstate_closure: RefCell::new(None),
+                routes: RefCell::new(routes),
             })
         }
     }
