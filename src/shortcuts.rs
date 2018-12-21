@@ -1272,17 +1272,18 @@ macro_rules! log {
 }
 
 
+/// A HashMap literal, where the keys must implement ToString.
 #[macro_export]
 macro_rules! routes {
-    { $($key:expr => $value:expr);* $(;)* } => {
+    { $($key:expr => $value:expr),* $(,)* } => {
         {
-            let mut vals = std::collections::HashMap::new();
+            let mut result = std::collections::HashMap::new();
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
-                vals.insert($key.to_string(), $value);
+                result.insert($key.to_string(), $value);
             )*
-            seed::routing::Routes::new(vals)
+            result
         }
      };
 }

@@ -45,7 +45,7 @@ pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     pub view: fn(Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: RefCell<Option<Closure<FnMut(web_sys::Event)>>>,
-    routes: RefCell<Option<routing::Routes<Ms>>>
+    routes: RefCell<Option<HashMap<String, Ms>>>
 }
 
 pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
@@ -60,7 +60,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
         update: fn(Ms, Mdl) -> Mdl,
         view: fn(Mdl) -> El<Ms>,
         parent_div_id: &str,
-        routes: Option<routing::Routes<Ms>>,
+        routes: Option<HashMap<String, Ms>>,
     ) -> Self {
 
         let window = web_sys::window().expect("No global window exists");

@@ -3,33 +3,16 @@ use std::collections::HashMap;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 
-/// Helper function to allow creating HashMaps of Strings from &str, and to
-/// allow for a literal syntax.
-#[derive(Clone, Debug)]
-pub struct Routes<Ms: Clone + Sized + 'static> {
-    vals: HashMap<String, Ms>
-}
-
-impl<Ms: Clone + Sized + 'static>Routes<Ms> {
-    pub fn insert(&mut self, key: impl ToString, val: Ms) {
-        self.vals.insert(key.to_string(), val);
-    }
-
-    pub fn new(vals: HashMap<String, Ms>) -> Self {
-        Self { vals }
-    }
-}
-
 /// Convenience function, mainly to avoid repeating expect logic.
 fn make_window() -> web_sys::Window {
     web_sys::window().expect("Can't find the global Window.")
 }
 
-pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: Routes<Ms>) -> crate::vdom::App<Ms, Mdl>
+pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>) -> crate::vdom::App<Ms, Mdl>
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
     let path = make_window().location().pathname().expect("Can't find pathname");
-    for (route, route_message) in routes.vals.into_iter() {
+    for (route, route_message) in routes.into_iter() {
         if &route == &path {
             app.update_dom(route_message);
             break;
@@ -38,7 +21,7 @@ pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: Routes<Ms>) -> c
     app
 }
 
-pub fn update_popstate_listener<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: Routes<Ms>)
+pub fn update_popstate_listener<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
 
@@ -61,7 +44,7 @@ pub fn update_popstate_listener<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes:
             let path = make_window().location().pathname().expect("Can't find pathname");
             let path_trimmed = &path[1..path.len()].to_string();
 
-            if let Some(route_message) = routes.vals.get(path_trimmed) {
+            if let Some(route_message) = routes.get(path_trimmed) {
                 app_for_closure.update_dom(route_message.clone());
             }
 

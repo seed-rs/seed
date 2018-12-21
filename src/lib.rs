@@ -23,12 +23,10 @@ extern crate serde_derive;
 
 //// todos:
 // Passing values to enums that have arguments without lifetime issues.
-// todo router
 // todo local storage
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
-// todo composable styles and attrs. Perhaps it's adding multiple ones, or maybe merge methods.
 
 
 /// Convenience function used in event handling: Convert an event target
@@ -79,7 +77,7 @@ pub fn document() -> web_sys::Document {
 /// App initialization: Collect its fundamental components, setup, and perform
 /// an initial render.
 pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
-          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, routes: Option<routing::Routes<Ms>>)
+          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, routes: Option<HashMap<String, Ms>>)
     where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
 {
 
