@@ -250,15 +250,21 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount {
     fn update(self, el: &mut El<Ms>) {
-        el.mount_actions = self.actions
+        el.did_mount = Some(self.actions)
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for DidUpdate {
     fn update(self, el: &mut El<Ms>) {
-        el.unmount_actions = self.actions
+        el.did_update = Some(self.actions)
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount {
+    fn update(self, el: &mut El<Ms>) {
+        el.will_unmount = Some(self.actions)
     }
 }
 
@@ -668,9 +674,9 @@ pub struct El<Ms: Clone + 'static> {
 
     pub raw_html: bool,
 
-    mount_actions: Vec<FnMut(web_sys::Element)>,
-    // update_actions: Vec<FnMut(web_sys::Element)>,
-    unmount_actions: Vec<FnMut(web_sys::Element)>,
+    pub did_mount: Option<Box<Fn(&web_sys::Element)>>,
+    pub did_update: Option<Box<Fn(&web_sys::Element)>>,
+    pub will_unmount: Option<Box<Fn(&web_sys::Element)>>,
 }
 
 impl<Ms: Clone + 'static> El<Ms> {
@@ -689,9 +695,9 @@ impl<Ms: Clone + 'static> El<Ms> {
             raw_html: false,
             namespace: None,
 
-            mount_actions: Vec::new(),
-            // update_actions: Vec::new(),
-            unmount_actions: Vec::new(),
+            did_mount: None,
+            did_update: None,
+            will_unmount: None,
         }
     }
 
@@ -793,8 +799,9 @@ impl<Ms: Clone + 'static> El<Ms> {
             raw_html: self.raw_html,
             namespace: self.namespace.clone(),
 
-            mount_actions: Vec::new(),
-            unmount_actions: Vec::new(),
+            did_mount: None,
+            did_update: None,
+            will_unmount: None,
         }
     }
 
@@ -811,7 +818,7 @@ impl<Ms: Clone + 'static> El<Ms> {
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
-/// closures within listeners, so we ommit it.
+/// closures within listeners or lifestyle hooks, so we ommit them.
 impl<Ms: Clone + 'static> Clone for El<Ms> {
     fn clone(&self) -> Self {
         Self {
@@ -828,8 +835,9 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
             raw_html: self.raw_html,
             namespace: self.namespace.clone(),
 
-            mount_actions: self.mount_actions.clone(),
-            unmount_actions: self.unmount_actions.clone(),
+            did_mount: None,
+            did_update: None,
+            will_unmount: None,
         }
     }
 }
@@ -849,26 +857,32 @@ impl<Ms: Clone + 'static> PartialEq for El<Ms> {
     }
 }
 
-
-
-pub struct DidMount<Ms: Clone + 'static> {
-    actions: Vec<Ms>
+pub struct DidMount {
+    actions: Box<Fn(&web_sys::Element)>
 }
 
-impl<Ms: Clone + 'static> DidMount<Ms> {
-    pub fn new(actions: Vec<FnMut(web_sys::Element)>) -> Self {
-        actions
-    }
+pub struct DidUpdate {
+    actions: Box<Fn(&web_sys::Element)>
 }
 
-// todo: distinguish mount and update
-
-pub struct WillUnmount<Ms: Clone + 'static> {
-    actions: Vec<FnMut(web_sys::Element)>
+pub struct WillUnmount {
+    actions: Box<Fn(&web_sys::Element)>
 }
 
-impl<Ms: Clone + 'static> WillUnmount<Ms> {
-    pub fn new(actions: Vec<FnMut(web_sys::Element)>) -> Self {
-        Self {actions}
-    }
+/// A crate-level constructor for DidMount, to simplify syntax.
+pub fn did_mount(mut actions: impl Fn(&web_sys::Element) + 'static) -> DidMount {
+    let closure = move |el: &web_sys::Element| actions(el);
+    DidMount { actions: Box::new(closure) }
+}
+
+/// A crate-level constructor for DidUpdate, to simplify syntax.
+pub fn did_update(mut actions: impl Fn(&web_sys::Element) + 'static) -> DidUpdate  {
+    let closure = move |el: &web_sys::Element| actions(el);
+    DidUpdate { actions: Box::new(closure) }
+}
+
+/// A crate-level constructor for WillUnmount, to simplify syntax.
+pub fn will_unmount(mut actions: impl Fn(&web_sys::Element) + 'static) -> WillUnmount  {
+    let closure = move |el: &web_sys::Element| actions(el);
+    WillUnmount { actions: Box::new(closure) }
 }

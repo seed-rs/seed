@@ -252,7 +252,13 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
         // todo forcing a rerender for differnet listeners is potentially sloppy,
         // todo, but I'm not sure how to patch them, or deal with them.
         if old.tag != new.tag {
+
+            // todo DRY here between this and later in func.
+            if let Some(unmount_actions) = &old.will_unmount {
+                unmount_actions(&old_el_ws)
+            }
             parent.remove_child(&old_el_ws).expect("Problem removing an element");
+
             websys_bridge::attach_els(new, parent);
             let mut new = new;
             attach_listeners(&mut new, &mailbox);
@@ -324,7 +330,13 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
     // Now purge any existing children; they're not part of the new model.
     for child in avail_old_children {
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
+
+        // todo DRY here between this and earlier in func
+        if let Some(unmount_actions) = &child.will_unmount {
+            unmount_actions(&child_el_ws)
+        }
         old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
+
         child.el_ws.replace(child_el_ws);
     }
 

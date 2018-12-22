@@ -89,12 +89,17 @@ fn view(model: Model) -> El<Msg> {
                 "border" => "2px solid #004422"; "padding" => 20
             },
                 // We can use normal Rust code and comments in the view.
-                h3![ text ],
+                h3![ text, did_update(|el| log!("This showswhen we increment")) ],
                 button![ simple_ev("click", Msg::Increment), "+" ],
                 button![ simple_ev("click", Msg::Decrement), "-" ],
 
-                // Optionally-displaying an element
-                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+                // Optionally-displaying an element, and lifecycle hooks
+                if model.count >= 10 {
+                    h2![ style!{"padding" => 50}, "Nice!",
+                         did_mount(|el| log!("This shows when clicks reach 10")),
+                         will_unmount(|el| log!("This shows when clicks drop below 10")),
+                    ]
+                } else { seed::empty() }
 
             ],
         success_level(model.count),  // Incorporating a separate component
@@ -111,10 +116,11 @@ fn view(model: Model) -> El<Msg> {
         button![
             "Focus C",
             simple_ev("click", Msg::Focus("C")) ,
-            seed::dom_types::DidMount::new(vec![ |el| {
+            did_mount(|el| {
+                log!("Mounted the thang");
                 let html_el = seed::to_html_el(&el);
                 html_el.focus().unwrap();
-            } ])
+            })
         ],
     ]
 }

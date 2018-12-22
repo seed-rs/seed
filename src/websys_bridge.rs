@@ -46,8 +46,6 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
 //            autofocus_helper(input)
-            crate::log(val);
-            crate::log("INPUT AUTO");
             match val {
                 "true" => {
                     input.set_autofocus(true);
@@ -150,16 +148,18 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
     // This is how we call this function externally, ie not through recursion.
 
     // Don't render if we're dealing with a dummy element.
-    // todo get this working. it produes panics
+    // todo get this working. it pr
+    // odues panics
 //    if el_vdom.is_dummy() == true { return }
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
-//    crate::log("Rendering element in attach");
-    // Purge existing children.
-//    parent.remove_child(&el_ws).expect("Missing el_ws");
-    // Append its child while it's out of its element.
     parent.append_child(&el_ws).unwrap();
+
+    // Perform side-effects specified for mounting.
+    if let Some(mount_actions) = &el_vdom.did_mount {
+        mount_actions(&el_ws)
+    }
 
     // todo: It seesm like if text is present along with children, it'll bbe
     // todo shown before them instead of after. Fix this.
@@ -185,6 +185,11 @@ pub fn _remove_children(el: &web_sys::Element) {
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_types::El<Ms>,
            old_el_ws: &web_sys::Element, document: &web_sys::Document) {
+
+    // Perform side-effects specified for updating
+    if let Some(update_actions) = &old.did_update {
+        update_actions(old_el_ws)
+    }
 
     if old.attrs != new.attrs {
         for (key, new_val) in &new.attrs.vals {
@@ -212,7 +217,6 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
         old_el_ws.set_attribute("style", &new.style.to_string())
             .expect("Setting style");
     }
-
 
     // Patch text
     if old.text != new.text {

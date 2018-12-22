@@ -70,6 +70,48 @@ pub fn document() -> web_sys::Document {
         .expect("Can't find document")
 }
 
+/// Push a new state to the window's history, and append a custom path to the url. This
+/// is an improtant client-side routing feature.
+/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
+/// https://developer.mozilla.org/en-US/docs/Web/API/History_API
+//pub fn push_route<Ms>(path: &str, message: Ms)
+//    where Ms: Clone + Sized + 'static
+//{
+//    routing::push(path, message);
+//}
+
+pub fn push_route(path: &str) {
+    routing::push(path);
+}
+
+/// Create an element flagged in a way that it will not be rendered. Useful
+/// in ternary operations.
+pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
+    // The tag doesn't matter here, but this seems semantically appropriate.
+    let mut el = dom_types::El::empty(dom_types::Tag::Del);
+    el.add_attr("dummy-element".into(), "true".into());
+    el
+}
+
+/// A convenience function for logging to the web browser's console.  See also
+/// the log! macro, which is more flexible.
+pub fn log<S: ToString>(text: S) {
+    web_sys::console::log_1(&text.to_string().into());
+}
+
+// todo: Perhaps put did_mount etc here so we call with seed:: instead of in prelude.
+// todo or maybe not, for consistency with events.
+
+/// Introduce El into the global namespace for convenience (It will be repeated
+/// often in the output type of components), and UpdateEl, which is required
+/// for element-creation macros, input event constructors, and the History struct.
+pub mod prelude {
+    pub use crate::dom_types::{
+        El, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev, did_mount, did_update, will_unmount
+    };
+    pub use std::collections::HashMap;
+}
+
 /// App initialization: Collect its fundamental components, setup, and perform
 /// an initial render.
 pub fn run<Ms, Mdl>(
@@ -102,42 +144,4 @@ pub fn run<Ms, Mdl>(
 
     // Allows panic messages to output to the browser console.error.
     panic::set_hook(Box::new(console_error_panic_hook::hook));
-}
-
-/// Push a new state to the window's history, and append a custom path to the url. This
-/// is an improtant client-side routing feature.
-/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
-/// https://developer.mozilla.org/en-US/docs/Web/API/History_API
-//pub fn push_route<Ms>(path: &str, message: Ms)
-//    where Ms: Clone + Sized + 'static
-//{
-//    routing::push(path, message);
-//}
-
-pub fn push_route(path: &str) {
-    routing::push(path);
-}
-
-/// Create an element flagged in a way that it will not be rendered. Useful
-/// in ternary operations.
-pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
-    // The tag doesn't matter here, but this seems semantically appropriate.
-    let mut el = dom_types::El::empty(dom_types::Tag::Del);
-    el.add_attr("dummy-element".into(), "true".into());
-    el
-}
-
-/// A convenience function for logging to the web browser's console.  See also
-/// the log! macro, which is more flexible.
-pub fn log<S: ToString>(text: S) {
-    web_sys::console::log_1(&text.to_string().into());
-}
-
-
-/// Introduce El into the global namespace for convenience (It will be repeated
-/// often in the output type of components), and UpdateEl, which is required
-/// for element-creation macros, input event constructors, and the History struct.
-pub mod prelude {
-    pub use crate::dom_types::{El, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev};
-    pub use std::collections::HashMap;
 }
