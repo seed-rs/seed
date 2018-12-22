@@ -5,7 +5,6 @@
 use std::collections::HashMap;
 use std::panic;
 
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 pub mod dom_types;
@@ -17,9 +16,6 @@ pub mod storage;
 mod vdom;
 mod websys_bridge;
 
-// For fetch:
-#[macro_use]
-extern crate serde_derive;
 
 //// todos:
 // Passing values to enums that have arguments without lifetime issues.
@@ -27,7 +23,7 @@ extern crate serde_derive;
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
 // todo keyed elements??
-
+// todo: Msg as copy type?
 
 /// Convenience function used in event handling: Convert an event target
 /// to an input element; eg so you can take its value.
@@ -38,21 +34,21 @@ pub fn to_input(target: &web_sys::EventTarget ) -> &web_sys::HtmlInputElement {
 }
 
 /// See to_input
-pub fn to_textarea(target: &web_sys::EventTarget ) -> &web_sys::HtmlTextAreaElement {
+pub fn to_textarea(target: &web_sys::EventTarget) -> &web_sys::HtmlTextAreaElement {
     // This might be more appropriate for web_sys::bridge, but I'd
     // like to expose it without making websys_bridge public.
     target.dyn_ref::<web_sys::HtmlTextAreaElement>().expect("Unable to cast as a textarea element")
 }
 
 /// See to_input
-pub fn to_select(target: &web_sys::EventTarget ) -> &web_sys::HtmlSelectElement {
+pub fn to_select(target: &web_sys::EventTarget) -> &web_sys::HtmlSelectElement {
     // This might be more appropriate for web_sys::bridge, but I'd
     // like to expose it without making websys_bridge public.
     target.dyn_ref::<web_sys::HtmlSelectElement>().expect("Unable to cast as a select element")
 }
 
 /// See to_input
-pub fn to_html_el(target: &web_sys::EventTarget ) -> &web_sys::HtmlElement {
+pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
     // This might be more appropriate for web_sys::bridge, but I'd
     // like to expose it without making websys_bridge public.
     target.dyn_ref::<web_sys::HtmlElement>().expect("Unable to cast as an HTML element")
@@ -60,7 +56,7 @@ pub fn to_html_el(target: &web_sys::EventTarget ) -> &web_sys::HtmlElement {
 
 /// Convert a web_sys::Event to a web_sys::KeyboardEvent. Useful for extracting
 /// info like which key has been pressed, which is not available with normal Events.
-pub fn to_kbevent(event: &web_sys::Event ) -> &web_sys::KeyboardEvent {
+pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
     // This might be more appropriate for web_sys::bridge, but I'd
     // like to expose it without making websys_bridge public.
     event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
@@ -76,18 +72,21 @@ pub fn document() -> web_sys::Document {
 
 /// App initialization: Collect its fundamental components, setup, and perform
 /// an initial render.
-pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
-          view: fn(Mdl) -> dom_types::El<Ms>, mount_point_id: &str, routes: Option<HashMap<String, Ms>>)
-    where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
+pub fn run<Ms, Mdl>(
+    model: Mdl,
+    update: fn(Ms, Mdl) -> Mdl,
+    view: fn(Mdl) -> dom_types::El<Ms>,
+    mount_point_id: &str,
+    routes: Option<HashMap<String, Ms>>)
+    where Ms: Clone + 'static, Mdl: Clone + 'static
 {
-
     let mut app = vdom::App::new(model.clone(), update, view, mount_point_id, routes.clone());
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
     app.setup_vdom(&mut topel_vdom, 0, 0);
 
-    vdom::attach_listeners(&mut topel_vdom, app.mailbox());
+    vdom::attach_listeners(&mut topel_vdom, &app.mailbox());
 
     // Attach all children: This is where our initial render occurs.
     websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
@@ -98,7 +97,7 @@ pub fn run<Ms, Mdl>(model: Mdl, update: fn(Ms, Mdl) -> Mdl,
     // on the starting URL. Must be set up on the server as well.
     if let Some(routes_inner) = routes {
         app = routing::initial(app, routes_inner.clone());
-        routing::update_popstate_listener(app, routes_inner);
+        routing::update_popstate_listener(&app, routes_inner);
     }
 
     // Allows panic messages to output to the browser console.error.

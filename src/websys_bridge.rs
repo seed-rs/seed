@@ -174,7 +174,7 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
 }
 
 /// Recursively remove all children.
-pub fn remove_children(el: &web_sys::Element) {
+pub fn _remove_children(el: &web_sys::Element) {
     while let Some(child) = el.last_child() {
         el.remove_child(&child).unwrap();
     }
@@ -227,12 +227,9 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
         if new.raw_html {
             old_el_ws.set_inner_html(&text)
         } else {
-
             if old.text.is_none() {
                 // There's no old node to find: Add it.
                 let new_next_node = document.create_text_node(&text);
-
-
                 old_el_ws.append_child(&new_next_node).unwrap();
             } else {
                 // Iterating over a NodeList, unfortunately, is not as clean as you might expect.

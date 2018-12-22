@@ -58,15 +58,19 @@ impl Namespace {
 
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
-pub fn simple_ev<Ms: Clone + 'static>(trigger: &str, message: Ms) -> Listener<Ms> {
-    let mut listener = Listener::empty(trigger.into());
+pub fn simple_ev<Ms>(trigger: &str, message: Ms) -> Listener<Ms>
+    where Ms: Clone + 'static
+{
+    let mut listener = Listener::empty(&trigger.into());
     listener.add_handler_simple(message);
     listener
 }
 
 /// Create an event that passes a String of field text, for fast input handling.
-pub fn input_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms> {
-    let mut listener = Listener::empty(trigger.into());
+pub fn input_ev<Ms>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms>
+    where Ms: Clone + 'static
+{
+    let mut listener = Listener::empty(&trigger.into());
     // handler must be boxed before passing to Listener's add method.
     listener.add_handler_input(Box::new(handler));
     listener
@@ -74,8 +78,10 @@ pub fn input_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(String) 
 
 /// Create an event that passes a web_sys::Event, allowing full control of
 /// event-handling
-pub fn raw_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms> {
-    let mut listener = Listener::empty(trigger.into());
+pub fn raw_ev<Ms>(trigger: &str, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms>
+    where Ms: Clone + 'static
+{
+    let mut listener = Listener::empty(&trigger.into());
     // handler must be boxed before passing to Listener's add method.
     listener.add_handler_raw(Box::new(handler));
     listener
@@ -83,12 +89,22 @@ pub fn raw_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::E
 
 /// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
 /// to items like key_code() and key().
-pub fn keyboard_ev<Ms: Clone + 'static>(trigger: &str, handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms> {
-    let mut listener = Listener::empty(trigger.into());
+pub fn keyboard_ev<Ms>(trigger: &str, handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms>
+    where Ms: Clone + 'static
+{
+    let mut listener = Listener::empty(&trigger.into());
     // handler must be boxed before passing to Listener's add method.
     listener.handler_keyboard(Box::new(handler));
     listener
 }
+
+//pub fn did_mount<Ms>(message: Ms) -> Listener<Ms>
+//    where Ms: Clone + 'static
+//{
+//    let mut listener = Listener::empty(&trigger.into());
+//    listener.add_handler_simple(message);
+//    listener
+//}
 
 /// Event-handling for Elements
 pub struct Listener<Ms: Clone> {
@@ -99,9 +115,8 @@ pub struct Listener<Ms: Clone> {
 }
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-// todo + 'static ??
 impl<Ms: Clone + 'static> Listener<Ms> {
-    pub fn empty(event: Event) -> Self {
+    pub fn empty(event: &Event) -> Self {
         Self {
             trigger: String::from(event.as_str()),
             handler: None,
@@ -232,6 +247,18 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
         for listener in self.into_iter() {
             el.listeners.push(listener)
         }
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount<Ms> {
+    fn update(self, el: &mut El<Ms>) {
+        el.mount_actions = self.actions
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount<Ms> {
+    fn update(self, el: &mut El<Ms>) {
+        el.unmount_actions = self.actions
     }
 }
 
@@ -640,21 +667,32 @@ pub struct El<Ms: Clone + 'static> {
 //    pub key: Option<u32>,
 
     pub raw_html: bool,
+
+    mount_actions: Vec<FnMut(web_sys::Element)>,
+    // update_actions: Vec<FnMut(web_sys::Element)>,
+    unmount_actions: Vec<FnMut(web_sys::Element)>,
 }
 
 impl<Ms: Clone + 'static> El<Ms> {
-    pub fn new(tag: Tag, attrs: Attrs, style: Style,
-               listeners: Vec<Listener<Ms>>, text: &str, children: Vec<El<Ms>>, namespace: Option<Namespace>) -> Self {
-        Self {tag, attrs, style, text: Some(text.into()), children,
-            el_ws: None, listeners, id: None, nest_level: None, raw_html: false, namespace
-        }
-    }
-
     /// Create an empty element, specifying only the tag
     pub fn empty(tag: Tag) -> Self {
-        Self {tag, attrs: Attrs::empty(), style: Style::empty(),
-            text: None, children: Vec::new(), el_ws: None,
-            listeners: Vec::new(), id: None, nest_level: None, raw_html: false, namespace: None }
+        Self {
+            tag,
+            attrs: Attrs::empty(),
+            style: Style::empty(),
+            text: None,
+            children: Vec::new(),
+            el_ws: None,
+            listeners: Vec::new(),
+            id: None,
+            nest_level: None,
+            raw_html: false,
+            namespace: None,
+
+            mount_actions: Vec::new(),
+            // update_actions: Vec::new(),
+            unmount_actions: Vec::new(),
+        }
     }
 
     /// Create an empty SVG element, specifying only the tag
@@ -754,6 +792,9 @@ impl<Ms: Clone + 'static> El<Ms> {
             el_ws: self.el_ws.clone(),
             raw_html: self.raw_html,
             namespace: self.namespace.clone(),
+
+            mount_actions: Vec::new(),
+            unmount_actions: Vec::new(),
         }
     }
 
@@ -786,11 +827,14 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
             listeners: Vec::new(),
             raw_html: self.raw_html,
             namespace: self.namespace.clone(),
+
+            mount_actions: self.mount_actions.clone(),
+            unmount_actions: self.unmount_actions.clone(),
         }
     }
 }
 
-impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
+impl<Ms: Clone + 'static> PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
@@ -802,5 +846,29 @@ impl<Ms: Clone + 'static>  PartialEq for El<Ms> {
         // TOdo not sure how nest-level should be used. Is it a given based on
         // todo how we iterate? Sanity-check for now.
         self.nest_level == other.nest_level
+    }
+}
+
+
+
+pub struct DidMount<Ms: Clone + 'static> {
+    actions: Vec<Ms>
+}
+
+impl<Ms: Clone + 'static> DidMount<Ms> {
+    pub fn new(actions: Vec<FnMut(web_sys::Element)>) -> Self {
+        actions
+    }
+}
+
+// todo: distinguish mount and update
+
+pub struct WillUnmount<Ms: Clone + 'static> {
+    actions: Vec<FnMut(web_sys::Element)>
+}
+
+impl<Ms: Clone + 'static> WillUnmount<Ms> {
+    pub fn new(actions: Vec<FnMut(web_sys::Element)>) -> Self {
+        Self {actions}
     }
 }

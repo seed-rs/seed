@@ -3,17 +3,22 @@ use std::collections::HashMap;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 
-/// Convenience function, mainly to avoid repeating expect logic.
+/// Convenience function to avoid repeating expect logic.
 fn make_window() -> web_sys::Window {
     web_sys::window().expect("Can't find the global Window.")
 }
 
-pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>) -> crate::vdom::App<Ms, Mdl>
-    where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
-{
+/// A convenience function to prevent repetitions
+fn get_path() -> String {
     let path = make_window().location().pathname().expect("Can't find pathname");
+    path[1..path.len()].to_string()
+}
+
+pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>) -> crate::vdom::App<Ms, Mdl>
+    where Ms: Clone + 'static, Mdl: Clone + 'static
+{
     for (route, route_message) in routes.into_iter() {
-        if &route == &path {
+        if route == get_path() {
             app.update_dom(route_message);
             break;
         }
@@ -21,8 +26,8 @@ pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, 
     app
 }
 
-pub fn update_popstate_listener<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>)
-    where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static
+pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>)
+    where Ms: Clone +'static, Mdl: Clone + 'static
 {
 
     let window = make_window();
@@ -36,18 +41,14 @@ pub fn update_popstate_listener<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes:
     let app_for_closure = app.clone();
 
     let closure = Closure::wrap(
-        Box::new(move |event: web_sys::Event| {
-            // todo we currently don't use state/events.
-//            let event = event.dyn_into::<web_sys::PopStateEvent>()
-//                .expect("Unable to cast as a PopStateEvent");
-
-            let path = make_window().location().pathname().expect("Can't find pathname");
-            let path_trimmed = &path[1..path.len()].to_string();
-
-            if let Some(route_message) = routes.get(path_trimmed) {
+        Box::new(move |_| {
+            if let Some(route_message) = routes.get(&get_path()) {
                 app_for_closure.update_dom(route_message.clone());
             }
 
+            // todo we currently don't use state/events.
+//            let event = event.dyn_into::<web_sys::PopStateEvent>()
+//                .expect("Unable to cast as a PopStateEvent");
             // todo: It looks like we could use either the event, or path name.
             // todo path name might be easier, since
 //                    if let Some(state) = event.state().as_string() {
@@ -63,7 +64,7 @@ pub fn update_popstate_listener<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes:
     app.data.popstate_closure.replace(Some(closure));
 }
 
-//pub fn push<Ms: Clone + Sized + 'static>(path: &str, message: Ms) {
+//pub fn push<Ms: Clone + 'static>(path: &str, message: Ms) {
 pub fn push(path: &str) {
     let history = make_window().history().expect("Can't find history");
     // The second parameter, title, is currently unused by Firefox at least.

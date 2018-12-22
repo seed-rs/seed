@@ -6,10 +6,9 @@ extern crate seed;
 use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+use serde_json;
+
+use serde::{Serialize, Deserialize};
 
 use std::collections::HashMap;
 

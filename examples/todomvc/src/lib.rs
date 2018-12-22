@@ -4,11 +4,8 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
+use serde::{Serialize, Deserialize};
 use wasm_bindgen::prelude::*;
-
-#[macro_use]
-extern crate serde_derive;
-
 
 const ENTER_KEY: u32 = 13;
 const ESCAPE_KEY: u32 = 27;
@@ -18,6 +15,16 @@ enum Visible {
     All,
     Active,
     Completed,
+}
+
+impl Visible {
+    fn to_string(self) -> String {
+        match self {
+            Visible::All => "".into(),
+            Visible::Active => "active".into(),
+            Visible::Completed => "completed".into(),
+        }
+    }
 }
 
 
@@ -108,6 +115,8 @@ enum Msg {
     EditSubmit(usize),
     EditChange(String),
     EditKeyDown(usize, u32),  // item position, keycode
+
+    RoutePage(Visible),
 }
 
 fn update(msg: Msg, model: Model) -> Model {
@@ -172,7 +181,10 @@ fn update(msg: Msg, model: Model) -> Model {
                 Model {todos, ..model}
             } else { model }
         }
-        Msg::SetVisibility(visible) => Model {visible, ..model },
+        Msg::SetVisibility(visible) => {
+            seed::push_route(&visible.to_string());
+            update(Msg::RoutePage(visible), model)
+        },
 
         Msg::EditItem(posit) => {
             let mut todos: Vec<Todo> = model.todos.into_iter()
@@ -209,6 +221,8 @@ fn update(msg: Msg, model: Model) -> Model {
                 update(Msg::EditSubmit(posit), model)
             } else {model}
         },
+
+        Msg::RoutePage(visible) => Model{visible, ..model} ,
     }
 }
 
@@ -242,9 +256,10 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     ]
 }
 
-fn selection_li(text: &str, path: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
+fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![
-        a![ attrs!{"href" => path; "class" => if visible == highlighter {"selected"} else {""}},
+        a![ attrs!{"class" => if visible == highlighter {"selected"} else {""}},
+            style!{"cursor" => "pointer"},
             simple_ev("click", Msg::SetVisibility(highlighter)), text
         ]
     ]
@@ -268,9 +283,9 @@ fn footer(model: &Model) -> El<Msg> {
         ],
 
         ul![ attrs!{"class" => "filters"},
-            selection_li("All", "#/", model.visible, Visible::All),
-            selection_li("Active", "#/active", model.visible, Visible::Active),
-            selection_li("Completed", "#/completed", model.visible, Visible::Completed)
+            selection_li("All", model.visible, Visible::All),
+            selection_li("Active", model.visible, Visible::Active),
+            selection_li("Completed", model.visible, Visible::Completed)
         ],
         clear_button
     ]
@@ -323,5 +338,11 @@ fn todo_app(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, todo_app, "main", None);
+    let mut routes = routes!{
+        "" => Msg::RoutePage(Visible::All),
+        "active" => Msg::RoutePage(Visible::Active),
+        "completed" => Msg::RoutePage(Visible::Completed),
+    };
+
+    seed::run(Model::default(), update, todo_app, "main", Some(routes));
 }

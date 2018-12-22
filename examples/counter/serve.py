@@ -1,13 +1,27 @@
 #!/usr/bin/env python3
 
-# From https://gist.github.com/prideout/09af26cef84eef3e06a1e3f20a499a48
-
 import http.server
+import os
 import socketserver
+import urllib
 
 PORT = 8000
 
-handler = http.server.SimpleHTTPRequestHandler
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    # Allow SPA routing by redirecting subpaths.
+    def do_GET(self):
+        urlparts = urllib.parse.urlparse(self.path)
+        request_file_path = urlparts.path.strip('/')
+
+        if not os.path.exists(request_file_path):
+            self.path = 'index.html'
+
+        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+
+handler = Handler
+# Add support for the WASM mime type.
 handler.extensions_map.update({
     '.wasm': 'application/wasm',
 })

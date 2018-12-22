@@ -108,7 +108,14 @@ fn view(model: Model) -> El<Msg> {
         input![ attrs!{"id" => "C"} ],
         button![ "Focus A", simple_ev("click", Msg::Focus("A")) ],
         button![ "Focus B", simple_ev("click", Msg::Focus("B")) ],
-        button![ "Focus C", simple_ev("click", Msg::Focus("C")) ],
+        button![
+            "Focus C",
+            simple_ev("click", Msg::Focus("C")) ,
+            seed::dom_types::DidMount::new(vec![ |el| {
+                let html_el = seed::to_html_el(&el);
+                html_el.focus().unwrap();
+            } ])
+        ],
     ]
 }
 

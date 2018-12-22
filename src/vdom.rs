@@ -5,7 +5,6 @@ use wasm_bindgen::closure::Closure;
 
 use crate::dom_types;
 use crate::dom_types::El;
-use crate::routing;
 use crate::websys_bridge;
 
 
@@ -35,8 +34,10 @@ impl<Ms> Clone for Mailbox<Ms> {
 
 // todo: Examine what needs to be ref cells, rcs etc
 
+type StoredPopstate = RefCell<Option<Closure<FnMut(web_sys::Event)>>>;
+
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
+pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     pub document: web_sys::Document,  // todo take off pub if you no longer use it in init
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update_dom().
@@ -44,17 +45,17 @@ pub struct Data<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
     pub update: fn(Ms, Mdl) -> Mdl,
     pub view: fn(Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
-    pub popstate_closure: RefCell<Option<Closure<FnMut(web_sys::Event)>>>,
+    pub popstate_closure: StoredPopstate,
     routes: RefCell<Option<HashMap<String, Ms>>>
 }
 
-pub struct App<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> {
+pub struct App<Ms: Clone + 'static , Mdl: 'static> {
     pub data: Rc<Data<Ms, Mdl>>
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
-impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
+impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     pub fn new(
         model: Mdl,
         update: fn(Ms, Mdl) -> Mdl,
@@ -126,7 +127,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
             &self.data.document,
             &mut self.data.main_el_vdom.borrow_mut(),
             &mut topel_new_vdom, &self.data.mount_point,
-            self.mailbox()
+            &self.mailbox()
         );
 
         // Now that we've re-rendered, replace our stored El with the new one;
@@ -165,7 +166,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
 
 // trying this approach leads to lifetime problems.
 //fn mailbox<Ms, Mdl>(app: &'static App<Ms, Mdl>) -> Mailbox<Ms>
-//    where Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static {
+//    where Ms: Clone + 'static, Mdl: Clone + 'static {
 //    Mailbox::new(move |message| {
 //        app.clone().update_dom(message);
 //    })
@@ -174,7 +175,7 @@ impl<Ms: Clone + Sized + 'static, Mdl: Clone + Sized + 'static> App<Ms, Mdl> {
 
 
 
-impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for App<Ms, Mdl> {
+impl<Ms: Clone + 'static , Mdl: 'static> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
             data: Rc::clone(&self.data),
@@ -184,8 +185,8 @@ impl<Ms: Clone + Sized + 'static , Mdl: Sized + 'static> std::clone::Clone for A
 
 // todo should this be here, or in a diff module?
 /// Recursively attach event-listeners. Run this at init.
-pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>)
-    where Ms: Clone + Sized + 'static
+pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
+    where Ms: Clone + 'static
 {
     let el_ws = el.el_ws.take().expect("Missing el_ws on attach_all_listeners");
 
@@ -193,7 +194,7 @@ pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>)
         listener.attach(&el_ws, mailbox.clone());
     }
     for child in &mut el.children {
-        attach_listeners(child, mailbox.clone())
+        attach_listeners(child, mailbox)
     }
 
    el.el_ws.replace(el_ws);
@@ -202,7 +203,7 @@ pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: Mailbox<Ms>)
 // todo should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
 pub fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
-    where Ms: Clone + Sized + 'static
+    where Ms: Clone + 'static
 {
     let el_ws = el.el_ws.take().expect("Missing el_ws on detach_all_listeners");
 
@@ -218,8 +219,8 @@ pub fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
 
 // todo take off pub if you no longer call this from lib.
 pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
-              parent: &web_sys::Element, mailbox: Mailbox<Ms>)
-    where Ms: Clone + Sized + 'static
+              parent: &web_sys::Element, mailbox: &Mailbox<Ms>)
+    where Ms: Clone + 'static
 {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // Todo: Current sceme is that if the parent changes, redraw all children...
@@ -254,7 +255,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
             parent.remove_child(&old_el_ws).expect("Problem removing an element");
             websys_bridge::attach_els(new, parent);
             let mut new = new;
-            attach_listeners(&mut new, mailbox.clone());
+            attach_listeners(&mut new, &mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
             return
         }
@@ -293,7 +294,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
             // changed, or we've made a mistake: Attach new children.
             websys_bridge::attach_els(child_new, &old_el_ws);
             let mut child_new = child_new;
-            attach_listeners(&mut child_new, mailbox.clone());
+            attach_listeners(&mut child_new, &mailbox);
         } else {
             // We still have old children to pick a match from. If we pick
             // incorrectly, or there is no "good" match, we'll have some
@@ -316,7 +317,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
             // todo do we really need to clone the mb again ehre? Keep this under control!
-            patch(document, &mut best_match, child_new, &old_el_ws, mailbox.clone()); // todo old vs new for par
+            patch(document, &mut best_match, child_new, &old_el_ws, &mailbox); // todo old vs new for par
         }
     }
 

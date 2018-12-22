@@ -5,15 +5,12 @@
 //! https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/
 //! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html
 
-//#[macro_use]
-//extern crate serde_derive;
 
 use std::collections::HashMap;
 use::std::hash::BuildHasher;
-
 use futures::{future, Future};
-//use js_sys;
-use wasm_bindgen::prelude::*;
+
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 //use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures;
