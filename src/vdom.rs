@@ -116,7 +116,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
         // We setup the vdom (which populates web_sys els through it, but don't
         // render them with attach_children; we try to do it cleverly via patch().
-        self.setup_vdom(&mut topel_new_vdom, 0, 0);
+        setup_els(&self.data.document, &mut topel_new_vdom, 0, 0);
 
         // Detach all old listeners before patching. We'll re-add them as required during patching.
         // We'll get a runtime panic if any are left un-removed.
@@ -141,25 +141,27 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             cloned.update_dom(message);
         })
     }
+}
 
-    /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
-    /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-    pub fn setup_vdom(&self, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32) {
-        // id iterates once per item; active-level once per nesting level.
-        let mut id = active_id;
-        el_vdom.id = Some(id);
-        id += 1;  // Raise the id after each element we process.
-        el_vdom.nest_level = Some(active_level);
+/// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
+/// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
+pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+    where Ms: Clone +'static
+{
+    // id iterates once per item; active-level once per nesting level.
+    let mut id = active_id;
+    el_vdom.id = Some(id);
+    id += 1;  // Raise the id after each element we process.
+    el_vdom.nest_level = Some(active_level);
 
-        // Create the web_sys element; add it to the working tree; store it in
-        // its corresponding vdom El.
-        let el_ws = websys_bridge::make_websys_el(el_vdom, &self.data.document);
-        el_vdom.el_ws = Some(el_ws);
-        for child in &mut el_vdom.children {
-            // Raise the active level once per recursion.
-            self.setup_vdom(child, active_level + 1, id);
-            id += 1;
-        }
+    // Create the web_sys element; add it to the working tree; store it in
+    // its corresponding vdom El.
+    let el_ws = websys_bridge::make_websys_el(el_vdom, document);
+    el_vdom.el_ws = Some(el_ws);
+    for child in &mut el_vdom.children {
+        // Raise the active level once per recursion.
+        setup_els(document, child, active_level + 1, id);
+        id += 1;
     }
 }
 

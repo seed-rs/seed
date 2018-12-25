@@ -178,6 +178,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             })
                 as Box<FnMut(web_sys::Event) + 'static>,
         );
+
         (element.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("problem adding listener to element");
@@ -662,10 +663,9 @@ pub struct El<Ms: Clone + 'static> {
     pub listeners: Vec<Listener<Ms>>,
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
-    pub namespace: Option<Namespace>,
 
     // Things that get filled in later, to assist with rendering.
-    pub id: Option<u32>,
+    pub id: Option<u32>,  // todo maybe not optional...
     pub nest_level: Option<u32>,
     pub el_ws: Option<web_sys::Element>,
 
@@ -673,7 +673,13 @@ pub struct El<Ms: Clone + 'static> {
 //    pub key: Option<u32>,
 
     pub raw_html: bool,
+    pub namespace: Option<Namespace>,
 
+     // static: bool
+     // static_to_parent: bool
+    // ancestors: Vec<u32>  // ids of parent, grandparent etc.
+
+    // Lifecycle hooks
     pub did_mount: Option<Box<Fn(&web_sys::Element)>>,
     pub did_update: Option<Box<Fn(&web_sys::Element)>>,
     pub will_unmount: Option<Box<Fn(&web_sys::Element)>>,
@@ -686,14 +692,19 @@ impl<Ms: Clone + 'static> El<Ms> {
             tag,
             attrs: Attrs::empty(),
             style: Style::empty(),
+            listeners: Vec::new(),
             text: None,
             children: Vec::new(),
-            el_ws: None,
-            listeners: Vec::new(),
+
             id: None,
             nest_level: None,
+            el_ws: None,
+
             raw_html: false,
             namespace: None,
+
+            // static: false,
+            // static_to_parent: false,
 
             did_mount: None,
             did_update: None,
@@ -869,20 +880,20 @@ pub struct WillUnmount {
     actions: Box<Fn(&web_sys::Element)>
 }
 
-/// A crate-level constructor for DidMount, to simplify syntax.
-pub fn did_mount(mut actions: impl Fn(&web_sys::Element) + 'static) -> DidMount {
+/// Aconstructor for DidMount, to be used in the API
+pub fn did_mount(actions: impl Fn(&web_sys::Element) + 'static) -> DidMount {
     let closure = move |el: &web_sys::Element| actions(el);
     DidMount { actions: Box::new(closure) }
 }
 
-/// A crate-level constructor for DidUpdate, to simplify syntax.
-pub fn did_update(mut actions: impl Fn(&web_sys::Element) + 'static) -> DidUpdate  {
+/// A constructor for DidUpdate, to be used in the API
+pub fn did_update(actions: impl Fn(&web_sys::Element) + 'static) -> DidUpdate  {
     let closure = move |el: &web_sys::Element| actions(el);
     DidUpdate { actions: Box::new(closure) }
 }
 
-/// A crate-level constructor for WillUnmount, to simplify syntax.
-pub fn will_unmount(mut actions: impl Fn(&web_sys::Element) + 'static) -> WillUnmount  {
+/// A constructor for WillUnmount, to be used in the API
+pub fn will_unmount(actions: impl Fn(&web_sys::Element) + 'static) -> WillUnmount  {
     let closure = move |el: &web_sys::Element| actions(el);
     WillUnmount { actions: Box::new(closure) }
 }

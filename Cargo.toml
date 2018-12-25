@@ -21,7 +21,7 @@ js-sys = "0.3.6"
 console_error_panic_hook = "^0.1.5"
 serde = { version = "^1.0.80", features = ['derive'] }
 serde_json = "^1.0.33"
-futures = "0.1.20"
+futures = "^0.1.20"
 wasm-bindgen-futures = "0.3.6"
 
 # Markdown conversion

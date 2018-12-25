@@ -13,52 +13,72 @@ use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
 
+
+
 // Model
 
 
-// Note that you can apply Serialize and Deserialize to your model directly,
-// eg if you'd like to receive or pass all of its data.
-// Why is clone required?b
-#[derive(Serialize, Deserialize, Clone)]
-struct Data {
-    val: i32,
-    text: String,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Commit {
+    pub sha: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Branch {
+    pub name: String,
+    pub commit: Commit,
 }
 
 #[derive(Clone)]
 struct Model {
-    data: Data,
+//    data: Data,
+    data: Branch,
 }
 
 
+use futures::{future, Future};
+use wasm_bindgen_futures;
+use wasm_bindgen_futures::future_to_promise;
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-//        let url = "https://seed-example.herokuapp.com/data";
         let url = "https://api.github.com/repos/rust-lang/rust/branches/master";
-        let mut headers = HashMap::new();
-//        headers.insert("Content-Type", "application/json");
 
-        let data = seed::fetch::fetch(seed::fetch::Method::Get, url, None, Some(headers));
+        let placeholder = Self {
+            data: Branch{ name: "Test".into(), commit: Commit{sha: "123".into()} }
+        };
+
+        let cb = Box::new(|serialized: String| {
+            let data: Branch = serde_json::from_str(&serialized).unwrap();
+            log!(format!("{:?}", &data));
+//            let p2 = Self {
+//            data: Data { val: 0, text: String::new() }
+//                data: Branch{ name: "Test".into(), commit: Commit{sha: "123".into()} }
+//            data: data
+//            };
+
+//            update(Msg::Replace(data), p2);
+        });
+        seed::fetch::get(url, None, Some(headers), cb);
 
 
-//        let closure = Closure::wrap(
-//            Box::new(move |v| {
-//                seed::log(v);
-//            })
-//        );
 
-
-
-//        server_data.then(&closure);;
+//            .and_then(|json| {
+////            // Use serde to parse the JSON into a struct.
+//            let data: Branch = json.into_serde().unwrap();
+//            log!(format!("{:?}", data));
+////
+//////            log!(format!("{:?}", data));
+////            future::ok("test")
+//            future::ok(JsValue::from_serde(&data).unwrap())
+////
+//        });
+//        let p = future_to_promise(r);
 
 //        Msg::Replace(data);
 
-//        seed::log(server_data.into());
 
-        Self {
-            data: Data { val: 0, text: String::new() }
-        }
+        placeholder
     }
 }
 
@@ -67,7 +87,8 @@ impl Default for Model {
 
 #[derive(Clone)]
 enum Msg {
-    Replace(Data),
+//    Replace(Data),
+    Replace(Branch),
 }
 
 fn update(msg: Msg, model: Model) -> Model {
@@ -80,7 +101,8 @@ fn update(msg: Msg, model: Model) -> Model {
 // View
 
 fn view(model: Model) -> El<Msg> {
-    div![ format!("Hello World. Val: {}, text: {}", model.data.val, model.data.text) ]
+//    div![ format!("Hello World. Val: {}, text: {}", model.data.val, model.data.text) ]
+    div![ format!("Hello World. name: {}, sha: {}", model.data.name, model.data.commit.sha) ]
 }
 
 #[wasm_bindgen]

@@ -66,11 +66,17 @@ fn success_level(clicks: i32) -> El<Msg> {
     p![ descrip ]
 }
 
-/// The top-level component we pass to the virtual dom. Must accept a ref to the model as its
+/// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output a single El.
 fn view(model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
+
+//    let autofocus = |el: &web_sys::Element| {
+//                log!("Mounted the thang");
+//                let html_el = seed::to_html_el(&el);
+//                html_el.focus().unwrap();
+//    };
 
     // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style!{
@@ -89,7 +95,7 @@ fn view(model: Model) -> El<Msg> {
                 "border" => "2px solid #004422"; "padding" => 20
             },
                 // We can use normal Rust code and comments in the view.
-                h3![ text, did_update(|el| log!("This showswhen we increment")) ],
+                h3![ text, did_update(|el| log!("This shows when we increment")) ],
                 button![ simple_ev("click", Msg::Increment), "+" ],
                 button![ simple_ev("click", Msg::Decrement), "-" ],
 
@@ -106,22 +112,6 @@ fn view(model: Model) -> El<Msg> {
 
         h3![ "What precisely is it we're counting?" ],
         input![ attrs!{"value" => model.what_we_count}, input_ev("input", Msg::ChangeWWC) ],
-
-        // todo temp: testing.
-        input![ attrs!{"id" => "A"; "autofocus" => true} ],
-        input![ attrs!{"id" => "B"} ],
-        input![ attrs!{"id" => "C"} ],
-        button![ "Focus A", simple_ev("click", Msg::Focus("A")) ],
-        button![ "Focus B", simple_ev("click", Msg::Focus("B")) ],
-        button![
-            "Focus C",
-            simple_ev("click", Msg::Focus("C")) ,
-            did_mount(|el| {
-                log!("Mounted the thang");
-                let html_el = seed::to_html_el(&el);
-                html_el.focus().unwrap();
-            })
-        ],
     ]
 }
 

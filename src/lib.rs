@@ -16,9 +16,7 @@ pub mod storage;
 mod vdom;
 mod websys_bridge;
 
-
 //// todos:
-// Passing values to enums that have arguments without lifetime issues.
 // todo local storage
 // todo maybe?? High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
@@ -126,7 +124,9 @@ pub fn run<Ms, Mdl>(
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
-    app.setup_vdom(&mut topel_vdom, 0, 0);
+//    app.setup_vdom(&mut topel_vdom, 0, 0);
+    let document = &web_sys::window().unwrap().document().unwrap();
+    vdom::setup_els(&document, &mut topel_vdom, 0, 0);
 
     vdom::attach_listeners(&mut topel_vdom, &app.mailbox());
 
