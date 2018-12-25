@@ -257,7 +257,7 @@ curve is shallow, and I think the macro syntax used to create elements, attribut
 is close-enough to normal Rust syntax that it's easy to reason about how the code
 should come together, without compartmentalizing it into logic code and display code.
  This lack of separation
-in particlar is a subjective, controversial decision, but I think the benefits 
+in particular is a subjective, controversial decision, but I think the benefits 
 are worth it.
 
 
