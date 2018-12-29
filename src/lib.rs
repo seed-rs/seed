@@ -5,13 +5,11 @@
 use std::collections::HashMap;
 use std::panic;
 
-use wasm_bindgen::JsCast;
-
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;
 #[macro_use]
-pub mod shortcuts;
+mod shortcuts;
 pub mod storage;
 mod vdom;
 mod websys_bridge;
@@ -23,42 +21,12 @@ mod websys_bridge;
 // todo keyed elements??
 // todo: Msg as copy type?
 
-/// Convenience function used in event handling: Convert an event target
-/// to an input element; eg so you can take its value.
-pub fn to_input(target: &web_sys::EventTarget ) -> &web_sys::HtmlInputElement {
-    // This might be more appropriate for web_sys::bridge, but I'd
-    // like to expose it without making websys_bridge public.
-    target.dyn_ref::<web_sys::HtmlInputElement>().expect("Unable to cast as an input element")
-}
-
-/// See to_input
-pub fn to_textarea(target: &web_sys::EventTarget) -> &web_sys::HtmlTextAreaElement {
-    // This might be more appropriate for web_sys::bridge, but I'd
-    // like to expose it without making websys_bridge public.
-    target.dyn_ref::<web_sys::HtmlTextAreaElement>().expect("Unable to cast as a textarea element")
-}
-
-/// See to_input
-pub fn to_select(target: &web_sys::EventTarget) -> &web_sys::HtmlSelectElement {
-    // This might be more appropriate for web_sys::bridge, but I'd
-    // like to expose it without making websys_bridge public.
-    target.dyn_ref::<web_sys::HtmlSelectElement>().expect("Unable to cast as a select element")
-}
-
-/// See to_input
-pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
-    // This might be more appropriate for web_sys::bridge, but I'd
-    // like to expose it without making websys_bridge public.
-    target.dyn_ref::<web_sys::HtmlElement>().expect("Unable to cast as an HTML element")
-}
-
-/// Convert a web_sys::Event to a web_sys::KeyboardEvent. Useful for extracting
-/// info like which key has been pressed, which is not available with normal Events.
-pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
-    // This might be more appropriate for web_sys::bridge, but I'd
-    // like to expose it without making websys_bridge public.
-    event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
-}
+pub use crate::{
+    //    dom_types::{did_mount, did_update, will_unmount},  // todo: Here or in prelude?
+    fetch::{Method, fetch, get, post},
+    websys_bridge::{to_input, to_kbevent, to_select, to_textarea, to_html_el},
+    routing::push_route,
+};
 
 /// Convenience function to access the web_sys DOM document.
 pub fn document() -> web_sys::Document {
@@ -66,20 +34,6 @@ pub fn document() -> web_sys::Document {
         .expect("Can't find window")
         .document()
         .expect("Can't find document")
-}
-
-/// Push a new state to the window's history, and append a custom path to the url. This
-/// is an improtant client-side routing feature.
-/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.History.html#method.push_state_with_url
-/// https://developer.mozilla.org/en-US/docs/Web/API/History_API
-//pub fn push_route<Ms>(path: &str, message: Ms)
-//    where Ms: Clone + Sized + 'static
-//{
-//    routing::push(path, message);
-//}
-
-pub fn push_route(path: &str) {
-    routing::push(path);
 }
 
 /// Create an element flagged in a way that it will not be rendered. Useful
@@ -124,7 +78,6 @@ pub fn run<Ms, Mdl>(
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     let mut topel_vdom = (app.data.view)(model);
-//    app.setup_vdom(&mut topel_vdom, 0, 0);
     let document = &web_sys::window().unwrap().document().unwrap();
     vdom::setup_els(&document, &mut topel_vdom, 0, 0);
 

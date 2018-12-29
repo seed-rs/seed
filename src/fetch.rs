@@ -5,7 +5,6 @@
 //! https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/
 //! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html
 
-
 use std::collections::HashMap;
 use::std::hash::BuildHasher;
 use futures::{future, Future};
@@ -28,7 +27,7 @@ pub enum Method {
 }
 
 impl Method {
-    fn as_str(&self) -> &str {
+    pub fn as_str(&self) -> &str { // todo pub is temp
         match *self {
             Method::Get => "GET",
             Method::Head => "HEAD",
@@ -43,27 +42,14 @@ impl Method {
     }
 }
 
-use serde::{Deserialize, Serialize};
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Commit {
-    pub sha: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Branch {
-    pub name: String,
-    pub commit: Commit,
-}
-
-
 /// A wrapper over web_sys's fetch api, to simplify code
 /// https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-pub fn fetch<S>(method: Method, url: &str, payload: Option<String>,
-//         headers: Option<HashMap<&str, &str, S>>) -> js_sys::Promise
-//         headers: Option<HashMap<&str, &str, S>>)
-//         headers: Option<HashMap<&str, &str, S>>) -> impl Future<Item = JsValue>
-         headers: Option<HashMap<&str, &str, S>>, cb: Box<Fn(String)>)
-    where S: BuildHasher
+pub fn fetch(
+    method: Method,
+    url: &str,
+    payload: Option<HashMap<&str, &str>>,
+    headers: Option<HashMap<&str, &str>>,
+    callback: Box<Fn(JsValue)>)
 {
     let mut opts = web_sys::RequestInit::new();
     opts.method(method.as_str());
@@ -88,44 +74,44 @@ pub fn fetch<S>(method: Method, url: &str, payload: Option<String>,
     let window = web_sys::window().expect("Can't find window");
     let request_promise = window.fetch_with_request(&request);
 
-    let future = wasm_bindgen_futures::JsFuture::from(request_promise)
+    let f = wasm_bindgen_futures::JsFuture::from(request_promise)
         .and_then(|resp_value| {
             // `resp_value` is a `Response` object.
-            assert!(resp_value.is_instance_of::<web_sys::Response>());
+//            assert!(resp_value.is_instance_of::<web_sys::Response>());  // todo wtf is this getting an error about El?
             let resp: web_sys::Response = resp_value.dyn_into()
                 .expect("Problem casting response as Reponse.");
 
-//            resp.json()
-            resp.text()
+            resp.json()
+//          resp.text()
         })
-        .and_then(|json_value: js_sys::Promise| {
+        .and_then(|json_value| {
             // Convert this other `Promise` into a rust `Future`.
             wasm_bindgen_futures::JsFuture::from(json_value)
-//            future::ok(temp)
         })
-
-        // todo ideally, here is where we'd like to split.
-
-        .and_then(move |json| {
-//            // Use serde to parse the JSON into a struct.
-            cb(json.as_string().expect("Problem converting JSON to String."));
+        .and_then(move |v| {
+            callback(v);
             future::ok(JsValue::null())
-//
         });
-    wasm_bindgen_futures::future_to_promise(future);
+
+    wasm_bindgen_futures::future_to_promise(f);
+
 }
 
-
-pub fn get<S>(url: &str, payload: Option<String>,
-         headers: Option<HashMap<&str, &str, S>>, cb: Box<Fn(String)>)
-    where S: BuildHasher
+pub fn get(
+    url: &str,
+    payload: Option<HashMap<&str, &str>>,
+    headers: Option<HashMap<&str, &str>>,
+    callback: Box<Fn(JsValue)>)
 {
-    fetch(Method::Get, url, payload, headers, cb)
+
+    fetch(Method::Get, url, payload, headers, callback)
 }
 
-pub fn post<S>(url: &str, payload: Option<String>,
-         headers: Option<HashMap<&str, &str, S>>, cb: Box<Fn(String)>)
-    where S: BuildHasher
+pub fn post(
+    url: &str,
+    payload: Option<HashMap<&str, &str>>,
+    headers: Option<HashMap<&str, &str>>,
+    callback: Box<Fn(JsValue)>)
 {
-    fetch(Method::Post, url, payload, headers, cb)
+    fetch(Method::Post, url, payload, headers, callback)
 }

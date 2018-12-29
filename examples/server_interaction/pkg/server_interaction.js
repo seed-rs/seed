@@ -400,13 +400,13 @@ __exports.__widl_instanceof_Response = function(idx) {
     return getObject(idx) instanceof Response ? 1 : 0;
 };
 
-const __widl_f_text_Response_target = typeof Response === 'undefined' ? null : Response.prototype.text || function() {
-    throw new Error(`wasm-bindgen: Response.text does not exist`);
+const __widl_f_json_Response_target = typeof Response === 'undefined' ? null : Response.prototype.json || function() {
+    throw new Error(`wasm-bindgen: Response.json does not exist`);
 };
 
-__exports.__widl_f_text_Response = function(arg0, exnptr) {
+__exports.__widl_f_json_Response = function(arg0, exnptr) {
     try {
-        return addHeapObject(__widl_f_text_Response_target.call(getObject(arg0)));
+        return addHeapObject(__widl_f_json_Response_target.call(getObject(arg0)));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -495,7 +495,7 @@ __exports.__wbg_new_9cc98abd8c2c45e2 = function(arg0, arg1) {
         }
 
     };
-    cbarg0.f = wasm.__wbg_function_table.get(104);
+    cbarg0.f = wasm.__wbg_function_table.get(106);
     cbarg0.a = arg0;
     cbarg0.b = arg1;
     try {
@@ -580,9 +580,15 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper620 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(11);
-    const d = wasm.__wbg_function_table.get(12);
+__exports.__wbindgen_json_serialize = function(idx, ptrptr) {
+    const ptr = passStringToWasm(JSON.stringify(getObject(idx)));
+    getUint32Memory()[ptrptr / 4] = ptr;
+    return WASM_VECTOR_LEN;
+};
+
+__exports.__wbindgen_closure_wrapper491 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(10);
+    const d = wasm.__wbg_function_table.get(11);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
@@ -604,9 +610,9 @@ __exports.__wbindgen_closure_wrapper620 = function(a, b, _ignored) {
     return addHeapObject(real);
 };
 
-__exports.__wbindgen_closure_wrapper1786 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(69);
-    const d = wasm.__wbg_function_table.get(70);
+__exports.__wbindgen_closure_wrapper1692 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(71);
+    const d = wasm.__wbg_function_table.get(72);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

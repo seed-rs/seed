@@ -34,77 +34,58 @@ impl Namespace {
 // todo valid ones.
 
 
-// todo once you sort out events/listeners etc, organize/tidy this module.
-// todo and reacttack when you need = 'static.
-
-
-//pub trait UpdateListener<T> {
-//    // T is the type of thing we're updating; eg attrs, style, events etc.
-//    fn update_l(self, el: &mut T);
-//}
-
-//
-//impl<Ms: Clone + 'static, F> UpdateListener<Listener<Ms>> for Box<F> where F: FnMut(String) -> Ms + 'static {
-//    fn update_l(self, listener: &mut Listener<Ms>) {
-//        listener.add_handler_input(self);
-//    }
-//}
-
-//impl<Ms: Clone + 'static> UpdateListener<Listener<Ms>> for Box<Ms> {
-//    fn update_l(self, listener: &mut Listener<Ms>) {
-//        listener.add_handler_simple(self);
-//    }
-//}
-
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms>(trigger: &str, message: Ms) -> Listener<Ms>
     where Ms: Clone + 'static
 {
-    let mut listener = Listener::empty(&trigger.into());
-    listener.add_handler_simple(message);
-    listener
+    let handler = || message;
+    let closure = move |_| handler.clone()();
+    Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
 /// Create an event that passes a String of field text, for fast input handling.
-pub fn input_ev<Ms>(trigger: &str, handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms>
+pub fn input_ev<Ms>(trigger: &str, mut handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms>
     where Ms: Clone + 'static
 {
-    let mut listener = Listener::empty(&trigger.into());
-    // handler must be boxed before passing to Listener's add method.
-    listener.add_handler_input(Box::new(handler));
-    listener
+    let closure = move |event: web_sys::Event| {
+        if let Some(target) = event.target() {
+            if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+                return handler(input.value());
+            }
+            if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+                return handler(input.value());
+            }
+            if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+                return handler(input.value());
+            }
+        }
+        handler(String::new())
+    };
+
+    Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
 /// Create an event that passes a web_sys::Event, allowing full control of
 /// event-handling
-pub fn raw_ev<Ms>(trigger: &str, handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms>
+pub fn raw_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms>
     where Ms: Clone + 'static
 {
-    let mut listener = Listener::empty(&trigger.into());
-    // handler must be boxed before passing to Listener's add method.
-    listener.add_handler_raw(Box::new(handler));
-    listener
+    let closure = move |event: web_sys::Event| handler(event);
+    Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
 /// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
 /// to items like key_code() and key().
-pub fn keyboard_ev<Ms>(trigger: &str, handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms>
+pub fn keyboard_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms>
     where Ms: Clone + 'static
 {
-    let mut listener = Listener::empty(&trigger.into());
-    // handler must be boxed before passing to Listener's add method.
-    listener.handler_keyboard(Box::new(handler));
-    listener
+        let closure = move |event: web_sys::Event| {
+            handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
+        };
+    Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
-//pub fn did_mount<Ms>(message: Ms) -> Listener<Ms>
-//    where Ms: Clone + 'static
-//{
-//    let mut listener = Listener::empty(&trigger.into());
-//    listener.add_handler_simple(message);
-//    listener
-//}
 
 /// Event-handling for Elements
 pub struct Listener<Ms: Clone> {
@@ -116,55 +97,12 @@ pub struct Listener<Ms: Clone> {
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms: Clone + 'static> Listener<Ms> {
-    pub fn empty(event: &Event) -> Self {
+    pub fn new(event: &Event, handler: Option<Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
         Self {
             trigger: String::from(event.as_str()),
-            handler: None,
+            handler,
             closure: None,
         }
-    }
-
-    /// Add a handler that doesn't process any details about the event, other
-    /// than it happened. The message Enum should not take a value.
-    fn add_handler_simple(&mut self, message: Ms) {
-        let handler = || message;
-        let closure = move |_| handler.clone()();
-        self.handler = Some(Box::new(closure));
-    }
-
-     /// Add a handler that takes the event target's value as text; use this
-     /// wiht input, textarea, and select elements.
-     fn add_handler_input(&mut self, mut handler: Box<FnMut(String) -> Ms + 'static>){
-         // We need to extract event.target.value, but value doesn't exist for generic
-         // event targets. We must cast as the appropriate type.
-         // todo: See if there's a way around this awkward behavior.
-        let closure = move |event: web_sys::Event| {
-            if let Some(target) = event.target() {
-                if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-                    return handler(input.value());
-                }
-                if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-                    return handler(input.value());
-                }
-                if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-                    return handler(input.value());
-                }
-            }
-            handler(String::new())
-        };
-         self.handler = Some(Box::new(closure));
-     }
-
-    fn add_handler_raw(&mut self, mut handler: Box<FnMut(web_sys::Event) -> Ms + 'static>){
-        let closure = move |event: web_sys::Event| handler(event);
-        self.handler = Some(Box::new(closure));
-    }
-
-    fn handler_keyboard(&mut self, mut handler: Box<FnMut(web_sys::KeyboardEvent) -> Ms + 'static>){
-        let closure = move |event: web_sys::Event| {
-            handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
-        };
-        self.handler = Some(Box::new(closure));
     }
 
     /// This method is where the processing logic for events happens.
@@ -405,7 +343,7 @@ impl Style {
     pub fn to_string(&self) -> String {
         self.vals
             .iter()
-            .map(|(k,v)|format!("{}:{};",k,v))
+            .map(|(k,v)|format!("{}:{}",k,v))
             .collect::<Vec<_>>()
             .join(";")
     }
@@ -880,7 +818,7 @@ pub struct WillUnmount {
     actions: Box<Fn(&web_sys::Element)>
 }
 
-/// Aconstructor for DidMount, to be used in the API
+/// A constructor for DidMount, to be used in the API
 pub fn did_mount(actions: impl Fn(&web_sys::Element) + 'static) -> DidMount {
     let closure = move |el: &web_sys::Element| actions(el);
     DidMount { actions: Box::new(closure) }

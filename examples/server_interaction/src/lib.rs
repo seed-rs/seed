@@ -7,16 +7,9 @@ use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
 use serde_json;
-
 use serde::{Serialize, Deserialize};
 
-use std::collections::HashMap;
-
-
-
-
 // Model
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Commit {
@@ -31,52 +24,37 @@ pub struct Branch {
 
 #[derive(Clone)]
 struct Model {
-//    data: Data,
+    //    data: Data,
     data: Branch,
 }
 
 
-use futures::{future, Future};
-use wasm_bindgen_futures;
-use wasm_bindgen_futures::future_to_promise;
+fn temp_fetch() {
+    let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
+
+    let callback = |json: JsValue| {
+            // Use serde to parse the JSON into a struct.
+            let branch_info: Branch = json.into_serde().unwrap();
+
+            let model = Model {
+                data: branch_info
+            };
+
+            seed::run(model, update, view, "main", None);
+        };
+
+    seed::get(url, None, None, Box::new(callback));
+}
+
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-        let url = "https://api.github.com/repos/rust-lang/rust/branches/master";
+
+        temp_fetch();
 
         let placeholder = Self {
             data: Branch{ name: "Test".into(), commit: Commit{sha: "123".into()} }
         };
-
-        let cb = Box::new(|serialized: String| {
-            let data: Branch = serde_json::from_str(&serialized).unwrap();
-            log!(format!("{:?}", &data));
-//            let p2 = Self {
-//            data: Data { val: 0, text: String::new() }
-//                data: Branch{ name: "Test".into(), commit: Commit{sha: "123".into()} }
-//            data: data
-//            };
-
-//            update(Msg::Replace(data), p2);
-        });
-        seed::fetch::get(url, None, Some(headers), cb);
-
-
-
-//            .and_then(|json| {
-////            // Use serde to parse the JSON into a struct.
-//            let data: Branch = json.into_serde().unwrap();
-//            log!(format!("{:?}", data));
-////
-//////            log!(format!("{:?}", data));
-////            future::ok("test")
-//            future::ok(JsValue::from_serde(&data).unwrap())
-////
-//        });
-//        let p = future_to_promise(r);
-
-//        Msg::Replace(data);
-
 
         placeholder
     }
@@ -87,13 +65,16 @@ impl Default for Model {
 
 #[derive(Clone)]
 enum Msg {
-//    Replace(Data),
+    //    Replace(Data),
     Replace(Branch),
 }
 
 fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Replace(data) => Model {data},
+        Msg::Replace(data) => {
+            log!(format!("{:?}", &data));
+            Model {data}
+        },
     }
 }
 
@@ -101,11 +82,18 @@ fn update(msg: Msg, model: Model) -> Model {
 // View
 
 fn view(model: Model) -> El<Msg> {
-//    div![ format!("Hello World. Val: {}, text: {}", model.data.val, model.data.text) ]
-    div![ format!("Hello World. name: {}, sha: {}", model.data.name, model.data.commit.sha) ]
+    div![ format!("Hello World. name: {}, sha: {}", model.data.name, model.data.commit.sha),
+//        simple_ev("click", Msg::Replace(new_data))
+        did_mount(|_| {
+//            Msg::Replace()
+        }),
+
+     ]
 }
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, view, "main", None);
+
+    temp_fetch();
+//    seed::run(Model::default(), update, view, "main", None);
 }

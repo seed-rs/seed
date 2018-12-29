@@ -1,45 +1,33 @@
-# Seed
-
-**A Rust framework for creating web apps**
-
-[![](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
-[![](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
-[![API Documentation on docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
-
-The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
-
-## Quickstart
+# Quickstart
 
 ## Setup
-This framework requires you to install [Rust](https://www.rust-lang.org/tools/install) - This will
-enable the CLI commands below:
+This framework requires you to first install [Rust](https://www.rust-lang.org/tools/install).
 
- You'll need a recent version of Rust: `rustup update`
+You'll need a recent version of Rust: `rustup update`
 
 The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
 And wasm-bindgen: `cargo install wasm-bindgen-cli`
 
+If you run into errors while installing `wasm-bindgen-cli`, you may need to install a C++
+build chain. On linux, run `sudo apt install build-essential`. On Windows, download and install
+[Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
+include the C++ workload.
 
 ## The theoretical minimum
 To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
 run `build.sh` or `build.ps1` in a terminal, then start a dev server that supports WASM.
 For example, with [Python](https://www.python.org/downloads/) installed, run `python serve.py`.
 (Linux users may need to run `python3 serve.py`.)
-Once you change your package name, you'll
-need to tweak the html file and build script, as described below.
+Once you change your package name, you'll need to tweak the html file and build script, as described below.
 
 
 ## A little deeper
-Or, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
+Alternatively, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `
 appname` should be replaced with the name of your app.
 
-If not using the quickstart repo, create an Html file that loads your app's compiled module, 
-and provides an element with id 
-to load the framework into. It also needs the following code to load your WASM module -
- Ie, the body should contain this:
- 
- ```html
+If not using the quickstart repo, create an Html file with a body that contains this:
+```html
  <section id="main"></section>
 
 <script src='./pkg/appname.js'></script>
@@ -54,15 +42,16 @@ to load the framework into. It also needs the following code to load your WASM m
         .catch(console.error);
 </script>
 ```
+The first line above is an empty element with id: It's where your app will render. The subsequent ones load your app's wasm modules.
 
 The quickstart repo includes this file, but you will need to rename the two 
 occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
 change the page's title, add a description, favicon, stylesheet etc.
 
 `Cargo.toml`, which is a file created by Cargo that describes your app, needs `wasm-bindgen`, `web-sys`, and `
-seed` added as depdendencies,
+seed` as depdendencies,
  and crate-type
-of `"cdylib"`. (The version in the quickstart repo has these set up already) Example:
+of `"cdylib"`. The version in the quickstart repo has these set up already. Example:
 
 ```toml
 [package]
@@ -78,11 +67,6 @@ crate-type = ["cdylib"]
 seed = "^0.1.6"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
-
-# For serialization, eg sending requests to a server. Otherwise, not required.
-serde = "^1.0.80"
-serde_derive = "^1.0.80"
-serde_json = "1.0.33"
 ```
 
 ## A short example
@@ -92,7 +76,6 @@ Guide section below. Its structure follows [The Elm Architecture](https://guide.
 
 *lib.rs*:
 ```rust
-
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
@@ -150,8 +133,8 @@ fn success_level(clicks: i32) -> El<Msg> {
     p![ descrip ]
 }
 
-/// The top-level component we pass to the virtual dom. Must the model as its
-/// only argument, and output a single El.
+/// The top-level component we pass to the virtual dom. Must accept the model as its
+/// only parameter, and output a single El.
 fn view(model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
@@ -198,7 +181,6 @@ For truly minimimal example, see [lib.rs in the quickstart repo](https://github.
 
 ## Building and running
 To build your app, create a `pkg` subdirectory, and run the following two commands:
-
 ```
 cargo build --target wasm32-unknown-unknown
 ```
@@ -208,27 +190,29 @@ wasm-bindgen target/wasm32-unknown-unknown/debug/appname.wasm --no modules --out
 ```
 where `appname` is replaced with your app's name. This compiles your code in the target
 folder, and populates the pkg folder with your WASM module, a Typescript definitions file,
-and a Javascript file used to link your module from HTML.
+and a JS file used to link your module from HTML.
 
 You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows).
-The Quickstart repo includes these, but you'll still need to do the rename. You can then use
+The quickstart repo includes these, but you'll still need to do the rename. You can then use
 `./build.sh` or `.\build.ps1` If you run into permission errors on `build.sh`, try this command
 to allow executing the file:`chmod +x build.sh`.
 
-For development, you can view your app using a shimmed Python dev server described above.
+For development, you can view your app using a shimmed Python dev server, as described above.
 (Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
 from the quickstart repo, and run `python serve.py`).
 
-For details, reference [the wasm-bindgen documention](https://rustwasm.github.io/wasm-bindgen/whirlwind-tour/basic-usage.html).
-In the future, I'd like the build script and commands above to be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
+In the future, the build script and commands above may be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
 
 ## Running included examples
-To run an example located in the `examples` folder, navigate to that folder in a terminal, 
+To run an example located in the [examples folder](https://github.com/David-OConnor/seed/tree/master/examples),
+navigate to that folder in a terminal, 
 run the build script for your system (`build.sh` or `build.ps1`), then start a dev server
  as described above. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
-`seed = { path = "../../"` with `seed = "^0.1.0"`, and in the build script, remove the leading `../../` on the second
+`seed = { path = "../../"` with `seed = "^0.1.8"`, and in the build script, remove the leading `../../` on the second
 line.
+
+
 ## About
 
 ## Goals

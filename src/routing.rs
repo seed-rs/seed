@@ -65,7 +65,7 @@ pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes
 }
 
 //pub fn push<Ms: Clone + 'static>(path: &str, message: Ms) {
-pub fn push(path: &str) {
+pub fn push_route(path: &str) {
     let history = make_window().history().expect("Can't find history");
     // The second parameter, title, is currently unused by Firefox at least.
     // The first, an arbitrary state object, we could possibly use.
