@@ -19,7 +19,7 @@ pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, 
 {
     for (route, route_message) in routes.into_iter() {
         if route == get_path() {
-            app.update_dom(route_message);
+            app.update(route_message);
             break;
         }
     }
@@ -43,7 +43,7 @@ pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes
     let closure = Closure::wrap(
         Box::new(move |_| {
             if let Some(route_message) = routes.get(&get_path()) {
-                app_for_closure.update_dom(route_message.clone());
+                app_for_closure.update(route_message.clone());
             }
 
             // todo we currently don't use state/events.

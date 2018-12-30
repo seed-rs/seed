@@ -7,25 +7,34 @@ use seed::prelude::*;
 use wasm_bindgen::prelude::*;
 
 use serde::{Serialize, Deserialize};
+use serde_json;
 
 // Model
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Data {
+#[derive(Clone, Serialize, Deserialize)]
+struct Data {
     pub val: u32,
     pub text: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Commit {
+#[derive(Clone, Serialize, Deserialize)]
+struct Commit {
     pub sha: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Branch {
+#[derive(Clone, Serialize, Deserialize)]
+struct Branch {
     pub name: String,
     pub commit: Commit,
 }
+
+#[derive(Serialize, Deserialize)]
+struct Message {
+    pub name: String,
+    pub email: String,
+    pub message: String,
+}
+
 
 #[derive(Clone)]
 struct Model {
@@ -34,40 +43,33 @@ struct Model {
 }
 
 
-fn test_get(app: seed::App<Msg, Model>) {
+fn get_data(state: seed::App<Msg, Model>) {
     let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 //    let url = "https://seed-example.herokuapp.com/data";
 
     let callback = move |json: JsValue| {
         let data: Branch = json.into_serde().unwrap();
-        app.update_dom(Msg::Replace(data));
+        state.update(Msg::Replace(data));
     };
     seed::get(url, None, Box::new(callback));
 }
 
-fn test_post() {
+fn send() {
 //    let url = "http://127.0.0.1:8001/api/contact";
     let url = "https://infinitea.herokuapp.com/api/contact";
 
-    let opts = seed::RequestOpts {
-        payload: Some(
-            hashmap_string!{
-                "name" => "david",
-                "email" => "it@worked.gov",
-                "message" => "Great site!",
-            }
-        ),
-        headers: Some(  // todo try without headers
-            hashmap_string!{
-                "Content-Type" => "application/json",
-            }
-        ),
-        credentials: None,
+    let message = Message {
+        name: "Mark Watney".into(),
+        email: "mark@crypt.kk".into(),
+        message: "I wanna be like Iron Man".into(),
     };
+
+    let mut opts = seed::RequestOpts::new();
+    opts.headers.insert("Content-Type".into(), "application/json".into());
 
     let callback = move |json: JsValue| {};
 
-    seed::post(url, Some(opts), Box::new(callback));
+    seed::post(url, message, Some(opts), Box::new(callback));
 }
 
 // Setup a default here, for initialization later.
@@ -87,17 +89,19 @@ impl Default for Model {
 enum Msg {
 //        Replace(Data),
     Replace(Branch),
-    GetData(seed::App<Msg, Model>)
+    GetData(seed::App<Msg, Model>),
+    Send,
 }
 
 fn update(msg: Msg, model: Model) -> Model {
     match msg {
-        Msg::Replace(data) => {
-            log!(format!("{:?}", &data));
-            Model {data}
-        },
+        Msg::Replace(data) => Model {data},
         Msg::GetData(app) => {
-            test_get(app);
+            get_data(app);
+            model
+        },
+        Msg::Send => {
+            send();
             model
         }
     }
@@ -106,10 +110,14 @@ fn update(msg: Msg, model: Model) -> Model {
 
 // View
 
-fn view(app: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+    let state2 = state.clone();
     div![
-        div![ format!("Hello World. name: {}, sha: {}", model.data.name, model.data.commit.sha) ],
-        button![ raw_ev("click", move |_| Msg::GetData(app.clone())), "Update state from the internet"]
+        div![ format!("Repo info: name: {}, sha: {}", model.data.name, model.data.commit.sha),
+            did_mount(move |_| get_data(state.clone()))
+        ],
+
+        button![ raw_ev("click", move |_| Msg::Send), "Send an urgent message"]
     ]
 }
 

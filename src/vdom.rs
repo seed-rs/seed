@@ -95,7 +95,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     /// We re-render the virtual DOM on every change, but (attempt to) only change
     /// the actual DOM, via web_sys, when we need.
     /// The model storred in inner is the old model; updated_model is a newly-calculated one.
-    pub fn update_dom(&self, message: Ms) {
+    pub fn update(&self, message: Ms) {
         // data.model is the old model; pass it to the update function created in the app,
         // which outputs an updated model.
         // We clone the model before running update, and again before passing it
@@ -139,7 +139,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     fn mailbox(&self) -> Mailbox<Ms> {
         let cloned = self.clone();
         Mailbox::new(move |message| {
-            cloned.update_dom(message);
+            cloned.update(message);
         })
     }
 }

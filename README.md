@@ -19,8 +19,8 @@ The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
 And wasm-bindgen: `cargo install wasm-bindgen-cli`
 
-If you run into errors while installing `wasm-bindgen-cli`, you may need to install a C++
-build chain. On linux, run `sudo apt install build-essential`. On Windows, download and install
+If you run into errors while installing `wasm-bindgen-cli`, you may need to install C++
+build tools. On linux, run `sudo apt install build-essential`. On Windows, download and install
 [Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
 include the C++ workload.
 
@@ -38,7 +38,7 @@ appname` should be replaced with the name of your app.
 
 If not using the quickstart repo, create an Html file with a body that contains this:
 ```html
- <section id="main"></section>
+<section id="main"></section>
 
 <script src='./pkg/appname.js'></script>
 
@@ -74,7 +74,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.1.6"
+seed = "^0.2.0"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 ```
@@ -135,17 +135,17 @@ fn update(msg: Msg, model: Model) -> Model {
 /// A simple component.
 fn success_level(clicks: i32) -> El<Msg> {
     let descrip = match clicks {
-        0 ... 3 => "Not very many 🙁",
-        4 ... 7 => "An OK amount 😐",
-        8 ... 999 => "Good job! 🙂",
-        _ => "You broke it 🙃"
+        0 ... 5 => "Not very many 🙁",
+        6 ... 9 => "I got my first real six-string 😐",
+        10 ... 11 => "Spinal Tap 🙂",
+        _ => "Double pendulum 🙃"
     };
     p![ descrip ]
 }
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only parameter, and output a single El.
-fn view(app: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
     // Attrs, Style, Events, and children may be defined separately.
@@ -187,7 +187,7 @@ pub fn render() {
     seed::run(Model::default(), update, view, "main", None);
 }
 ```
-For truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/David-OConnor/seed-quickstart/blob/master/src/lib.rs)
+For a truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/David-OConnor/seed-quickstart/blob/master/src/lib.rs)
 
 ## Building and running
 To build your app, create a `pkg` subdirectory, and run the following two commands:
@@ -205,7 +205,8 @@ and a JS file used to link your module from HTML.
 You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows).
 The quickstart repo includes these, but you'll still need to do the rename. You can then use
 `./build.sh` or `.\build.ps1` If you run into permission errors on `build.sh`, try this command
-to allow executing the file:`chmod +x build.sh`.
+to allow executing the file:`chmod +x build.sh`. If you run into persmission errors on `build.ps1`,
+open Powershell as an administrator, and enter this command: `Set-ExecutionPolicy RemoteSigned`.
 
 For development, you can view your app using a shimmed Python dev server, as described above.
 (Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
@@ -236,97 +237,89 @@ of your familiarity with Rust.
 
 
 ## A note on view syntax
-This project takes a different approach to describing how to display DOM elements 
-than others. It neither uses completely natural (ie macro-free) Rust code, nor
+This project uses an unconventional approach to describe how to display DOM elements.
+It neither uses completely natural (ie macro-free) Rust code, nor
 an HTML-like abstraction (eg JSX or templates). My intent is to make the code close 
 to natural Rust, while streamlining the syntax in a way suited for creating 
-a visual layout with minimal repetition. The macros used here are thin wrappers
+a visual layout with minimal repetition. The macros used are thin wrappers
 for constructors, and don't conceal much. Specifically, the element-creation macros
-allow for accepting a variable number of arguments, and the attrs/style marcros are 
-essentially HashMap literals, with wrappers that let el macros know how to distinguish
+allow for accepting a variable number of parameters, and the attrs/style marcros are 
+essentially HashMap literals, with wrappers that let element macros know how to distinguish
 them.
 
 The lack of resemblance to HTML be offputting, but the learning
-curve is shallow, and I think the macro syntax used to create elements, attributes etc
-is close-enough to normal Rust syntax that it's easy to reason about how the code
-should come together, without compartmentalizing it into logic code and display code.
- This lack of separation
-in particular is a subjective, controversial decision, but I think the benefits 
+curve is shallow, and I think the macro syntax is close-enough to normal Rust that it's 
+easy to reason about how to build views, without compartmentalizing it into logic code and display code.
+This lack of separation in particular is a controversial decision, but I think the benefits 
 are worth it.
 
 
 ## Where to start if you're familiar with existing frontend frameworks
 The [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
-which has example code in my frameworks that do the same thing. Compare the example in this
+which has example code in other frameworks that produce identitcal apps. Compare the example in this
 project to one on that page that uses a framework you're familiar with.
 
-## Suggestions? Critique? Submit an issue or pull request on Github
 
 ## Influences
-This project is strongly influenced by Elm, React, and Redux. The overall layout
+This project is strongly influenced by Elm, React, and Redux. The overall structure
 of Seed apps mimicks that of The Elm Architecture.
 
 
-## Why another entry in a saturated field?
+## There are already several Rust/WASM frameworks; why add another?
 
-### There are already several Rust/WASM frameworks; why add another?
-
-My goal is for this to be easy to pick up from looking at a tutorial or documentation, regardless of your
-level of experience with Rust. I'm distinguising this package through clear examples
-and documentation (see goals above), and using `wasm-bindgen` internally. I started this
-project after being unable to get existing frameworks to work
+ I'm distinguising Seed through clear examples and documentation, and using `wasm-bindgen`/`web-sys` internally. I started this
+project after being unable to get existing frameworks working
 due to lack of documented examples, and inconsistency between documentation and 
 published versions. My intent is for anyone who's proficient in a frontend
 framework to get a standalone app working in the browser within a few minutes, using just the 
 quickstart guide.
 
-Seed approaches HTML-display syntax differently from existing packages: 
+Seed's different approach to view syntax also distinguishes it: 
 rather than use an HTML-like markup similar to JSX, 
-it uses Rust builtin types, thinly-wrapped by a macro for each DOM element.
-This decision may not appeal to everyone, 
-but I think it integrates more naturally with the language.
+it uses Rust builtin types, thinly-wrapped by macros that allow flexible composition.
+This decision will not appeal to everyone, but I think it integrates more naturally with
+the language.
 
-### Why build a frontend in Rust over Elm or Javascript-based frameworks?
 
-You may prefer writing in Rust, and using packages from Cargo vis npm. Getting started with
-this framework will, in most cases be faster, and require less config and setup overhead than
-with JS frameworks. You like the advantages of compile-time error-checking.
+## Why build a frontend app in Rust over Elm, or Javascript-based frameworks?
+You may prefer writing in Rust, and using packages from Cargo vice npm. Getting started with
+this framework will in most cases be easier, and require less config and setup overhead than
+with JS frameworks. You may appreciate Rust's compile-time error-checking, and built-in testing.
 
-You may choose 
-this approach over Elm if you're already comfortable with Rust, want the performance 
-benefits, or don't want to code business logic in a purely-functional langauge.
+You may choose this approach over Elm if you're already comfortable with Rust,
+or don't want to code business logic in a purely-functional langauge.
 
 Compared with React, you may appreciate the consistency of how to write apps:
 There's no distinction between logic and display code; no restrictions on comments;
 no distinction between components and normal functions. The API is
-flexible, and avoids OOP boilerplate.
+flexible, and avoids OOP boilerplate. Its integrated routing and message system
+avoids the dependency glue-code associated with Redux and React Router.
 
-I also hope that config, building, and dependency-management is cleaner with Cargo and
-wasm-bindgen than with npm.
 
 ### Shoutouts
- - The [WASM-Bindgen](https://github.com/rustwasm/wasm-bindgen) team: 
- For building the tools this project relies on
- - Alex Chrichton, for being extraodinarily helpful in the Rust / WASM community
- - The [Elm](https://elm-lang.org/) team: For creating and standardizing the Elm architecture
- - Denis Kolodin: for creating the inspirational [Yew framework](https://github.com/DenisKolodin/yew)
- - Utkarsh Kukreti, for through his [Draco repo](https://github.com/utkarshkukreti/draco), 
+- The [WASM-Bindgen](https://github.com/rustwasm/wasm-bindgen) team,
+ for building the tools this project relies on
+- Alex Chrichton, for being extraodinarily helpful in the Rust / WASM community
+- The [Elm](https://elm-lang.org/) team, for creating and standardizing the Elm architecture
+- Mozilla, for excellent DOM documentation
+- Denis Kolodin, for creating the inspirational [Yew framework](https://github.com/DenisKolodin/yew)
+- Utkarsh Kukreti, for through his [Draco repo](https://github.com/utkarshkukreti/draco), 
  helping me understand how wasm-bindgen's
  closure system can be used to update state.
- - Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
+- Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
 
 ### Features to add
- - High-level fetch API
- - Lifecycle hooks
- - SVG support
- - More flexible routing
- - Virtual DOM optimization 
- - High-level CSS-grid/Flexbox API ?
+- Improve fetch API
+- Dynamic SVG creation and modification
+- More flexible routing
+- Add data-struct integration for Rust servers. (Eg to avoid [de]serializing if Rust on front and backend)
+- Virtual DOM optimization
+- High-level CSS-grid/Flexbox API ?
  
- ### Bugs to fix
- - Text renders above children instead of below
+### Bugs to fix
+- Text renders above children instead of below
  
- ## Reference
+## Reference
 - [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)
 - [Mozilla MDN web docs](https://developer.mozilla.org/en-US/)
 - [web-sys api](https://rustwasm.github.io/wasm-bindgen/api/web_sys/) (A good partner for the MDN docs - most DOM items have web-sys equivalents used internally)

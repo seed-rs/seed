@@ -13,6 +13,9 @@ use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures;
 use web_sys;
 
+use serde::Serialize;
+use serde_json;
+
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 pub enum Method {
     Get,
@@ -43,13 +46,27 @@ impl Method {
 }
 
 /// Higher-level wrapper for web_sys::RequestInit.
-/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RequestInit.html#method.mode
+/// https://rus
+/// twasm.github.io/wasm-bindgen/api/web_sys/struct.RequestInit.html#method.mode
+#[derive(Clone)]
 pub struct RequestOpts {
     // todo: Macro for this?
-    pub payload: Option<HashMap<String, String>>,
-    pub headers: Option<HashMap<String, String>>,
-    pub credentials: Option<HashMap<String, String>>,
-//    mode: web_sys::RequestMode
+    pub payload: Option<String>,
+    pub headers: HashMap<String, String>,
+    pub credentials: HashMap<String, String>,
+    pub mode: web_sys::RequestMode,
+}
+
+impl RequestOpts {
+    pub fn new() -> Self {
+        Self {
+            payload: None,
+            headers: HashMap::new(),
+            credentials: HashMap::new(),
+            // https://rustwasm.github.io/wasm-bindgen/api/web_sys/enum.RequestMode.html
+            mode: web_sys::RequestMode::Cors,
+        }
+    }
 }
 
 // todo once this is polished, publish as a standalone crate.
@@ -69,49 +86,26 @@ pub fn fetch(
     // web_sys::RequestInit.
     let mut opts = web_sys::RequestInit::new();
     opts.method(method.as_str());
-    // https://rustwasm.github.io/wasm-bindgen/api/web_sys/enum.RequestMode.html
-    // We get a CORS error without this setting.
-//    opts.mode(web_sys::RequestMode::NoCors);
-    opts.mode(web_sys::RequestMode::Cors);
+    opts.mode(web_sys::RequestMode::Cors);  // default
 
-    if let Some(o) = request_opts {
+    if let Some(o) = request_opts.clone() {
         if let Some(p) = o.payload {
-            let mut payload_str = String::from("{");
-            for (key, val) in &p {
-                payload_str += &format!("\"{}\": \"{}\", ", key, val);
-            }
-            payload_str.truncate(payload_str.len() - 2);  // Remove trailing command space.
-            payload_str += "}";
-            crate::log(format!("{:?}", &payload_str));
-
-            opts.body(Some(&JsValue::from_str(&payload_str)));
+            opts.body(Some(&JsValue::from_str(&p)));
         }
+        opts.mode(o.mode);
     }
 
-    let request = web_sys::Request::new_with_str_and_init(url, &opts)
+    let request = web_sys::Request::new_with_str_and_init(url, &opts.clone())
         .expect("Problem with request");
 
-
-    // Set headers:
-    // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Headers.html
-    // https://developer.mozilla.org/en-US/docs/Web/API/Headers/set
-//    if let Some(h) = request_opts.headers {
-////        let req_headers = request.headers();
-//        for (name, value) in &h {
-//            crate::log(format!("{:?} {:?}", &name, &value));
-//            request.headers().set(&name, &value).unwrap();
-//        }
-//
-//    }
-//    request.headers().set("Content-Type", "application/json;charset=UTF-8").unwrap();
-//    request.headers().set("Accept", "application/vnd.github.v3+json").unwrap();
-//    request.headers().set("Accept-Language", "en-us").unwrap();
-
-    crate::log(format!("CT: {:?}", request.headers().get("Content-Type").unwrap()));
-    crate::log(format!("A: {:?}", request.headers().get("Accept").unwrap()));
-    crate::log(format!("AL: {:?}", request.headers().get("Accept-Language").unwrap()));
-
-
+    if let Some(o) = request_opts {
+        // Set headers:
+        //  https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Headers.html
+        // https://developer.mozilla.org/en-US/docs/Web/API/Headers/set
+        for (name, value) in &o.headers {
+            request.headers().set(&name, &value).unwrap();
+        }
+    }
 
     let window = web_sys::window().expect("Can't find window");
     let request_promise = window.fetch_with_request(&request);
@@ -149,10 +143,22 @@ pub fn get(
     fetch(Method::Get, url, request_opts, callback)
 }
 
-pub fn post(
+/// A wrapper for fetch that serializes the payload
+pub fn post<S: Serialize>(
     url: &str,
+    payload: S,
     request_opts: Option<RequestOpts>,
     callback: Box<Fn(JsValue)>)
 {
-    fetch(Method::Post, url, request_opts, callback)
+    let serialized_payload = serde_json::to_string(&payload).expect("Problem serializing payload");
+
+    let updated_opts = match request_opts {
+        Some(o) => RequestOpts{payload: Some(serialized_payload), ..o},
+        None => {
+            let mut opts = RequestOpts::new();
+            opts.payload = Some(serialized_payload);
+            opts
+        }
+    };
+    fetch(Method::Post, url, Some(updated_opts), callback)
 }

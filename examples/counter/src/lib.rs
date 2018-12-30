@@ -58,17 +58,17 @@ fn update(msg: Msg, model: Model) -> Model {
 /// A simple component.
 fn success_level(clicks: i32) -> El<Msg> {
     let descrip = match clicks {
-        0 ... 3 => "Not very many 🙁",
-        4 ... 7 => "An OK amount 😐",
-        8 ... 999 => "Good job! 🙂",
-        _ => "You broke it 🙃"
+        0 ... 5 => "Not very many 🙁",
+        6 ... 9 => "I got my first real six-string 😐",
+        10 ... 11 => "Spinal Tap 🙂",
+        _ => "Double pendulum 🙃"
     };
     p![ descrip ]
 }
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output a single El.
-fn view(app: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
