@@ -403,8 +403,8 @@ pub fn run<Ms, Mdl>(
     let mut app = App::new(model.clone(), update, view, mount_point_id, routes.clone());
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    // todo maybe have view take an update_dom instead of whole app??
-    let mut topel_vdom = (app.data.view)(app.clone(), model);  // todo clone, etc.
+    // todo maybe have view take an update_dom instead of whole app?
+    let mut topel_vdom = (app.data.view)(app.clone(), model);
     let document = &web_sys::window().unwrap().document().unwrap();
     setup_els(&document, &mut topel_vdom, 0, 0);
 
@@ -418,8 +418,8 @@ pub fn run<Ms, Mdl>(
     // If a route map is inlcluded, update the state on page load, based
     // on the starting URL. Must be set up on the server as well.
     if let Some(routes_inner) = routes {
-        app = crate::routing::initial(app, routes_inner.clone());
-        crate::routing::update_popstate_listener(&app, routes_inner);
+        let app2 = crate::routing::initial(app, routes_inner.clone());
+        crate::routing::update_popstate_listener(&app2, routes_inner);
     }
 
     // Allows panic messages to output to the browser console.error.

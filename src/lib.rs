@@ -2,9 +2,6 @@
 
 #![allow(unused_macros)]
 
-use std::collections::HashMap;
-
-
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;

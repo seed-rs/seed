@@ -818,7 +818,7 @@ pub struct WillUnmount {
     actions: Box<Fn(&web_sys::Element)>
 }
 
-/// A constructor for DidMount, to be used in the API
+/// Aconstructor for DidMount, to be used in the API
 pub fn did_mount(actions: impl Fn(&web_sys::Element) + 'static) -> DidMount {
     let closure = move |el: &web_sys::Element| actions(el);
     DidMount { actions: Box::new(closure) }

@@ -292,7 +292,7 @@ fn footer(model: &Model) -> El<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn todo_app(model: Model) -> El<Msg> {
+fn todo_app(app: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
@@ -338,7 +338,7 @@ fn todo_app(model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    let mut routes = routes!{
+    let routes = routes!{
         "" => Msg::RoutePage(Visible::All),
         "active" => Msg::RoutePage(Visible::Active),
         "completed" => Msg::RoutePage(Visible::Completed),
