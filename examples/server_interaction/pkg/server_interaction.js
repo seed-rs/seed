@@ -255,23 +255,6 @@ __exports.__widl_f_set_autofocus_HTMLTextAreaElement = function(arg0, arg1) {
     __widl_f_set_autofocus_HTMLTextAreaElement_target.call(getObject(arg0), arg1 !== 0);
 };
 
-const __widl_f_set_Headers_target = typeof Headers === 'undefined' ? null : Headers.prototype.set || function() {
-    throw new Error(`wasm-bindgen: Headers.set does not exist`);
-};
-
-__exports.__widl_f_set_Headers = function(arg0, arg1, arg2, arg3, arg4, exnptr) {
-    let varg1 = getStringFromWasm(arg1, arg2);
-    let varg3 = getStringFromWasm(arg3, arg4);
-    try {
-        __widl_f_set_Headers_target.call(getObject(arg0), varg1, varg3);
-    } catch (e) {
-        const view = getUint32Memory();
-        view[exnptr / 4] = 1;
-        view[exnptr / 4 + 1] = addHeapObject(e);
-
-    }
-};
-
 let cachedTextEncoder = new TextEncoder('utf-8');
 
 let WASM_VECTOR_LEN = 0;
@@ -284,6 +267,28 @@ function passStringToWasm(arg) {
     WASM_VECTOR_LEN = buf.length;
     return ptr;
 }
+
+const __widl_f_get_Headers_target = typeof Headers === 'undefined' ? null : Headers.prototype.get || function() {
+    throw new Error(`wasm-bindgen: Headers.get does not exist`);
+};
+
+__exports.__widl_f_get_Headers = function(ret, arg0, arg1, arg2, exnptr) {
+    let varg1 = getStringFromWasm(arg1, arg2);
+    try {
+        const val = __widl_f_get_Headers_target.call(getObject(arg0), varg1);
+        const retptr = isLikeNone(val) ? [0, 0] : passStringToWasm(val);
+        const retlen = WASM_VECTOR_LEN;
+        const mem = getUint32Memory();
+        mem[ret / 4] = retptr;
+        mem[ret / 4 + 1] = retlen;
+
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+};
 
 __exports.__widl_f_pathname_Location = function(ret, arg0, exnptr) {
     try {
@@ -495,7 +500,7 @@ __exports.__wbg_new_9cc98abd8c2c45e2 = function(arg0, arg1) {
         }
 
     };
-    cbarg0.f = wasm.__wbg_function_table.get(106);
+    cbarg0.f = wasm.__wbg_function_table.get(109);
     cbarg0.a = arg0;
     cbarg0.b = arg1;
     try {
@@ -586,7 +591,7 @@ __exports.__wbindgen_json_serialize = function(idx, ptrptr) {
     return WASM_VECTOR_LEN;
 };
 
-__exports.__wbindgen_closure_wrapper491 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper494 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(10);
     const d = wasm.__wbg_function_table.get(11);
     const cb = function(arg0) {
@@ -610,9 +615,9 @@ __exports.__wbindgen_closure_wrapper491 = function(a, b, _ignored) {
     return addHeapObject(real);
 };
 
-__exports.__wbindgen_closure_wrapper1692 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(71);
-    const d = wasm.__wbg_function_table.get(72);
+__exports.__wbindgen_closure_wrapper1759 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(74);
+    const d = wasm.__wbg_function_table.get(75);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

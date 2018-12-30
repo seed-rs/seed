@@ -1,4 +1,14 @@
-# Quickstart
+# Seed
+
+**A Rust framework for creating web apps**
+
+[![](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
+[![](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
+[![API Documentation on docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
+
+The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
+
+## Quickstart
 
 ## Setup
 This framework requires you to first install [Rust](https://www.rust-lang.org/tools/install).

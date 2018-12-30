@@ -43,7 +43,7 @@ pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     // Model is in a RefCell here so we can replace it in self.update_dom().
     pub model: RefCell<Mdl>,
     pub update: fn(Ms, Mdl) -> Mdl,
-    pub view: fn(Mdl) -> El<Ms>,
+    pub view: fn(App<Ms, Mdl>, Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
     routes: RefCell<Option<HashMap<String, Ms>>>
@@ -59,7 +59,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     pub fn new(
         model: Mdl,
         update: fn(Ms, Mdl) -> Mdl,
-        view: fn(Mdl) -> El<Ms>,
+        view: fn(Self, Mdl) -> El<Ms>,
         parent_div_id: &str,
         routes: Option<HashMap<String, Ms>>,
     ) -> Self {
@@ -107,7 +107,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         // have ids, nest levels, or associated web_sys elements.
         // We accept cloning here, for the benefit of making data easier to work
         // with in the app.
-        let mut topel_new_vdom = (self.data.view)(updated_model.clone());
+        let mut topel_new_vdom = (self.data.view)(self.clone(), updated_model.clone());
 
         // We're now done with this updated model; store it for use as the old
         // model for the next update.

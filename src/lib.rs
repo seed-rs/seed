@@ -14,6 +14,8 @@ pub mod storage;
 mod vdom;
 mod websys_bridge;
 
+// todo: Why does this work without importing web_sys??
+
 //// todos:
 // todo local storage
 // todo maybe?? High-level css-grid and flex api?
@@ -23,9 +25,10 @@ mod websys_bridge;
 
 pub use crate::{
     //    dom_types::{did_mount, did_update, will_unmount},  // todo: Here or in prelude?
-    fetch::{Method, fetch, get, post},
+    fetch::{Method, RequestOpts, fetch, get, post},
     websys_bridge::{to_input, to_kbevent, to_select, to_textarea, to_html_el},
     routing::push_route,
+    vdom::App // todo temp?
 };
 
 /// Convenience function to access the web_sys DOM document.
@@ -69,7 +72,7 @@ pub mod prelude {
 pub fn run<Ms, Mdl>(
     model: Mdl,
     update: fn(Ms, Mdl) -> Mdl,
-    view: fn(Mdl) -> dom_types::El<Ms>,
+    view: fn(vdom::App<Ms, Mdl>, Mdl) -> dom_types::El<Ms>,
     mount_point_id: &str,
     routes: Option<HashMap<String, Ms>>)
     where Ms: Clone + 'static, Mdl: Clone + 'static
@@ -77,7 +80,8 @@ pub fn run<Ms, Mdl>(
     let mut app = vdom::App::new(model.clone(), update, view, mount_point_id, routes.clone());
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    let mut topel_vdom = (app.data.view)(model);
+    // todo maybe have view take an update_dom instead of whole app??
+    let mut topel_vdom = (app.data.view)(app.clone(), model);  // todo clone, etc.
     let document = &web_sys::window().unwrap().document().unwrap();
     vdom::setup_els(&document, &mut topel_vdom, 0, 0);
 
