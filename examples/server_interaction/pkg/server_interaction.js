@@ -591,9 +591,9 @@ __exports.__wbindgen_json_serialize = function(idx, ptrptr) {
     return WASM_VECTOR_LEN;
 };
 
-__exports.__wbindgen_closure_wrapper494 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(10);
-    const d = wasm.__wbg_function_table.get(11);
+__exports.__wbindgen_closure_wrapper495 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(14);
+    const d = wasm.__wbg_function_table.get(15);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

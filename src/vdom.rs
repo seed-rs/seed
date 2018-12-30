@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::{cell::{RefCell}, rc::Rc};
+use std::panic;
 
 use wasm_bindgen::closure::Closure;
 
@@ -56,7 +57,7 @@ pub struct App<Ms: Clone + 'static , Mdl: 'static> {
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
 impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
-    pub fn new(
+    fn new(
         model: Mdl,
         update: fn(Ms, Mdl) -> Mdl,
         view: fn(Self, Mdl) -> El<Ms>,
@@ -135,7 +136,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         self.data.main_el_vdom.replace(topel_new_vdom);
     }
 
-    pub fn mailbox(&self) -> Mailbox<Ms> {
+    fn mailbox(&self) -> Mailbox<Ms> {
         let cloned = self.clone();
         Mailbox::new(move |message| {
             cloned.update_dom(message);
@@ -145,7 +146,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
     where Ms: Clone +'static
 {
     // id iterates once per item; active-level once per nesting level.
@@ -187,7 +188,7 @@ impl<Ms: Clone + 'static , Mdl: 'static> std::clone::Clone for App<Ms, Mdl> {
 
 // todo should this be here, or in a diff module?
 /// Recursively attach event-listeners. Run this at init.
-pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
+fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
     where Ms: Clone + 'static
 {
     let el_ws = el.el_ws.take().expect("Missing el_ws on attach_all_listeners");
@@ -204,7 +205,7 @@ pub fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
 
 // todo should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
-pub fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
+fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
     where Ms: Clone + 'static
 {
     let el_ws = el.el_ws.take().expect("Missing el_ws on detach_all_listeners");
@@ -387,6 +388,42 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 //    }
 
     score
+}
+
+/// App initialization: Collect its fundamental components, setup, and perform
+/// an initial render.
+pub fn run<Ms, Mdl>(
+    model: Mdl,
+    update: fn(Ms, Mdl) -> Mdl,
+    view: fn(App<Ms, Mdl>, Mdl) -> dom_types::El<Ms>,
+    mount_point_id: &str,
+    routes: Option<HashMap<String, Ms>>)
+    where Ms: Clone + 'static, Mdl: Clone + 'static
+{
+    let mut app = App::new(model.clone(), update, view, mount_point_id, routes.clone());
+
+    // Our initial render. Can't initialize in new due to mailbox() requiring self.
+    // todo maybe have view take an update_dom instead of whole app??
+    let mut topel_vdom = (app.data.view)(app.clone(), model);  // todo clone, etc.
+    let document = &web_sys::window().unwrap().document().unwrap();
+    setup_els(&document, &mut topel_vdom, 0, 0);
+
+    attach_listeners(&mut topel_vdom, &app.mailbox());
+
+    // Attach all children: This is where our initial render occurs.
+    websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
+
+    app.data.main_el_vdom.replace(topel_vdom);
+
+    // If a route map is inlcluded, update the state on page load, based
+    // on the starting URL. Must be set up on the server as well.
+    if let Some(routes_inner) = routes {
+        app = crate::routing::initial(app, routes_inner.clone());
+        crate::routing::update_popstate_listener(&app, routes_inner);
+    }
+
+    // Allows panic messages to output to the browser console.error.
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
 
