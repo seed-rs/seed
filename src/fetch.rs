@@ -117,7 +117,6 @@ pub fn fetch(
             let resp: web_sys::Response = resp_value.dyn_into()
                 .expect("Problem casting response as Reponse.");
 
-//            resp
             resp.json()
 //          resp.text()
         })
@@ -131,7 +130,6 @@ pub fn fetch(
         });
 
     wasm_bindgen_futures::future_to_promise(f);
-
 }
 
 pub fn get(
