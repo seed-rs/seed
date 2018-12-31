@@ -26,10 +26,15 @@
       <sourceFolder url="file://$MODULE_DIR$/examples/homepage/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/examples/homepage/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/examples/homepage/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/window_events/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/window_events/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/window_events/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/window_events/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/examples/counter/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/homepage/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/server_interaction/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/todomvc/target" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/window_events/target" />
       <excludeFolder url="file://$MODULE_DIR$/proc_macros/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>

@@ -47,7 +47,9 @@ pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     pub view: fn(App<Ms, Mdl>, Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
-    routes: RefCell<Option<HashMap<String, Ms>>>
+    routes: RefCell<Option<HashMap<String, Ms>>>,
+
+    pub window_listeners: Vec<dom_types::Listener<Ms>>,
 }
 
 pub struct App<Ms: Clone + 'static , Mdl: 'static> {
@@ -80,6 +82,8 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
+
+                window_listeners: Vec::new(),
             })
         }
     }
@@ -397,7 +401,9 @@ pub fn run<Ms, Mdl>(
     update: fn(Ms, Mdl) -> Mdl,
     view: fn(App<Ms, Mdl>, Mdl) -> dom_types::El<Ms>,
     mount_point_id: &str,
-    routes: Option<HashMap<String, Ms>>)
+    routes: Option<HashMap<String, Ms>>,
+    window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+)
     where Ms: Clone + 'static, Mdl: Clone + 'static
 {
     let mut app = App::new(model.clone(), update, view, mount_point_id, routes.clone());

@@ -66,4 +66,5 @@ members = [
     "examples/counter",
     "examples/server_interaction",
     "examples/todomvc",
+    "examples/window_events",
 ]

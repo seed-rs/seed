@@ -62,6 +62,17 @@
 //}
 
 #[macro_export]
+macro_rules! custom {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty(seed::dom_types::Tag::Custom("missingtagname".into()));
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! address {
     ( $($part:expr),* $(,)* ) => {
         {
@@ -1148,7 +1159,6 @@ macro_rules! tspan {
 
 
 /// Provide a shortcut for creating attributes.
-// todo DRY between thsi and style
 #[macro_export]
 macro_rules! attrs {
     { $($key:expr => $value:expr);* $(;)* } => {
@@ -1163,6 +1173,23 @@ macro_rules! attrs {
         }
      };
 }
+
+/// Convenience macro. Ideal when there are multiple classes, and no other attrs.
+#[macro_export]
+macro_rules! class {
+    { $($class:expr),* $(,)* } => {
+        {
+            let mut result = seed::dom_types::Attrs::empty();
+            let mut classes = Vec::new();
+            $(
+                classes.push($class);
+            )*
+            result.add_multiple("class", classes);
+            result
+        }
+     };
+}
+
 
 // todo: Once the macro_at_most_once_rep is in stable, you can use $(;)? here (
 // todo: and in el creation macros) to make only trailing comma/semicolon acceptable.

@@ -22,6 +22,7 @@ mod websys_bridge;
 
 pub use crate::{
     //    dom_types::{did_mount, did_update, will_unmount},  // todo: Here or in prelude?
+    dom_types::{Listener, id},
     fetch::{Method, RequestOpts, fetch, get, post},
     websys_bridge::{to_input, to_kbevent, to_select, to_textarea, to_html_el},
     routing::push_route,
@@ -59,7 +60,8 @@ pub fn log<S: ToString>(text: S) {
 /// for element-creation macros, input event constructors, and the History struct.
 pub mod prelude {
     pub use crate::dom_types::{
-        El, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev, did_mount, did_update, will_unmount
+        El, Tag, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev,
+        did_mount, did_update, will_unmount
     };
     pub use std::collections::HashMap;
 }

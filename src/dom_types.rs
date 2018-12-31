@@ -86,7 +86,6 @@ pub fn keyboard_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::KeyboardE
     Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
-
 /// Event-handling for Elements
 pub struct Listener<Ms: Clone> {
     pub trigger: String,
@@ -228,6 +227,13 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for El<Ms> {
     }
 }
 
+/// This is intended only to be used for the custom! element macro.
+impl<Ms: Clone> UpdateEl<El<Ms>> for Tag {
+    fn update(self, el: &mut El<Ms>) {
+        el.tag = self;
+    }
+}
+
 
 //#[derive(Debug)]
 pub enum _Attr {
@@ -300,6 +306,13 @@ impl Attrs {
         self.vals.insert(key.to_string(), val.to_string());
     }
 
+    // Add multiple values for a single attribute. Useful for classes.
+    pub fn add_multiple(&mut self, name: &str, items: Vec<&str>) {
+        // We can't loop through self.add, single the value we need is a single,
+        // concatonated string.
+        self.add(name, &items.join(" "));
+    }
+
     /// Combine with another Attrs; if there's a conflict, use the other one.
     pub fn merge(&self, other: &Self) -> Self {
         let mut result = self.clone();
@@ -308,6 +321,14 @@ impl Attrs {
         }
         result
     }
+}
+
+
+/// Convenience function. Ideal when there's one id, and no other attrs.
+pub fn id(name: &str) -> Attrs {
+    let mut result = Attrs::empty();
+    result.add("id", name);
+    result
 }
 
 
@@ -453,6 +474,7 @@ macro_rules! make_tags {
         /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
         #[derive(Clone, PartialEq)]
         pub enum Tag {
+            Custom(String),
             $(
                 $tag_camel,
             )+
@@ -461,6 +483,7 @@ macro_rules! make_tags {
         impl Tag {
             pub fn as_str(&self) -> &str {
                 match self {
+                    Tag::Custom(name) => &name,
                     $ (
                         Tag::$tag_camel => $tag,
                     ) +

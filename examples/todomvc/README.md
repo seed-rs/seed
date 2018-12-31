@@ -27,14 +27,9 @@ Here are some links you may find helpful:
 * [Seed guide](https://github.com/David-OConnor/seed)
 * [Seed quickstart repo](https://github.com/David-OConnor/seed-quickstart)
 
-Articles and guides from the community:
+Get help from Rust users:
 
-* [Thoughts on TypeScript](http://www.nczonline.net/blog/2012/10/04/thoughts-on-typescript)
-* [ScreenCast - Why I Like TypeScript](https://www.youtube.com/watch?v=Mh5VQVfWTbs)
-
-Get help from other TypeScript users:
-
-* [TypeScript on StackOverflow](http://stackoverflow.com/questions/tagged/rust)
+* [Rust on StackOverflow](http://stackoverflow.com/questions/tagged/rust)
 * [Reddit](https://www.reddit.com/r/rust/)
 * [Gitter chat](https://gitter.im/rust-lang/rust)
 
@@ -43,21 +38,18 @@ _If you have other helpful links to share, or find any of the links above no lon
 
 ## Running
 
-This package requires you to install [Rust](https://www.rust-lang.org/en-US/) - This will
-enable the CLI commands below:
+This framework requires you to first install [Rust](https://www.rust-lang.org/tools/install).
 
- You'll need a recent version of Rust's nightly toolchain:
+You'll need a recent version of Rust: `rustup update`
 
-    rustup update
-    rustup default nightly
+The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
-The wasm32-unknown-unknown target:
+And wasm-bindgen: `cargo install wasm-bindgen-cli`
 
-    rustup target add wasm32-unknown-unknown --toolchain nightly
-
-And wasm-bindgen: 
-
-    Cargo +nightly install wasm-bindgen-cli
+If you run into errors while installing `wasm-bindgen-cli`, you may need to install C++
+build tools. On linux, run `sudo apt install build-essential`. On Windows, download and install
+[Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
+include the C++ workload.
 
 Build using one of the two following commands:
 
@@ -68,4 +60,4 @@ or
     
 Open index.html in a web browser, or with a dev server, eg
 
-    python -m http.server
+    python serve.py
