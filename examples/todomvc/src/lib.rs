@@ -5,7 +5,7 @@
 extern crate seed;
 use seed::prelude::*;
 use serde::{Serialize, Deserialize};
-use wasm_bindgen::prelude::*;
+
 
 const ENTER_KEY: u32 = 13;
 const ESCAPE_KEY: u32 = 27;
@@ -235,7 +235,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     att.add("key", &item.title);
 
     li![ att,
-        div![ attrs!{"class" => "view"},
+        div![ class!["view"],
             input![ 
                 attrs!{"class" => "toggle"; "type" => "checkbox"; "checked" => item.completed },
                 simple_ev("click", Msg::Toggle(posit))
@@ -258,7 +258,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
 
 fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![
-        a![ attrs!{"class" => if visible == highlighter {"selected"} else {""}},
+        a![ class![if visible == highlighter {"selected"} else {""}],
             style!{"cursor" => "pointer"},
             simple_ev("click", Msg::SetVisibility(highlighter)), text
         ]
@@ -270,19 +270,19 @@ fn footer(model: &Model) -> El<Msg> {
 
     let clear_button = if model.completed_count() > 0 {
         button![
-            attrs!{"class" => "clear-completed"},
+            class!["clear-completed"],
             simple_ev("click", Msg::ClearCompleted),
             "Clear completed"
         ]
     } else { seed::empty() };
 
-    footer![ attrs!{"class" => "footer"},
-        span![ attrs!{"class" => "todo-count"},
+    footer![ class!["footer"],
+        span![ class!["todo-count"],
             strong![ model.active_count().to_string() ],
             span![ format!(" item{} left", optional_s) ]
         ],
 
-        ul![ attrs!{"class" => "filters"},
+        ul![ class!["filters"],
             selection_li("All", model.visible, Visible::All),
             selection_li("Active", model.visible, Visible::Active),
             selection_li("Completed", model.visible, Visible::Completed)
@@ -305,20 +305,20 @@ fn todo_app(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
 
     let main = if !model.todos.is_empty() {
 
-        section![ attrs!{"class" => "main"},
+        section![ class!["main"],
             input![
                 attrs!{"id" => "toggle-all"; "class" => "toggle-all"; "type" => "checkbox";
                        "checked" => model.active_count() == 0},
                 simple_ev("click", Msg::ToggleAll)
             ],
             label![ attrs!{"for" => "toggle-all"}, "Mark all as complete"],
-            ul![ attrs!{"class" => "todo-list"}, todo_els ]
+            ul![ class!["todo-list"], todo_els ]
         ]
 
     } else { seed::empty() };
 
     div![
-        header![ attrs!{"class" => "header"},
+        header![ class!["header"],
             h1![ "todos" ],
             input![
                 attrs!{
@@ -344,5 +344,5 @@ pub fn render() {
         "completed" => Msg::RoutePage(Visible::Completed),
     };
 
-    seed::run(Model::default(), update, todo_app, "main", Some(routes));
+    seed::run(Model::default(), update, todo_app, "main", Some(routes), None);
 }

@@ -3,7 +3,6 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use wasm_bindgen::prelude::*;
 
 
 // Model
@@ -11,7 +10,8 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone)]
 struct Model {
     watching: bool,
-    coords: (u32, u32),
+    coords: (i32, i32),
+    last_keycode: u32,
 }
 
 impl Model {
@@ -20,12 +20,12 @@ impl Model {
     }
 }
 
-// Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
         Self {
             watching: false,
             coords: (0, 0),
+            last_keycode: 0,
         }
     }
 }
@@ -36,52 +36,58 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     ToggleWatching,
-    UpdateCoords(web_sys::Event),
-
+    UpdateCoords(web_sys::MouseEvent),
+    KeyPressed(web_sys::KeyboardEvent),
 }
 
-/// The sole source of updating the model; returns a fresh one.
 fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::ToggleWatching => Model {watching: !model.watching, ..model},
-        Msg::UpdateCoords(window) => {
-
-
-//            Model {coords: (x, y), ..model}
-            model
-        },
+        Msg::UpdateCoords(ev) => Model {coords: (ev.screen_x(), ev.screen_y()), ..model},
+        Msg::KeyPressed(key) => Model {last_keycode: key.key_code(), ..model}
     }
 }
 
 
 // View
 
-/// The top-level component we pass to the virtual dom. Must accept the model as its
-/// only argument, and output a single El.
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
-    // This view func demonstrates use of custom element tags.
+/// This func demonstrates use of custom element tags, and the class! and
+/// id! convenience macros
+fn misc_demo() -> El<Msg> {
     let mut custom_el = El::empty(Tag::Custom("mytag".into()));
-    custom_el.set_text("Words");
+    custom_el.set_text("");  // Demo of set_text.
 
     let mut attributes = attrs!{};
     attributes.add_multiple("class", vec!["a-modicum-of", "hardly-any"]);
 
     custom![ Tag::Custom("superdiv".into()),
-        h2![ attributes, model.coords_string() ],
+        p![ attributes ],
 
         // class! and id! convenience macros, if no other attributes are required.
         span![ class!["calculus", "chemistry", "literature"] ],
-        span![ seed::id("unique-element") ],
+        span![ id!("unique-element") ],
 
         custom_el,
-        button![ simple_ev("click", Msg::ToggleWatching), "Toggle watching" ]
+    ]
+}
+
+fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+    div![
+        h2![ model.coords_string() ],
+        h2![ format!("Last key pressed: {}", model.last_keycode) ],
+        button![
+            simple_ev("click", Msg::ToggleWatching),
+            if model.watching {"Stop watching"} else {"Start watching"}
+        ],
+        misc_demo()
     ]
 }
 
 fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
     let mut result = Vec::new();
     if model.watching {
-        result.push(raw_ev("mousemove", |ev| Msg::UpdateCoords(ev)));
+        result.push(mouse_ev("mousemove", |ev| Msg::UpdateCoords(ev)));
+        result.push(keyboard_ev("keydown", |ev| Msg::KeyPressed(ev)));
     }
     result
 }
@@ -89,6 +95,5 @@ fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
 
 #[wasm_bindgen]
 pub fn render() {
-    // The final parameter is an optional routing map.
     seed::run(Model::default(), update, view, "main", None, Some(window_events));
 }

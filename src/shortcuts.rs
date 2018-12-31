@@ -1190,6 +1190,16 @@ macro_rules! class {
      };
 }
 
+/// Convenience macro, for brevity.
+#[macro_export]
+macro_rules! id {
+    { $id:expr } => {
+        {
+            seed::dom_types::Attrs::from_id($id)
+        }
+     };
+}
+
 
 // todo: Once the macro_at_most_once_rep is in stable, you can use $(;)? here (
 // todo: and in el creation macros) to make only trailing comma/semicolon acceptable.

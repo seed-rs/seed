@@ -222,25 +222,6 @@ __exports.__widl_f_set_autofocus_HTMLButtonElement = function(arg0, arg1) {
     __widl_f_set_autofocus_HTMLButtonElement_target.call(getObject(arg0), arg1 !== 0);
 };
 
-__exports.__widl_instanceof_HTMLElement = function(idx) {
-    return getObject(idx) instanceof HTMLElement ? 1 : 0;
-};
-
-const __widl_f_focus_HTMLElement_target = typeof HTMLElement === 'undefined' ? null : HTMLElement.prototype.focus || function() {
-    throw new Error(`wasm-bindgen: HTMLElement.focus does not exist`);
-};
-
-__exports.__widl_f_focus_HTMLElement = function(arg0, exnptr) {
-    try {
-        __widl_f_focus_HTMLElement_target.call(getObject(arg0));
-    } catch (e) {
-        const view = getUint32Memory();
-        view[exnptr / 4] = 1;
-        view[exnptr / 4 + 1] = addHeapObject(e);
-
-    }
-};
-
 __exports.__widl_instanceof_HTMLInputElement = function(idx) {
     return getObject(idx) instanceof HTMLInputElement ? 1 : 0;
 };
@@ -530,9 +511,9 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper583 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(20);
-    const d = wasm.__wbg_function_table.get(21);
+__exports.__wbindgen_closure_wrapper528 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(2);
+    const d = wasm.__wbg_function_table.get(3);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

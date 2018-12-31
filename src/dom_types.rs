@@ -1,6 +1,7 @@
 //! This module contains structs and enums that represent dom types, and their parts.
 //! These are the types used internally by our virtual dom.
 
+use core::convert::AsRef;
 use std::collections::HashMap;
 
 use pulldown_cmark;
@@ -86,6 +87,16 @@ pub fn keyboard_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::KeyboardE
     Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
+/// See keyboard_ev
+pub fn mouse_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static) -> Listener<Ms>
+    where Ms: Clone + 'static
+{
+        let closure = move |event: web_sys::Event| {
+            handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
+        };
+    Listener::new(&trigger.into(), Some(Box::new(closure)))
+}
+
 /// Event-handling for Elements
 pub struct Listener<Ms: Clone> {
     pub trigger: String,
@@ -105,7 +116,8 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     }
 
     /// This method is where the processing logic for events happens.
-    pub fn attach(&mut self, element: &web_sys::Element, mailbox: Mailbox<Ms>) {
+    pub fn attach<T>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>)
+        where T: AsRef<web_sys::EventTarget> {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
 
@@ -116,7 +128,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
                 as Box<FnMut(web_sys::Event) + 'static>,
         );
 
-        (element.as_ref() as &web_sys::EventTarget)
+        (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
             .expect("problem adding listener to element");
 
@@ -126,7 +138,8 @@ impl<Ms: Clone + 'static> Listener<Ms> {
 //        self.handler.replace(handler);  // todo ?
     }
 
-    pub fn detach(&self, el_ws: &web_sys::Element) {
+    pub fn detach<T>(&self, el_ws: &T)
+        where T: AsRef<web_sys::EventTarget> {
         // This and attach taken from Draco.
         let closure = self.closure.as_ref().unwrap();
         (el_ws.as_ref() as &web_sys::EventTarget)
@@ -293,6 +306,14 @@ impl Attrs {
         Self { vals: HashMap::new() }
     }
 
+    /// Convenience function. Ideal when there's one id, and no other attrs.
+    /// Generally called with the id! macro.
+    pub fn from_id(name: &str) -> Self {
+        let mut result = Self::empty();
+        result.add("id", name);
+        result
+    }
+
     /// Create an HTML-compatible string representation
     pub fn to_string(&self) -> String {
         self.vals.iter()
@@ -322,15 +343,6 @@ impl Attrs {
         result
     }
 }
-
-
-/// Convenience function. Ideal when there's one id, and no other attrs.
-pub fn id(name: &str) -> Attrs {
-    let mut result = Attrs::empty();
-    result.add("id", name);
-    result
-}
-
 
 /// Handle Style separately from Attrs, since it commonly involves multiple parts,
 /// and has a different semantic meaning.

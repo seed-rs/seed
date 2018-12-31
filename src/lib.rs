@@ -5,8 +5,7 @@
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;
-#[macro_use]
-mod shortcuts;
+pub mod shortcuts;
 pub mod storage;
 mod vdom;
 mod websys_bridge;
@@ -22,9 +21,9 @@ mod websys_bridge;
 
 pub use crate::{
     //    dom_types::{did_mount, did_update, will_unmount},  // todo: Here or in prelude?
-    dom_types::{Listener, id},
+    dom_types::{Listener},
     fetch::{Method, RequestOpts, fetch, get, post},
-    websys_bridge::{to_input, to_kbevent, to_select, to_textarea, to_html_el},
+    websys_bridge::{to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_html_el},
     routing::push_route,
     vdom::{App, run} // todo app temp?
 };
@@ -55,13 +54,21 @@ pub fn log<S: ToString>(text: S) {
 // todo: Perhaps put did_mount etc here so we call with seed:: instead of in prelude.
 // todo or maybe not, for consistency with events.
 
-/// Introduce El into the global namespace for convenience (It will be repeated
+/// Introduce El and Tag into the global namespace for convenience (El will be repeated
 /// often in the output type of components), and UpdateEl, which is required
 /// for element-creation macros, input event constructors, and the History struct.
+/// Expose the wasm_bindgen prelude, and lifestyle hooks.
 pub mod prelude {
-    pub use crate::dom_types::{
-        El, Tag, UpdateEl, simple_ev, input_ev, keyboard_ev, raw_ev,
-        did_mount, did_update, will_unmount
-    };
     pub use std::collections::HashMap;
+
+    pub use crate::{
+        dom_types::{
+            El, Tag, UpdateEl, simple_ev, input_ev, keyboard_ev, mouse_ev, raw_ev,
+            did_mount, did_update, will_unmount
+        },
+        shortcuts::*,  // appears not to work.
+    };
+
+    pub use wasm_bindgen::prelude::*;
+
 }

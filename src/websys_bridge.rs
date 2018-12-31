@@ -277,3 +277,9 @@ pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
 pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
     event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
 }
+
+/// See to_kbevent
+pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
+    event.dyn_ref::<web_sys::MouseEvent>().expect("Unable to cast as a mouse event")
+}
+

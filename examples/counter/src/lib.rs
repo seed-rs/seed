@@ -3,7 +3,6 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use wasm_bindgen::prelude::*;
 
 
 // Model
@@ -32,8 +31,6 @@ enum Msg {
     Increment,
     Decrement,
     ChangeWWC(String),
-
-    Focus(&'static str),
 }
 
 /// The sole source of updating the model; returns a fresh one.
@@ -42,13 +39,6 @@ fn update(msg: Msg, model: Model) -> Model {
         Msg::Increment => Model {count: model.count + 1, ..model},
         Msg::Decrement => Model {count: model.count - 1, ..model},
         Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model },
-
-        Msg::Focus(el_id) => {
-            let input = seed::document().get_element_by_id(el_id).unwrap();
-            let input = seed::to_html_el(&input);
-            input.focus().unwrap();
-            model
-        }
     }
 }
 
@@ -95,15 +85,15 @@ fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
                 "border" => "2px solid #004422"; "padding" => 20
             },
                 // We can use normal Rust code and comments in the view.
-                h3![ text, did_update(|el| log!("This shows when we increment")) ],
+                h3![ text, did_update(|_| log!("This shows when we increment")) ],
                 button![ simple_ev("click", Msg::Increment), "+" ],
                 button![ simple_ev("click", Msg::Decrement), "-" ],
 
                 // Optionally-displaying an element, and lifecycle hooks
                 if model.count >= 10 {
                     h2![ style!{"padding" => 50}, "Nice!",
-                         did_mount(|el| log!("This shows when clicks reach 10")),
-                         will_unmount(|el| log!("This shows when clicks drop below 10")),
+                         did_mount(|_| log!("This shows when clicks reach 10")),
+                         will_unmount(|_| log!("This shows when clicks drop below 10")),
                     ]
                 } else { seed::empty() }
 
@@ -119,5 +109,5 @@ fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
 #[wasm_bindgen]
 pub fn render() {
     // The final parameter is an optional routing map.
-    seed::run(Model::default(), update, view, "main", None);
+    seed::run(Model::default(), update, view, "main", None, None);
 }

@@ -41,7 +41,7 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(web_sys::Event)>>>;
 pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     pub document: web_sys::Document,  // todo take off pub if you no longer use it in init
     pub mount_point: web_sys::Element,
-    // Model is in a RefCell here so we can replace it in self.update_dom().
+    // Model is in a RefCell here so we can replace it in self.update().
     pub model: RefCell<Mdl>,
     pub update: fn(Ms, Mdl) -> Mdl,
     pub view: fn(App<Ms, Mdl>, Mdl) -> El<Ms>,
@@ -49,7 +49,8 @@ pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     pub popstate_closure: StoredPopstate,
     routes: RefCell<Option<HashMap<String, Ms>>>,
 
-    pub window_listeners: Vec<dom_types::Listener<Ms>>,
+    pub window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+    window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
 pub struct App<Ms: Clone + 'static , Mdl: 'static> {
@@ -65,6 +66,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         view: fn(Self, Mdl) -> El<Ms>,
         parent_div_id: &str,
         routes: Option<HashMap<String, Ms>>,
+        window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     ) -> Self {
 
         let window = web_sys::window().expect("No global window exists");
@@ -83,7 +85,8 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
 
-                window_listeners: Vec::new(),
+                window_events,
+                window_listeners: RefCell::new(Vec::new()),
             })
         }
     }
@@ -107,6 +110,20 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
         let updated_model = (self.data.update)(message, model_to_update);
+
+        // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
+        // logic based on if we have window listeners.
+        if let Some(window_events) = self.data.window_events {
+            let mut new_listeners = (window_events)(updated_model.clone());
+            setup_window_listeners(
+                &web_sys::window().expect("No global window exists"),
+                &mut self.data.window_listeners.borrow_mut(),
+//                &mut Vec::new(),
+                &mut new_listeners,
+                &self.mailbox()
+            );
+            self.data.window_listeners.replace(new_listeners);
+        }
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
@@ -175,7 +192,7 @@ fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_leve
 //fn mailbox<Ms, Mdl>(app: &'static App<Ms, Mdl>) -> Mailbox<Ms>
 //    where Ms: Clone + 'static, Mdl: Clone + 'static {
 //    Mailbox::new(move |message| {
-//        app.clone().update_dom(message);
+//        app.clone().update(message);
 //    })
 //
 //}
@@ -222,6 +239,24 @@ fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
     }
 
    el.el_ws.replace(el_ws);
+}
+
+/// We reattach all listeners, as with normal Els, since we have no
+/// way of diffing them.
+fn setup_window_listeners<Ms>(
+    window: &web_sys::Window,
+    old: &mut Vec<dom_types::Listener<Ms>>,
+    new: &mut Vec<dom_types::Listener<Ms>>,
+    mailbox: &Mailbox<Ms>
+)
+    where Ms: Clone + 'static {
+    for listener in old {
+        listener.detach(window);
+    }
+
+    for mut listener in new {
+        listener.attach(window, mailbox.clone());
+    }
 }
 
 // todo take off pub if you no longer call this from lib.
@@ -406,12 +441,38 @@ pub fn run<Ms, Mdl>(
 )
     where Ms: Clone + 'static, Mdl: Clone + 'static
 {
-    let mut app = App::new(model.clone(), update, view, mount_point_id, routes.clone());
+    let app = App::new(model.clone(), update, view, mount_point_id, routes.clone(), window_events);
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    // todo maybe have view take an update_dom instead of whole app?
-    let mut topel_vdom = (app.data.view)(app.clone(), model);
-    let document = &web_sys::window().unwrap().document().unwrap();
+    // todo maybe have view take an update instead of whole app?
+    // todo: There's a lot of DRY between here and update.
+//    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
+
+    let window = &web_sys::window().expect("Problem getting window");
+
+    // Only clone model if we have window events.
+    let mut topel_vdom;
+    match app.data.window_events {
+        Some(window_events) => {
+            topel_vdom = (app.data.view)(app.clone(), model.clone());
+            setup_window_listeners(
+                &web_sys::window().expect("No global window exists"),
+                &mut Vec::new(),
+                // todo: Fix this. Bug where if we try to add initial listeners,
+                // todo we get many runtime panics. Workaround is to wait until
+                // todo app.update, which means an event must be triggered
+                // todo prior to window listeners working.
+                &mut Vec::new(),
+//                &mut (window_events)(model),
+                &app.mailbox()
+            );
+        },
+        None => {
+            topel_vdom = (app.data.view)(app.clone(), model);
+        }
+    }
+
+    let document = window.document().expect("Problem getting document");
     setup_els(&document, &mut topel_vdom, 0, 0);
 
     attach_listeners(&mut topel_vdom, &app.mailbox());

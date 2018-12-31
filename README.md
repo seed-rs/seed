@@ -89,7 +89,6 @@ Guide section below. Its structure follows [The Elm Architecture](https://guide.
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use wasm_bindgen::prelude::*;
 
 
 // Model
