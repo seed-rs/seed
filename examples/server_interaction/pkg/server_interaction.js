@@ -495,7 +495,7 @@ __exports.__wbg_new_9cc98abd8c2c45e2 = function(arg0, arg1) {
         }
 
     };
-    cbarg0.f = wasm.__wbg_function_table.get(110);
+    cbarg0.f = wasm.__wbg_function_table.get(120);
     cbarg0.a = arg0;
     cbarg0.b = arg1;
     try {
@@ -586,7 +586,7 @@ __exports.__wbindgen_json_serialize = function(idx, ptrptr) {
     return WASM_VECTOR_LEN;
 };
 
-__exports.__wbindgen_closure_wrapper320 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper366 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(10);
     const d = wasm.__wbg_function_table.get(11);
     const cb = function(arg0) {
@@ -610,9 +610,9 @@ __exports.__wbindgen_closure_wrapper320 = function(a, b, _ignored) {
     return addHeapObject(real);
 };
 
-__exports.__wbindgen_closure_wrapper1847 = function(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(73);
-    const d = wasm.__wbg_function_table.get(74);
+__exports.__wbindgen_closure_wrapper1916 = function(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(83);
+    const d = wasm.__wbg_function_table.get(84);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;

@@ -4,10 +4,10 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use wasm_bindgen::prelude::*;
 
 use serde::{Serialize, Deserialize};
 use serde_json;
+
 
 // Model
 
@@ -28,11 +28,16 @@ struct Branch {
     pub commit: Commit,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 struct Message {
     pub name: String,
     pub email: String,
     pub message: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct ServerResponse {
+    pub success: bool,
 }
 
 
@@ -42,16 +47,21 @@ struct Model {
     data: Branch,
 }
 
+// todo
+use wasm_bindgen_futures;
+use futures::{future, Future};
+
 
 fn get_data(state: seed::App<Msg, Model>) {
     let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 //    let url = "https://seed-example.herokuapp.com/data";
-
+//    let callback = move |json: JsValue| {
     let callback = move |json: JsValue| {
         let data: Branch = json.into_serde().unwrap();
         state.update(Msg::Replace(data));
     };
-    seed::get(url, None, Box::new(callback));
+
+    seed::get_json(url, None, Box::new(callback));
 }
 
 fn send() {
@@ -67,9 +77,12 @@ fn send() {
     let mut opts = seed::RequestOpts::new();
     opts.headers.insert("Content-Type".into(), "application/json".into());
 
-    let callback = move |json: JsValue| {};
+    let callback = move |json: JsValue| {
+        let result: ServerResponse = json.into_serde().unwrap();
+        log!(format!("Response: {:?}", result));
+    };
 
-    seed::post(url, message, Some(opts), Box::new(callback));
+    seed::post_json(url, message, Some(opts), Box::new(callback));
 }
 
 // Setup a default here, for initialization later.

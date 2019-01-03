@@ -64,6 +64,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         model: Mdl,
         update: fn(Ms, Mdl) -> Mdl,
         view: fn(Self, Mdl) -> El<Ms>,
+//        view: fn(Self, Mdl) -> DomEl<Ms>,
         parent_div_id: &str,
         routes: Option<HashMap<String, Ms>>,
         window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
@@ -493,6 +494,27 @@ pub fn run<Ms, Mdl>(
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
+/// WIP towards a modular VDOM
+/// Assumes dependency on web_sys.
+pub trait DomEl<Tg, At, Sty, Tx, Ls, E>
+    where
+        Tg: PartialEq,
+        At: PartialEq,
+        Sty: PartialEq,
+        Tx: ToString + PartialEq,
+{
+    fn tag(self) -> Tg;
+    fn attrs(self) -> At;
+    fn style(self) -> Sty;
+    fn listeners(self) -> Vec<Ls>;
+    fn text(self) -> Option<Tx>;
+    fn children(self) -> Vec<E>;  // todo
+
+    fn websys_el(self) -> Option<web_sys::Element>;
+    fn id(self) -> Option<u32>;
+
+//    fn make_websys_el(&self, document: &web_sys::Document) -> web_sys::Element;
+}
 
 #[cfg(test)]
 pub mod tests {

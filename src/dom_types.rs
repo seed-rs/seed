@@ -8,10 +8,41 @@ use pulldown_cmark;
 use web_sys;
 use wasm_bindgen::{closure::Closure, JsCast};
 
-use crate::vdom::Mailbox;  // todo temp
+use crate::vdom::Mailbox;
 
 
-//use regex::Regex;
+
+
+
+//  pub tag: Tag,
+//    pub attrs: Attrs,
+//    pub style: Style,
+//    pub listeners: Vec<Listener<Ms>>,
+//    pub text: Option<String>,
+//    pub children: Vec<El<Ms>>,
+//
+//    // Things that get filled in later, to assist with rendering.
+//    pub id: Option<u32>,  // todo maybe not optional...
+//    pub nest_level: Option<u32>,
+//    pub el_ws: Option<web_sys::Element>,
+//
+//    // todo temp?
+////    pub key: Option<u32>,
+//
+//    pub raw_html: bool,
+//    pub namespace: Option<Namespace>,
+//
+//     // static: bool
+//     // static_to_parent: bool
+//    // ancestors: Vec<u32>  // ids of parent, grandparent etc.
+//
+//    // Lifecycle hooks
+//    pub did_mount: Option<Box<Fn(&web_sys::Element)>>,
+//    pub did_update: Option<Box<Fn(&web_sys::Element)>>,
+//    pub will_unmount: Option<Box<Fn(&web_sys::Element)>>,
+//
+//
+
 
 /// Common Namespaces
 #[derive(Debug,Clone,PartialEq)]
@@ -103,6 +134,7 @@ pub struct Listener<Ms: Clone> {
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
+    pub id: Option<u32>,
 }
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
@@ -112,6 +144,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
             trigger: String::from(event.as_str()),
             handler,
             closure: None,
+            id: None,
         }
     }
 
@@ -152,7 +185,7 @@ impl<Ms: Clone + 'static>  PartialEq for Listener<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo we're only checking the trigger - will miss changes if
         // todo only the fn passed changes!
-        self.trigger == other.trigger
+        self.trigger == other.trigger && self.id == other.id
     }
 }
 
@@ -826,6 +859,15 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
     }
 }
 
+pub type SeedEl<Ms> = crate::vdom::DomEl<
+    Tag,
+    Attrs,
+    Style,
+    String,
+    Listener<Ms>,
+    El<Ms>
+>;
+
 impl<Ms: Clone + 'static> PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo Again, note that the listeners check only checks triggers.
@@ -839,6 +881,39 @@ impl<Ms: Clone + 'static> PartialEq for El<Ms> {
         // todo how we iterate? Sanity-check for now.
         self.nest_level == other.nest_level
     }
+}
+
+impl <Ms: Clone + 'static>crate::vdom::DomEl<Tag, Attrs, Style, String,
+        Listener<Ms>, El<Ms>> for El<Ms> {
+    fn tag(self) -> Tag {
+        self.tag
+    }
+    fn attrs(self) -> Attrs {
+        self.attrs
+    }
+    fn style(self) -> Style {
+        self.style
+    }
+    fn listeners(self) -> Vec<Listener<Ms>> {
+        self.listeners
+    }
+    fn text(self) -> Option<String> {
+        self.text
+    }
+    fn children(self) -> Vec<Self> {
+        self.children
+    }
+
+    fn websys_el(self) -> Option<web_sys::Element> {
+        self.el_ws
+    }
+    fn id(self) -> Option<u32> {
+        self.id
+    }
+
+//    fn make_websys_el(&mut self, document: &web_sys::Document) -> web_sys::Element {
+//        crate::websys_bridge::make_websys_el(self, document)
+//    }
 }
 
 pub struct DidMount {
@@ -870,3 +945,4 @@ pub fn will_unmount(actions: impl Fn(&web_sys::Element) + 'static) -> WillUnmoun
     let closure = move |el: &web_sys::Element| actions(el);
     WillUnmount { actions: Box::new(closure) }
 }
+

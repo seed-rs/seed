@@ -108,7 +108,7 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-pub fn make_websys_el<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, document: &web_sys::Document) -> web_sys::Element {
+pub fn make_websys_el<Ms: Clone>(el_vdom: &dom_types::El<Ms>, document: &web_sys::Document) -> web_sys::Element {
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
     let el_ws = match el_vdom.namespace {
