@@ -57,7 +57,7 @@ pub fn log<S: ToString>(text: S) {
 /// Introduce El and Tag into the global namespace for convenience (El will be repeated
 /// often in the output type of components), and UpdateEl, which is required
 /// for element-creation macros, input event constructors, and the History struct.
-/// Expose the wasm_bindgen prelude, and lifestyle hooks.
+/// Expose the wasm_bindgen prelude, and lifecycle hooks.
 pub mod prelude {
     pub use std::collections::HashMap;
 
