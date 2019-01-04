@@ -52,7 +52,7 @@ impl Method {
 pub struct Request<'a> {
     url: &'a str,
     init: web_sys::RequestInit,
-    headers: web_sys::Headers,
+    headers: Option<web_sys::Headers>,
 }
 
 impl<'a> Request<'a> {
@@ -60,7 +60,7 @@ impl<'a> Request<'a> {
         Self {
             url,
             init: web_sys::RequestInit::new(),
-            headers: web_sys::Headers::new().expect("Error with creating Headers"),
+            headers: None,
         }
     }
 
@@ -70,9 +70,17 @@ impl<'a> Request<'a> {
         self
     }
 
+    fn set_header(&mut self, name: &str, val: &str) {
+        let headers = self.headers.get_or_insert_with(|| {
+            web_sys::Headers::new().expect("Error with creating Headers")
+        });
+
+        headers.set(name, val).expect("Error with setting header");
+    }
+
     #[inline]
-    pub fn header(self, name: &str, val: &str) -> Self {
-        self.headers.set(name, val).expect("Error with setting header");
+    pub fn header(mut self, name: &str, val: &str) -> Self {
+        self.set_header(name, val);
         self
     }
 
@@ -82,9 +90,14 @@ impl<'a> Request<'a> {
         self
     }
 
-    pub fn body_json<A: Serialize>(self, val: &A) -> Self {
+    fn get_json<A: Serialize>(val: &A) -> JsValue {
         let json = serde_json::to_string(val).expect("Error serializing JSON");
-        self.body(&JsValue::from_str(&json))
+        JsValue::from_str(&json)
+    }
+
+    #[inline]
+    pub fn body_json<A: Serialize>(self, val: &A) -> Self {
+        self.body(&Self::get_json(val))
     }
 
     #[inline]
@@ -132,7 +145,10 @@ impl<'a> Request<'a> {
     pub fn fetch(mut self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
         let controller = web_sys::AbortController::new().expect("Error with creating AbortController");
 
-        self.init.headers(self.headers.as_ref());
+        if let Some(headers) = self.headers {
+            self.init.headers(headers.as_ref());
+        }
+
         self.init.signal(Some(&controller.signal()));
 
         let future = web_sys::window()
