@@ -297,7 +297,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
         if old.tag != new.tag {
 
             // todo DRY here between this and later in func.
-            if let Some(unmount_actions) = &old.will_unmount {
+            if let Some(unmount_actions) = &mut old.will_unmount {
                 unmount_actions(&old_el_ws)
             }
             parent.remove_child(&old_el_ws).expect("Problem removing an element");
@@ -375,7 +375,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // todo DRY here between this and earlier in func
-        if let Some(unmount_actions) = &child.will_unmount {
+        if let Some(unmount_actions) = &mut child.will_unmount {
             unmount_actions(&child_el_ws)
         }
         old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");

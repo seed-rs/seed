@@ -157,7 +157,7 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
     parent.append_child(&el_ws).unwrap();
 
     // Perform side-effects specified for mounting.
-    if let Some(mount_actions) = &el_vdom.did_mount {
+    if let Some(mount_actions) = &mut el_vdom.did_mount {
         mount_actions(&el_ws)
     }
 
@@ -187,7 +187,7 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
            old_el_ws: &web_sys::Element, document: &web_sys::Document) {
 
     // Perform side-effects specified for updating
-    if let Some(update_actions) = &old.did_update {
+    if let Some(update_actions) = &mut old.did_update {
         update_actions(old_el_ws)
     }
 

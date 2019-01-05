@@ -55,7 +55,6 @@ use futures::{future, Future};
 fn get_data(state: seed::App<Msg, Model>) {
     let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 //    let url = "https://seed-example.herokuapp.com/data";
-//    let callback = move |json: JsValue| {
     let callback = move |json: JsValue| {
         let data: Branch = json.into_serde().unwrap();
         state.update(Msg::Replace(data));
@@ -77,7 +76,7 @@ fn send() {
     let mut opts = seed::RequestOpts::new();
     opts.headers.insert("Content-Type".into(), "application/json".into());
 
-    let callback = move |json: JsValue| {
+    let callback = |json: JsValue| {
         let result: ServerResponse = json.into_serde().unwrap();
         log!(format!("Response: {:?}", result));
     };

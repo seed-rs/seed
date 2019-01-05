@@ -686,9 +686,9 @@ pub struct El<Ms: Clone + 'static> {
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
 
     // Lifecycle hooks
-    pub did_mount: Option<Box<Fn(&web_sys::Element)>>,
-    pub did_update: Option<Box<Fn(&web_sys::Element)>>,
-    pub will_unmount: Option<Box<Fn(&web_sys::Element)>>,
+    pub did_mount: Option<Box<FnMut(&web_sys::Element)>>,
+    pub did_update: Option<Box<FnMut(&web_sys::Element)>>,
+    pub will_unmount: Option<Box<FnMut(&web_sys::Element)>>,
 }
 
 impl<Ms: Clone + 'static> El<Ms> {
@@ -917,31 +917,31 @@ impl <Ms: Clone + 'static>crate::vdom::DomEl<Tag, Attrs, Style, String,
 }
 
 pub struct DidMount {
-    actions: Box<Fn(&web_sys::Element)>
+    actions: Box<FnMut(&web_sys::Element)>
 }
 
 pub struct DidUpdate {
-    actions: Box<Fn(&web_sys::Element)>
+    actions: Box<FnMut(&web_sys::Element)>
 }
 
 pub struct WillUnmount {
-    actions: Box<Fn(&web_sys::Element)>
+    actions: Box<FnMut(&web_sys::Element)>
 }
 
 /// Aconstructor for DidMount, to be used in the API
-pub fn did_mount(actions: impl Fn(&web_sys::Element) + 'static) -> DidMount {
+pub fn did_mount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> DidMount {
     let closure = move |el: &web_sys::Element| actions(el);
     DidMount { actions: Box::new(closure) }
 }
 
 /// A constructor for DidUpdate, to be used in the API
-pub fn did_update(actions: impl Fn(&web_sys::Element) + 'static) -> DidUpdate  {
+pub fn did_update(mut actions: impl FnMut(&web_sys::Element) + 'static) -> DidUpdate  {
     let closure = move |el: &web_sys::Element| actions(el);
     DidUpdate { actions: Box::new(closure) }
 }
 
 /// A constructor for WillUnmount, to be used in the API
-pub fn will_unmount(actions: impl Fn(&web_sys::Element) + 'static) -> WillUnmount  {
+pub fn will_unmount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> WillUnmount  {
     let closure = move |el: &web_sys::Element| actions(el);
     WillUnmount { actions: Box::new(closure) }
 }
