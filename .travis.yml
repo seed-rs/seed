@@ -1,0 +1,12 @@
+language: rust
+rust:
+  - nightly
+os:
+  - linux
+  - osx
+  - windows
+before_script:
+  - rustup target add wasm32-unknown-unknown
+  - cargo install wasm-bindgen-cli
+script:
+  - cargo build --tests --target wasm32-unknown-unknown
