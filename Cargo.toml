@@ -12,8 +12,12 @@ keywords = ["wasm", "webassembly", "frontend", "framework", "web"]
 categories = ["wasm", "web-programming"]
 edition = "2018"
 
-#[lib]
+[lib]
+crate-type = ["cdylib", "rlib"]
 #proc-macro = true
+
+[dev-dependencies]
+wasm-bindgen-test = "^0.2.29" # NOTE: keep in sync with wasm-bindgen version
 
 [dependencies]
 wasm-bindgen = {version = "^0.2.29", features = ["serde-serialize"]}
