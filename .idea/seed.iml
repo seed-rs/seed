@@ -30,8 +30,18 @@
       <sourceFolder url="file://$MODULE_DIR$/examples/window_events/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/examples/window_events/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/examples/window_events/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/examples/counter/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/homepage/target" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/server_integration/shared/target" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/server_integration/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/server_interaction/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/todomvc/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/window_events/target" />

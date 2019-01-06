@@ -68,3 +68,8 @@ members = [
     "examples/todomvc",
     "examples/window_events",
 ]
+
+exclude = [
+    # We experience compile-target incompatibility if including in a workspace.
+    "examples/server_integration"
+]
