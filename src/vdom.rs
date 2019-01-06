@@ -521,7 +521,8 @@ pub mod tests {
     use super::*;
 
     use crate as seed;  // required for macros to work.
-    use crate::dom_types::{UpdateListener, UpdateEl};
+    use crate::dom_types::{UpdateEl};
+    use crate::{div,li};
 
     fn make_doc() -> web_sys::Document {
         let window = web_sys::window().unwrap();
