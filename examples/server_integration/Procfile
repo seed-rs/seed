@@ -1,0 +1,1 @@
+web: ROCKET_PORT=$PORT target/release/rebar-example-server

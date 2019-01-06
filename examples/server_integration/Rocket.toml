@@ -1,0 +1,8 @@
+[staging]
+
+[development]
+port = 8001
+
+[production]
+base_url = "https://seed-example.herokuapp.com"
+

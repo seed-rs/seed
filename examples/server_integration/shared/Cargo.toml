@@ -1,0 +1,8 @@
+[package]
+name = "shared"
+version = "0.1.0"
+authors = ["DavidOConnor <david.alan.oconnor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = { version = "^1.0.80", features = ['derive'] }
