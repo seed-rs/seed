@@ -518,7 +518,12 @@ pub trait DomEl<Tg, At, Sty, Tx, Ls, E>
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
+   #![feature(custom_attribute)]
+   use wasm_bindgen_test::wasm_bindgen_test_configure;
+   wasm_bindgen_test_configure!(run_in_browser);
+
+   use wasm_bindgen_test::*;
+   use super::*;
 
     use crate as seed;  // required for macros to work.
     use crate::dom_types::{UpdateEl};
@@ -533,7 +538,7 @@ pub mod tests {
     enum Msg {}
 
 
-    #[test]
+    #[wasm_bindgen_test]
     fn el_added() {
         // todo macros not working here.
         let old_vdom: El<Msg> = div![ "text", vec![
