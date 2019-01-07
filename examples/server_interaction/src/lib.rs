@@ -4,9 +4,22 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-
+use seed::{Request, Method};
+use wasm_bindgen_futures::future_to_promise;
 use serde::{Serialize, Deserialize};
-use serde_json;
+
+// todo
+use wasm_bindgen_futures;
+use futures::Future;
+
+
+
+fn spawn_local<F>(future: F) where F: Future<Item = (), Error = JsValue> + 'static {
+    future_to_promise(future.map(|_| JsValue::UNDEFINED).map_err(|err| {
+        web_sys::console::error_1(&err);
+        err
+    }));
+}
 
 
 // Model
@@ -47,23 +60,20 @@ struct Model {
     data: Branch,
 }
 
-// todo
-use wasm_bindgen_futures;
-use futures::{future, Future};
 
-
-fn get_data(state: seed::App<Msg, Model>) {
+fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsValue> {
     let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 //    let url = "https://seed-example.herokuapp.com/data";
-    let callback = move |json: JsValue| {
-        let data: Branch = json.into_serde().unwrap();
-        state.update(Msg::Replace(data));
-    };
 
-    seed::get_json(url, None, Box::new(callback));
+    Request::new(url)
+        .method(Method::Get)
+        .fetch_json()
+        .map(move |json| {
+            state.update(Msg::Replace(json));
+        })
 }
 
-fn send() {
+fn send() -> impl Future<Item = (), Error = JsValue> {
 //    let url = "http://127.0.0.1:8001/api/contact";
     let url = "https://infinitea.herokuapp.com/api/contact";
 
@@ -73,15 +83,14 @@ fn send() {
         message: "I wanna be like Iron Man".into(),
     };
 
-    let mut opts = seed::RequestOpts::new();
-    opts.headers.insert("Content-Type".into(), "application/json".into());
-
-    let callback = |json: JsValue| {
-        let result: ServerResponse = json.into_serde().unwrap();
-        log!(format!("Response: {:?}", result));
-    };
-
-    seed::post_json(url, message, Some(opts), Box::new(callback));
+    Request::new(url)
+        .method(Method::Post)
+        .header("Content-Type", "application/json")
+        .body_json(&message)
+        .fetch_json()
+        .map(|result: ServerResponse| {
+            log!(format!("Response: {:?}", result));
+        })
 }
 
 // Setup a default here, for initialization later.
@@ -109,11 +118,11 @@ fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Replace(data) => Model {data},
         Msg::GetData(app) => {
-            get_data(app);
+            spawn_local(get_data(app));
             model
         },
         Msg::Send => {
-            send();
+            spawn_local(send());
             model
         }
     }
@@ -126,7 +135,7 @@ fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     let state2 = state.clone();
     div![
         div![ format!("Repo info: name: {}, sha: {}", model.data.name, model.data.commit.sha),
-            did_mount(move |_| get_data(state.clone()))
+            did_mount(move |_| spawn_local(get_data(state.clone())))
         ],
 
         button![ raw_ev("click", move |_| Msg::Send), "Send an urgent message"]

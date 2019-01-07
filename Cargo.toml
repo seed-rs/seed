@@ -30,6 +30,8 @@ pulldown-cmark = "^0.2.0"
 [dependencies.web-sys]
 version = "0.3.4"
 features = [
+    "AbortController",
+    "AbortSignal",
     "Document",
     "Element",
     "Event",
@@ -48,9 +50,13 @@ features = [
     "NodeList",
     "Performance",
     "PopStateEvent",
+    "ReferrerPolicy",
     "Request",
+    "RequestCache",
+    "RequestCredentials",
     "RequestInit",
     "RequestMode",
+    "RequestRedirect",
     "Response",
     "Storage",
     "Text",
