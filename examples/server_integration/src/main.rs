@@ -6,9 +6,6 @@ use rocket::http::Method;
 use rocket_cors;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-use serde::{Serialize, Deserialize};
-use serde_json;
-
 use shared::Data;
 
 

@@ -7,6 +7,7 @@ pub mod fetch;
 pub mod routing;
 pub mod shortcuts;
 pub mod storage;
+mod util;
 mod vdom;
 mod websys_bridge;
 
@@ -29,14 +30,6 @@ pub use crate::{
     routing::push_route,
     vdom::{App, run} // todo app temp?
 };
-
-/// Convenience function to access the web_sys DOM document.
-pub fn document() -> web_sys::Document {
-    web_sys::window()
-        .expect("Can't find window")
-        .document()
-        .expect("Can't find document")
-}
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
@@ -85,5 +78,6 @@ pub mod prelude {
     };
 
     pub use wasm_bindgen::prelude::*;
+//    pub use wasm_bindgen_macro::wasm_bindgen;
 
 }

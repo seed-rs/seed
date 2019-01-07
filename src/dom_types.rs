@@ -386,10 +386,10 @@ pub struct Style {
 }
 
 impl Style {
-    // todo avoid Dry code between this and Attrs.
     pub fn new(vals: HashMap<String, String>) -> Self {
         let mut new_vals = HashMap::new();
         for (key, val) in vals.into_iter() {
+            // Handle automatic conversion to string with "px" appended, for integers.
             let val_backup = val.clone();
             match val.parse::<u32>() {
                 Ok(_) => new_vals.insert(key, val_backup + "px"),
@@ -407,11 +407,13 @@ impl Style {
     /// Output style as a string, as would be set in the DOM as the attribute value
     /// for 'style'. Eg: "display: flex; font-size: 1.5em"
     pub fn to_string(&self) -> String {
-        self.vals
-            .iter()
-            .map(|(k,v)|format!("{}:{}",k,v))
-            .collect::<Vec<_>>()
-            .join(";")
+        if self.vals.keys().len() > 0 {
+            self.vals
+                .iter()
+                .map(|(k, v)| format!("{}:{}", k, v))
+                .collect::<Vec<_>>()
+                .join(";")
+        } else { String::new() }
     }
 
     pub fn add(&mut self, key: &str, val: &str) {
@@ -785,7 +787,6 @@ impl<Ms: Clone + 'static> El<Ms> {
         self.text = Some(text.into())
     }
 
-    // todo do we need this method?
     /// Output the HTML of this node, including all its children, recursively.
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
@@ -946,3 +947,28 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> Wil
     WillUnmount { actions: Box::new(closure) }
 }
 
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    use crate as seed;  // required for macros to work.
+    use crate::prelude::*;
+    use crate::{div};
+
+    #[derive(Clone)]
+    enum  Msg {
+        Placeholder
+    }
+
+    // todo 'cannot call wasm-bindgen imported functions on non-wasm targets' error
+    #[test]
+    #[wasm_bindgen]  // todo ?
+    pub fn single() {
+        let expected = "<div>\ntest\n</div>";
+
+        let mut el: El<Msg> = div![ "test" ];
+        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+        assert_eq!(expected, el.el_ws.unwrap().inner_html());
+    }
+}

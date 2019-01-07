@@ -6,6 +6,7 @@ use wasm_bindgen::closure::Closure;
 
 use crate::dom_types;
 use crate::dom_types::El;
+use crate::util;
 use crate::websys_bridge;
 
 
@@ -70,7 +71,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     ) -> Self {
 
-        let window = web_sys::window().expect("No global window exists");
+        let window = util::window();
         let document = window.document().expect("Can't find the window's document.");
 
         let mount_point = document.get_element_by_id(parent_div_id).unwrap();
@@ -117,7 +118,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         if let Some(window_events) = self.data.window_events {
             let mut new_listeners = (window_events)(updated_model.clone());
             setup_window_listeners(
-                &web_sys::window().expect("No global window exists"),
+                &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
 //                &mut Vec::new(),
                 &mut new_listeners,
@@ -168,7 +169,8 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+    // pub for tesets.
     where Ms: Clone +'static
 {
     // id iterates once per item; active-level once per nesting level.
@@ -255,7 +257,7 @@ fn setup_window_listeners<Ms>(
         listener.detach(window);
     }
 
-    for mut listener in new {
+    for listener in new {
         listener.attach(window, mailbox.clone());
     }
 }
@@ -449,7 +451,7 @@ pub fn run<Ms, Mdl>(
     // todo: There's a lot of DRY between here and update.
 //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
 
-    let window = &web_sys::window().expect("Problem getting window");
+    let window = util::window();
 
     // Only clone model if we have window events.
     let mut topel_vdom;
@@ -457,7 +459,7 @@ pub fn run<Ms, Mdl>(
         Some(window_events) => {
             topel_vdom = (app.data.view)(app.clone(), model.clone());
             setup_window_listeners(
-                &web_sys::window().expect("No global window exists"),
+                &util::window(),
                 &mut Vec::new(),
                 // todo: Fix this. Bug where if we try to add initial listeners,
                 // todo we get many runtime panics. Workaround is to wait until
@@ -521,13 +523,8 @@ pub mod tests {
     use super::*;
 
     use crate as seed;  // required for macros to work.
-    use crate::dom_types::{UpdateEl};
+    use crate::prelude::*;
     use crate::{div,li};
-
-    fn make_doc() -> web_sys::Document {
-        let window = web_sys::window().unwrap();
-        window.document().unwrap()
-    }
 
     #[derive(Clone)]
     enum Msg {}
@@ -545,7 +542,7 @@ pub mod tests {
             li![ "child2" ]
         ] ];
 
-        let doc = make_doc();
+        let doc = util::document();
         let old_ws = doc.create_element("div").unwrap();
         let new_ws = doc.create_element("div").unwrap();
 
@@ -565,5 +562,13 @@ pub mod tests {
 
 
         assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn el_removed() {
+    }
+
+    #[test]
+    fn el_changed() {
     }
 }

@@ -2,15 +2,12 @@ use std::collections::HashMap;
 
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
+use crate::util;
 
-/// Convenience function to avoid repeating expect logic.
-fn make_window() -> web_sys::Window {
-    web_sys::window().expect("Can't find the global Window.")
-}
 
 /// A convenience function to prevent repetitions
 fn get_path() -> String {
-    let path = make_window().location().pathname().expect("Can't find pathname");
+    let path = util::window().location().pathname().expect("Can't find pathname");
     path[1..path.len()].to_string()
 }
 
@@ -30,7 +27,7 @@ pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes
     where Ms: Clone +'static, Mdl: Clone + 'static
 {
 
-    let window = make_window();
+    let window = util::window();
     if let Some(ps_closure) = app.data.popstate_closure.borrow().as_ref() {
         (window.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback("popstate", ps_closure.as_ref().unchecked_ref())
@@ -66,7 +63,7 @@ pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes
 
 //pub fn push<Ms: Clone + 'static>(path: &str, message: Ms) {
 pub fn push_route(path: &str) {
-    let history = make_window().history().expect("Can't find history");
+    let history = util::window().history().expect("Can't find history");
     // The second parameter, title, is currently unused by Firefox at least.
     // The first, an arbitrary state object, we could possibly use.
     // todo: Look into using state/events
