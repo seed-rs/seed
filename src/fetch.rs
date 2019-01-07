@@ -142,32 +142,44 @@ impl<'a> Request<'a> {
         self
     }
 
-    pub fn fetch(mut self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
+    // Must be called before make_future
+    fn make_controller(&mut self) -> web_sys::AbortController {
         let controller = web_sys::AbortController::new().expect("Error with creating AbortController");
 
-        if let Some(headers) = self.headers {
+        if let Some(ref headers) = self.headers {
             self.init.headers(headers.as_ref());
         }
 
         self.init.signal(Some(&controller.signal()));
 
-        let future = web_sys::window()
-            .expect("Can't find window")
-            .fetch_with_str_and_init(self.url, &self.init)
-            .into();
-
-        RequestFuture {
-            controller,
-            future,
-        }
+        controller
     }
 
-    pub fn fetch_string(self) -> impl Future<Item = String, Error = JsValue> {
-        self.fetch()
-            .and_then(|x| {
-                JsFuture::from(x.text().expect("Error retrieving text from a Response"))
-            })
-            // TODO handle error codes like 404
+    // Must be called after make_controller
+    fn make_future(&self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
+        let promise = web_sys::window()
+            .expect("Can't find window")
+            .fetch_with_str_and_init(self.url, &self.init);
+
+        JsFuture::from(promise).map(|x| x.into())
+    }
+
+    pub fn fetch(mut self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
+        let controller = self.make_controller();
+        let future = self.make_future();
+        AbortFuture::new(controller, future)
+    }
+
+    pub fn fetch_string(mut self) -> impl Future<Item = String, Error = JsValue> {
+        let controller = self.make_controller();
+        let future = self.make_future();
+
+        // TODO handle error codes like 404
+        let future = future
+            .and_then(|x| x.text())
+            .and_then(JsFuture::from);
+
+        AbortFuture::new(controller, future)
             .map(|x| {
                 // TODO avoid copying somehow ?
                 x.as_string().expect("Error when converting into string")
@@ -183,22 +195,30 @@ impl<'a> Request<'a> {
 }
 
 
-struct RequestFuture {
+// This will automatically abort the request when it is dropped
+struct AbortFuture<A> {
     controller: web_sys::AbortController,
-    future: JsFuture,
+    future: A,
 }
 
-impl Future for RequestFuture {
-    type Item = web_sys::Response;
-    type Error = JsValue;
-
+impl<A> AbortFuture<A> {
     #[inline]
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        self.future.poll().map(|x| x.map(|x| x.into()))
+    fn new(controller: web_sys::AbortController, future: A) -> Self {
+        Self { controller, future }
     }
 }
 
-impl Drop for RequestFuture {
+impl<A> Future for AbortFuture<A> where A: Future {
+    type Item = A::Item;
+    type Error = A::Error;
+
+    #[inline]
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        self.future.poll()
+    }
+}
+
+impl<A> Drop for AbortFuture<A> {
     #[inline]
     fn drop(&mut self) {
         self.controller.abort();
