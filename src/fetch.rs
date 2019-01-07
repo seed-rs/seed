@@ -5,21 +5,20 @@
 //! https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/
 //! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html
 
-use std::collections::HashMap;
-use::std::hash::BuildHasher;
-use futures::{future, Future};
-
-use wasm_bindgen::{JsCast, JsValue};
-use wasm_bindgen_futures;
+use futures::{Future, Poll};
+use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::JsFuture;
 use web_sys;
 
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use serde_json;
 
 // todo once this is polished, publish as a standalone crate.
 
 
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+#[derive(Debug, Clone, Copy)]
 pub enum Method {
     Get,
     Head,
@@ -48,191 +47,180 @@ impl Method {
     }
 }
 
-/// Higher-level wrapper for web_sys::RequestInit.
-/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RequestInit.html#method.mode
-#[derive(Clone)]
-pub struct RequestOpts {
-    // todo: Macro for this?
-    pub payload: Option<String>,
-    pub headers: HashMap<String, String>,
-    pub credentials: HashMap<String, String>,
-    pub mode: web_sys::RequestMode,
+
+#[derive(Debug)]
+pub struct Request<'a> {
+    url: &'a str,
+    init: web_sys::RequestInit,
+    headers: Option<web_sys::Headers>,
 }
 
-impl RequestOpts {
-    pub fn new() -> Self {
+impl<'a> Request<'a> {
+    pub fn new(url: &'a str) -> Self {
         Self {
-            payload: None,
-            headers: HashMap::new(),
-            credentials: HashMap::new(),
-            // https://rustwasm.github.io/wasm-bindgen/api/web_sys/enum.RequestMode.html
-            mode: web_sys::RequestMode::Cors,
+            url,
+            init: web_sys::RequestInit::new(),
+            headers: None,
         }
     }
-}
 
-
-/// A wrapper over web_sys's fetch api, to simplify code
-/// https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-fn fetch_helper(
-    method: Method,
-    url: &str,
-    request_opts: Option<RequestOpts>,
-//) -> Future<Item=js_sys::Promise, Error=JsValue> {
-//) -> Future<Item=js_sys::Promise> {
-) -> web_sys::Request {
-
-    let mut opts = web_sys::RequestInit::new();
-    opts.method(method.as_str());
-    opts.mode(web_sys::RequestMode::Cors);  // default
-
-    if let Some(o) = request_opts.clone() {
-        if let Some(p) = o.payload {
-            opts.body(Some(&JsValue::from_str(&p)));
-        }
-        opts.mode(o.mode);
+    #[inline]
+    pub fn method(mut self, val: Method) -> Self {
+        self.init.method(val.as_str());
+        self
     }
 
-    let request = web_sys::Request::new_with_str_and_init(url, &opts.clone())
-        .expect("Problem with request");
-
-    if let Some(o) = request_opts {
-        // Set headers.
-        //  https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Headers.html
-        // https://developer.mozilla.org/en-US/docs/Web/API/Headers/set
-        for (name, value) in &o.headers {
-            request.headers().set(&name, &value).unwrap();
-        }
-    }
-    request
-}
-
-/// Allow access to a web_sys::Response inside a callback. Suitable for general use,
-/// eg we can get the status code etc. Currently, accessing json from inside this
-/// may be difficult.
-pub fn fetch(
-    method: Method,
-    url: &str,
-    request_opts: Option<RequestOpts>,
-    callback: Box<Fn(web_sys::Response)>
-) {
-    let request = fetch_helper(method, url, request_opts);
-    let window = web_sys::window().expect("Can't find window");
-
-    // We could get the fetch_request_with_init promise directly from the func,
-    // but am running into issues with futures etc.
-    let request_promise = window.fetch_with_request(&request);
-    let f = wasm_bindgen_futures::JsFuture::from(request_promise)
-
-        .and_then(move |resp_value| {
-        // `resp_value` is a `Response` object.
-            assert!(resp_value.is_instance_of::<web_sys::Response>());
-        let resp: web_sys::Response = resp_value.dyn_into()
-            .expect("Problem casting response as Reponse.");
-
-        callback(resp);
-        future::ok(JsValue::null())
-    });
-
-    wasm_bindgen_futures::future_to_promise(f);
-}
-
-// todo fetch_text?
-
-/// Allow access to a json object, inside a callback.
-pub fn fetch_json(
-    method: Method,
-    url: &str,
-    request_opts: Option<RequestOpts>,
-    callback: Box<Fn(JsValue)>
-) {
-    let request = fetch_helper(method, url, request_opts);
-    let window = web_sys::window().expect("Can't find window");
-
-    // We could get the fetch_request_with_init promise directly from the func,
-    // but am running into issues with futures etc. So, repeated code here between
-    // this and fetch.
-    let request_promise = window.fetch_with_request(&request);
-    let f = wasm_bindgen_futures::JsFuture::from(request_promise)
-
-            .and_then(move |resp_value| {
-        // `resp_value` is a `Response` object.
-            assert!(resp_value.is_instance_of::<web_sys::Response>());
-            let resp: web_sys::Response = resp_value.dyn_into()
-                .expect("Problem casting response as Reponse.");
-
-            resp.json()
-//          resp.text()
-        })
-        .and_then(|json_value| {
-            // Convert this other `Promise` into a rust `Future`.
-            wasm_bindgen_futures::JsFuture::from(json_value)
-        })
-        .and_then(move |v| {
-            callback(v);
-            future::ok(JsValue::null())
+    fn set_header(&mut self, name: &str, val: &str) {
+        let headers = self.headers.get_or_insert_with(|| {
+            web_sys::Headers::new().expect("Error with creating Headers")
         });
 
-    wasm_bindgen_futures::future_to_promise(f);
-}
+        headers.set(name, val).expect("Error with setting header");
+    }
 
-/// Convenience function for fetch, for get requests.
-pub fn get(
-    url: &str,
-    request_opts: Option<RequestOpts>,
-    callback: Box<Fn(web_sys::Response)>)
-{
+    #[inline]
+    pub fn header(mut self, name: &str, val: &str) -> Self {
+        self.set_header(name, val);
+        self
+    }
 
-    fetch(Method::Get, url, request_opts, callback)
-}
+    #[inline]
+    pub fn body(mut self, val: &JsValue) -> Self {
+        self.init.body(Some(val));
+        self
+    }
 
-/// Convenience function for fetch for get requests, that exposes json in the callback.
-pub fn get_json(
-    url: &str,
-    request_opts: Option<RequestOpts>,
-    callback: Box<Fn(JsValue)>)
-{
-    fetch_json(Method::Get, url, request_opts, callback)
-}
+    fn get_json<A: Serialize>(val: &A) -> JsValue {
+        let json = serde_json::to_string(val).expect("Error serializing JSON");
+        JsValue::from_str(&json)
+    }
 
-/// A wrapper for fetch that serializes the payload, and allows access to a web_sys::Response
-/// struct in its callback.
-pub fn post<S: Serialize>(
-    url: &str,
-    payload: S,
-    request_opts: Option<RequestOpts>,
-    callback: Box<Fn(web_sys::Response)>
-) {
-    let serialized_payload = serde_json::to_string(&payload).expect("Problem serializing payload");
+    #[inline]
+    pub fn body_json<A: Serialize>(self, val: &A) -> Self {
+        self.body(&Self::get_json(val))
+    }
 
-    let updated_opts = match request_opts {
-        Some(o) => RequestOpts{payload: Some(serialized_payload), ..o},
-        None => {
-            let mut opts = RequestOpts::new();
-            opts.payload = Some(serialized_payload);
-            opts
+    #[inline]
+    pub fn cache(mut self, val: web_sys::RequestCache) -> Self {
+        self.init.cache(val);
+        self
+    }
+
+    #[inline]
+    pub fn credentials(mut self, val: web_sys::RequestCredentials) -> Self {
+        self.init.credentials(val);
+        self
+    }
+
+    #[inline]
+    pub fn integrity(mut self, val: &str) -> Self {
+        self.init.integrity(val);
+        self
+    }
+
+    #[inline]
+    pub fn mode(mut self, val: web_sys::RequestMode) -> Self {
+        self.init.mode(val);
+        self
+    }
+
+    #[inline]
+    pub fn redirect(mut self, val: web_sys::RequestRedirect) -> Self {
+        self.init.redirect(val);
+        self
+    }
+
+    #[inline]
+    pub fn referrer(mut self, val: &str) -> Self {
+        self.init.referrer(val);
+        self
+    }
+
+    #[inline]
+    pub fn referrer_policy(mut self, val: web_sys::ReferrerPolicy) -> Self {
+        self.init.referrer_policy(val);
+        self
+    }
+
+    // Must be called before make_future
+    fn make_controller(&mut self) -> web_sys::AbortController {
+        let controller = web_sys::AbortController::new().expect("Error with creating AbortController");
+
+        if let Some(ref headers) = self.headers {
+            self.init.headers(headers.as_ref());
         }
-    };
-    fetch(Method::Post, url, Some(updated_opts), callback)
+
+        self.init.signal(Some(&controller.signal()));
+
+        controller
+    }
+
+    // Must be called after make_controller
+    fn make_future(&self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
+        let promise = web_sys::window()
+            .expect("Can't find window")
+            .fetch_with_str_and_init(self.url, &self.init);
+
+        JsFuture::from(promise).map(|x| x.into())
+    }
+
+    pub fn fetch(mut self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
+        let controller = self.make_controller();
+        let future = self.make_future();
+        AbortFuture::new(controller, future)
+    }
+
+    pub fn fetch_string(mut self) -> impl Future<Item = String, Error = JsValue> {
+        let controller = self.make_controller();
+        let future = self.make_future();
+
+        // TODO handle error codes like 404
+        let future = future
+            .and_then(|x| x.text())
+            .and_then(JsFuture::from);
+
+        AbortFuture::new(controller, future)
+            .map(|x| {
+                // TODO avoid copying somehow ?
+                x.as_string().expect("Error when converting into string")
+            })
+    }
+
+    pub fn fetch_json<A: DeserializeOwned>(self) -> impl Future<Item = A, Error = JsValue> {
+        self.fetch_string()
+            .map(|text| {
+                serde_json::from_str(&text).expect("Error deserializing JSON")
+            })
+    }
 }
 
 
-/// A wrapper for fetch that serializes the payload, and exposes json in the callback.
-pub fn post_json<S: Serialize>(
-    url: &str,
-    payload: S,
-    request_opts: Option<RequestOpts>,
-    callback: Box<Fn(JsValue)>
-) {
-    let serialized_payload = serde_json::to_string(&payload).expect("Problem serializing payload");
+// This will automatically abort the request when it is dropped
+struct AbortFuture<A> {
+    controller: web_sys::AbortController,
+    future: A,
+}
 
-    let updated_opts = match request_opts {
-        Some(o) => RequestOpts{payload: Some(serialized_payload), ..o},
-        None => {
-            let mut opts = RequestOpts::new();
-            opts.payload = Some(serialized_payload);
-            opts
-        }
-    };
-    fetch_json(Method::Post, url, Some(updated_opts), callback)
+impl<A> AbortFuture<A> {
+    #[inline]
+    fn new(controller: web_sys::AbortController, future: A) -> Self {
+        Self { controller, future }
+    }
+}
+
+impl<A> Future for AbortFuture<A> where A: Future {
+    type Item = A::Item;
+    type Error = A::Error;
+
+    #[inline]
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        self.future.poll()
+    }
+}
+
+impl<A> Drop for AbortFuture<A> {
+    #[inline]
+    fn drop(&mut self) {
+        self.controller.abort();
+    }
 }

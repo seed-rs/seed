@@ -520,7 +520,12 @@ pub trait DomEl<Tg, At, Sty, Tx, Ls, E>
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
+   #![feature(custom_attribute)]
+   use wasm_bindgen_test::wasm_bindgen_test_configure;
+   wasm_bindgen_test_configure!(run_in_browser);
+
+   use wasm_bindgen_test::*;
+   use super::*;
 
     use crate as seed;  // required for macros to work.
     use crate::prelude::*;
@@ -530,7 +535,7 @@ pub mod tests {
     enum Msg {}
 
 
-    #[test]
+    #[wasm_bindgen_test]
     fn el_added() {
         // todo macros not working here.
         let old_vdom: El<Msg> = div![ "text", vec![
@@ -563,6 +568,7 @@ pub mod tests {
 
         assert_eq!(2 + 2, 4);
     }
+<<<<<<< HEAD
 
     #[test]
     fn el_removed() {
@@ -572,3 +578,6 @@ pub mod tests {
     fn el_changed() {
     }
 }
+=======
+}
+>>>>>>> d98c94cc9894e19fc257751e6b925d3028a0886c

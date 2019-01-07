@@ -25,7 +25,7 @@ use wasm_bindgen::{closure::Closure, JsCast};
 pub use crate::{
     //    dom_types::{did_mount, did_update, will_unmount},  // todo: Here or in prelude?
     dom_types::{Listener},
-    fetch::{Method, RequestOpts, fetch, fetch_json, get, post, get_json, post_json},
+    fetch::{Method, Request},
     websys_bridge::{to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_html_el},
     routing::push_route,
     vdom::{App, run} // todo app temp?

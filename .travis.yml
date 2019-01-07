@@ -4,9 +4,14 @@ rust:
 os:
   - linux
   - osx
-  - windows
+  #- windows
+addons:
+  firefox: latest
+cache: cargo
 before_script:
   - rustup target add wasm32-unknown-unknown
-  - cargo install wasm-bindgen-cli
+  - cargo install wasm-bindgen-cli --vers 0.2.29 || true
+  - cargo install wasm-pack --vers 0.5.1 || true
 script:
   - cargo build --tests --target wasm32-unknown-unknown
+  - wasm-pack test --headless --firefox
