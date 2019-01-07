@@ -1,8 +1,12 @@
 #[macro_use]
 extern crate seed;
+use seed::{Request, Method, spawn_local};
 use seed::prelude::*;
 
+use futures::Future;
+
 use shared::Data;
+
 
 
 // Model
@@ -20,14 +24,15 @@ impl Default for Model {
     }
 }
 
-fn get_data(state: seed::App<Msg, Model>) {
+fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsValue>  {
     let url = "http://localhost:8001/data";
-    let callback = move |json: JsValue| {
-        let data: Data = json.into_serde().unwrap();
-        state.update(Msg::Replace(data));
-    };
 
-    seed::get(url, None, Box::new(callback));
+        Request::new(url)
+        .method(Method::Get)
+        .fetch_json()
+        .map(move |json| {
+            state.update(Msg::Replace(json));
+        })
 }
 
 
@@ -42,7 +47,7 @@ enum Msg {
 fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::GetData(state) => {
-            get_data(state);
+            spawn_local(get_data(state));
             model
         },
         Msg::Replace(data) => Model {data}

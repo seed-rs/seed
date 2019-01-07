@@ -950,7 +950,13 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> Wil
 
 #[cfg(test)]
 pub mod tests {
+    #![feature(custom_attribute)]
+    use wasm_bindgen_test::wasm_bindgen_test_configure;
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    use wasm_bindgen_test::*;
     use super::*;
+
 
     use crate as seed;  // required for macros to work.
     use crate::prelude::*;
@@ -962,8 +968,7 @@ pub mod tests {
     }
 
     // todo 'cannot call wasm-bindgen imported functions on non-wasm targets' error
-    #[test]
-    #[wasm_bindgen]  // todo ?
+    #[wasm_bindgen_test]
     pub fn single() {
         let expected = "<div>\ntest\n</div>";
 

@@ -17,18 +17,16 @@ use wasm_bindgen::{closure::Closure, JsCast};
 
 //// todos:
 // todo local storage
-// todo maybe?? High-level css-grid and flex api?
+// todo High-level css-grid and flex api?
 // todo Async conflicts with events stepping on each other ?
-// todo keyed elements??
-// todo: Msg as copy type?
+// todo keyed elements?
 
 pub use crate::{
-    //    dom_types::{did_mount, did_update, will_unmount},  // todo: Here or in prelude?
     dom_types::{Listener},
-    fetch::{Method, Request},
+    fetch::{Method, Request, spawn_local},
     websys_bridge::{to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_html_el},
     routing::push_route,
-    vdom::{App, run} // todo app temp?
+    vdom::{App, run}
 };
 
 /// Create an element flagged in a way that it will not be rendered. Useful

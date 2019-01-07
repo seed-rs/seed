@@ -15,6 +15,4 @@ web-sys = "^0.3.6"
 serde = { version = "^1.0.83", features = ['derive'] }
 serde_json = "^1.0.33"
 
-# todo temp
 futures = "^0.1.20"
-wasm-bindgen-futures = "0.3.6"

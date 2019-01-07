@@ -537,7 +537,6 @@ pub mod tests {
 
     #[wasm_bindgen_test]
     fn el_added() {
-        // todo macros not working here.
         let old_vdom: El<Msg> = div![ "text", vec![
             li![ "child1" ],
         ] ];
@@ -568,7 +567,6 @@ pub mod tests {
 
         assert_eq!(2 + 2, 4);
     }
-<<<<<<< HEAD
 
     #[test]
     fn el_removed() {
@@ -578,6 +576,4 @@ pub mod tests {
     fn el_changed() {
     }
 }
-=======
-}
->>>>>>> d98c94cc9894e19fc257751e6b925d3028a0886c
+

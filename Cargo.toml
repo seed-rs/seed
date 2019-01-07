@@ -1,6 +1,6 @@
 [package]
 name = "seed"
-version = "0.2.1"
+version = "0.2.2"
 description = "A Rust framework for creating web apps, using WebAssembly"
 authors = ["DavidOConnor <david.alan.oconnor@gmail.com>"]
 license = "MIT"
@@ -14,7 +14,6 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-#proc-macro = true
 
 [dev-dependencies]
 wasm-bindgen-test = "^0.2.29" # NOTE: keep in sync with wasm-bindgen version

@@ -4,22 +4,10 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use seed::{Request, Method};
-use wasm_bindgen_futures::future_to_promise;
+use seed::{Request, Method, spawn_local};
 use serde::{Serialize, Deserialize};
 
-// todo
-use wasm_bindgen_futures;
 use futures::Future;
-
-
-
-fn spawn_local<F>(future: F) where F: Future<Item = (), Error = JsValue> + 'static {
-    future_to_promise(future.map(|_| JsValue::UNDEFINED).map_err(|err| {
-        web_sys::console::error_1(&err);
-        err
-    }));
-}
 
 
 // Model
@@ -56,14 +44,11 @@ struct ServerResponse {
 
 #[derive(Clone)]
 struct Model {
-//        data: Data,
     data: Branch,
 }
 
-
 fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsValue> {
     let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
-//    let url = "https://seed-example.herokuapp.com/data";
 
     Request::new(url)
         .method(Method::Get)
@@ -74,7 +59,6 @@ fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsVa
 }
 
 fn send() -> impl Future<Item = (), Error = JsValue> {
-//    let url = "http://127.0.0.1:8001/api/contact";
     let url = "https://infinitea.herokuapp.com/api/contact";
 
     let message = Message {
@@ -98,7 +82,6 @@ impl Default for Model {
     fn default() -> Self {
         Self {
             data: Branch{ name: "Test".into(), commit: Commit{sha: "123".into()} }
-//            data: Data {val: 0, text: "".into()}
         }
     }
 }
@@ -108,7 +91,6 @@ impl Default for Model {
 
 #[derive(Clone)]
 enum Msg {
-//        Replace(Data),
     Replace(Branch),
     GetData(seed::App<Msg, Model>),
     Send,
@@ -117,8 +99,10 @@ enum Msg {
 fn update(msg: Msg, model: Model) -> Model {
     match msg {
         Msg::Replace(data) => Model {data},
-        Msg::GetData(app) => {
-            spawn_local(get_data(app));
+        // Msg::GetData is unused in this example, but could be used when
+        // updating state from an event.
+        Msg::GetData(state) => {
+            spawn_local(get_data(state));
             model
         },
         Msg::Send => {

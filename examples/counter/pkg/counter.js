@@ -511,7 +511,7 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper594 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper592 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(2);
     const d = wasm.__wbg_function_table.get(3);
     const cb = function(arg0) {

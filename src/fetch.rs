@@ -8,6 +8,7 @@
 use futures::{Future, Poll};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen_futures::future_to_promise;
 use web_sys;
 
 use serde::Serialize;
@@ -223,4 +224,11 @@ impl<A> Drop for AbortFuture<A> {
     fn drop(&mut self) {
         self.controller.abort();
     }
+}
+
+pub fn spawn_local<F>(future: F) where F: Future<Item = (), Error = JsValue> + 'static {
+    future_to_promise(future.map(|_| JsValue::UNDEFINED).map_err(|err| {
+        web_sys::console::error_1(&err);
+        err
+    }));
 }
