@@ -2,8 +2,7 @@
 
 **A Rust framework for creating web apps**
 
-
-[![Build Status](https://travis-ci.org/rustwasm/wasm-bindgen.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
+[![Build Status](https://travis-ci.org/David-OConnor/seed.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
 [![](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
 [![](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
 [![API Documentation on docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
@@ -328,4 +327,5 @@ avoids the dependency glue-code associated with Redux and React Router.
 - [Rust standard library api](https://doc.rust-lang.org/std/)
 - [Seed's API docs](https://docs.rs/seed)
 - [Learn Rust](https://www.rust-lang.org/learn)
+- [Testing in Headless Browsers](https://rustwasm.github.io/wasm-bindgen/wasm-bindgen-test/browsers.html)
 
