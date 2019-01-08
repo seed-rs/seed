@@ -2,8 +2,7 @@
 
 **A Rust framework for creating web apps**
 
-
-[![Build Status](https://travis-ci.org/rustwasm/wasm-bindgen.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
+[![Build Status](https://travis-ci.org/David-OConnor/seed.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
 [![](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
 [![](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
 [![API Documentation on docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
