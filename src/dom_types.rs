@@ -970,10 +970,10 @@ pub mod tests {
     // todo 'cannot call wasm-bindgen imported functions on non-wasm targets' error
     #[wasm_bindgen_test]
     pub fn single() {
-        let expected = "<div>\ntest\n</div>";
+        let expected = "<div>test</div>";
 
         let mut el: El<Msg> = div![ "test" ];
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-        assert_eq!(expected, el.el_ws.unwrap().inner_html());
+        assert_eq!(expected, el.el_ws.unwrap().outer_html());
     }
 }
