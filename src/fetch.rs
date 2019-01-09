@@ -48,7 +48,9 @@ impl Method {
     }
 }
 
-
+/// Request is the entry point for all fetch requests. Its methods configure
+/// the request, and and handle the response. Many of them return the original
+/// struct, and are intended to be used chained together.
 #[derive(Debug)]
 pub struct Request<'a> {
     url: &'a str,
@@ -65,6 +67,7 @@ impl<'a> Request<'a> {
         }
     }
 
+    /// Set the HTTP method
     #[inline]
     pub fn method(mut self, val: Method) -> Self {
         self.init.method(val.as_str());
@@ -79,6 +82,8 @@ impl<'a> Request<'a> {
         headers.set(name, val).expect("Error with setting header");
     }
 
+    /// Add a single header. String multiple calls to this together to add multiple ones.
+    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
     #[inline]
     pub fn header(mut self, name: &str, val: &str) -> Self {
         self.set_header(name, val);
@@ -96,6 +101,7 @@ impl<'a> Request<'a> {
         JsValue::from_str(&json)
     }
 
+    /// Serialize a Rust data structure as JSON; eg the payload in a POST request.
     #[inline]
     pub fn body_json<A: Serialize>(self, val: &A) -> Self {
         self.body(&Self::get_json(val))
@@ -107,36 +113,42 @@ impl<'a> Request<'a> {
         self
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials
     #[inline]
     pub fn credentials(mut self, val: web_sys::RequestCredentials) -> Self {
         self.init.credentials(val);
         self
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
     #[inline]
     pub fn integrity(mut self, val: &str) -> Self {
         self.init.integrity(val);
         self
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/mode
     #[inline]
     pub fn mode(mut self, val: web_sys::RequestMode) -> Self {
         self.init.mode(val);
         self
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections
     #[inline]
     pub fn redirect(mut self, val: web_sys::RequestRedirect) -> Self {
         self.init.redirect(val);
         self
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Document/referrer
     #[inline]
     pub fn referrer(mut self, val: &str) -> Self {
         self.init.referrer(val);
         self
     }
 
+    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
     #[inline]
     pub fn referrer_policy(mut self, val: web_sys::ReferrerPolicy) -> Self {
         self.init.referrer_policy(val);
@@ -165,12 +177,15 @@ impl<'a> Request<'a> {
         JsFuture::from(promise).map(|x| x.into())
     }
 
+    /// Use this if you want access to the web_sys::Request, eg for status code.
     pub fn fetch(mut self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
         let controller = self.make_controller();
         let future = self.make_future();
         AbortFuture::new(controller, future)
     }
 
+    // Use this for the response's text.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
     pub fn fetch_string(mut self) -> impl Future<Item = String, Error = JsValue> {
         let controller = self.make_controller();
         let future = self.make_future();
@@ -187,6 +202,8 @@ impl<'a> Request<'a> {
             })
     }
 
+    /// Use this to access the response's JSON:
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/json
     pub fn fetch_json<A: DeserializeOwned>(self) -> impl Future<Item = A, Error = JsValue> {
         self.fetch_string()
             .map(|text| {
@@ -196,7 +213,7 @@ impl<'a> Request<'a> {
 }
 
 
-// This will automatically abort the request when it is dropped
+/// This will automatically abort the request when it is dropped
 struct AbortFuture<A> {
     controller: web_sys::AbortController,
     future: A,

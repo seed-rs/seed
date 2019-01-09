@@ -262,8 +262,7 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-// todo take off pub if you no longer call this from lib.
-pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
+fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
               parent: &web_sys::Element, mailbox: &Mailbox<Ms>)
     where Ms: Clone + 'static
 {
@@ -311,7 +310,7 @@ pub fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms
             return
         }
 
-        // Patch attributes.
+        // Patch parts of the Element.
         websys_bridge::patch_el_details(old, new, &old_el_ws, document);
     }
 
@@ -520,7 +519,6 @@ pub trait DomEl<Tg, At, Sty, Tx, Ls, E>
 
 #[cfg(test)]
 pub mod tests {
-   #![feature(custom_attribute)]
    use wasm_bindgen_test::wasm_bindgen_test_configure;
    wasm_bindgen_test_configure!(run_in_browser);
 
@@ -558,9 +556,9 @@ pub mod tests {
         child1.set_text_content(Some("child1"));
         child2.set_text_content(Some("child2"));
 
-        old_ws.append_child(&child1);
-        new_ws.append_child(&child1);
-        new_ws.append_child(&child2);
+        old_ws.append_child(&child1).unwrap();
+        new_ws.append_child(&child1).unwrap();
+        new_ws.append_child(&child2).unwrap();
 
 //        let patched = patch();
 

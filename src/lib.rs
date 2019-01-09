@@ -1,6 +1,7 @@
 //! See readme for details.
 
 #![allow(unused_macros)]
+//#![feature(custom_attribute)]  // For testing
 
 pub mod dom_types;
 pub mod fetch;

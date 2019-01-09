@@ -185,7 +185,6 @@ pub fn _remove_children(el: &web_sys::Element) {
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_types::El<Ms>,
            old_el_ws: &web_sys::Element, document: &web_sys::Document) {
-
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut old.did_update {
         update_actions(old_el_ws)
@@ -237,14 +236,19 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
                 old_el_ws.append_child(&new_next_node).unwrap();
             } else {
                 // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
-                let children = old_el_ws.child_nodes();
-                for i in 0..children.length() {
-                    let node = children.item(i).unwrap();
-                    // We've found it; there will be not more than 1 text node.
-                    if node.node_type() == 3 {
-                        node.set_text_content(Some(&text));
-                        break;
+                if old_el_ws.has_child_nodes() {
+                    let children = old_el_ws.child_nodes();
+                    for i in 0..children.length() {
+                        let node = children.item(i).unwrap();
+                        // We've found it; there will be not more than 1 text node.
+                        if node.node_type() == 3 {
+                            node.set_text_content(Some(&text));
+                            break;
+                        }
                     }
+                } else {
+                    let new_next_node = document.create_text_node(&text);
+                    old_el_ws.append_child(&new_next_node).unwrap();
                 }
             }
         }

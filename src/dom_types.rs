@@ -950,7 +950,6 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> Wil
 
 #[cfg(test)]
 pub mod tests {
-    #![feature(custom_attribute)]
     use wasm_bindgen_test::wasm_bindgen_test_configure;
     wasm_bindgen_test_configure!(run_in_browser);
 
@@ -959,21 +958,51 @@ pub mod tests {
 
 
     use crate as seed;  // required for macros to work.
-    use crate::prelude::*;
-    use crate::{div};
+//    use crate::prelude::*;
+    use crate::{div, section, span, attrs, h1, p};
 
     #[derive(Clone)]
     enum  Msg {
         Placeholder
     }
 
-    // todo 'cannot call wasm-bindgen imported functions on non-wasm targets' error
     #[wasm_bindgen_test]
     pub fn single() {
-        let expected = "<div>\ntest\n</div>";
+        let expected = "<div>test</div>";
 
         let mut el: El<Msg> = div![ "test" ];
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-        assert_eq!(expected, el.el_ws.unwrap().inner_html());
+        assert_eq!(expected, el.el_ws.unwrap().outer_html());
+    }
+
+    #[wasm_bindgen_test]
+    pub fn nested() {
+        let expected = "<section><div><div><h1>huge success</h1></div><p>\
+        I'm making a note here</p></div><span>This is a triumph</span></section>";
+
+        let mut el: El<Msg> = section![
+            div![
+                div![
+                    h1![ "huge success" ]
+                ],
+                p![ "I'm making a note here" ]
+            ],
+            span![ "This is a triumph" ]
+        ];
+        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+        assert_eq!(expected, el.el_ws.unwrap().outer_html());
+    }
+
+    #[wasm_bindgen_test]
+    pub fn attrs() {
+        let expected = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
+
+        let mut el: El<Msg> = div![
+            attrs!{"class" => "biochemistry"; "src" => "https://seed-rs.org"},
+            "ok"
+        ];
+
+        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+        assert_eq!(expected, el.el_ws.unwrap().outer_html());
     }
 }
