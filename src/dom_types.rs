@@ -973,7 +973,6 @@ pub mod tests {
         let mut el: El<Msg> = div![ "test" ];
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
         assert_eq!(expected, el.el_ws.unwrap().outer_html());
-<<<<<<< HEAD
     }
 
     #[wasm_bindgen_test]
@@ -1005,7 +1004,5 @@ pub mod tests {
 
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
         assert_eq!(expected, el.el_ws.unwrap().outer_html());
-=======
->>>>>>> 953d5a04f788c3c06fffc8a82a42c4d0c93ff981
     }
 }
