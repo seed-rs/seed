@@ -11,39 +11,6 @@ use wasm_bindgen::{closure::Closure, JsCast};
 use crate::vdom::Mailbox;
 
 
-
-
-
-//  pub tag: Tag,
-//    pub attrs: Attrs,
-//    pub style: Style,
-//    pub listeners: Vec<Listener<Ms>>,
-//    pub text: Option<String>,
-//    pub children: Vec<El<Ms>>,
-//
-//    // Things that get filled in later, to assist with rendering.
-//    pub id: Option<u32>,  // todo maybe not optional...
-//    pub nest_level: Option<u32>,
-//    pub el_ws: Option<web_sys::Element>,
-//
-//    // todo temp?
-////    pub key: Option<u32>,
-//
-//    pub raw_html: bool,
-//    pub namespace: Option<Namespace>,
-//
-//     // static: bool
-//     // static_to_parent: bool
-//    // ancestors: Vec<u32>  // ids of parent, grandparent etc.
-//
-//    // Lifecycle hooks
-//    pub did_mount: Option<Box<Fn(&web_sys::Element)>>,
-//    pub did_update: Option<Box<Fn(&web_sys::Element)>>,
-//    pub will_unmount: Option<Box<Fn(&web_sys::Element)>>,
-//
-//
-
-
 /// Common Namespaces
 #[derive(Debug,Clone,PartialEq)]
 pub enum Namespace {
@@ -148,6 +115,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         }
     }
 
+    // todo deal with duplicates between the main methods and the trait
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>)
         where T: AsRef<web_sys::EventTarget> {
@@ -172,6 +140,41 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     }
 
     pub fn detach<T>(&self, el_ws: &T)
+        where T: AsRef<web_sys::EventTarget> {
+        // This and attach taken from Draco.
+        let closure = self.closure.as_ref().unwrap();
+        (el_ws.as_ref() as &web_sys::EventTarget)
+            .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
+            .expect("problem removing listener from element");
+    }
+}
+
+// todo don't have both method and trait fns for these
+impl<Ms: Clone + 'static> crate::vdom::Listener for Listener<Ms> {
+        /// This method is where the processing logic for events happens.
+    fn attach<T>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>)
+        where T: AsRef<web_sys::EventTarget> {
+        // This and detach taken from Draco.
+        let mut handler = self.handler.take().expect("Can't find old handler");
+
+        let closure = Closure::wrap(
+            Box::new(move |event: web_sys::Event| {
+                mailbox.send(handler(event))
+            })
+                as Box<FnMut(web_sys::Event) + 'static>,
+        );
+
+        (el_ws.as_ref() as &web_sys::EventTarget)
+            .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
+            .expect("problem adding listener to element");
+
+        // Store the closure so we can detach it later. Not detaching it when an element
+        // is removed will trigger a panic.
+        self.closure = Some(closure);
+//        self.handler.replace(handler);  // todo ?
+    }
+
+    fn detach<T>(&self, el_ws: &T)
         where T: AsRef<web_sys::EventTarget> {
         // This and attach taken from Draco.
         let closure = self.closure.as_ref().unwrap();
@@ -860,15 +863,6 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
     }
 }
 
-pub type SeedEl<Ms> = crate::vdom::DomEl<
-    Tag,
-    Attrs,
-    Style,
-    String,
-    Listener<Ms>,
-    El<Ms>
->;
-
 impl<Ms: Clone + 'static> PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo Again, note that the listeners check only checks triggers.
@@ -884,8 +878,16 @@ impl<Ms: Clone + 'static> PartialEq for El<Ms> {
     }
 }
 
-impl <Ms: Clone + 'static>crate::vdom::DomEl<Tag, Attrs, Style, String,
-        Listener<Ms>, El<Ms>> for El<Ms> {
+// todo consider splitting this up into subcrates.
+
+// todo: Consider moving this out into an outer crate/file
+impl <Ms: Clone + 'static>crate::vdom::DomEl for El<Ms> {
+    type Tg = Tag;
+    type At = Attrs;
+    type St = Style;
+    type Ls = Listener<Ms>;
+    type Tx = Option<String>;
+
     fn tag(self) -> Tag {
         self.tag
     }
@@ -905,11 +907,31 @@ impl <Ms: Clone + 'static>crate::vdom::DomEl<Tag, Attrs, Style, String,
         self.children
     }
 
+    fn did_mount(self) -> Option<Box<FnMut(&web_sys::Element)>> {
+        self.did_mount
+    }
+
+    fn did_update(self) -> Option<Box<FnMut(&web_sys::Element)>> {
+        self.did_mount
+    }
+
+    fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>> {
+        self.did_mount
+    }
+
     fn websys_el(self) -> Option<web_sys::Element> {
         self.el_ws
     }
     fn id(self) -> Option<u32> {
         self.id
+    }
+
+    fn empty(self) -> Self {
+        self.empty()
+    }
+
+    fn set_websys_el(&mut self, el_ws: Option<web_sys::Element>) {
+        self.el_ws = el_ws
     }
 
 //    fn make_websys_el(&mut self, document: &web_sys::Document) -> web_sys::Element {
@@ -997,7 +1019,7 @@ pub mod tests {
     pub fn attrs() {
         let expected = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
 
-        let mut el: El<Msg> = div![
+        let mut el: El<Msg> = section![
             attrs!{"class" => "biochemistry"; "src" => "https://seed-rs.org"},
             "ok"
         ];

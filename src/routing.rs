@@ -11,8 +11,17 @@ fn get_path() -> String {
     path[1..path.len()].to_string()
 }
 
-pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>) -> crate::vdom::App<Ms, Mdl>
-    where Ms: Clone + 'static, Mdl: Clone + 'static
+pub fn initial<Ms, Mdl, E>(app: crate::vdom::App<Ms, Mdl, E>,
+                                             routes: HashMap<String, Ms>) -> crate::vdom::App<Ms, Mdl, E>
+    where
+        Ms: Clone + 'static,
+        Mdl: Clone + 'static,
+//        Tg: PartialEq,
+//        At: PartialEq,
+//        Sty: PartialEq,
+//        Tx: ToString + PartialEq,
+//        Ls: crate::vdom::Listener,
+
 {
     for (route, route_message) in routes.into_iter() {
         if route == get_path() {
@@ -23,8 +32,16 @@ pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, 
     app
 }
 
-pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>)
-    where Ms: Clone +'static, Mdl: Clone + 'static
+pub fn update_popstate_listener<Ms, Mdl, E>(app: &crate::vdom::App<Ms, Mdl, E>,
+                                                              routes: HashMap<String, Ms>)
+    where
+        Ms: Clone + 'static,
+        Mdl: Clone + 'static,
+//        Tg: PartialEq,
+//        At: PartialEq,
+//        Sty: PartialEq,
+//        Tx: ToString + PartialEq,
+//        Ls: crate::vdom::Listener,
 {
 
     let window = util::window();
