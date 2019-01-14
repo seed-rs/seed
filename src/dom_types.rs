@@ -150,7 +150,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
 }
 
 // todo don't have both method and trait fns for these
-impl<Ms: Clone + 'static> crate::vdom::Listener for Listener<Ms> {
+impl<Ms: Clone + 'static> crate::vdom::Listener<Ms> for Listener<Ms> {
         /// This method is where the processing logic for events happens.
     fn attach<T>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>)
         where T: AsRef<web_sys::EventTarget> {
@@ -350,14 +350,6 @@ impl Attrs {
         result
     }
 
-    /// Create an HTML-compatible string representation
-    pub fn to_string(&self) -> String {
-        self.vals.iter()
-            .map(|(k,v)|format!("{}=\"{}\"", k, v))
-            .collect::<Vec<_>>()
-            .join(" ")
-    }
-
     /// Add a new key, value pair
     pub fn add(&mut self, key: &str, val: &str) {
         self.vals.insert(key.to_string(), val.to_string());
@@ -377,6 +369,16 @@ impl Attrs {
             result.vals.insert(key.clone(), val.clone());
         }
         result
+    }
+}
+
+impl ToString for Attrs {
+    /// Create an HTML-compatible string representation
+    fn to_string(&self) -> String {
+        self.vals.iter()
+            .map(|(k,v)|format!("{}=\"{}\"", k, v))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -407,18 +409,6 @@ impl Style {
         Self { vals: HashMap::new() }
     }
 
-    /// Output style as a string, as would be set in the DOM as the attribute value
-    /// for 'style'. Eg: "display: flex; font-size: 1.5em"
-    pub fn to_string(&self) -> String {
-        if self.vals.keys().len() > 0 {
-            self.vals
-                .iter()
-                .map(|(k, v)| format!("{}:{}", k, v))
-                .collect::<Vec<_>>()
-                .join(";")
-        } else { String::new() }
-    }
-
     pub fn add(&mut self, key: &str, val: &str) {
         self.vals.insert(key.to_string(), val.to_string());
     }
@@ -430,6 +420,20 @@ impl Style {
             result.vals.insert(key.clone(), val.clone());
         }
         result
+    }
+}
+
+impl ToString for Style {
+    /// Output style as a string, as would be set in the DOM as the attribute value
+    /// for 'style'. Eg: "display: flex; font-size: 1.5em"
+    fn to_string(&self) -> String {
+        if self.vals.keys().len() > 0 {
+            self.vals
+                .iter()
+                .map(|(k, v)| format!("{}:{}", k, v))
+                .collect::<Vec<_>>()
+                .join(";")
+        } else { String::new() }
     }
 }
 
@@ -530,12 +534,12 @@ macro_rules! make_tags {
             )+
         }
 
-        impl Tag {
-            pub fn as_str(&self) -> &str {
+        impl ToString for Tag {
+            pub fn to_string(&self) -> String {
                 match self {
                     Tag::Custom(name) => &name,
                     $ (
-                        Tag::$tag_camel => $tag,
+                        Tag::$tag_camel => $tag.to_string(),
                     ) +
                 }
             }
@@ -881,12 +885,12 @@ impl<Ms: Clone + 'static> PartialEq for El<Ms> {
 // todo consider splitting this up into subcrates.
 
 // todo: Consider moving this out into an outer crate/file
-impl <Ms: Clone + 'static>crate::vdom::DomEl for El<Ms> {
+impl <Ms: Clone + 'static>crate::vdom::DomEl<Ms> for El<Ms> {
     type Tg = Tag;
     type At = Attrs;
     type St = Style;
     type Ls = Listener<Ms>;
-    type Tx = Option<String>;
+    type Tx = String;
 
     fn tag(self) -> Tag {
         self.tag
@@ -906,30 +910,35 @@ impl <Ms: Clone + 'static>crate::vdom::DomEl for El<Ms> {
     fn children(self) -> Vec<Self> {
         self.children
     }
-
     fn did_mount(self) -> Option<Box<FnMut(&web_sys::Element)>> {
         self.did_mount
     }
-
     fn did_update(self) -> Option<Box<FnMut(&web_sys::Element)>> {
         self.did_mount
     }
-
     fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>> {
         self.did_mount
     }
-
     fn websys_el(self) -> Option<web_sys::Element> {
         self.el_ws
     }
     fn id(self) -> Option<u32> {
         self.id
     }
+    fn raw_html(self) -> boolean {
+        self.raw_html
+    }
+        fn namespace(self) -> Option<Namespace> {
+        self.namespace
+    }
 
     fn empty(self) -> Self {
         self.empty()
     }
 
+    fn set_id(&mut self, id: Option<u32>) {
+        self.id = id
+    }
     fn set_websys_el(&mut self, el_ws: Option<web_sys::Element>) {
         self.el_ws = el_ws
     }

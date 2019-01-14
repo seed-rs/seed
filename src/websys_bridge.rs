@@ -2,7 +2,9 @@
 use wasm_bindgen::JsCast;
 
 use crate::vdom::DomEl;
-use crate::dom_types;
+
+// todo: How coupled should this be to Seed, vdom, and dom_types?
+
 //use crate::dom_types::{Tag, Attrs, Style, Listener};
 
 /// Reduces DRY
@@ -110,7 +112,7 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-pub fn make_websys_el<Ms>(el_vdom: &impl DomEl, document: &web_sys::Document) -> web_sys::Element
+pub fn make_websys_el<Ms>(el_vdom: &impl DomEl<Ms>, document: &web_sys::Document) -> web_sys::Element
     where Ms: Clone,
 {
     // Create the DOM-analog element; it won't render until attached to something.
@@ -126,8 +128,8 @@ pub fn make_websys_el<Ms>(el_vdom: &impl DomEl, document: &web_sys::Document) ->
 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
-    if el_vdom.style.vals.keys().len() > 0 {
-        el_ws.set_attribute("style", &el_vdom.style.to_string()).expect("Problem setting style");
+    if el_vdom.style().vals.keys().len() > 0 {
+        el_ws.set_attribute("style", &el_vdom.style().to_string()).expect("Problem setting style");
     }
 
     // We store text as Option<String>, but set_text_content uses Option<&str>.
@@ -147,7 +149,7 @@ pub fn make_websys_el<Ms>(el_vdom: &impl DomEl, document: &web_sys::Document) ->
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_els<Ms>(el_vdom: &mut impl DomEl, parent: &web_sys::Element)
+pub fn attach_els<Ms>(el_vdom: &mut impl DomEl<Ms>, parent: &web_sys::Element)
     where Ms: Clone,
 {
     // No parent means we're operating on the top-level element; append it to the main div.
@@ -158,13 +160,15 @@ pub fn attach_els<Ms>(el_vdom: &mut impl DomEl, parent: &web_sys::Element)
     // odues panics
 //    if el_vdom.is_dummy() == true { return }
 
-    let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
+    let el_ws = el_vdom.websys_el().take().expect("Missing websys el");
 
     parent.append_child(&el_ws).unwrap();
 
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.did_mount() {
-        mount_actions(&el_ws)
+        // todo do you need these dyn_refs? Came up when switching to DomEl trait
+        // todo: Could perhaps convert to Element earlier on instead of each time used
+        mount_actions(&el_ws.dyn_ref::<web_sys::Element>().unwrap())
     }
 
     // todo: It seesm like if text is present along with children, it'll bbe
@@ -172,11 +176,11 @@ pub fn attach_els<Ms>(el_vdom: &mut impl DomEl, parent: &web_sys::Element)
 
     for child in &mut el_vdom.children() {
         // Raise the active level once per recursion.
-        attach_els(child, &el_ws)
+        attach_els(child, &el_ws.dyn_ref::<web_sys::Element>().unwrap())
     }
 
     // Replace the web_sys el... Indiana-Jones-style.
-    el_vdom.el_ws.replace(el_ws);
+    el_vdom.websys_el().replace(el_ws.dyn_into::<web_sys::Element>().unwrap());
 }
 
 /// Recursively remove all children.
@@ -190,9 +194,8 @@ pub fn _remove_children(el: &web_sys::Element) {
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms>(
-//    old: &mut dom_types::El<Ms> as DomEl<Tg=Tag, At=Attrs, St=Style, Ls=Listener, Tx=Option<String>>,
-    old: &mut impl DomEl,
-    new: &mut impl DomEl,
+    old: &mut impl DomEl<Ms>,
+    new: &mut impl DomEl<Ms>,
     old_el_ws: &web_sys::Element,
     document: &web_sys::Document)
     where Ms: Clone,
@@ -204,7 +207,7 @@ pub fn patch_el_details<Ms>(
 
     if old.attrs() != new.attrs() {
         for (key, new_val) in &new.attrs().vals {
-            match old.attrs().vals.get(key) {
+            match old.attrs().vals().get(key) {
                 Some(old_val) => {
                     // The value's different
                     if old_val != new_val {
@@ -216,7 +219,7 @@ pub fn patch_el_details<Ms>(
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs().vals.keys() {
-            if new.attrs().vals.get(name).is_none() {
+            if new.attrs().vals().get(name).is_none() {
                 old_el_ws.remove_attribute(name).expect("Removing an attribute");
             }
         }

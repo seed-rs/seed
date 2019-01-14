@@ -41,33 +41,33 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(web_sys::Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct Data<Ms, Mdl, E>
-    where Ms: Clone + 'static + Sized, Mdl: 'static,
+    where Ms: Clone + 'static + Sized, Mdl: 'static, E: DomEl<Ms>
 {
     pub document: web_sys::Document,  // todo take off pub if you no longer use it in init
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update().
     pub model: RefCell<Mdl>,
     pub update: fn(Ms, Mdl) -> Mdl,
-    pub view: fn(App<Ms, Mdl, E>) -> E,
+    pub view: fn(App<Ms, Mdl, E>, Mdl) -> E,
     pub main_el_vdom: RefCell<E>,
     pub popstate_closure: StoredPopstate,
     routes: RefCell<Option<HashMap<String, Ms>>>,
 
     // todo trait listener
-    pub window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+//    pub window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
-pub struct App<Ms, Mdl: 'static, E>
-    where Ms: Clone +'static,
+pub struct App<Ms, Mdl, E>
+    where Ms: Clone +'static, Mdl: 'static, E: DomEl<Ms>
 {
     pub data: Rc<Data<Ms, Mdl, E>>
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
-impl<Ms, Mdl: Clone + 'static, E> App<Ms, Mdl, E>
-    where Ms: Clone +'static,
+impl<Ms, Mdl, E> App<Ms, Mdl, E>
+    where Ms: Clone +'static, Mdl: Clone + 'static, E: DomEl<Ms>
 {
     fn new(
         model: Mdl,
@@ -75,7 +75,7 @@ impl<Ms, Mdl: Clone + 'static, E> App<Ms, Mdl, E>
         view: fn(Self, Mdl) -> E,
         parent_div_id: &str,
         routes: Option<HashMap<String, Ms>>,
-        window_events: Option<fn(Mdl) -> Vec<Listener>>,
+//        window_events: Option<fn(Mdl) -> Vec<Listener<Ms>>>,
     ) -> Self {
 
         let window = util::window();
@@ -94,7 +94,7 @@ impl<Ms, Mdl: Clone + 'static, E> App<Ms, Mdl, E>
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
 
-                window_events,
+//                window_events,
                 window_listeners: RefCell::new(Vec::new()),
             })
         }
@@ -122,17 +122,18 @@ impl<Ms, Mdl: Clone + 'static, E> App<Ms, Mdl, E>
 
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
         // logic based on if we have window listeners.
-        if let Some(window_events) = self.data.window_events {
-            let mut new_listeners = (window_events)(updated_model.clone());
-            setup_window_listeners(
-                &util::window(),
-                &mut self.data.window_listeners.borrow_mut(),
-//                &mut Vec::new(),
-                &mut new_listeners,
-                &self.mailbox()
-            );
-            self.data.window_listeners.replace(new_listeners);
-        }
+        // todo put this back once DomEl is working!
+//        if let Some(window_events) = self.data.window_events {
+//            let mut new_listeners = (window_events)(updated_model.clone());
+//            setup_window_listeners(
+//                &util::window(),
+//                &mut self.data.window_listeners.borrow_mut(),
+////                &mut Vec::new(),
+//                &mut new_listeners,
+//                &self.mailbox()
+//            );
+//            self.data.window_listeners.replace(new_listeners);
+//        }
 
         // Create a new vdom: The top element, and all its children. Does not yet
         // have ids, nest levels, or associated web_sys elements.
@@ -176,13 +177,13 @@ impl<Ms, Mdl: Clone + 'static, E> App<Ms, Mdl, E>
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut impl DomEl, active_level: u32, active_id: u32)
+pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut impl DomEl<Ms>, active_level: u32, active_id: u32)
     // pub for tests.
     where Ms: Clone +'static,
 {
     // id iterates once per item; active-level once per nesting level.
     let mut id = active_id;
-    el_vdom.id() = Some(id);
+    el_vdom.set_id(Some(id));
     id += 1;  // Raise the id after each element we process.
     el_vdom.nest_level() = Some(active_level);
 
@@ -209,13 +210,8 @@ pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut impl DomEl, act
 
 
 
-impl<Ms, Mdl: 'static, E> std::clone::Clone for App<Ms, Mdl, E>
-    where Ms: Clone + 'static,
-//          Tg: PartialEq,
-//          At: PartialEq,
-//          Sty: PartialEq,
-//          Tx: ToString + PartialEq,
-//          Ls: Listener,
+impl<Ms, Mdl, E> std::clone::Clone for App<Ms, Mdl, E>
+    where Ms: Clone + 'static, Mdl: 'static, E: DomEl<Ms>
 {
     fn clone(&self) -> Self {
         App {
@@ -226,7 +222,7 @@ impl<Ms, Mdl: 'static, E> std::clone::Clone for App<Ms, Mdl, E>
 
 // todo should this be here, or in a diff module?
 /// Recursively attach event-listeners. Run this at init.
-fn attach_listeners<Ms, Tg, At, Sty, Tx, Ls>(el: &mut impl DomEl, mailbox: &Mailbox<Ms>)
+fn attach_listeners<Ms>(el: &mut impl DomEl<Ms>, mailbox: &Mailbox<Ms>)
     where Ms: Clone + 'static,
 {
     let el_ws = el.websys_el().take().expect("Missing el_ws on attach_all_listeners");
@@ -243,7 +239,7 @@ fn attach_listeners<Ms, Tg, At, Sty, Tx, Ls>(el: &mut impl DomEl, mailbox: &Mail
 
 // todo should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
-fn detach_listeners<Ms>(el: &mut impl DomEl)
+fn detach_listeners<Ms>(el: &mut impl DomEl<Ms>)
     where Ms: Clone + 'static,
 {
     let el_ws = el.websys_el().take().expect("Missing el_ws on detach_all_listeners");
@@ -276,7 +272,7 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-fn patch<Ms>(document: &web_sys::Document, old: &mut impl DomEl, new: &mut impl DomEl,
+fn patch<Ms>(document: &web_sys::Document, old: &mut impl DomEl<Ms>, new: &mut impl DomEl<Ms>,
               parent: &web_sys::Element, mailbox: &Mailbox<Ms>)
     where Ms: Clone + 'static,
 
@@ -391,19 +387,19 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut impl DomEl, new: &mut impl 
         let child_el_ws = child.websys_el().take().expect("Missing child el_ws");
 
         // todo DRY here between this and earlier in func
-        if let Some(unmount_actions) = &mut child.will_unmount {
+        if let Some(unmount_actions) = &mut child.will_unmount() {
             unmount_actions(&child_el_ws)
         }
         old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
 
-        child.el_ws().replace(child_el_ws);
+        child.websys_el().replace(child_el_ws);
     }
 
     new.set_websys_el(Some(old_el_ws));
 }
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
-fn match_score<Ms>(old: &impl DomEl, new: &impl DomEl) -> f32
+fn match_score<Ms>(old: &impl DomEl<Ms>, new: &impl DomEl<Ms>) -> f32
     where
         Ms: Clone,
 {
@@ -459,15 +455,11 @@ pub fn run<Ms, Mdl, E>(
     routes: Option<HashMap<String, Ms>>,
     window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
 )
-    where Ms: Clone + 'static,
-          Mdl: Clone + 'static,
-//          Tg: PartialEq,
-//          At: PartialEq,
-//          Sty: PartialEq,
-//          Tx: ToString + PartialEq,
-//          Ls: Listener,
+    where Ms: Clone + 'static, Mdl: Clone + 'static, E: DomEl<Ms>
 {
-    let app = App::new(model.clone(), update, view, mount_point_id, routes.clone(), window_events);
+    // todo put back!!
+//    let app = App::new(model.clone(), update, view, mount_point_id, routes.clone(), window_events);
+    let app = App::new(model.clone(), update, view, mount_point_id, routes.clone());
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
     // todo maybe have view take an update instead of whole app?
@@ -478,25 +470,26 @@ pub fn run<Ms, Mdl, E>(
 
     // Only clone model if we have window events.
     let mut topel_vdom;
-    match app.data.window_events {
-        Some(window_events) => {
-            topel_vdom = (app.data.view)(app.clone(), model.clone());
-            setup_window_listeners(
-                &util::window(),
-                &mut Vec::new(),
-                // todo: Fix this. Bug where if we try to add initial listeners,
-                // todo we get many runtime panics. Workaround is to wait until
-                // todo app.update, which means an event must be triggered
-                // todo prior to window listeners working.
-                &mut Vec::new(),
-//                &mut (window_events)(model),
-                &app.mailbox()
-            );
-        },
-        None => {
-            topel_vdom = (app.data.view)(app.clone(), model);
-        }
-    }
+    // todo put back!!
+//    match app.data.window_events {
+//        Some(window_events) => {
+//            topel_vdom = (app.data.view)(app.clone(), model.clone());
+//            setup_window_listeners(
+//                &util::window(),
+//                &mut Vec::new(),
+//                // todo: Fix this. Bug where if we try to add initial listeners,
+//                // todo we get many runtime panics. Workaround is to wait until
+//                // todo app.update, which means an event must be triggered
+//                // todo prior to window listeners working.
+//                &mut Vec::new(),
+////                &mut (window_events)(model),
+//                &app.mailbox()
+//            );
+//        },
+//        None => {
+//            topel_vdom = (app.data.view)(app.clone(), model);
+//        }
+//    }
 
     let document = window.document().expect("Problem getting document");
     setup_els(&document, &mut topel_vdom, 0, 0);
@@ -519,37 +512,42 @@ pub fn run<Ms, Mdl, E>(
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
-pub trait Listener {
-    fn attach<T, Ms>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
+pub trait Listener<Ms>: Sized {
+    fn attach<T: AsRef<web_sys::EventTarget>>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
     fn detach<T: AsRef<web_sys::EventTarget>>(&self, el_ws: &T);
 }
 
 /// WIP towards a modular VDOM
 /// Assumes dependency on web_sys.
-pub trait DomEl: Sized {
-    type Tg;
-    type At;
-    type St;
-    type Ls;
-    type Tx;
+// todo: Do we need <Ms> ?
+pub trait DomEl<Ms>: Sized {
+    type Tg: PartialEq + ToString;  // todo tostring
+    type At: PartialEq + ToString;
+    type St: PartialEq + ToString;
+    type Ls: Listener<Ms>;
+    type Tx: PartialEq + ToString + Clone + Default;
 
+    // Fields
     fn tag(self) -> Self::Tg;
     fn attrs(self) -> Self::At;
     fn style(self) -> Self::St;
     fn listeners(self) -> Vec<Self::Ls>;
     fn text(self) -> Option<Self::Tx>;
     fn children(self) -> Vec<Self>;
-
     fn did_mount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
     fn did_update(self) -> Option<Box<FnMut(&web_sys::Element)>>;
     fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
-
     fn websys_el(self) -> Option<web_sys::Element>;
     fn id(self) -> Option<u32>;
+    fn raw_html(self) -> boolean;
+    // todo tying to dom_types is temp - defeats the urpose of the trait
+    fn namespace(self) -> Option<crate::dom_types::Namespace>;
 
+    // Methods
     fn empty(self) -> Self;
 
     // setters
+    fn set_id(&mut self, id: Option<u32>);
     fn set_websys_el(&mut self, el: Option<web_sys::Element>);
 
 //    fn make_websys_el(&self, document: &web_sys::Document) -> web_sys::Element;
@@ -574,11 +572,11 @@ pub mod tests {
 
     #[wasm_bindgen_test]
     fn el_added() {
-        let old_vdom: DomEl = div![ "text", vec![
+        let old_vdom: DomEl<Msg> = div![ "text", vec![
             li![ "child1" ],
         ] ];
 
-        let new_vdom: DomEl = div![ "text", vec![
+        let new_vdom: DomEl<Msg> = div![ "text", vec![
             li![ "child1" ],
             li![ "child2" ]
         ] ];
