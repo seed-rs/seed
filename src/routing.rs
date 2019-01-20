@@ -4,7 +4,6 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 use crate::util;
 
-// todo: How coupled should this be to Seed, vdom, and dom_types?
 
 /// A convenience function to prevent repetitions
 fn get_path() -> String {
@@ -12,11 +11,8 @@ fn get_path() -> String {
     path[1..path.len()].to_string()
 }
 
-pub fn initial<Ms, Mdl, E>(
-    app: crate::vdom::App<Ms, Mdl, E>,
-    routes: HashMap<String, Ms>
-) -> crate::vdom::App<Ms, Mdl, E>
-    where Ms: Clone + 'static, Mdl: Clone + 'static, E: crate::vdom::DomEl<Ms>
+pub fn initial<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>) -> crate::vdom::App<Ms, Mdl>
+    where Ms: Clone + 'static, Mdl: Clone + 'static
 {
     for (route, route_message) in routes.into_iter() {
         if route == get_path() {
@@ -27,11 +23,8 @@ pub fn initial<Ms, Mdl, E>(
     app
 }
 
-pub fn update_popstate_listener<Ms, Mdl, E>(
-    app: &crate::vdom::App<Ms, Mdl, E>,
-    routes: HashMap<String, Ms>
-)
-    where Ms: Clone + 'static,  Mdl: Clone + 'static, E: crate::vdom::DomEl<Ms>
+pub fn update_popstate_listener<Ms, Mdl>(app: &crate::vdom::App<Ms, Mdl>, routes: HashMap<String, Ms>)
+    where Ms: Clone +'static, Mdl: Clone + 'static
 {
 
     let window = util::window();

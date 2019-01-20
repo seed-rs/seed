@@ -1,11 +1,7 @@
 //! This file contains interactions with web_sys.
 use wasm_bindgen::JsCast;
 
-use crate::vdom::{DomEl, Attrs, Style};
-
-// todo: How coupled should this be to Seed, vdom, and dom_types?
-
-//use crate::dom_types::{Tag, Attrs, Style, Listener};
+use crate::dom_types;
 
 /// Reduces DRY
 /// todo can't find a suitable trait for this. Seems like set_autofocus is
@@ -112,31 +108,29 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-pub fn make_websys_el<Ms>(el_vdom: &impl DomEl<Ms>, document: &web_sys::Document) -> web_sys::Element
-    where Ms: Clone,
-{
+pub fn make_websys_el<Ms: Clone>(el_vdom: &dom_types::El<Ms>, document: &web_sys::Document) -> web_sys::Element {
     // Create the DOM-analog element; it won't render until attached to something.
-    let tag = &el_vdom.tag().to_string();
-    let el_ws = match el_vdom.namespace() {
+    let tag = el_vdom.tag.as_str();
+    let el_ws = match el_vdom.namespace {
         Some(ref ns) => document.create_element_ns(Some(ns.as_str()), tag).expect("Problem creating web-sys El"),
         None => document.create_element(tag).expect("Problem creating web-sys El")
     };
 
-    for (name, val) in &el_vdom.attrs().vals() {
+    for (name, val) in &el_vdom.attrs.vals {
         set_attr_shim(&el_ws, name, val);
     }
 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
-    if el_vdom.style().vals().keys().len() > 0 {
-        el_ws.set_attribute("style", &el_vdom.style().to_string()).expect("Problem setting style");
+    if el_vdom.style.vals.keys().len() > 0 {
+        el_ws.set_attribute("style", &el_vdom.style.to_string()).expect("Problem setting style");
     }
 
     // We store text as Option<String>, but set_text_content uses Option<&str>.
     // A naive match Some(t) => Some(&t) does not work.
     // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
-    let text = el_vdom.text().as_ref().map(String::as_ref);
-    if el_vdom.raw_html() {
+    let text = el_vdom.text.as_ref().map(String::as_ref);
+    if el_vdom.raw_html {
         el_ws.set_inner_html(text.unwrap())
     } else {
         el_ws.set_text_content(text);
@@ -149,9 +143,7 @@ pub fn make_websys_el<Ms>(el_vdom: &impl DomEl<Ms>, document: &web_sys::Document
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_els<Ms>(el_vdom: &mut impl DomEl<Ms>, parent: &web_sys::Element)
-    where Ms: Clone,
-{
+pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Element) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
@@ -160,27 +152,25 @@ pub fn attach_els<Ms>(el_vdom: &mut impl DomEl<Ms>, parent: &web_sys::Element)
     // odues panics
 //    if el_vdom.is_dummy() == true { return }
 
-    let el_ws = el_vdom.websys_el().take().expect("Missing websys el");
+    let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
     parent.append_child(&el_ws).unwrap();
 
     // Perform side-effects specified for mounting.
-    if let Some(mount_actions) = &mut el_vdom.did_mount() {
-        // todo do you need these dyn_refs? Came up when switching to DomEl trait
-        // todo: Could perhaps convert to Element earlier on instead of each time used
-        mount_actions(&el_ws.dyn_ref::<web_sys::Element>().unwrap())
+    if let Some(mount_actions) = &mut el_vdom.did_mount {
+        mount_actions(&el_ws)
     }
 
     // todo: It seesm like if text is present along with children, it'll bbe
     // todo shown before them instead of after. Fix this.
 
-    for child in &mut el_vdom.children() {
+    for child in &mut el_vdom.children {
         // Raise the active level once per recursion.
-        attach_els(child, &el_ws.dyn_ref::<web_sys::Element>().unwrap())
+        attach_els(child, &el_ws)
     }
 
     // Replace the web_sys el... Indiana-Jones-style.
-    el_vdom.websys_el().replace(el_ws.dyn_into::<web_sys::Element>().unwrap());
+    el_vdom.el_ws.replace(el_ws);
 }
 
 /// Recursively remove all children.
@@ -193,21 +183,16 @@ pub fn _remove_children(el: &web_sys::Element) {
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms>(
-    old: &mut impl DomEl<Ms>,
-    new: &mut impl DomEl<Ms>,
-    old_el_ws: &web_sys::Element,
-    document: &web_sys::Document)
-    where Ms: Clone,
-{
+pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_types::El<Ms>,
+           old_el_ws: &web_sys::Element, document: &web_sys::Document) {
     // Perform side-effects specified for updating
-    if let Some(update_actions) = &mut old.did_update() {
+    if let Some(update_actions) = &mut old.did_update {
         update_actions(old_el_ws)
     }
 
-    if old.attrs() != new.attrs() {
-        for (key, new_val) in &new.attrs().vals() {
-            match old.attrs().vals().get(key) {
+    if old.attrs != new.attrs {
+        for (key, new_val) in &new.attrs.vals {
+            match old.attrs.vals.get(key) {
                 Some(old_val) => {
                     // The value's different
                     if old_val != new_val {
@@ -218,34 +203,34 @@ pub fn patch_el_details<Ms>(
             }
         }
         // Remove attributes that aren't in the new vdom.
-        for name in old.attrs().vals().keys() {
-            if new.attrs().vals().get(name).is_none() {
+        for name in old.attrs.vals.keys() {
+            if new.attrs.vals.get(name).is_none() {
                 old_el_ws.remove_attribute(name).expect("Removing an attribute");
             }
         }
     }
 
     // Patch style.
-    if old.style() != new.style() {
+    if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        old_el_ws.set_attribute("style", &new.style().to_string())
+        old_el_ws.set_attribute("style", &new.style.to_string())
             .expect("Setting style");
     }
 
     // Patch text
-    if old.text() != new.text() {
+    if old.text != new.text {
         // This is not as straightforward as it looks: There can be multiple text nodes
         // in the DOM, even though our API only allows for 1 per element. If we
         // naively run set_text_content(), all child nodes will be removed.
         // Text is stored in special Text nodes that don't have a direct-relation to
         // the vdom.
 
-        let text = new.text().clone().unwrap_or_default().to_string();
+        let text = new.text.clone().unwrap_or_default();
 
-        if new.raw_html() {
+        if new.raw_html {
             old_el_ws.set_inner_html(&text)
         } else {
-            if old.text().is_none() {
+            if old.text.is_none() {
                 // There's no old node to find: Add it.
                 let new_next_node = document.create_text_node(&text);
                 old_el_ws.append_child(&new_next_node).unwrap();

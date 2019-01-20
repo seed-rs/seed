@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = { path = "../../" }
-wasm-bindgen = "^0.2.29"
+wasm-bindgen = "^0.2.33"
 web-sys = "^0.3.6"
 
 serde = { version = "^1.0.83", features = ['derive'] }
