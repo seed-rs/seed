@@ -27,6 +27,7 @@ pub use crate::{
     fetch::{Method, Request, spawn_local},
     websys_bridge::{to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_html_el},
     routing::push_route,
+    util::{document, window},
     vdom::{App, run}
 };
 
