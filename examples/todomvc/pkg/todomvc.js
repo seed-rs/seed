@@ -50,10 +50,6 @@ function addHeapObject(obj) {
     return idx;
 }
 
-const __widl_f_create_element_Document_target = typeof Document === 'undefined' ? null : Document.prototype.createElement || function() {
-    throw new Error(`wasm-bindgen: Document.createElement does not exist`);
-};
-
 let cachegetUint32Memory = null;
 function getUint32Memory() {
     if (cachegetUint32Memory === null || cachegetUint32Memory.buffer !== wasm.memory.buffer) {
@@ -65,24 +61,20 @@ function getUint32Memory() {
 __exports.__widl_f_create_element_Document = function(arg0, arg1, arg2, exnptr) {
     let varg1 = getStringFromWasm(arg1, arg2);
     try {
-        return addHeapObject(__widl_f_create_element_Document_target.call(getObject(arg0), varg1));
+        return addHeapObject(getObject(arg0).createElement(varg1));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
         view[exnptr / 4 + 1] = addHeapObject(e);
 
     }
-};
-
-const __widl_f_create_element_ns_Document_target = typeof Document === 'undefined' ? null : Document.prototype.createElementNS || function() {
-    throw new Error(`wasm-bindgen: Document.createElementNS does not exist`);
 };
 
 __exports.__widl_f_create_element_ns_Document = function(arg0, arg1, arg2, arg3, arg4, exnptr) {
     let varg1 = arg1 == 0 ? undefined : getStringFromWasm(arg1, arg2);
     let varg3 = getStringFromWasm(arg3, arg4);
     try {
-        return addHeapObject(__widl_f_create_element_ns_Document_target.call(getObject(arg0), varg1, varg3));
+        return addHeapObject(getObject(arg0).createElementNS(varg1, varg3));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -91,56 +83,40 @@ __exports.__widl_f_create_element_ns_Document = function(arg0, arg1, arg2, arg3,
     }
 };
 
-const __widl_f_create_text_node_Document_target = typeof Document === 'undefined' ? null : Document.prototype.createTextNode || function() {
-    throw new Error(`wasm-bindgen: Document.createTextNode does not exist`);
-};
-
 __exports.__widl_f_create_text_node_Document = function(arg0, arg1, arg2) {
     let varg1 = getStringFromWasm(arg1, arg2);
-    return addHeapObject(__widl_f_create_text_node_Document_target.call(getObject(arg0), varg1));
+    return addHeapObject(getObject(arg0).createTextNode(varg1));
 };
 
 function isLikeNone(x) {
     return x === undefined || x === null;
 }
 
-const __widl_f_get_element_by_id_Document_target = typeof Document === 'undefined' ? null : Document.prototype.getElementById || function() {
-    throw new Error(`wasm-bindgen: Document.getElementById does not exist`);
-};
-
 __exports.__widl_f_get_element_by_id_Document = function(arg0, arg1, arg2) {
     let varg1 = getStringFromWasm(arg1, arg2);
 
-    const val = __widl_f_get_element_by_id_Document_target.call(getObject(arg0), varg1);
+    const val = getObject(arg0).getElementById(varg1);
     return isLikeNone(val) ? 0 : addHeapObject(val);
 
-};
-
-const __widl_f_remove_attribute_Element_target = typeof Element === 'undefined' ? null : Element.prototype.removeAttribute || function() {
-    throw new Error(`wasm-bindgen: Element.removeAttribute does not exist`);
 };
 
 __exports.__widl_f_remove_attribute_Element = function(arg0, arg1, arg2, exnptr) {
     let varg1 = getStringFromWasm(arg1, arg2);
     try {
-        __widl_f_remove_attribute_Element_target.call(getObject(arg0), varg1);
+        getObject(arg0).removeAttribute(varg1);
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
         view[exnptr / 4 + 1] = addHeapObject(e);
 
     }
-};
-
-const __widl_f_set_attribute_Element_target = typeof Element === 'undefined' ? null : Element.prototype.setAttribute || function() {
-    throw new Error(`wasm-bindgen: Element.setAttribute does not exist`);
 };
 
 __exports.__widl_f_set_attribute_Element = function(arg0, arg1, arg2, arg3, arg4, exnptr) {
     let varg1 = getStringFromWasm(arg1, arg2);
     let varg3 = getStringFromWasm(arg3, arg4);
     try {
-        __widl_f_set_attribute_Element_target.call(getObject(arg0), varg1, varg3);
+        getObject(arg0).setAttribute(varg1, varg3);
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -149,51 +125,26 @@ __exports.__widl_f_set_attribute_Element = function(arg0, arg1, arg2, arg3, arg4
     }
 };
 
-function GetOwnOrInheritedPropertyDescriptor(obj, id) {
-    while (obj) {
-        let desc = Object.getOwnPropertyDescriptor(obj, id);
-        if (desc) return desc;
-        obj = Object.getPrototypeOf(obj);
-    }
-return {}
-}
-
-const __widl_f_set_inner_html_Element_target = GetOwnOrInheritedPropertyDescriptor(typeof Element === 'undefined' ? null : Element.prototype, 'innerHTML').set || function() {
-    throw new Error(`wasm-bindgen: Element.innerHTML does not exist`);
-};
-
 __exports.__widl_f_set_inner_html_Element = function(arg0, arg1, arg2) {
     let varg1 = getStringFromWasm(arg1, arg2);
-    __widl_f_set_inner_html_Element_target.call(getObject(arg0), varg1);
-};
-
-const __widl_f_prevent_default_Event_target = typeof Event === 'undefined' ? null : Event.prototype.preventDefault || function() {
-    throw new Error(`wasm-bindgen: Event.preventDefault does not exist`);
+    getObject(arg0).innerHTML = varg1;
 };
 
 __exports.__widl_f_prevent_default_Event = function(arg0) {
-    __widl_f_prevent_default_Event_target.call(getObject(arg0));
-};
-
-const __widl_f_target_Event_target = GetOwnOrInheritedPropertyDescriptor(typeof Event === 'undefined' ? null : Event.prototype, 'target').get || function() {
-    throw new Error(`wasm-bindgen: Event.target does not exist`);
+    getObject(arg0).preventDefault();
 };
 
 __exports.__widl_f_target_Event = function(arg0) {
 
-    const val = __widl_f_target_Event_target.call(getObject(arg0));
+    const val = getObject(arg0).target;
     return isLikeNone(val) ? 0 : addHeapObject(val);
 
-};
-
-const __widl_f_add_event_listener_with_callback_EventTarget_target = typeof EventTarget === 'undefined' ? null : EventTarget.prototype.addEventListener || function() {
-    throw new Error(`wasm-bindgen: EventTarget.addEventListener does not exist`);
 };
 
 __exports.__widl_f_add_event_listener_with_callback_EventTarget = function(arg0, arg1, arg2, arg3, exnptr) {
     let varg1 = getStringFromWasm(arg1, arg2);
     try {
-        __widl_f_add_event_listener_with_callback_EventTarget_target.call(getObject(arg0), varg1, getObject(arg3));
+        getObject(arg0).addEventListener(varg1, getObject(arg3));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -202,14 +153,10 @@ __exports.__widl_f_add_event_listener_with_callback_EventTarget = function(arg0,
     }
 };
 
-const __widl_f_remove_event_listener_with_callback_EventTarget_target = typeof EventTarget === 'undefined' ? null : EventTarget.prototype.removeEventListener || function() {
-    throw new Error(`wasm-bindgen: EventTarget.removeEventListener does not exist`);
-};
-
 __exports.__widl_f_remove_event_listener_with_callback_EventTarget = function(arg0, arg1, arg2, arg3, exnptr) {
     let varg1 = getStringFromWasm(arg1, arg2);
     try {
-        __widl_f_remove_event_listener_with_callback_EventTarget_target.call(getObject(arg0), varg1, getObject(arg3));
+        getObject(arg0).removeEventListener(varg1, getObject(arg3));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -222,32 +169,20 @@ __exports.__widl_instanceof_HTMLButtonElement = function(idx) {
     return getObject(idx) instanceof HTMLButtonElement ? 1 : 0;
 };
 
-const __widl_f_set_autofocus_HTMLButtonElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLButtonElement === 'undefined' ? null : HTMLButtonElement.prototype, 'autofocus').set || function() {
-    throw new Error(`wasm-bindgen: HTMLButtonElement.autofocus does not exist`);
-};
-
 __exports.__widl_f_set_autofocus_HTMLButtonElement = function(arg0, arg1) {
-    __widl_f_set_autofocus_HTMLButtonElement_target.call(getObject(arg0), arg1 !== 0);
+    getObject(arg0).autofocus = arg1 !== 0;
 };
 
 __exports.__widl_instanceof_HTMLInputElement = function(idx) {
     return getObject(idx) instanceof HTMLInputElement ? 1 : 0;
 };
 
-const __widl_f_set_autofocus_HTMLInputElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLInputElement === 'undefined' ? null : HTMLInputElement.prototype, 'autofocus').set || function() {
-    throw new Error(`wasm-bindgen: HTMLInputElement.autofocus does not exist`);
-};
-
 __exports.__widl_f_set_autofocus_HTMLInputElement = function(arg0, arg1) {
-    __widl_f_set_autofocus_HTMLInputElement_target.call(getObject(arg0), arg1 !== 0);
-};
-
-const __widl_f_set_checked_HTMLInputElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLInputElement === 'undefined' ? null : HTMLInputElement.prototype, 'checked').set || function() {
-    throw new Error(`wasm-bindgen: HTMLInputElement.checked does not exist`);
+    getObject(arg0).autofocus = arg1 !== 0;
 };
 
 __exports.__widl_f_set_checked_HTMLInputElement = function(arg0, arg1) {
-    __widl_f_set_checked_HTMLInputElement_target.call(getObject(arg0), arg1 !== 0);
+    getObject(arg0).checked = arg1 !== 0;
 };
 
 let cachedTextEncoder = new TextEncoder('utf-8');
@@ -263,13 +198,9 @@ function passStringToWasm(arg) {
     return ptr;
 }
 
-const __widl_f_value_HTMLInputElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLInputElement === 'undefined' ? null : HTMLInputElement.prototype, 'value').get || function() {
-    throw new Error(`wasm-bindgen: HTMLInputElement.value does not exist`);
-};
-
 __exports.__widl_f_value_HTMLInputElement = function(ret, arg0) {
 
-    const retptr = passStringToWasm(__widl_f_value_HTMLInputElement_target.call(getObject(arg0)));
+    const retptr = passStringToWasm(getObject(arg0).value);
     const retlen = WASM_VECTOR_LEN;
     const mem = getUint32Memory();
     mem[ret / 4] = retptr;
@@ -277,34 +208,22 @@ __exports.__widl_f_value_HTMLInputElement = function(ret, arg0) {
 
 };
 
-const __widl_f_set_value_HTMLInputElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLInputElement === 'undefined' ? null : HTMLInputElement.prototype, 'value').set || function() {
-    throw new Error(`wasm-bindgen: HTMLInputElement.value does not exist`);
-};
-
 __exports.__widl_f_set_value_HTMLInputElement = function(arg0, arg1, arg2) {
     let varg1 = getStringFromWasm(arg1, arg2);
-    __widl_f_set_value_HTMLInputElement_target.call(getObject(arg0), varg1);
+    getObject(arg0).value = varg1;
 };
 
 __exports.__widl_instanceof_HTMLSelectElement = function(idx) {
     return getObject(idx) instanceof HTMLSelectElement ? 1 : 0;
 };
 
-const __widl_f_set_autofocus_HTMLSelectElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLSelectElement === 'undefined' ? null : HTMLSelectElement.prototype, 'autofocus').set || function() {
-    throw new Error(`wasm-bindgen: HTMLSelectElement.autofocus does not exist`);
-};
-
 __exports.__widl_f_set_autofocus_HTMLSelectElement = function(arg0, arg1) {
-    __widl_f_set_autofocus_HTMLSelectElement_target.call(getObject(arg0), arg1 !== 0);
-};
-
-const __widl_f_value_HTMLSelectElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLSelectElement === 'undefined' ? null : HTMLSelectElement.prototype, 'value').get || function() {
-    throw new Error(`wasm-bindgen: HTMLSelectElement.value does not exist`);
+    getObject(arg0).autofocus = arg1 !== 0;
 };
 
 __exports.__widl_f_value_HTMLSelectElement = function(ret, arg0) {
 
-    const retptr = passStringToWasm(__widl_f_value_HTMLSelectElement_target.call(getObject(arg0)));
+    const retptr = passStringToWasm(getObject(arg0).value);
     const retlen = WASM_VECTOR_LEN;
     const mem = getUint32Memory();
     mem[ret / 4] = retptr;
@@ -316,21 +235,13 @@ __exports.__widl_instanceof_HTMLTextAreaElement = function(idx) {
     return getObject(idx) instanceof HTMLTextAreaElement ? 1 : 0;
 };
 
-const __widl_f_set_autofocus_HTMLTextAreaElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLTextAreaElement === 'undefined' ? null : HTMLTextAreaElement.prototype, 'autofocus').set || function() {
-    throw new Error(`wasm-bindgen: HTMLTextAreaElement.autofocus does not exist`);
-};
-
 __exports.__widl_f_set_autofocus_HTMLTextAreaElement = function(arg0, arg1) {
-    __widl_f_set_autofocus_HTMLTextAreaElement_target.call(getObject(arg0), arg1 !== 0);
-};
-
-const __widl_f_value_HTMLTextAreaElement_target = GetOwnOrInheritedPropertyDescriptor(typeof HTMLTextAreaElement === 'undefined' ? null : HTMLTextAreaElement.prototype, 'value').get || function() {
-    throw new Error(`wasm-bindgen: HTMLTextAreaElement.value does not exist`);
+    getObject(arg0).autofocus = arg1 !== 0;
 };
 
 __exports.__widl_f_value_HTMLTextAreaElement = function(ret, arg0) {
 
-    const retptr = passStringToWasm(__widl_f_value_HTMLTextAreaElement_target.call(getObject(arg0)));
+    const retptr = passStringToWasm(getObject(arg0).value);
     const retlen = WASM_VECTOR_LEN;
     const mem = getUint32Memory();
     mem[ret / 4] = retptr;
@@ -338,15 +249,11 @@ __exports.__widl_f_value_HTMLTextAreaElement = function(ret, arg0) {
 
 };
 
-const __widl_f_push_state_with_url_History_target = typeof History === 'undefined' ? null : History.prototype.pushState || function() {
-    throw new Error(`wasm-bindgen: History.pushState does not exist`);
-};
-
 __exports.__widl_f_push_state_with_url_History = function(arg0, arg1, arg2, arg3, arg4, arg5, exnptr) {
     let varg2 = getStringFromWasm(arg2, arg3);
     let varg4 = arg4 == 0 ? undefined : getStringFromWasm(arg4, arg5);
     try {
-        __widl_f_push_state_with_url_History_target.call(getObject(arg0), getObject(arg1), varg2, varg4);
+        getObject(arg0).pushState(getObject(arg1), varg2, varg4);
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -359,12 +266,8 @@ __exports.__widl_instanceof_KeyboardEvent = function(idx) {
     return getObject(idx) instanceof KeyboardEvent ? 1 : 0;
 };
 
-const __widl_f_key_code_KeyboardEvent_target = GetOwnOrInheritedPropertyDescriptor(typeof KeyboardEvent === 'undefined' ? null : KeyboardEvent.prototype, 'keyCode').get || function() {
-    throw new Error(`wasm-bindgen: KeyboardEvent.keyCode does not exist`);
-};
-
 __exports.__widl_f_key_code_KeyboardEvent = function(arg0) {
-    return __widl_f_key_code_KeyboardEvent_target.call(getObject(arg0));
+    return getObject(arg0).keyCode;
 };
 
 __exports.__widl_f_pathname_Location = function(ret, arg0, exnptr) {
@@ -384,13 +287,9 @@ __exports.__widl_f_pathname_Location = function(ret, arg0, exnptr) {
     }
 };
 
-const __widl_f_append_child_Node_target = typeof Node === 'undefined' ? null : Node.prototype.appendChild || function() {
-    throw new Error(`wasm-bindgen: Node.appendChild does not exist`);
-};
-
 __exports.__widl_f_append_child_Node = function(arg0, arg1, exnptr) {
     try {
-        return addHeapObject(__widl_f_append_child_Node_target.call(getObject(arg0), getObject(arg1)));
+        return addHeapObject(getObject(arg0).appendChild(getObject(arg1)));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -399,13 +298,13 @@ __exports.__widl_f_append_child_Node = function(arg0, arg1, exnptr) {
     }
 };
 
-const __widl_f_remove_child_Node_target = typeof Node === 'undefined' ? null : Node.prototype.removeChild || function() {
-    throw new Error(`wasm-bindgen: Node.removeChild does not exist`);
+__exports.__widl_f_has_child_nodes_Node = function(arg0) {
+    return getObject(arg0).hasChildNodes();
 };
 
 __exports.__widl_f_remove_child_Node = function(arg0, arg1, exnptr) {
     try {
-        return addHeapObject(__widl_f_remove_child_Node_target.call(getObject(arg0), getObject(arg1)));
+        return addHeapObject(getObject(arg0).removeChild(getObject(arg1)));
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -414,59 +313,35 @@ __exports.__widl_f_remove_child_Node = function(arg0, arg1, exnptr) {
     }
 };
 
-const __widl_f_node_type_Node_target = GetOwnOrInheritedPropertyDescriptor(typeof Node === 'undefined' ? null : Node.prototype, 'nodeType').get || function() {
-    throw new Error(`wasm-bindgen: Node.nodeType does not exist`);
-};
-
 __exports.__widl_f_node_type_Node = function(arg0) {
-    return __widl_f_node_type_Node_target.call(getObject(arg0));
-};
-
-const __widl_f_child_nodes_Node_target = GetOwnOrInheritedPropertyDescriptor(typeof Node === 'undefined' ? null : Node.prototype, 'childNodes').get || function() {
-    throw new Error(`wasm-bindgen: Node.childNodes does not exist`);
+    return getObject(arg0).nodeType;
 };
 
 __exports.__widl_f_child_nodes_Node = function(arg0) {
-    return addHeapObject(__widl_f_child_nodes_Node_target.call(getObject(arg0)));
-};
-
-const __widl_f_set_text_content_Node_target = GetOwnOrInheritedPropertyDescriptor(typeof Node === 'undefined' ? null : Node.prototype, 'textContent').set || function() {
-    throw new Error(`wasm-bindgen: Node.textContent does not exist`);
+    return addHeapObject(getObject(arg0).childNodes);
 };
 
 __exports.__widl_f_set_text_content_Node = function(arg0, arg1, arg2) {
     let varg1 = arg1 == 0 ? undefined : getStringFromWasm(arg1, arg2);
-    __widl_f_set_text_content_Node_target.call(getObject(arg0), varg1);
-};
-
-const __widl_f_item_NodeList_target = typeof NodeList === 'undefined' ? null : NodeList.prototype.item || function() {
-    throw new Error(`wasm-bindgen: NodeList.item does not exist`);
+    getObject(arg0).textContent = varg1;
 };
 
 __exports.__widl_f_item_NodeList = function(arg0, arg1) {
 
-    const val = __widl_f_item_NodeList_target.call(getObject(arg0), arg1);
+    const val = getObject(arg0).item(arg1);
     return isLikeNone(val) ? 0 : addHeapObject(val);
 
 };
 
-const __widl_f_length_NodeList_target = GetOwnOrInheritedPropertyDescriptor(typeof NodeList === 'undefined' ? null : NodeList.prototype, 'length').get || function() {
-    throw new Error(`wasm-bindgen: NodeList.length does not exist`);
-};
-
 __exports.__widl_f_length_NodeList = function(arg0) {
-    return __widl_f_length_NodeList_target.call(getObject(arg0));
-};
-
-const __widl_f_set_item_Storage_target = typeof Storage === 'undefined' ? null : Storage.prototype.setItem || function() {
-    throw new Error(`wasm-bindgen: Storage.setItem does not exist`);
+    return getObject(arg0).length;
 };
 
 __exports.__widl_f_set_item_Storage = function(arg0, arg1, arg2, arg3, arg4, exnptr) {
     let varg1 = getStringFromWasm(arg1, arg2);
     let varg3 = getStringFromWasm(arg3, arg4);
     try {
-        __widl_f_set_item_Storage_target.call(getObject(arg0), varg1, varg3);
+        getObject(arg0).setItem(varg1, varg3);
     } catch (e) {
         const view = getUint32Memory();
         view[exnptr / 4] = 1;
@@ -515,18 +390,16 @@ __exports.__widl_f_local_storage_Window = function(arg0, exnptr) {
     }
 };
 
-const __widl_f_log_1__target = console.log;
-
 __exports.__widl_f_log_1_ = function(arg0) {
-    __widl_f_log_1__target(getObject(arg0));
+    console.log(getObject(arg0));
 };
 
-__exports.__wbg_newnoargs_6a80f84471205fc8 = function(arg0, arg1) {
+__exports.__wbg_newnoargs_43c5f57b77232284 = function(arg0, arg1) {
     let varg0 = getStringFromWasm(arg0, arg1);
     return addHeapObject(new Function(varg0));
 };
 
-__exports.__wbg_call_582b20dfcad7fee4 = function(arg0, arg1, exnptr) {
+__exports.__wbg_call_7ac13208e630ddeb = function(arg0, arg1, exnptr) {
     try {
         return addHeapObject(getObject(arg0).call(getObject(arg1)));
     } catch (e) {
@@ -553,40 +426,78 @@ __exports.__wbindgen_string_new = function(p, l) {
     return addHeapObject(getStringFromWasm(p, l));
 };
 
-__exports.__wbindgen_number_get = function(n, invalid) {
-    let obj = getObject(n);
-    if (typeof(obj) === 'number') return obj;
-    getUint8Memory()[invalid] = 1;
-    return 0;
-};
-
-__exports.__wbindgen_is_null = function(idx) {
-    return getObject(idx) === null ? 1 : 0;
-};
-
-__exports.__wbindgen_is_undefined = function(idx) {
-    return getObject(idx) === undefined ? 1 : 0;
-};
-
-__exports.__wbindgen_boolean_get = function(i) {
-    let v = getObject(i);
-    if (typeof(v) === 'boolean') {
-        return v ? 1 : 0;
-    } else {
-        return 2;
+__exports.__wbindgen_debug_string = function(i, len_ptr) {
+    const toString = Object.prototype.toString;
+    const debug_str = val => {
+        // primitive types
+        const type = typeof val;
+        if (type == 'number' || type == 'boolean' || val == null) {
+            return  `${val}`;
+        }
+        if (type == 'string') {
+            return `"${val}"`;
+        }
+        if (type == 'symbol') {
+            const description = val.description;
+            if (description == null) {
+                return 'Symbol';
+            } else {
+                return `Symbol(${description})`;
+            }
+        }
+        if (type == 'function') {
+            const name = val.name;
+            if (typeof name == 'string' && name.length > 0) {
+                return `Function(${name})`;
+            } else {
+                return 'Function';
+            }
+        }
+        // objects
+        if (Array.isArray(val)) {
+            const length = val.length;
+            let debug = '[';
+            if (length > 0) {
+                debug += debug_str(val[0]);
+            }
+            for(let i = 1; i < length; i++) {
+                debug += ', ' + debug_str(val[i]);
+            }
+            debug += ']';
+            return debug;
+        }
+        // Test for built-in
+        const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
+        let className;
+        if (builtInMatches.length > 1) {
+            className = builtInMatches[1];
+        } else {
+            // Failed to match the standard '[object ClassName]'
+            return toString.call(val);
+        }
+        if (className == 'Object') {
+            // we're a user defined class or Object
+            // JSON.stringify avoids problems with cycles, and is generally much
+            // easier than looping through ownProperties of `val`.
+            try {
+                return 'Object(' + JSON.stringify(val) + ')';
+            } catch (_) {
+                return 'Object';
+            }
+        }
+        // errors
+        if (val instanceof Error) {
+        return `${val.name}: ${val.message}
+        ${val.stack}`;
     }
+    // TODO we could test for more things here, like `Set`s and `Map`s.
+    return className;
 };
-
-__exports.__wbindgen_is_symbol = function(i) {
-    return typeof(getObject(i)) === 'symbol' ? 1 : 0;
-};
-
-__exports.__wbindgen_string_get = function(i, len_ptr) {
-    let obj = getObject(i);
-    if (typeof(obj) !== 'string') return 0;
-    const ptr = passStringToWasm(obj);
-    getUint32Memory()[len_ptr / 4] = WASM_VECTOR_LEN;
-    return ptr;
+const val = getObject(i);
+const debug = debug_str(val);
+const ptr = passStringToWasm(debug);
+getUint32Memory()[len_ptr / 4] = WASM_VECTOR_LEN;
+return ptr;
 };
 
 __exports.__wbindgen_cb_drop = function(i) {
@@ -599,7 +510,7 @@ __exports.__wbindgen_cb_drop = function(i) {
     return 0;
 };
 
-__exports.__wbindgen_closure_wrapper353 = function(a, b, _ignored) {
+__exports.__wbindgen_closure_wrapper828 = function(a, b, _ignored) {
     const f = wasm.__wbg_function_table.get(2);
     const d = wasm.__wbg_function_table.get(3);
     const cb = function(arg0) {

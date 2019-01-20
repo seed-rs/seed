@@ -116,7 +116,6 @@ fn update(msg: Msg, model: Model) -> Model {
 // View
 
 fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
-    let state2 = state.clone();
     div![
         div![ format!("Repo info: name: {}, sha: {}", model.data.name, model.data.commit.sha),
             did_mount(move |_| spawn_local(get_data(state.clone())))

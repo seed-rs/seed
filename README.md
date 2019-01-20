@@ -9,10 +9,8 @@
 
 The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
 
-## Quickstart
-
 ## Setup
-This framework requires you to first install [Rust](https://www.rust-lang.org/tools/install).
+This framework requires you to install [Rust](https://www.rust-lang.org/tools/install).
 
 You'll need a recent version of Rust: `rustup update`
 
@@ -41,22 +39,21 @@ If not using the quickstart repo, create an Html file with a body that contains 
 ```html
 <section id="main"></section>
 
-<script src='./pkg/appname.js'></script>
+<script src='./pkg/package.js'></script>
 
 <script>
     const { render } = wasm_bindgen;
     function run() {
         render();
     }
-    wasm_bindgen('./pkg/appname_bg.wasm')
+    wasm_bindgen('./pkg/package_bg.wasm')
         .then(run)
         .catch(console.error);
 </script>
 ```
 The first line above is an empty element with id: It's where your app will render. The subsequent ones load your app's wasm modules.
 
-The quickstart repo includes this file, but you will need to rename the two 
-occurances of `appname`. (If your project name has a hyphen, use an underscore instead here) You will eventually need to modify this file to 
+The quickstart repo includes this file. You will eventually need to modify it to 
 change the page's title, add a description, favicon, stylesheet etc.
 
 `Cargo.toml`, which is a file created by Cargo that describes your app, needs `wasm-bindgen`, `web-sys`, and `
@@ -75,7 +72,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.2.0"
+seed = "^0.1.12"
 wasm-bindgen = "^0.2.29"
 web-sys = "^0.3.6"
 ```
@@ -143,8 +140,7 @@ fn success_level(clicks: i32) -> El<Msg> {
     p![ descrip ]
 }
 
-/// The top-level component we pass to the virtual dom. Must accept the model as its
-/// only parameter, and output a single El.
+/// The top-level component we pass to the virtual dom.
 fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
@@ -195,7 +191,7 @@ cargo build --target wasm32-unknown-unknown
 ```
 and 
 ```
-wasm-bindgen target/wasm32-unknown-unknown/debug/appname.wasm --no modules --out-dir ./pkg
+wasm-bindgen target/wasm32-unknown-unknown/debug/appname.wasm --no modules --out-dir ./pkg --out-name package
 ```
 where `appname` is replaced with your app's name. This compiles your code in the target
 folder, and populates the pkg folder with your WASM module, a Typescript definitions file,
@@ -212,6 +208,8 @@ For development, you can view your app using a shimmed Python dev server, as des
 from the quickstart repo, and run `python serve.py`).
 
 In the future, the build script and commands above may be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
+You may use it now if you wish, but may run into issues running the examples, enabling no-modules mode,
+and syntax-highlighting in the compile logs.
 
 ## Running included examples
 To run an example located in the [examples folder](https://github.com/David-OConnor/seed/tree/master/examples),

@@ -495,24 +495,51 @@ pub fn run<Ms, Mdl>(
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
+pub trait Attrs: PartialEq + ToString {
+    fn vals(self) -> HashMap<String, String>;
+}
+
+pub trait Style: PartialEq + ToString {
+    fn vals(self) -> HashMap<String, String>;
+}
+
+pub trait Listener<Ms>: Sized {
+    fn attach<T: AsRef<web_sys::EventTarget>>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
+    fn detach<T: AsRef<web_sys::EventTarget>>(&self, el_ws: &T);
+}
+
 /// WIP towards a modular VDOM
 /// Assumes dependency on web_sys.
-pub trait DomEl<Tg, At, Sty, Tx, Ls, E>
-    where
-        Tg: PartialEq,
-        At: PartialEq,
-        Sty: PartialEq,
-        Tx: ToString + PartialEq,
-{
-    fn tag(self) -> Tg;
-    fn attrs(self) -> At;
-    fn style(self) -> Sty;
-    fn listeners(self) -> Vec<Ls>;
-    fn text(self) -> Option<Tx>;
-    fn children(self) -> Vec<E>;  // todo
+// todo: Do we need <Ms> ?
+pub trait DomEl<Ms>: Sized + PartialEq {
+    type Tg: PartialEq + ToString;  // todo tostring
+    type At: Attrs;
+    type St: Style;
+    type Ls: Listener<Ms>;
+    type Tx: PartialEq + ToString + Clone + Default;
 
+    // Fields
+    fn tag(self) -> Self::Tg;
+    fn attrs(self) -> Self::At;
+    fn style(self) -> Self::St;
+    fn listeners(self) -> Vec<Self::Ls>;
+    fn text(self) -> Option<Self::Tx>;
+    fn children(self) -> Vec<Self>;
+    fn did_mount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
+    fn did_update(self) -> Option<Box<FnMut(&web_sys::Element)>>;
+    fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
     fn websys_el(self) -> Option<web_sys::Element>;
     fn id(self) -> Option<u32>;
+    fn raw_html(self) -> bool;
+    // todo tying to dom_types is temp - defeats the urpose of the trait
+    fn namespace(self) -> Option<crate::dom_types::Namespace>;
+
+    // Methods
+    fn empty(self) -> Self;
+
+    // setters
+    fn set_id(&mut self, id: Option<u32>);
+    fn set_websys_el(&mut self, el: Option<web_sys::Element>);
 
 //    fn make_websys_el(&self, document: &web_sys::Document) -> web_sys::Element;
 }
