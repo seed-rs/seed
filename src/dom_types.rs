@@ -372,6 +372,13 @@ impl Attrs {
     }
 }
 
+// todo temp duplication of trait and main methods for vals
+impl crate::vdom::Attrs for Attrs {
+    fn vals(self) -> HashMap<String, String> {
+        self.vals
+    }
+}
+
 impl ToString for Attrs {
     /// Create an HTML-compatible string representation
     fn to_string(&self) -> String {
@@ -420,6 +427,13 @@ impl Style {
             result.vals.insert(key.clone(), val.clone());
         }
         result
+    }
+}
+
+// todo temp duplication of trait and main methods for vals
+impl crate::vdom::Style for Style {
+    fn vals(self) -> HashMap<String, String> {
+        self.vals
     }
 }
 
@@ -535,7 +549,7 @@ macro_rules! make_tags {
         }
 
         impl ToString for Tag {
-            pub fn to_string(&self) -> String {
+            fn to_string(&self) -> String {
                 match self {
                     Tag::Custom(name) => &name,
                     $ (
@@ -798,7 +812,7 @@ impl<Ms: Clone + 'static> El<Ms> {
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
 
-        let opening = String::from("<") + self.tag.as_str() + &self.attrs.to_string() +
+        let opening = String::from("<") + &self.tag.to_string() + &self.attrs.to_string() +
             " style=\"" + &self.style.to_string() + ">\n";
 
         let inner = self.children.iter().fold(String::new(), |result, child| result + &child._html());
@@ -925,7 +939,7 @@ impl <Ms: Clone + 'static>crate::vdom::DomEl<Ms> for El<Ms> {
     fn id(self) -> Option<u32> {
         self.id
     }
-    fn raw_html(self) -> boolean {
+    fn raw_html(self) -> bool {
         self.raw_html
     }
         fn namespace(self) -> Option<Namespace> {

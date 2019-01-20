@@ -185,7 +185,8 @@ pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut impl DomEl<Ms>,
     let mut id = active_id;
     el_vdom.set_id(Some(id));
     id += 1;  // Raise the id after each element we process.
-    el_vdom.nest_level() = Some(active_level);
+    // todo perhaps put back
+//    el_vdom.nest_level() = Some(active_level);
 
     // Create the web_sys element; add it to the working tree; store it in
     // its corresponding vdom El.
@@ -512,6 +513,14 @@ pub fn run<Ms, Mdl, E>(
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
+pub trait Attrs: PartialEq + ToString {
+    fn vals(self) -> HashMap<String, String>;
+}
+
+pub trait Style: PartialEq + ToString {
+    fn vals(self) -> HashMap<String, String>;
+}
+
 pub trait Listener<Ms>: Sized {
     fn attach<T: AsRef<web_sys::EventTarget>>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
     fn detach<T: AsRef<web_sys::EventTarget>>(&self, el_ws: &T);
@@ -520,10 +529,10 @@ pub trait Listener<Ms>: Sized {
 /// WIP towards a modular VDOM
 /// Assumes dependency on web_sys.
 // todo: Do we need <Ms> ?
-pub trait DomEl<Ms>: Sized {
+pub trait DomEl<Ms>: Sized + PartialEq {
     type Tg: PartialEq + ToString;  // todo tostring
-    type At: PartialEq + ToString;
-    type St: PartialEq + ToString;
+    type At: Attrs;
+    type St: Style;
     type Ls: Listener<Ms>;
     type Tx: PartialEq + ToString + Clone + Default;
 
@@ -539,7 +548,7 @@ pub trait DomEl<Ms>: Sized {
     fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
     fn websys_el(self) -> Option<web_sys::Element>;
     fn id(self) -> Option<u32>;
-    fn raw_html(self) -> boolean;
+    fn raw_html(self) -> bool;
     // todo tying to dom_types is temp - defeats the urpose of the trait
     fn namespace(self) -> Option<crate::dom_types::Namespace>;
 

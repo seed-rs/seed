@@ -27,7 +27,8 @@ pub use crate::{
     fetch::{Method, Request, spawn_local},
     websys_bridge::{to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_html_el},
     routing::push_route,
-    vdom::{App, run}
+    util::{document, window},
+    vdom::{App, run},
 };
 
 /// Create an element flagged in a way that it will not be rendered. Useful

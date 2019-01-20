@@ -1,7 +1,7 @@
 //! This file contains interactions with web_sys.
 use wasm_bindgen::JsCast;
 
-use crate::vdom::DomEl;
+use crate::vdom::{DomEl, Attrs, Style};
 
 // todo: How coupled should this be to Seed, vdom, and dom_types?
 
@@ -116,19 +116,19 @@ pub fn make_websys_el<Ms>(el_vdom: &impl DomEl<Ms>, document: &web_sys::Document
     where Ms: Clone,
 {
     // Create the DOM-analog element; it won't render until attached to something.
-    let tag = el_vdom.tag().as_str();
+    let tag = &el_vdom.tag().to_string();
     let el_ws = match el_vdom.namespace() {
         Some(ref ns) => document.create_element_ns(Some(ns.as_str()), tag).expect("Problem creating web-sys El"),
         None => document.create_element(tag).expect("Problem creating web-sys El")
     };
 
-    for (name, val) in &el_vdom.attrs().vals {
+    for (name, val) in &el_vdom.attrs().vals() {
         set_attr_shim(&el_ws, name, val);
     }
 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
-    if el_vdom.style().vals.keys().len() > 0 {
+    if el_vdom.style().vals().keys().len() > 0 {
         el_ws.set_attribute("style", &el_vdom.style().to_string()).expect("Problem setting style");
     }
 
@@ -206,7 +206,7 @@ pub fn patch_el_details<Ms>(
     }
 
     if old.attrs() != new.attrs() {
-        for (key, new_val) in &new.attrs().vals {
+        for (key, new_val) in &new.attrs().vals() {
             match old.attrs().vals().get(key) {
                 Some(old_val) => {
                     // The value's different
@@ -218,7 +218,7 @@ pub fn patch_el_details<Ms>(
             }
         }
         // Remove attributes that aren't in the new vdom.
-        for name in old.attrs().vals.keys() {
+        for name in old.attrs().vals().keys() {
             if new.attrs().vals().get(name).is_none() {
                 old_el_ws.remove_attribute(name).expect("Removing an attribute");
             }
@@ -240,7 +240,7 @@ pub fn patch_el_details<Ms>(
         // Text is stored in special Text nodes that don't have a direct-relation to
         // the vdom.
 
-        let text = new.text().clone().unwrap_or_default();
+        let text = new.text().clone().unwrap_or_default().to_string();
 
         if new.raw_html() {
             old_el_ws.set_inner_html(&text)
