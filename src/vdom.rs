@@ -1,19 +1,20 @@
-use std::collections::HashMap;
-use std::{cell::{RefCell}, rc::Rc};
-use std::panic;
-
+use crate::{
+    dom_types,
+    dom_types::{El, Namespace},
+    routing, util, websys_bridge,
+};
+use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::closure::Closure;
-
-use crate::dom_types;
-use crate::dom_types::El;
-use crate::util;
-use crate::websys_bridge;
-
+use web_sys::{Document, Element, Event, EventTarget, Window};
 
 pub enum Update<Mdl: 'static + Clone> {
     Render(Mdl),
     Skip(Mdl),
 }
+
+type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
+type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, Mdl) -> El<Ms>;
+type Routes<Ms> = HashMap<String, Ms>;
 
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
@@ -39,28 +40,28 @@ impl<Ms> Clone for Mailbox<Ms> {
     }
 }
 
-// todo: Examine what needs to be ref cells, rcs etc
+// TODO: Examine what needs to be ref cells, rcs etc
 
-type StoredPopstate = RefCell<Option<Closure<FnMut(web_sys::Event)>>>;
+type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct Data<Ms: Clone +'static , Mdl: 'static + Clone> {
-    pub document: web_sys::Document,  // todo take off pub if you no longer use it in init
+pub struct Data<Ms: Clone + 'static, Mdl: 'static + Clone> {
+    pub document: web_sys::Document, // todo take off pub if you no longer use it in init
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update().
     pub model: RefCell<Mdl>,
-    pub update: fn(Ms, Mdl) -> Update<Mdl>,
-    pub view: fn(App<Ms, Mdl>, Mdl) -> El<Ms>,
+    pub update: UpdateFn<Ms, Mdl>,
+    pub view: ViewFn<Ms, Mdl>,
     pub main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
-    routes: RefCell<Option<HashMap<String, Ms>>>,
+    routes: RefCell<Option<Routes<Ms>>>,
 
     pub window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
-pub struct App<Ms: Clone + 'static , Mdl: 'static + Clone> {
-    pub data: Rc<Data<Ms, Mdl>>
+pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
+    pub data: Rc<Data<Ms, Mdl>>,
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
@@ -68,16 +69,16 @@ pub struct App<Ms: Clone + 'static , Mdl: 'static + Clone> {
 impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     fn new(
         model: Mdl,
-        update: fn(Ms, Mdl) -> Update<Mdl>,
-        view: fn(Self, Mdl) -> El<Ms>,
-//        view: fn(Self, Mdl) -> DomEl<Ms>,
+        update: UpdateFn<Ms, Mdl>,
+        view: ViewFn<Ms, Mdl>,
         parent_div_id: &str,
-        routes: Option<HashMap<String, Ms>>,
+        routes: Option<Routes<Ms>>,
         window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     ) -> Self {
-
         let window = util::window();
-        let document = window.document().expect("Can't find the window's document.");
+        let document = window
+            .document()
+            .expect("Can't find the window's document.");
 
         let mount_point = document.get_element_by_id(parent_div_id).unwrap();
 
@@ -94,7 +95,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
                 window_events,
                 window_listeners: RefCell::new(Vec::new()),
-            })
+            }),
         }
     }
 
@@ -124,7 +125,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             Update::Skip(m) => {
                 should_render = false;
                 m
-            },
+            }
         };
 
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
@@ -134,9 +135,9 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
-//                &mut Vec::new(),
+                //                &mut Vec::new(),
                 &mut new_listeners,
-                &self.mailbox()
+                &self.mailbox(),
             );
             self.data.window_listeners.replace(new_listeners);
         }
@@ -147,7 +148,6 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             // We accept cloning here, for the benefit of making data easier to work
             // with in the app.
             let mut topel_new_vdom = (self.data.view)(self.clone(), updated_model.clone());
-
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
@@ -161,8 +161,9 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             patch(
                 &self.data.document,
                 &mut self.data.main_el_vdom.borrow_mut(),
-                &mut topel_new_vdom, &self.data.mount_point,
-                &self.mailbox()
+                &mut topel_new_vdom,
+                &self.data.mount_point,
+                &self.mailbox(),
             );
 
             // Now that we've re-rendered, replace our stored El with the new one;
@@ -186,14 +187,15 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
-    // pub for tesets.
-    where Ms: Clone +'static
+pub fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+// pub for tests.
+where
+    Ms: Clone + 'static,
 {
     // id iterates once per item; active-level once per nesting level.
     let mut id = active_id;
     el_vdom.id = Some(id);
-    id += 1;  // Raise the id after each element we process.
+    id += 1; // Raise the id after each element we process.
     el_vdom.nest_level = Some(active_level);
 
     // Create the web_sys element; add it to the working tree; store it in
@@ -207,7 +209,6 @@ pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_
     }
 }
 
-
 // trying this approach leads to lifetime problems.
 //fn mailbox<Ms, Mdl>(app: &'static App<Ms, Mdl>) -> Mailbox<Ms>
 //    where Ms: Clone + 'static, Mdl: Clone + 'static {
@@ -217,9 +218,7 @@ pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_
 //
 //}
 
-
-
-impl<Ms: Clone + 'static , Mdl: 'static + Clone> std::clone::Clone for App<Ms, Mdl> {
+impl<Ms: Clone + 'static, Mdl: 'static + Clone> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
             data: Rc::clone(&self.data),
@@ -227,12 +226,16 @@ impl<Ms: Clone + 'static , Mdl: 'static + Clone> std::clone::Clone for App<Ms, M
     }
 }
 
-// todo should this be here, or in a diff module?
+// TODO: should this be here, or in a diff module?
 /// Recursively attach event-listeners. Run this at init.
 fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
-    where Ms: Clone + 'static
+where
+    Ms: Clone + 'static,
 {
-    let el_ws = el.el_ws.take().expect("Missing el_ws on attach_all_listeners");
+    let el_ws = el
+        .el_ws
+        .take()
+        .expect("Missing el_ws on attach_all_listeners");
 
     for listener in &mut el.listeners {
         listener.attach(&el_ws, mailbox.clone());
@@ -241,15 +244,19 @@ fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
         attach_listeners(child, mailbox)
     }
 
-   el.el_ws.replace(el_ws);
+    el.el_ws.replace(el_ws);
 }
 
-// todo should this be here, or in a diff module?
+// TODO: should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
 fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
-    where Ms: Clone + 'static
+where
+    Ms: Clone + 'static,
 {
-    let el_ws = el.el_ws.take().expect("Missing el_ws on detach_all_listeners");
+    let el_ws = el
+        .el_ws
+        .take()
+        .expect("Missing el_ws on detach_all_listeners");
 
     for listener in &mut el.listeners {
         listener.detach(&el_ws);
@@ -258,18 +265,19 @@ fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
         detach_listeners(child)
     }
 
-   el.el_ws.replace(el_ws);
+    el.el_ws.replace(el_ws);
 }
 
 /// We reattach all listeners, as with normal Els, since we have no
 /// way of diffing them.
 fn setup_window_listeners<Ms>(
-    window: &web_sys::Window,
+    window: &Window,
     old: &mut Vec<dom_types::Listener<Ms>>,
     new: &mut Vec<dom_types::Listener<Ms>>,
-    mailbox: &Mailbox<Ms>
-)
-    where Ms: Clone + 'static {
+    mailbox: &Mailbox<Ms>,
+) where
+    Ms: Clone + 'static,
+{
     for listener in old {
         listener.detach(window);
     }
@@ -279,16 +287,21 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
-              parent: &web_sys::Element, mailbox: &Mailbox<Ms>)
-    where Ms: Clone + 'static
+fn patch<Ms>(
+    document: &Document,
+    old: &mut El<Ms>,
+    new: &mut El<Ms>,
+    parent: &Element,
+    mailbox: &Mailbox<Ms>,
+) where
+    Ms: Clone + 'static,
 {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
-    // Todo: Current sceme is that if the parent changes, redraw all children...
-    // todo fix this later.
+    // TODO: Current sceme is that if the parent changes, redraw all children...
+    // TODO: fix this later.
     // We make an assumption that most of the page is not dramatically changed
     // by each event, to optimize.
-    // todo: There are a lot of ways you could make this more sophisticated.
+    // TODO: There are a lot of ways you could make this more sophisticated.
 
     // Assume setup_vdom has been run on the new el, all listeners have been removed
     // from the old el_ws, and the only the old el vdom's elements are still attached.
@@ -298,7 +311,7 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
     // We remove it from the old el_vodom now, and at the end... add it to the new one.
     // We don't run attach_children() when patching, hence this approach.
 
-//        if new.is_dummy() == true { return }
+    //        if new.is_dummy() == true { return }
 
     let old_el_ws = old.el_ws.take().expect("No old elws");
 
@@ -310,21 +323,22 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
 
         // If the tag's different, we must redraw the element and its children; there's
         // no way to patch one element type into another.
-        // todo forcing a rerender for differnet listeners is potentially sloppy,
-        // todo, but I'm not sure how to patch them, or deal with them.
+        // TODO: forcing a rerender for differnet listeners is potentially sloppy,
+        // TODO:, but I'm not sure how to patch them, or deal with them.
         if old.tag != new.tag {
-
-            // todo DRY here between this and later in func.
+            // TODO: DRY here between this and later in func.
             if let Some(unmount_actions) = &mut old.will_unmount {
                 unmount_actions(&old_el_ws)
             }
-            parent.remove_child(&old_el_ws).expect("Problem removing an element");
+            parent
+                .remove_child(&old_el_ws)
+                .expect("Problem removing an element");
 
             websys_bridge::attach_els(new, parent);
             let mut new = new;
             attach_listeners(&mut new, &mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
-            return
+            return;
         }
 
         // Patch parts of the Element.
@@ -352,7 +366,7 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
     // One approach would be check all combinations, combine scores within each combo, and pick the one
     // with the highest total score, but this increases with the factorial of
     // child size!
-    // todo: Look into this improvement sometime after the initial release.
+    // TODO:: Look into this improvement sometime after the initial release.
 
     let avail_old_children = &mut old.children;
     for child_new in &mut new.children {
@@ -366,8 +380,10 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
             // We still have old children to pick a match from. If we pick
             // incorrectly, or there is no "good" match, we'll have some
             // patching and/or attaching (rendering) to do in subsequent recursions.
-            let mut scores: Vec<(u32, f32)> = avail_old_children.iter()
-                .map(|c| (c.id.unwrap(), match_score(c, child_new))).collect();
+            let mut scores: Vec<(u32, f32)> = avail_old_children
+                .iter()
+                .map(|c| (c.id.unwrap(), match_score(c, child_new)))
+                .collect();
 
             // should put highest score at the end.
             scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
@@ -376,15 +392,19 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
             // without irking the borrow checker, despite appearing less counter-intuitive,
             // due to the convenient pop method.
             avail_old_children.sort_by(|b, a| {
-                scores.iter().find(|s| s.0 == b.id.unwrap()).unwrap().1.partial_cmp(
-                    &scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1
-                ).unwrap()
+                scores
+                    .iter()
+                    .find(|s| s.0 == b.id.unwrap())
+                    .unwrap()
+                    .1
+                    .partial_cmp(&scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1)
+                    .unwrap()
             });
 
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
-            // todo do we really need to clone the mb again ehre? Keep this under control!
-            patch(document, &mut best_match, child_new, &old_el_ws, &mailbox); // todo old vs new for par
+            // TODO: do we really need to clone the mb again ehre? Keep this under control!
+            patch(document, &mut best_match, child_new, &old_el_ws, &mailbox); // TODO: old vs new for par
         }
     }
 
@@ -392,11 +412,13 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
     for child in avail_old_children {
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
-        // todo DRY here between this and earlier in func
+        // TODO: DRY here between this and earlier in func
         if let Some(unmount_actions) = &mut child.will_unmount {
             unmount_actions(&child_el_ws)
         }
-        old_el_ws.remove_child(&child_el_ws).expect("Problem removing child");
+        old_el_ws
+            .remove_child(&child_el_ws)
+            .expect("Problem removing child");
 
         child.el_ws.replace(child_el_ws);
     }
@@ -407,43 +429,65 @@ fn patch<Ms>(document: &web_sys::Document, old: &mut El<Ms>, new: &mut El<Ms>,
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
 fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
     // children_to_eval is the number of children to look at on each nest level.
-//    let children_to_eval = 3;
+    //    let children_to_eval = 3;
     // Don't weight children as heavily as the parent. This effect acculates the further down we go.
-//    let child_score_significance = 0.6;
+    //    let child_score_significance = 0.6;
 
     let mut score = 0.;
 
     // Tags are not likely to change! Good indicator of it being the wrong element.
-    if old.tag == new.tag { score += 0.3 } else { score -= 0.3 };
+    if old.tag == new.tag {
+        score += 0.3
+    } else {
+        score -= 0.3
+    };
     // Attrs are not likely to change.
-    // todo: Compare attrs more directly.
-    if old.attrs == new.attrs { score += 0.15 } else { score -= 0.15 };
+    // TODO:: Compare attrs more directly.
+    if old.attrs == new.attrs {
+        score += 0.15
+    } else {
+        score -= 0.15
+    };
     // Style is likely to change.
-    if old.style == new.style { score += 0.05 } else { score -= 0.05 };
+    if old.style == new.style {
+        score += 0.05
+    } else {
+        score -= 0.05
+    };
     // Text is likely to change, but may still be a good indicator.
-    if old.text == new.text { score += 0.05 } else { score -= 0.05 };
+    if old.text == new.text {
+        score += 0.05
+    } else {
+        score -= 0.05
+    };
 
     // For children length, don't do it based on the difference, since children that actually change in
     // len may have very large changes. But having identical length is a sanity check.
     if old.children.len() == new.children.len() {
         score += 0.1
-//    } else if (old.children.len() as i16 - new.children.len() as i16).abs() == 1 {
-//        // Perhaps we've added or removed a child.
-//        score += 0.05  // todo non-even transaction
-    } else { score -= 0.1 }
+    //    } else if (old.children.len() as i16 - new.children.len() as i16).abs() == 1 {
+    //        // Perhaps we've added or removed a child.
+    //        score += 0.05  // TODO: non-even transaction
+    } else {
+        score -= 0.1
+    }
     // Same id implies it may have been added in the same order.
-    if old.id.expect("Missing id") == new.id.expect("Missing id") { score += 0.15 } else { score -= 0.15 };
+    if old.id.expect("Missing id") == new.id.expect("Missing id") {
+        score += 0.15
+    } else {
+        score -= 0.15
+    };
 
     // For now, just look at the first child: Easier to code, and still helps.
     // Doing indefinite recursion of first child for now. Weight each child
     // subsequently-less.  This is effective for some common HTML patterns.
-//    for posit in 0..children_to_eval {
-//        if let Some(child_old) = &old.children.get(posit) {
-//            if let Some(child_new) = &old.children.get(posit) {
-//                score += child_score_significance * match_score(child_old, child_new);
-//            }
-//        }
-//    }
+    //    for posit in 0..children_to_eval {
+    //        if let Some(child_old) = &old.children.get(posit) {
+    //            if let Some(child_new) = &old.children.get(posit) {
+    //                score += child_score_significance * match_score(child_old, child_new);
+    //            }
+    //        }
+    //    }
 
     score
 }
@@ -452,40 +496,51 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 /// an initial render.
 pub fn run<Ms, Mdl>(
     model: Mdl,
-    update: fn(Ms, Mdl) -> Update<Mdl>,
-    view: fn(App<Ms, Mdl>, Mdl) -> dom_types::El<Ms>,
+    update: UpdateFn<Ms, Mdl>,
+    view: ViewFn<Ms, Mdl>,
     mount_point_id: &str,
-    routes: Option<HashMap<String, Ms>>,
+    routes: Option<Routes<Ms>>,
     window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
-) -> App<Ms,Mdl>
-    where Ms: Clone + 'static, Mdl: Clone + 'static
+) -> App<Ms, Mdl>
+where
+    Ms: Clone + 'static,
+    Mdl: Clone + 'static,
 {
-    let app = App::new(model.clone(), update, view, mount_point_id, routes.clone(), window_events);
+    let app = App::new(
+        model.clone(),
+        update,
+        view,
+        mount_point_id,
+        routes.clone(),
+        window_events,
+    );
 
     // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    // todo maybe have view take an update instead of whole app?
-    // todo: There's a lot of DRY between here and update.
-//    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
+    // TODO: maybe have view take an update instead of whole app?
+    // TODO: There's a lot of DRY between here and update.
+    //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
 
     let window = util::window();
 
     // Only clone model if we have window events.
     let mut topel_vdom;
     match app.data.window_events {
-        Some(window_events) => {
+        //TODO: use window events
+        Some(_window_events) => {
             topel_vdom = (app.data.view)(app.clone(), model.clone());
             setup_window_listeners(
                 &util::window(),
                 &mut Vec::new(),
-                // todo: Fix this. Bug where if we try to add initial listeners,
-                // todo we get many runtime panics. Workaround is to wait until
-                // todo app.update, which means an event must be triggered
-                // todo prior to window listeners working.
+                // TODO:
+                // Fix this. Bug where if we try to add initial listeners,
+                // we get many runtime panics. Workaround is to wait until
+                // app.update, which means an event must be triggered
+                // prior to window listeners working.
                 &mut Vec::new(),
-//                &mut (window_events)(model),
-                &app.mailbox()
+                // &mut (window_events)(model),
+                &app.mailbox(),
             );
-        },
+        }
         None => {
             topel_vdom = (app.data.view)(app.clone(), model);
         }
@@ -504,8 +559,8 @@ pub fn run<Ms, Mdl>(
     // If a route map is inlcluded, update the state on page load, based
     // on the starting URL. Must be set up on the server as well.
     if let Some(routes_inner) = routes {
-        let app2 = crate::routing::initial(app.clone(), routes_inner.clone());
-        crate::routing::update_popstate_listener(&app2, routes_inner);
+        let app2 = routing::initial(app.clone(), routes_inner.clone());
+        routing::update_popstate_listener(&app2, routes_inner);
     }
 
     // Allows panic messages to output to the browser console.error.
@@ -522,15 +577,15 @@ pub trait Style: PartialEq + ToString {
 }
 
 pub trait Listener<Ms>: Sized {
-    fn attach<T: AsRef<web_sys::EventTarget>>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
-    fn detach<T: AsRef<web_sys::EventTarget>>(&self, el_ws: &T);
+    fn attach<T: AsRef<EventTarget>>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
+    fn detach<T: AsRef<EventTarget>>(&self, el_ws: &T);
 }
 
 /// WIP towards a modular VDOM
 /// Assumes dependency on web_sys.
-// todo: Do we need <Ms> ?
-pub trait DomEl<Ms>: Sized + PartialEq {
-    type Tg: PartialEq + ToString;  // todo tostring
+// TODO:: Do we need <Ms> ?
+pub trait DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
+    type Tg: PartialEq + ToString; // TODO: tostring
     type At: Attrs;
     type St: Style;
     type Ls: Listener<Ms>;
@@ -543,51 +598,47 @@ pub trait DomEl<Ms>: Sized + PartialEq {
     fn listeners(self) -> Vec<Self::Ls>;
     fn text(self) -> Option<Self::Tx>;
     fn children(self) -> Vec<Self>;
-    fn did_mount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
-    fn did_update(self) -> Option<Box<FnMut(&web_sys::Element)>>;
-    fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>>;
     fn websys_el(self) -> Option<web_sys::Element>;
     fn id(self) -> Option<u32>;
     fn raw_html(self) -> bool;
-    // todo tying to dom_types is temp - defeats the urpose of the trait
-    fn namespace(self) -> Option<crate::dom_types::Namespace>;
+    // TODO: tying to dom_types is temp - defeats the urpose of the trait
+    fn namespace(self) -> Option<Namespace>;
 
     // Methods
     fn empty(self) -> Self;
 
     // setters
     fn set_id(&mut self, id: Option<u32>);
-    fn set_websys_el(&mut self, el: Option<web_sys::Element>);
+    fn set_websys_el(&mut self, el: Option<Element>);
 
-//    fn make_websys_el(&self, document: &web_sys::Document) -> web_sys::Element;
+    //    fn make_websys_el(&self, document: &web_sys::Document) -> web_sys::Element;
+}
+
+pub trait DomElLifecycle {
+    fn did_mount(self) -> Option<Box<FnMut(&Element)>>;
+    fn did_update(self) -> Option<Box<FnMut(&Element)>>;
+    fn will_unmount(self) -> Option<Box<FnMut(&Element)>>;
 }
 
 #[cfg(test)]
 pub mod tests {
-   use wasm_bindgen_test::wasm_bindgen_test_configure;
-   wasm_bindgen_test_configure!(run_in_browser);
+    use wasm_bindgen_test::wasm_bindgen_test_configure;
+    wasm_bindgen_test_configure!(run_in_browser);
 
-   use wasm_bindgen_test::*;
-   use super::*;
+    use super::*;
+    use wasm_bindgen_test::*;
 
-    use crate as seed;  // required for macros to work.
-    use crate::prelude::*;
-    use crate::{div,li};
+    use crate as seed; // required for macros to work.
+    use crate::{div, li, prelude::*};
 
     #[derive(Clone)]
     enum Msg {}
 
-
+    #[ignore]
     #[wasm_bindgen_test]
     fn el_added() {
-        let old_vdom: El<Msg> = div![ "text", vec![
-            li![ "child1" ],
-        ] ];
-
-        let new_vdom: El<Msg> = div![ "text", vec![
-            li![ "child1" ],
-            li![ "child2" ]
-        ] ];
+        let mut old_vdom: El<Msg> = div!["text", vec![li!["child1"],]];
+        let mut new_vdom: El<Msg> = div!["text", vec![li!["child1"], li!["child2"]]];
 
         let doc = util::document();
         let old_ws = doc.create_element("div").unwrap();
@@ -595,8 +646,8 @@ pub mod tests {
 
         let child1 = doc.create_element("li").unwrap();
         let child2 = doc.create_element("li").unwrap();
-        // todo make this match how you're setting text_content, eg could
-        // todo be adding a text node.
+        // TODO: make this match how you're setting text_content, eg could
+        // TODO: be adding a text node.
         old_ws.set_text_content(Some("text"));
         child1.set_text_content(Some("child1"));
         child2.set_text_content(Some("child2"));
@@ -605,18 +656,22 @@ pub mod tests {
         new_ws.append_child(&child1).unwrap();
         new_ws.append_child(&child2).unwrap();
 
-//        let patched = patch();
+        let mailbox = Mailbox::new(|msg: Msg| {});
 
-
-        assert_eq!(2 + 2, 4);
+        let parent = doc.create_element("div").unwrap();
+        patch(&doc, &mut old_vdom, &mut new_vdom, &parent, &mailbox);
+        unimplemented!()
     }
 
+    #[ignore]
     #[test]
     fn el_removed() {
+        unimplemented!()
     }
 
+    #[ignore]
     #[test]
     fn el_changed() {
+        unimplemented!()
     }
 }
-

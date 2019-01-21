@@ -30,11 +30,11 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
             match val {
                 "true" => {
                     el.set_checked(true);
-                },
+                }
                 "false" => {
                     el.set_checked(false);
-                },
-                _ => ()
+                }
+                _ => (),
             }
             set_special = true;
         }
@@ -43,63 +43,64 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
     // https://www.w3schools.com/tags/att_autofocus.asp
     //todo needs to work for other type sof input!
     else if name == "autofocus" {
-
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
-//            autofocus_helper(input)
+            //            autofocus_helper(input)
             match val {
                 "true" => {
                     input.set_autofocus(true);
-                },
+                }
                 "false" => {
                     input.set_autofocus(false);
-                },
-                _ => ()
+                }
+                _ => (),
             }
             set_special = true;
         }
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-//             autofocus_helper(input)
+            //             autofocus_helper(input)
             match val {
                 "true" => {
                     input.set_autofocus(true);
-                },
+                }
                 "false" => {
                     input.set_autofocus(false);
-                },
-                _ => ()
+                }
+                _ => (),
             }
             set_special = true;
         }
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlSelectElement>() {
-//             autofocus_helper(input)
+            //             autofocus_helper(input)
             match val {
                 "true" => {
                     input.set_autofocus(true);
-                },
+                }
                 "false" => {
                     input.set_autofocus(false);
-                },
-                _ => ()
+                }
+                _ => (),
             }
             set_special = true;
         }
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlButtonElement>() {
-//             autofocus_helper(input)
+            //             autofocus_helper(input)
             match val {
                 "true" => {
                     input.set_autofocus(true);
-                },
+                }
                 "false" => {
                     input.set_autofocus(false);
-                },
-                _ => ()
+                }
+                _ => (),
             }
             set_special = true;
         }
     }
 
     if !set_special {
-        el_ws.set_attribute(name, val).expect("Problem setting an atrribute.");
+        el_ws
+            .set_attribute(name, val)
+            .expect("Problem setting an atrribute.");
     }
 }
 
@@ -108,12 +109,19 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
-pub fn make_websys_el<Ms: Clone>(el_vdom: &dom_types::El<Ms>, document: &web_sys::Document) -> web_sys::Element {
+pub fn make_websys_el<Ms: Clone>(
+    el_vdom: &dom_types::El<Ms>,
+    document: &web_sys::Document,
+) -> web_sys::Element {
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
     let el_ws = match el_vdom.namespace {
-        Some(ref ns) => document.create_element_ns(Some(ns.as_str()), tag).expect("Problem creating web-sys El"),
-        None => document.create_element(tag).expect("Problem creating web-sys El")
+        Some(ref ns) => document
+            .create_element_ns(Some(ns.as_str()), tag)
+            .expect("Problem creating web-sys El"),
+        None => document
+            .create_element(tag)
+            .expect("Problem creating web-sys El"),
     };
 
     for (name, val) in &el_vdom.attrs.vals {
@@ -123,7 +131,9 @@ pub fn make_websys_el<Ms: Clone>(el_vdom: &dom_types::El<Ms>, document: &web_sys
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-        el_ws.set_attribute("style", &el_vdom.style.to_string()).expect("Problem setting style");
+        el_ws
+            .set_attribute("style", &el_vdom.style.to_string())
+            .expect("Problem setting style");
     }
 
     // We store text as Option<String>, but set_text_content uses Option<&str>.
@@ -150,7 +160,7 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
     // Don't render if we're dealing with a dummy element.
     // todo get this working. it pr
     // odues panics
-//    if el_vdom.is_dummy() == true { return }
+    //    if el_vdom.is_dummy() == true { return }
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
@@ -183,8 +193,12 @@ pub fn _remove_children(el: &web_sys::Element) {
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_types::El<Ms>,
-           old_el_ws: &web_sys::Element, document: &web_sys::Document) {
+pub fn patch_el_details<Ms: Clone>(
+    old: &mut dom_types::El<Ms>,
+    new: &mut dom_types::El<Ms>,
+    old_el_ws: &web_sys::Element,
+    document: &web_sys::Document,
+) {
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut old.did_update {
         update_actions(old_el_ws)
@@ -198,14 +212,16 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
                     if old_val != new_val {
                         set_attr_shim(&old_el_ws, key, new_val);
                     }
-                },
-                None =>  set_attr_shim(&old_el_ws, key, new_val),
+                }
+                None => set_attr_shim(&old_el_ws, key, new_val),
             }
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
-                old_el_ws.remove_attribute(name).expect("Removing an attribute");
+                old_el_ws
+                    .remove_attribute(name)
+                    .expect("Removing an attribute");
             }
         }
     }
@@ -213,7 +229,8 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        old_el_ws.set_attribute("style", &new.style.to_string())
+        old_el_ws
+            .set_attribute("style", &new.style.to_string())
             .expect("Setting style");
     }
 
@@ -257,33 +274,44 @@ pub fn patch_el_details<Ms: Clone>(old: &mut dom_types::El<Ms>, new: &mut dom_ty
 
 /// Convenience function used in event handling: Convert an event target
 /// to an input element; eg so you can take its value.
-pub fn to_input(target: &web_sys::EventTarget ) -> &web_sys::HtmlInputElement {
-    target.dyn_ref::<web_sys::HtmlInputElement>().expect("Unable to cast as an input element")
+pub fn to_input(target: &web_sys::EventTarget) -> &web_sys::HtmlInputElement {
+    target
+        .dyn_ref::<web_sys::HtmlInputElement>()
+        .expect("Unable to cast as an input element")
 }
 
 /// See to_input
 pub fn to_textarea(target: &web_sys::EventTarget) -> &web_sys::HtmlTextAreaElement {
-    target.dyn_ref::<web_sys::HtmlTextAreaElement>().expect("Unable to cast as a textarea element")
+    target
+        .dyn_ref::<web_sys::HtmlTextAreaElement>()
+        .expect("Unable to cast as a textarea element")
 }
 
 /// See to_input
 pub fn to_select(target: &web_sys::EventTarget) -> &web_sys::HtmlSelectElement {
-    target.dyn_ref::<web_sys::HtmlSelectElement>().expect("Unable to cast as a select element")
+    target
+        .dyn_ref::<web_sys::HtmlSelectElement>()
+        .expect("Unable to cast as a select element")
 }
 
 /// See to_input
 pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
-    target.dyn_ref::<web_sys::HtmlElement>().expect("Unable to cast as an HTML element")
+    target
+        .dyn_ref::<web_sys::HtmlElement>()
+        .expect("Unable to cast as an HTML element")
 }
 
 /// Convert a web_sys::Event to a web_sys::KeyboardEvent. Useful for extracting
 /// info like which key has been pressed, which is not available with normal Events.
 pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
-    event.dyn_ref::<web_sys::KeyboardEvent>().expect("Unable to cast as a keyboard event")
+    event
+        .dyn_ref::<web_sys::KeyboardEvent>()
+        .expect("Unable to cast as a keyboard event")
 }
 
 /// See to_kbevent
 pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
-    event.dyn_ref::<web_sys::MouseEvent>().expect("Unable to cast as a mouse event")
+    event
+        .dyn_ref::<web_sys::MouseEvent>()
+        .expect("Unable to cast as a mouse event")
 }
-

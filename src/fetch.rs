@@ -7,16 +7,15 @@
 
 use futures::{Future, Poll};
 use wasm_bindgen::JsValue;
-use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_futures::future_to_promise;
+use wasm_bindgen_futures::JsFuture;
 use web_sys;
 
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use serde_json;
 
 // todo once this is polished, publish as a standalone crate.
-
 
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +28,7 @@ pub enum Method {
     Connect,
     Options,
     Trace,
-    Patch
+    Patch,
 }
 
 impl Method {
@@ -75,9 +74,9 @@ impl<'a> Request<'a> {
     }
 
     fn set_header(&mut self, name: &str, val: &str) {
-        let headers = self.headers.get_or_insert_with(|| {
-            web_sys::Headers::new().expect("Error with creating Headers")
-        });
+        let headers = self
+            .headers
+            .get_or_insert_with(|| web_sys::Headers::new().expect("Error with creating Headers"));
 
         headers.set(name, val).expect("Error with setting header");
     }
@@ -157,7 +156,8 @@ impl<'a> Request<'a> {
 
     // Must be called before make_future
     fn make_controller(&mut self) -> web_sys::AbortController {
-        let controller = web_sys::AbortController::new().expect("Error with creating AbortController");
+        let controller =
+            web_sys::AbortController::new().expect("Error with creating AbortController");
 
         if let Some(ref headers) = self.headers {
             self.init.headers(headers.as_ref());
@@ -191,27 +191,21 @@ impl<'a> Request<'a> {
         let future = self.make_future();
 
         // TODO handle error codes like 404
-        let future = future
-            .and_then(|x| x.text())
-            .and_then(JsFuture::from);
+        let future = future.and_then(|x| x.text()).and_then(JsFuture::from);
 
-        AbortFuture::new(controller, future)
-            .map(|x| {
-                // TODO avoid copying somehow ?
-                x.as_string().expect("Error when converting into string")
-            })
+        AbortFuture::new(controller, future).map(|x| {
+            // TODO avoid copying somehow ?
+            x.as_string().expect("Error when converting into string")
+        })
     }
 
     /// Use this to access the response's JSON:
     /// https://developer.mozilla.org/en-US/docs/Web/API/Body/json
     pub fn fetch_json<A: DeserializeOwned>(self) -> impl Future<Item = A, Error = JsValue> {
         self.fetch_string()
-            .map(|text| {
-                serde_json::from_str(&text).expect("Error deserializing JSON")
-            })
+            .map(|text| serde_json::from_str(&text).expect("Error deserializing JSON"))
     }
 }
-
 
 /// This will automatically abort the request when it is dropped
 struct AbortFuture<A> {
@@ -226,7 +220,10 @@ impl<A> AbortFuture<A> {
     }
 }
 
-impl<A> Future for AbortFuture<A> where A: Future {
+impl<A> Future for AbortFuture<A>
+where
+    A: Future,
+{
     type Item = A::Item;
     type Error = A::Error;
 
@@ -243,7 +240,10 @@ impl<A> Drop for AbortFuture<A> {
     }
 }
 
-pub fn spawn_local<F>(future: F) where F: Future<Item = (), Error = JsValue> + 'static {
+pub fn spawn_local<F>(future: F)
+where
+    F: Future<Item = (), Error = JsValue> + 'static,
+{
     future_to_promise(future.map(|_| JsValue::UNDEFINED).map_err(|err| {
         web_sys::console::error_1(&err);
         err
