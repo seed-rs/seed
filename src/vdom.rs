@@ -10,6 +10,11 @@ use crate::util;
 use crate::websys_bridge;
 
 
+pub enum Update<Mdl: 'static + Clone> {
+    Render(Mdl),
+    Skip(Mdl),
+}
+
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
 }
@@ -39,12 +44,12 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<FnMut(web_sys::Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct Data<Ms: Clone +'static , Mdl: 'static> {
+pub struct Data<Ms: Clone +'static , Mdl: 'static + Clone> {
     pub document: web_sys::Document,  // todo take off pub if you no longer use it in init
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update().
     pub model: RefCell<Mdl>,
-    pub update: fn(Ms, Mdl) -> (Mdl, bool),
+    pub update: fn(Ms, Mdl) -> Update<Mdl>,
     pub view: fn(App<Ms, Mdl>, Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
@@ -54,7 +59,7 @@ pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
-pub struct App<Ms: Clone + 'static , Mdl: 'static> {
+pub struct App<Ms: Clone + 'static , Mdl: 'static + Clone> {
     pub data: Rc<Data<Ms, Mdl>>
 }
 
@@ -63,7 +68,7 @@ pub struct App<Ms: Clone + 'static , Mdl: 'static> {
 impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     fn new(
         model: Mdl,
-        update: fn(Ms, Mdl) -> (Mdl, bool),
+        update: fn(Ms, Mdl) -> Update<Mdl>,
         view: fn(Self, Mdl) -> El<Ms>,
 //        view: fn(Self, Mdl) -> DomEl<Ms>,
         parent_div_id: &str,
@@ -111,7 +116,16 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
-        let (updated_model, should_render) = (self.data.update)(message, model_to_update);
+        let updated_model = (self.data.update)(message, model_to_update);
+
+        let mut should_render = true;
+        let updated_model = match updated_model {
+            Update::Render(m) => m,
+            Update::Skip(m) => {
+                should_render = false;
+                m
+            },
+        };
 
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
         // logic based on if we have window listeners.
@@ -205,7 +219,7 @@ pub fn setup_els<Ms>(document: &web_sys::Document, el_vdom: &mut El<Ms>, active_
 
 
 
-impl<Ms: Clone + 'static , Mdl: 'static> std::clone::Clone for App<Ms, Mdl> {
+impl<Ms: Clone + 'static , Mdl: 'static + Clone> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
             data: Rc::clone(&self.data),
@@ -438,7 +452,7 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 /// an initial render.
 pub fn run<Ms, Mdl>(
     model: Mdl,
-    update: fn(Ms, Mdl) -> (Mdl, bool),
+    update: fn(Ms, Mdl) -> Update<Mdl>,
     view: fn(App<Ms, Mdl>, Mdl) -> dom_types::El<Ms>,
     mount_point_id: &str,
     routes: Option<HashMap<String, Ms>>,

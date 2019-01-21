@@ -44,13 +44,13 @@ enum Msg {
     Replace(Data),
 }
 
-fn update(msg: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> Update<Model> {
     match msg {
         Msg::GetData(state) => {
             spawn_local(get_data(state));
-            model
+            Render(model)
         },
-        Msg::Replace(data) => Model {data}
+        Msg::Replace(data) => Render(Model {data})
     }
 }
 

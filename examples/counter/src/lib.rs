@@ -34,13 +34,24 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> (Model, bool) {
+fn update(msg: Msg, model: Model) -> Update<Model> {
     match msg {
-        Msg::Increment => (Model {count: model.count + 1, ..model}, true),
-        Msg::Decrement => (Model {count: model.count - 1, ..model}, true),
-        Msg::ChangeWWC(what_we_count) => (Model {what_we_count, ..model }, true),
+        Msg::Increment => Render(Model {count: model.count + 1, ..model}),
+        Msg::Decrement => Skip(Model {count: model.count - 1, ..model}),
+        Msg::ChangeWWC(what_we_count) => Render(Model {what_we_count, ..model }),
     }
 }
+
+/// A mutable-style alternative:
+//fn update(msg: Msg, model: Model) -> ModelUpdate<Model> {
+//    let mut model = model;
+//    match msg {
+//        Msg::Increment => model.count += 1,
+//        Msg::Decrement => model.count -= 1,
+//        Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
+//    }
+//    Render(model)
+//}
 
 
 // View

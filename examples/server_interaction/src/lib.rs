@@ -96,18 +96,18 @@ enum Msg {
     Send,
 }
 
-fn update(msg: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> Update<Model> {
     match msg {
-        Msg::Replace(data) => Model {data},
+        Msg::Replace(data) => Render(Model {data}),
         // Msg::GetData is unused in this example, but could be used when
         // updating state from an event.
         Msg::GetData(state) => {
             spawn_local(get_data(state));
-            model
+            Render(model)
         },
         Msg::Send => {
             spawn_local(send());
-            model
+            Render(model)
         }
     }
 }

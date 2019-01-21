@@ -17,9 +17,11 @@ use wasm_bindgen::{closure::Closure, JsCast};
 // todo: Why does this work without importing web_sys??
 
 //// todos:
+// todo Give 'components' their own message type/update fn. Could help efficient rendering,
+// todo and code organization.
+// todo dynamic routing
 // todo local storage
 // todo High-level css-grid and flex api?
-// todo Async conflicts with events stepping on each other ?
 // todo keyed elements?
 
 pub use crate::{
@@ -74,11 +76,71 @@ pub mod prelude {
             El, Tag, UpdateEl, simple_ev, input_ev, keyboard_ev, mouse_ev, raw_ev,
             did_mount, did_update, will_unmount
         },
+        vdom::{Update, Update::Render, Update::Skip},
         shortcuts::*,  // appears not to work.
     };
 //    pub use proc_macros::seed_update;
 
     pub use wasm_bindgen::prelude::*;
 //    pub use wasm_bindgen_macro::wasm_bindgen;
+
+}
+
+
+#[cfg(test)]
+pub mod tests {
+    use wasm_bindgen_test::wasm_bindgen_test_configure;
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    use wasm_bindgen_test::*;
+    use wasm_bindgen::JsCast;
+//    use super::*;
+
+    use crate as seed;  // required for macros to work.
+    use crate::prelude::*;
+    use crate::{div, section, span, attrs, h1, p};
+
+    #[derive(Clone)]
+    enum  Msg {
+        Placeholder
+    }
+
+    /// This is a minimal app, that should build. Will fail if there's a breaking
+    /// change.
+    #[wasm_bindgen_test]
+    pub fn app_builds() {
+        #[derive(Clone)]
+        struct Model {
+            pub val: i32,
+        }
+
+        impl Default for Model {
+            fn default() -> Self {
+                Self {
+                    val: 0,
+                }
+            }
+        }
+
+        #[derive(Clone)]
+        enum Msg {
+            Increment,
+        }
+
+        fn update(msg: Msg, model: Model) -> Update<Model> {
+            match msg {
+                Msg::Increment => Render(Model {val: model.val + 1})
+            }
+        }
+
+        fn view(_state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+            div![ "Hello world"]
+        }
+
+        #[wasm_bindgen]
+        pub fn render() {
+            seed::run(Model::default(), update, view, "main", None, None);
+        }
+    }
 
 }

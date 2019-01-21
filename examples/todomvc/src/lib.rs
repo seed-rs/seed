@@ -119,7 +119,7 @@ enum Msg {
     RoutePage(Visible),
 }
 
-fn update(msg: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> Update<Model> {
     // We take a verbose immutable-design/functional approach in this example.
     // Alternatively, you could re-declare model as mutable at the top, and mutate
     // what we need in each match leg. See the Update section of the guide for details.
@@ -129,7 +129,7 @@ fn update(msg: Msg, model: Model) -> Model {
             let todos = model.todos.into_iter()
                 .filter(|t| !t.completed)
                 .collect();
-            Model {todos, ..model}
+            Render(Model {todos, ..model})
         },
         Msg::Destroy(posit) => {
             let todos = model.todos.into_iter()
@@ -138,7 +138,7 @@ fn update(msg: Msg, model: Model) -> Model {
                 // We only used the enumerate to find the right todo; remove it.
                 .map(|(_, t)| t)
                 .collect();
-            Model {todos, ..model}
+            Render(Model {todos, ..model})
         },
         Msg::Toggle(posit) => {
             let mut todos = model.todos;
@@ -146,7 +146,7 @@ fn update(msg: Msg, model: Model) -> Model {
             todo.completed = !todo.completed;
             todos.insert(posit, todo);
 
-            Model {todos, ..model}
+            Render(Model {todos, ..model})
         },
         Msg::ToggleAll => {
             // Mark all as completed, unless all are: mark all as not completed.
@@ -154,7 +154,7 @@ fn update(msg: Msg, model: Model) -> Model {
             let todos = model.todos.into_iter()
                 .map(|t| Todo{completed, ..t})
                 .collect();
-            Model {todos, ..model}
+            Render(Model {todos, ..model})
         }
         Msg::NewTodo(ev) => {
             // Add a todo_, if the enter key is pressed.
@@ -162,7 +162,7 @@ fn update(msg: Msg, model: Model) -> Model {
             // raw event logic here.
             let code = seed::to_kbevent(&ev).key_code();
             if code != ENTER_KEY {
-                return model
+                return Render(model)
             }
             ev.prevent_default();
 
@@ -178,8 +178,8 @@ fn update(msg: Msg, model: Model) -> Model {
                     editing: false,
                 });
                 input_el.set_value("");
-                Model {todos, ..model}
-            } else { model }
+                Render(Model {todos, ..model})
+            } else { Render(model) }
         }
         Msg::SetVisibility(visible) => {
             seed::push_route(&visible.to_string());
@@ -195,7 +195,7 @@ fn update(msg: Msg, model: Model) -> Model {
             todo.editing = true;
             todos.insert(posit, todo.clone());
 
-            Model {todos, edit_text: todo.title, ..model}
+            Render(Model {todos, edit_text: todo.title, ..model})
         },
         Msg::EditSubmit(posit) => {
             if model.edit_text.is_empty() {
@@ -207,22 +207,22 @@ fn update(msg: Msg, model: Model) -> Model {
                 todo.title = model.edit_text.clone();
                 todos.insert(posit, todo);
 
-                Model {todos, edit_text: model.edit_text.trim().to_string(), ..model}
+                Render(Model {todos, edit_text: model.edit_text.trim().to_string(), ..model})
             }
         },
-        Msg::EditChange(edit_text) => Model {edit_text, ..model},
+        Msg::EditChange(edit_text) => Render(Model {edit_text, ..model}),
         Msg::EditKeyDown(posit, code) => {
             if code == ESCAPE_KEY {
                 let todos = model.todos.clone().into_iter()
                     .map(|t| Todo {editing: false, ..t})
                     .collect();
-                Model {todos, edit_text: model.todos[posit].title.clone(), ..model}
+                Render(Model {todos, edit_text: model.todos[posit].title.clone(), ..model})
             } else if code == ENTER_KEY {
                 update(Msg::EditSubmit(posit), model)
-            } else {model}
+            } else {Render(model)}
         },
 
-        Msg::RoutePage(visible) => Model{visible, ..model} ,
+        Msg::RoutePage(visible) => Render(Model{visible, ..model}),
     }
 }
 

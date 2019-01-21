@@ -10,10 +10,6 @@ use wasm_bindgen::{closure::Closure, JsCast};
 
 use crate::vdom::Mailbox;
 
-
-
-
-
 //  pub tag: Tag,
 //    pub attrs: Attrs,
 //    pub style: Style,
@@ -1020,7 +1016,7 @@ pub mod tests {
 
     #[wasm_bindgen_test]
     pub fn attrs() {
-        let expected = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
+        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
 
         let mut el: El<Msg> = section![
             attrs!{"class" => "biochemistry"; "src" => "https://seed-rs.org"},
