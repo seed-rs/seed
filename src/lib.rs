@@ -76,6 +76,7 @@ pub mod prelude {
         },
         shortcuts::*,  // appears not to work.
     };
+//    pub use proc_macros::seed_update;
 
     pub use wasm_bindgen::prelude::*;
 //    pub use wasm_bindgen_macro::wasm_bindgen;

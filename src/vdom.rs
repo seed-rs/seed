@@ -44,7 +44,7 @@ pub struct Data<Ms: Clone +'static , Mdl: 'static> {
     pub mount_point: web_sys::Element,
     // Model is in a RefCell here so we can replace it in self.update().
     pub model: RefCell<Mdl>,
-    pub update: fn(Ms, Mdl) -> Mdl,
+    pub update: fn(Ms, Mdl) -> (Mdl, bool),
     pub view: fn(App<Ms, Mdl>, Mdl) -> El<Ms>,
     pub main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
@@ -63,7 +63,7 @@ pub struct App<Ms: Clone + 'static , Mdl: 'static> {
 impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
     fn new(
         model: Mdl,
-        update: fn(Ms, Mdl) -> Mdl,
+        update: fn(Ms, Mdl) -> (Mdl, bool),
         view: fn(Self, Mdl) -> El<Ms>,
 //        view: fn(Self, Mdl) -> DomEl<Ms>,
         parent_div_id: &str,
@@ -111,7 +111,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
-        let updated_model = (self.data.update)(message, model_to_update);
+        let (updated_model, should_render) = (self.data.update)(message, model_to_update);
 
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
         // logic based on if we have window listeners.
@@ -127,36 +127,39 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             self.data.window_listeners.replace(new_listeners);
         }
 
-        // Create a new vdom: The top element, and all its children. Does not yet
-        // have ids, nest levels, or associated web_sys elements.
-        // We accept cloning here, for the benefit of making data easier to work
-        // with in the app.
-        let mut topel_new_vdom = (self.data.view)(self.clone(), updated_model.clone());
+        if should_render {
+            // Create a new vdom: The top element, and all its children. Does not yet
+            // have ids, nest levels, or associated web_sys elements.
+            // We accept cloning here, for the benefit of making data easier to work
+            // with in the app.
+            let mut topel_new_vdom = (self.data.view)(self.clone(), updated_model.clone());
+
+
+            // We setup the vdom (which populates web_sys els through it, but don't
+            // render them with attach_children; we try to do it cleverly via patch().
+            setup_els(&self.data.document, &mut topel_new_vdom, 0, 0);
+
+            // Detach all old listeners before patching. We'll re-add them as required during patching.
+            // We'll get a runtime panic if any are left un-removed.
+            detach_listeners(&mut self.data.main_el_vdom.borrow_mut());
+
+            // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
+            patch(
+                &self.data.document,
+                &mut self.data.main_el_vdom.borrow_mut(),
+                &mut topel_new_vdom, &self.data.mount_point,
+                &self.mailbox()
+            );
+
+            // Now that we've re-rendered, replace our stored El with the new one;
+            // it will be used as the old El next (.
+            self.data.main_el_vdom.replace(topel_new_vdom);
+        }
 
         // We're now done with this updated model; store it for use as the old
         // model for the next update.
         // Note: It appears that this step is why we need data.model to be in a RefCell.
         self.data.model.replace(updated_model);
-
-        // We setup the vdom (which populates web_sys els through it, but don't
-        // render them with attach_children; we try to do it cleverly via patch().
-        setup_els(&self.data.document, &mut topel_new_vdom, 0, 0);
-
-        // Detach all old listeners before patching. We'll re-add them as required during patching.
-        // We'll get a runtime panic if any are left un-removed.
-        detach_listeners(&mut self.data.main_el_vdom.borrow_mut());
-
-        // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
-        patch(
-            &self.data.document,
-            &mut self.data.main_el_vdom.borrow_mut(),
-            &mut topel_new_vdom, &self.data.mount_point,
-            &self.mailbox()
-        );
-
-        // Now that we've re-rendered, replace our stored El with the new one;
-        // it will be used as the old El next (.
-        self.data.main_el_vdom.replace(topel_new_vdom);
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
@@ -435,7 +438,7 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
 /// an initial render.
 pub fn run<Ms, Mdl>(
     model: Mdl,
-    update: fn(Ms, Mdl) -> Mdl,
+    update: fn(Ms, Mdl) -> (Mdl, bool),
     view: fn(App<Ms, Mdl>, Mdl) -> dom_types::El<Ms>,
     mount_point_id: &str,
     routes: Option<HashMap<String, Ms>>,

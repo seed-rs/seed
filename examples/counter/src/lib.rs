@@ -34,11 +34,11 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> (Model, bool) {
     match msg {
-        Msg::Increment => Model {count: model.count + 1, ..model},
-        Msg::Decrement => Model {count: model.count - 1, ..model},
-        Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model },
+        Msg::Increment => (Model {count: model.count + 1, ..model}, true),
+        Msg::Decrement => (Model {count: model.count - 1, ..model}, true),
+        Msg::ChangeWWC(what_we_count) => (Model {what_we_count, ..model }, true),
     }
 }
 
@@ -61,12 +61,6 @@ fn success_level(clicks: i32) -> El<Msg> {
 fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
-
-//    let autofocus = |el: &web_sys::Element| {
-//                log!("Mounted the thang");
-//                let html_el = seed::to_html_el(&el);
-//                html_el.focus().unwrap();
-//    };
 
     // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style!{
