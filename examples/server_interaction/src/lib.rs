@@ -4,11 +4,10 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use seed::{Request, Method, spawn_local};
-use serde::{Serialize, Deserialize};
+use seed::{spawn_local, Method, Request};
+use serde::{Deserialize, Serialize};
 
 use futures::Future;
-
 
 // Model
 
@@ -40,7 +39,6 @@ struct Message {
 struct ServerResponse {
     pub success: bool,
 }
-
 
 #[derive(Clone)]
 struct Model {
@@ -81,11 +79,13 @@ fn send() -> impl Future<Item = (), Error = JsValue> {
 impl Default for Model {
     fn default() -> Self {
         Self {
-            data: Branch{ name: "Test".into(), commit: Commit{sha: "123".into()} }
+            data: Branch {
+                name: "Test".into(),
+                commit: Commit { sha: "123".into() },
+            },
         }
     }
 }
-
 
 // Update
 
@@ -98,13 +98,13 @@ enum Msg {
 
 fn update(msg: Msg, model: Model) -> Update<Model> {
     match msg {
-        Msg::Replace(data) => Render(Model {data}),
+        Msg::Replace(data) => Render(Model { data }),
         // Msg::GetData is unused in this example, but could be used when
         // updating state from an event.
         Msg::GetData(state) => {
             spawn_local(get_data(state));
             Render(model)
-        },
+        }
         Msg::Send => {
             spawn_local(send());
             Render(model)
@@ -112,21 +112,25 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
     }
 }
 
-
 // View
 
 fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
     div![
-        div![ format!("Repo info: name: {}, sha: {}", model.data.name, model.data.commit.sha),
+        div![
+            format!(
+                "Repo info: name: {}, sha: {}",
+                model.data.name, model.data.commit.sha
+            ),
             did_mount(move |_| spawn_local(get_data(state.clone())))
         ],
-
-        button![ raw_ev("click", move |_| Msg::Send), "Send an urgent message"]
+        button![
+            raw_ev("click", move |_| Msg::Send),
+            "Send an urgent message"
+        ]
     ]
 }
 
 #[wasm_bindgen]
 pub fn render() {
     seed::run(Model::default(), update, view, "main", None, None);
-
 }

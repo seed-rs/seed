@@ -5,8 +5,8 @@ use core::convert::AsRef;
 use std::collections::HashMap;
 
 use pulldown_cmark;
-use web_sys;
 use wasm_bindgen::{closure::Closure, JsCast};
+use web_sys;
 
 use crate::vdom::Mailbox;
 
@@ -39,21 +39,20 @@ use crate::vdom::Mailbox;
 //
 //
 
-
 /// Common Namespaces
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Namespace {
     /// SVG Namespace
     Svg,
-    Custom(String)
+    Custom(String),
 }
 
 impl Namespace {
     pub fn as_str(&self) -> &str {
         use self::Namespace::*;
-        match self{
+        match self {
             Svg => "http://www.w3.org/2000/svg",
-            Custom(s) => s
+            Custom(s) => s,
         }
     }
 }
@@ -61,11 +60,11 @@ impl Namespace {
 // todo cleanup enums vs &strs for restricting events/styles/attrs to
 // todo valid ones.
 
-
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms>(trigger: &str, message: Ms) -> Listener<Ms>
-    where Ms: Clone + 'static
+where
+    Ms: Clone + 'static,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -74,7 +73,8 @@ pub fn simple_ev<Ms>(trigger: &str, message: Ms) -> Listener<Ms>
 
 /// Create an event that passes a String of field text, for fast input handling.
 pub fn input_ev<Ms>(trigger: &str, mut handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms>
-    where Ms: Clone + 'static
+where
+    Ms: Clone + 'static,
 {
     let closure = move |event: web_sys::Event| {
         if let Some(target) = event.target() {
@@ -96,8 +96,12 @@ pub fn input_ev<Ms>(trigger: &str, mut handler: impl FnMut(String) -> Ms + 'stat
 
 /// Create an event that passes a web_sys::Event, allowing full control of
 /// event-handling
-pub fn raw_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::Event) -> Ms + 'static) -> Listener<Ms>
-    where Ms: Clone + 'static
+pub fn raw_ev<Ms>(
+    trigger: &str,
+    mut handler: impl FnMut(web_sys::Event) -> Ms + 'static,
+) -> Listener<Ms>
+where
+    Ms: Clone + 'static,
 {
     let closure = move |event: web_sys::Event| handler(event);
     Listener::new(&trigger.into(), Some(Box::new(closure)))
@@ -105,22 +109,30 @@ pub fn raw_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::Event) -> Ms +
 
 /// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
 /// to items like key_code() and key().
-pub fn keyboard_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static) -> Listener<Ms>
-    where Ms: Clone + 'static
+pub fn keyboard_ev<Ms>(
+    trigger: &str,
+    mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static,
+) -> Listener<Ms>
+where
+    Ms: Clone + 'static,
 {
-        let closure = move |event: web_sys::Event| {
-            handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
-        };
+    let closure = move |event: web_sys::Event| {
+        handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
+    };
     Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
 /// See keyboard_ev
-pub fn mouse_ev<Ms>(trigger: &str, mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static) -> Listener<Ms>
-    where Ms: Clone + 'static
+pub fn mouse_ev<Ms>(
+    trigger: &str,
+    mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static,
+) -> Listener<Ms>
+where
+    Ms: Clone + 'static,
 {
-        let closure = move |event: web_sys::Event| {
-            handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
-        };
+    let closure = move |event: web_sys::Event| {
+        handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
+    };
     Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
 
@@ -146,16 +158,17 @@ impl<Ms: Clone + 'static> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>)
-        where T: AsRef<web_sys::EventTarget> {
+    where
+        T: AsRef<web_sys::EventTarget>,
+    {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
 
-        let closure = Closure::wrap(
-            Box::new(move |event: web_sys::Event| {
-                mailbox.send(handler(event))
-            })
-                as Box<FnMut(web_sys::Event) + 'static>,
-        );
+        let closure =
+            Closure::wrap(
+                Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
+                    as Box<FnMut(web_sys::Event) + 'static>,
+            );
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
@@ -164,11 +177,13 @@ impl<Ms: Clone + 'static> Listener<Ms> {
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
         self.closure = Some(closure);
-//        self.handler.replace(handler);  // todo ?
+        //        self.handler.replace(handler);  // todo ?
     }
 
     pub fn detach<T>(&self, el_ws: &T)
-        where T: AsRef<web_sys::EventTarget> {
+    where
+        T: AsRef<web_sys::EventTarget>,
+    {
         // This and attach taken from Draco.
         let closure = self.closure.as_ref().unwrap();
         (el_ws.as_ref() as &web_sys::EventTarget)
@@ -177,7 +192,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     }
 }
 
-impl<Ms: Clone + 'static>  PartialEq for Listener<Ms> {
+impl<Ms: Clone + 'static> PartialEq for Listener<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo we're only checking the trigger - will miss changes if
         // todo only the fn passed changes!
@@ -276,7 +291,6 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Tag {
     }
 }
 
-
 //#[derive(Debug)]
 pub enum _Attr {
     // https://www.w3schools.com/tags/ref_attributes.asp
@@ -304,7 +318,7 @@ pub enum _Attr {
 pub struct Attrs {
     // todo: Custom implm where we ignore checked.
     // todo enum of only allowed attrs?
-    pub vals: HashMap<String, String>
+    pub vals: HashMap<String, String>,
 }
 
 //impl PartialEq for Attrs {
@@ -325,14 +339,15 @@ pub struct Attrs {
 //    }
 //}
 
-
 impl Attrs {
     pub fn new(vals: HashMap<String, String>) -> Self {
         Self { vals }
     }
 
     pub fn empty() -> Self {
-        Self { vals: HashMap::new() }
+        Self {
+            vals: HashMap::new(),
+        }
     }
 
     /// Convenience function. Ideal when there's one id, and no other attrs.
@@ -345,8 +360,9 @@ impl Attrs {
 
     /// Create an HTML-compatible string representation
     pub fn to_string(&self) -> String {
-        self.vals.iter()
-            .map(|(k,v)|format!("{}=\"{}\"", k, v))
+        self.vals
+            .iter()
+            .map(|(k, v)| format!("{}=\"{}\"", k, v))
             .collect::<Vec<_>>()
             .join(" ")
     }
@@ -378,7 +394,7 @@ impl Attrs {
 #[derive(Clone, PartialEq)]
 pub struct Style {
     // todo enum for key?
-    pub vals: HashMap<String, String>
+    pub vals: HashMap<String, String>,
 }
 
 impl Style {
@@ -397,7 +413,9 @@ impl Style {
     }
 
     pub fn empty() -> Self {
-        Self { vals: HashMap::new() }
+        Self {
+            vals: HashMap::new(),
+        }
     }
 
     /// Output style as a string, as would be set in the DOM as the attribute value
@@ -409,7 +427,9 @@ impl Style {
                 .map(|(k, v)| format!("{}:{}", k, v))
                 .collect::<Vec<_>>()
                 .join(";")
-        } else { String::new() }
+        } else {
+            String::new()
+        }
     }
 
     pub fn add(&mut self, key: &str, val: &str) {
@@ -504,7 +524,6 @@ make_events! {
 
     Input => "input"
 }
-
 
 /// Populate tags using a macro, to reduce code repetition.
 /// The tag enum primarily exists to ensure only valid elements are allowed.
@@ -669,18 +688,17 @@ pub struct El<Ms: Clone + 'static> {
     pub children: Vec<El<Ms>>,
 
     // Things that get filled in later, to assist with rendering.
-    pub id: Option<u32>,  // todo maybe not optional...
+    pub id: Option<u32>, // todo maybe not optional...
     pub nest_level: Option<u32>,
     pub el_ws: Option<web_sys::Element>,
 
     // todo temp?
-//    pub key: Option<u32>,
-
+    //    pub key: Option<u32>,
     pub raw_html: bool,
     pub namespace: Option<Namespace>,
 
-     // static: bool
-     // static_to_parent: bool
+    // static: bool
+    // static_to_parent: bool
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
 
     // Lifecycle hooks
@@ -709,7 +727,6 @@ impl<Ms: Clone + 'static> El<Ms> {
 
             // static: false,
             // static_to_parent: false,
-
             did_mount: None,
             did_update: None,
             will_unmount: None,
@@ -728,26 +745,26 @@ impl<Ms: Clone + 'static> El<Ms> {
         let parser = pulldown_cmark::Parser::new(markdown);
         let mut html_text = String::new();
         pulldown_cmark::html::push_html(&mut html_text, parser);
-//
+        //
         // todo: Syntect crate is currently bugged with wasm target.
-//        let ss = syntect::parsing::SyntaxSet::load_defaults_newlines();
-//        let sr = ss.find_syntax_by_token("rust").unwrap();
-//        let ts = syntect::highlighting::Theme::default();
-//
-//        let replacer = |match_group| {
-//            syntect::html::highlighted_html_for_string(
-//                match_group, &ss, sr, &ts
-//            )
-//        };
+        //        let ss = syntect::parsing::SyntaxSet::load_defaults_newlines();
+        //        let sr = ss.find_syntax_by_token("rust").unwrap();
+        //        let ts = syntect::highlighting::Theme::default();
+        //
+        //        let replacer = |match_group| {
+        //            syntect::html::highlighted_html_for_string(
+        //                match_group, &ss, sr, &ts
+        //            )
+        //        };
 
-//        let replacer = |match_grp: &regex::Captures| match_grp.name("code").unwrap().as_str();
+        //        let replacer = |match_grp: &regex::Captures| match_grp.name("code").unwrap().as_str();
 
-//        let re = Regex::new(r"<code>(?P<code>.*?)</code>").expect("Error creating Regex");
-//         re.replace_all(&html_text, replacer);
+        //        let re = Regex::new(r"<code>(?P<code>.*?)</code>").expect("Error creating Regex");
+        //         re.replace_all(&html_text, replacer);
 
-//        crate::log(&html_text);
-//
-//        let highlighted_html = syntect::html::highlighted_html_for_string(text,  ss, sr, ts);
+        //        crate::log(&html_text);
+        //
+        //        let highlighted_html = syntect::html::highlighted_html_for_string(text,  ss, sr, ts);
 
         let mut result = Self::empty(Tag::Span);
         result.raw_html = true;
@@ -787,10 +804,17 @@ impl<Ms: Clone + 'static> El<Ms> {
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
 
-        let opening = String::from("<") + self.tag.as_str() + &self.attrs.to_string() +
-            " style=\"" + &self.style.to_string() + ">\n";
+        let opening = String::from("<")
+            + self.tag.as_str()
+            + &self.attrs.to_string()
+            + " style=\""
+            + &self.style.to_string()
+            + ">\n";
 
-        let inner = self.children.iter().fold(String::new(), |result, child| result + &child._html());
+        let inner = self
+            .children
+            .iter()
+            .fold(String::new(), |result, child| result + &child._html());
 
         let closing = String::from("\n</") + self.tag.as_str() + ">";
 
@@ -806,7 +830,7 @@ impl<Ms: Clone + 'static> El<Ms> {
             listeners: Vec::new(),
             text: None,
             children: Vec::new(),
-//            key: None,
+            //            key: None,
             id: None,
             nest_level: None,
             el_ws: self.el_ws.clone(),
@@ -822,12 +846,12 @@ impl<Ms: Clone + 'static> El<Ms> {
     /// Dummy elements are used when logic must return an El due to the type
     /// system, but we don't want to render anything.
     pub fn is_dummy(&self) -> bool {
-    if let Tag::Del = self.tag {
-        if self.attrs.vals.get("dummy-element").is_some() {
-            return true;
+        if let Tag::Del = self.tag {
+            if self.attrs.vals.get("dummy-element").is_some() {
+                return true;
+            }
         }
-    }
-    false
+        false
     }
 }
 
@@ -841,7 +865,7 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
             style: self.style.clone(),
             text: self.text.clone(),
             children: self.children.clone(),
-//            key: self.key,
+            //            key: self.key,
             id: self.id,
             nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
@@ -870,7 +894,6 @@ impl<Ms: Clone + 'static> PartialEq for El<Ms> {
         self.nest_level == other.nest_level
     }
 }
-
 
 //impl <Ms: Clone + 'static>crate::vdom::DomEl<Ms> for El<Ms> {
 //    type Tg = Tag;
@@ -936,90 +959,94 @@ impl<Ms: Clone + 'static> PartialEq for El<Ms> {
 //}
 
 pub struct DidMount {
-    actions: Box<FnMut(&web_sys::Element)>
+    actions: Box<FnMut(&web_sys::Element)>,
 }
 
 pub struct DidUpdate {
-    actions: Box<FnMut(&web_sys::Element)>
+    actions: Box<FnMut(&web_sys::Element)>,
 }
 
 pub struct WillUnmount {
-    actions: Box<FnMut(&web_sys::Element)>
+    actions: Box<FnMut(&web_sys::Element)>,
 }
 
 /// Aconstructor for DidMount, to be used in the API
 pub fn did_mount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> DidMount {
     let closure = move |el: &web_sys::Element| actions(el);
-    DidMount { actions: Box::new(closure) }
+    DidMount {
+        actions: Box::new(closure),
+    }
 }
 
 /// A constructor for DidUpdate, to be used in the API
-pub fn did_update(mut actions: impl FnMut(&web_sys::Element) + 'static) -> DidUpdate  {
+pub fn did_update(mut actions: impl FnMut(&web_sys::Element) + 'static) -> DidUpdate {
     let closure = move |el: &web_sys::Element| actions(el);
-    DidUpdate { actions: Box::new(closure) }
+    DidUpdate {
+        actions: Box::new(closure),
+    }
 }
 
 /// A constructor for WillUnmount, to be used in the API
-pub fn will_unmount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> WillUnmount  {
+pub fn will_unmount(mut actions: impl FnMut(&web_sys::Element) + 'static) -> WillUnmount {
     let closure = move |el: &web_sys::Element| actions(el);
-    WillUnmount { actions: Box::new(closure) }
+    WillUnmount {
+        actions: Box::new(closure),
+    }
 }
-
 
 #[cfg(test)]
 pub mod tests {
     use wasm_bindgen_test::wasm_bindgen_test_configure;
     wasm_bindgen_test_configure!(run_in_browser);
 
-    use wasm_bindgen_test::*;
     use super::*;
+    use wasm_bindgen_test::*;
 
-
-    use crate as seed;  // required for macros to work.
-//    use crate::prelude::*;
-    use crate::{div, section, span, attrs, h1, p};
+    use crate as seed; // required for macros to work.
+                       //    use crate::prelude::*;
+    use crate::{attrs, div, h1, p, section, span};
 
     #[derive(Clone)]
-    enum  Msg {
-        Placeholder
+    enum Msg {
+        Placeholder,
     }
 
     #[wasm_bindgen_test]
     pub fn single() {
         let expected = "<div>test</div>";
 
-        let mut el: El<Msg> = div![ "test" ];
+        let mut el: El<Msg> = div!["test"];
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
         assert_eq!(expected, el.el_ws.unwrap().outer_html());
     }
 
     // todo children are not showing up not sure why.
-//    #[wasm_bindgen_test]
-//    pub fn nested() {
-//        let expected = "<section><div><div><h1>huge success</h1></div><p>\
-//        I'm making a note here</p></div><span>This is a triumph</span></section>";
-//
-//        let mut el: El<Msg> = section![
-//            div![
-//                div![
-//                    h1![ "huge success" ]
-//                ],
-//                p![ "I'm making a note here" ]
-//            ],
-//            span![ "This is a triumph" ]
-//        ];
-//
-//        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-////        assert_eq!(expected, el.el_ws.unwrap().first_element_child().unwrap().outer_html());
-//        assert_eq!(expected, el.el_ws.unwrap().outer_html());
-//    }
+    //    #[wasm_bindgen_test]
+    //    pub fn nested() {
+    //        let expected = "<section><div><div><h1>huge success</h1></div><p>\
+    //        I'm making a note here</p></div><span>This is a triumph</span></section>";
+    //
+    //        let mut el: El<Msg> = section![
+    //            div![
+    //                div![
+    //                    h1![ "huge success" ]
+    //                ],
+    //                p![ "I'm making a note here" ]
+    //            ],
+    //            span![ "This is a triumph" ]
+    //        ];
+    //
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    ////        assert_eq!(expected, el.el_ws.unwrap().first_element_child().unwrap().outer_html());
+    //        assert_eq!(expected, el.el_ws.unwrap().outer_html());
+    //    }
 
     #[wasm_bindgen_test]
     pub fn attrs() {
         let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
 
         let mut el: El<Msg> = section![
-            attrs!{"class" => "biochemistry"; "src" => "https://seed-rs.org"},
+            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
             "ok"
         ];
 
