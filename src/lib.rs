@@ -94,19 +94,10 @@ pub mod tests {
     wasm_bindgen_test_configure!(run_in_browser);
 
     use wasm_bindgen::JsCast;
-<<<<<<< HEAD
-=======
     use wasm_bindgen_test::*;
-    //    use super::*;
->>>>>>> 339d233e8491bcf64893660083aad80a75ffc700
 
     use crate as seed; // required for macros to work.
-    use crate::prelude::*;
-<<<<<<< HEAD
-    use crate::{div};
-=======
-    use crate::{attrs, div, h1, p, section, span};
->>>>>>> 339d233e8491bcf64893660083aad80a75ffc700
+    use crate::div;
 
     #[derive(Clone)]
     enum Msg {
