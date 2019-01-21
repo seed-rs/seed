@@ -7,7 +7,6 @@
 ///
 ///
 
-
 //macro_rules! element {
 //    // Create shortcut macros for any element; populate these functions in this module.
 //    ($($seed::dom_types::Tag:ident => $seed::dom_types::Tag_camel:ident);+) => {
@@ -36,7 +35,6 @@
 //    h1 => H1; h2 => H2; h3 => H3; h4 => H4; h5 => H5; h6 => H6; p => P;
 //    button => Button; img => Img
 //}
-
 
 // todo: Currently rust doesn't allow nested macros to repeat in binding patterns
 // https://github.com/rust-lang/rust/issues/35853
@@ -1061,7 +1059,6 @@ macro_rules! mesh_gradient {
     };
 }
 
-
 #[macro_export]
 macro_rules! stop {
     ( $($part:expr),* $(,)* ) => {
@@ -1157,7 +1154,6 @@ macro_rules! tspan {
 
 //// End element-creation macros.
 
-
 /// Provide a shortcut for creating attributes.
 #[macro_export]
 macro_rules! attrs {
@@ -1200,7 +1196,6 @@ macro_rules! id {
      };
 }
 
-
 // todo: Once the macro_at_most_once_rep is in stable, you can use $(;)? here (
 // todo: and in el creation macros) to make only trailing comma/semicolon acceptable.
 /// Provide a shortcut for creating styles.
@@ -1218,7 +1213,6 @@ macro_rules! style {
         }
      };
 }
-
 
 //#[macro_export]
 //macro_rules! events {
@@ -1247,7 +1241,6 @@ macro_rules! style {
 //}
 //
 
-
 ///// Attempt to apply the correct input type based on its trigger.
 //#[macro_export]
 //macro_rules! ev2 {
@@ -1271,7 +1264,6 @@ macro_rules! style {
 //    };
 //}
 
-
 ///// Attempt to apply the correct input type based on its trigger.
 //#[macro_export]
 //macro_rules! ev2 {
@@ -1290,7 +1282,6 @@ macro_rules! style {
 //
 //}
 
-
 /// A convenience function for logging to the web browser's console.  We use
 /// a macro instead of a function to allow flexible input types, and multiple
 /// inputs.
@@ -1307,7 +1298,6 @@ macro_rules! log {
         }
      };
 }
-
 
 /// A HashMap literal, where the keys must implement ToString.
 #[macro_export]

@@ -25,12 +25,12 @@ use wasm_bindgen::{closure::Closure, JsCast};
 // todo keyed elements?
 
 pub use crate::{
-    dom_types::{Listener},
-    fetch::{Method, Request, spawn_local},
-    websys_bridge::{to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_html_el},
+    dom_types::Listener,
+    fetch::{spawn_local, Method, Request},
     routing::push_route,
     util::{document, window},
-    vdom::{App, run},
+    vdom::{run, App},
+    websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 
 /// Create an element flagged in a way that it will not be rendered. Useful
@@ -54,10 +54,12 @@ pub fn log<S: ToString>(text: S) {
 pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
     let window = web_sys::window().expect("Can't find window");
-    window.set_interval_with_callback_and_timeout_and_arguments_0(
-        callback.as_ref().unchecked_ref(),
-        timeout
-    ).expect("Problem setting interval");
+    window
+        .set_interval_with_callback_and_timeout_and_arguments_0(
+            callback.as_ref().unchecked_ref(),
+            timeout,
+        )
+        .expect("Problem setting interval");
     callback.forget();
 }
 
@@ -73,36 +75,35 @@ pub mod prelude {
 
     pub use crate::{
         dom_types::{
-            El, Tag, UpdateEl, simple_ev, input_ev, keyboard_ev, mouse_ev, raw_ev,
-            did_mount, did_update, will_unmount
+            did_mount, did_update, input_ev, keyboard_ev, mouse_ev, raw_ev, simple_ev,
+            will_unmount, El, Tag, UpdateEl,
         },
+        shortcuts::*, // appears not to work.
         vdom::{Update, Update::Render, Update::Skip},
-        shortcuts::*,  // appears not to work.
     };
-//    pub use proc_macros::seed_update;
+    //    pub use proc_macros::seed_update;
 
     pub use wasm_bindgen::prelude::*;
-//    pub use wasm_bindgen_macro::wasm_bindgen;
+    //    pub use wasm_bindgen_macro::wasm_bindgen;
 
 }
-
 
 #[cfg(test)]
 pub mod tests {
     use wasm_bindgen_test::wasm_bindgen_test_configure;
     wasm_bindgen_test_configure!(run_in_browser);
 
-    use wasm_bindgen_test::*;
     use wasm_bindgen::JsCast;
-//    use super::*;
+    use wasm_bindgen_test::*;
+    //    use super::*;
 
-    use crate as seed;  // required for macros to work.
+    use crate as seed; // required for macros to work.
     use crate::prelude::*;
-    use crate::{div, section, span, attrs, h1, p};
+    use crate::{attrs, div, h1, p, section, span};
 
     #[derive(Clone)]
-    enum  Msg {
-        Placeholder
+    enum Msg {
+        Placeholder,
     }
 
     /// This is a minimal app, that should build. Will fail if there's a breaking
@@ -116,9 +117,7 @@ pub mod tests {
 
         impl Default for Model {
             fn default() -> Self {
-                Self {
-                    val: 0,
-                }
+                Self { val: 0 }
             }
         }
 
@@ -129,12 +128,12 @@ pub mod tests {
 
         fn update(msg: Msg, model: Model) -> Update<Model> {
             match msg {
-                Msg::Increment => Render(Model {val: model.val + 1})
+                Msg::Increment => Render(Model { val: model.val + 1 }),
             }
         }
 
         fn view(_state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
-            div![ "Hello world"]
+            div!["Hello world"]
         }
 
         #[wasm_bindgen]
