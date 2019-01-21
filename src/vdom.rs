@@ -443,7 +443,7 @@ pub fn run<Ms, Mdl>(
     mount_point_id: &str,
     routes: Option<HashMap<String, Ms>>,
     window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
-)
+) -> App<Ms,Mdl>
     where Ms: Clone + 'static, Mdl: Clone + 'static
 {
     let app = App::new(model.clone(), update, view, mount_point_id, routes.clone(), window_events);
@@ -490,12 +490,13 @@ pub fn run<Ms, Mdl>(
     // If a route map is inlcluded, update the state on page load, based
     // on the starting URL. Must be set up on the server as well.
     if let Some(routes_inner) = routes {
-        let app2 = crate::routing::initial(app, routes_inner.clone());
+        let app2 = crate::routing::initial(app.clone(), routes_inner.clone());
         crate::routing::update_popstate_listener(&app2, routes_inner);
     }
 
     // Allows panic messages to output to the browser console.error.
     panic::set_hook(Box::new(console_error_panic_hook::hook));
+    app
 }
 
 pub trait Attrs: PartialEq + ToString {
