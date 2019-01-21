@@ -94,11 +94,10 @@ pub mod tests {
 
     use wasm_bindgen_test::*;
     use wasm_bindgen::JsCast;
-//    use super::*;
 
     use crate as seed;  // required for macros to work.
     use crate::prelude::*;
-    use crate::{div, section, span, attrs, h1, p};
+    use crate::{div};
 
     #[derive(Clone)]
     enum  Msg {
