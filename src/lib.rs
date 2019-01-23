@@ -98,6 +98,8 @@ pub mod tests {
 
     use crate as seed; // required for macros to work.
     use crate::div;
+    use crate::vdom::Update;
+    use crate::dom_types::{El,UpdateEl};
 
     #[derive(Clone)]
     enum Msg {
@@ -126,7 +128,7 @@ pub mod tests {
 
         fn update(msg: Msg, model: Model) -> Update<Model> {
             match msg {
-                Msg::Increment => Render(Model { val: model.val + 1 }),
+                Msg::Increment => Update::Render(Model { val: model.val + 1 }),
             }
         }
 
@@ -134,7 +136,7 @@ pub mod tests {
             div!["Hello world"]
         }
 
-        #[wasm_bindgen]
+        #[wasm_bindgen_test]
         pub fn render() {
             seed::run(Model::default(), update, view, "main", None, None);
         }
