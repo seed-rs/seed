@@ -15,6 +15,7 @@ pub enum Update<Mdl: 'static + Clone> {
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, Mdl) -> El<Ms>;
 type Routes<Ms> = HashMap<String, Ms>;
+type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
 
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
@@ -64,9 +65,59 @@ pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
     pub data: Rc<Data<Ms, Mdl>>,
 }
 
+pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
+    model: Mdl,
+    update: UpdateFn<Ms, Mdl>,
+    view: ViewFn<Ms, Mdl>,
+    parent_div_id: Option<&'static str>,
+    routes: Option<Routes<Ms>>,
+    window_events: Option<WindowEvents<Ms, Mdl>>,
+}
+
+impl<Ms: Clone + 'static, Mdl: Clone + 'static> AppBuilder<Ms, Mdl> {
+    pub fn mount(mut self, id: &'static str) -> Self {
+        self.parent_div_id = Some(id);
+        self
+    }
+    pub fn routes(mut self, routes: Routes<Ms>) -> Self {
+        self.routes = Some(routes);
+        self
+    }
+    pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
+        self.window_events = Some(evts);
+        self
+    }
+    pub fn finish(self) -> App<Ms, Mdl> {
+        let parent_div_id = self.parent_div_id.unwrap_or("body");
+
+        App::new(
+            self.model,
+            self.update,
+            self.view,
+            parent_div_id,
+            self.routes,
+            self.window_events,
+        )
+    }
+}
+
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
 impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
+    pub fn build(
+        model: Mdl,
+        update: UpdateFn<Ms, Mdl>,
+        view: ViewFn<Ms, Mdl>,
+    ) -> AppBuilder<Ms, Mdl> {
+        AppBuilder {
+            model,
+            update,
+            view,
+            parent_div_id: None,
+            routes: None,
+            window_events: None,
+        }
+    }
     fn new(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
@@ -97,6 +148,62 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
                 window_listeners: RefCell::new(Vec::new()),
             }),
         }
+    }
+
+    /// App initialization: Collect its fundamental components, setup, and perform
+    /// an initial render.
+    pub fn run(self) -> Self {
+        // Our initial render. Can't initialize in new due to mailbox() requiring self.
+        // TODO: maybe have view take an update instead of whole app?
+        // TODO: There's a lot of DRY between here and update.
+        //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
+
+        let window = util::window();
+
+        // Only clone model if we have window events.
+        let mut topel_vdom;
+        match self.data.window_events {
+            //TODO: use window events
+            Some(_window_events) => {
+                topel_vdom = (self.data.view)(self.clone(), self.data.model.borrow().clone());
+                setup_window_listeners(
+                    &util::window(),
+                    &mut Vec::new(),
+                    // TODO:
+                    // Fix this. Bug where if we try to add initial listeners,
+                    // we get many runtime panics. Workaround is to wait until
+                    // app.update, which means an event must be triggered
+                    // prior to window listeners working.
+                    &mut Vec::new(),
+                    // &mut (window_events)(model),
+                    &self.mailbox(),
+                );
+            }
+            None => {
+                topel_vdom = (self.data.view)(self.clone(), self.data.model.borrow().clone());
+            }
+        }
+
+        let document = window.document().expect("Problem getting document");
+        setup_els(&document, &mut topel_vdom, 0, 0);
+
+        attach_listeners(&mut topel_vdom, &self.mailbox());
+
+        // Attach all children: This is where our initial render occurs.
+        websys_bridge::attach_els(&mut topel_vdom, &self.data.mount_point);
+
+        self.data.main_el_vdom.replace(topel_vdom);
+
+        // If a route map is inlcluded, update the state on page load, based
+        // on the starting URL. Must be set up on the server as well.
+        if let Some(routes_inner) = self.data.routes.borrow().clone() {
+            let app2 = routing::initial(self.clone(), routes_inner.clone());
+            routing::update_popstate_listener(&app2, routes_inner);
+        }
+
+        // Allows panic messages to output to the browser console.error.
+        panic::set_hook(Box::new(console_error_panic_hook::hook));
+        self
     }
 
     /// This runs whenever the state is changed, ie the user-written update function is called.
@@ -490,82 +597,6 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
     //    }
 
     score
-}
-
-/// App initialization: Collect its fundamental components, setup, and perform
-/// an initial render.
-pub fn run<Ms, Mdl>(
-    model: Mdl,
-    update: UpdateFn<Ms, Mdl>,
-    view: ViewFn<Ms, Mdl>,
-    mount_point_id: &str,
-    routes: Option<Routes<Ms>>,
-    window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
-) -> App<Ms, Mdl>
-where
-    Ms: Clone + 'static,
-    Mdl: Clone + 'static,
-{
-    let app = App::new(
-        model.clone(),
-        update,
-        view,
-        mount_point_id,
-        routes.clone(),
-        window_events,
-    );
-
-    // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    // TODO: maybe have view take an update instead of whole app?
-    // TODO: There's a lot of DRY between here and update.
-    //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
-
-    let window = util::window();
-
-    // Only clone model if we have window events.
-    let mut topel_vdom;
-    match app.data.window_events {
-        //TODO: use window events
-        Some(_window_events) => {
-            topel_vdom = (app.data.view)(app.clone(), model.clone());
-            setup_window_listeners(
-                &util::window(),
-                &mut Vec::new(),
-                // TODO:
-                // Fix this. Bug where if we try to add initial listeners,
-                // we get many runtime panics. Workaround is to wait until
-                // app.update, which means an event must be triggered
-                // prior to window listeners working.
-                &mut Vec::new(),
-                // &mut (window_events)(model),
-                &app.mailbox(),
-            );
-        }
-        None => {
-            topel_vdom = (app.data.view)(app.clone(), model);
-        }
-    }
-
-    let document = window.document().expect("Problem getting document");
-    setup_els(&document, &mut topel_vdom, 0, 0);
-
-    attach_listeners(&mut topel_vdom, &app.mailbox());
-
-    // Attach all children: This is where our initial render occurs.
-    websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
-
-    app.data.main_el_vdom.replace(topel_vdom);
-
-    // If a route map is inlcluded, update the state on page load, based
-    // on the starting URL. Must be set up on the server as well.
-    if let Some(routes_inner) = routes {
-        let app2 = routing::initial(app.clone(), routes_inner.clone());
-        routing::update_popstate_listener(&app2, routes_inner);
-    }
-
-    // Allows panic messages to output to the browser console.error.
-    panic::set_hook(Box::new(console_error_panic_hook::hook));
-    app
 }
 
 pub trait Attrs: PartialEq + ToString {
