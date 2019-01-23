@@ -65,6 +65,7 @@ pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
     pub data: Rc<Data<Ms, Mdl>>,
 }
 
+#[derive(Clone)]
 pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
