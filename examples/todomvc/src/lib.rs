@@ -394,12 +394,9 @@ pub fn render() {
         "completed" => Msg::RoutePage(Visible::Completed),
     };
 
-    seed::run(
-        Model::default(),
-        update,
-        todo_app,
-        "main",
-        Some(routes),
-        None,
-    );
+    seed::App::build(Model::default(), update, todo_app)
+        .mount("main")
+        .routes(routes)
+        .finish()
+        .run();
 }

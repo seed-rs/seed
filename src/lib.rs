@@ -29,7 +29,7 @@ pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::push_route,
     util::{document, window},
-    vdom::{run, App},
+    vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 
@@ -98,8 +98,8 @@ pub mod tests {
 
     use crate as seed; // required for macros to work.
     use crate::div;
+    use crate::dom_types::{El, UpdateEl};
     use crate::vdom::Update;
-    use crate::dom_types::{El,UpdateEl};
 
     #[derive(Clone)]
     enum Msg {
@@ -138,7 +138,12 @@ pub mod tests {
 
         #[wasm_bindgen_test]
         pub fn render() {
-            seed::run(Model::default(), update, view, "main", None, None);
+            seed::App::build(Model::default())
+                .update(update)
+                .view(view)
+                .mount("main")
+                .finish()
+                .run();
         }
     }
 
