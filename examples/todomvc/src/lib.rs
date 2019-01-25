@@ -395,7 +395,6 @@ pub fn render() {
     };
 
     seed::App::build(Model::default(), update, todo_app)
-        .mount("main")
         .routes(routes)
         .finish()
         .run();

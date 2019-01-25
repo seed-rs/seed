@@ -93,25 +93,20 @@ pub mod tests {
     use wasm_bindgen_test::wasm_bindgen_test_configure;
     wasm_bindgen_test_configure!(run_in_browser);
 
-    use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
-
-    use crate as seed; // required for macros to work.
-    use crate::{
-        div,
-        dom_types::{El, UpdateEl},
-        vdom::Update,
-    };
-
-    #[derive(Clone)]
-    enum Msg {
-        Placeholder,
-    }
 
     /// This is a minimal app, that should build. Will fail if there's a breaking
     /// change.
     #[wasm_bindgen_test]
     pub fn app_builds() {
+        use crate as seed; // required for macros to work.
+        use crate::{
+            div,
+            dom_types::{El, UpdateEl},
+            vdom::Update,
+        };
+        use crate::prelude::*;
+
         #[derive(Clone)]
         struct Model {
             pub val: i32,
@@ -138,10 +133,10 @@ pub mod tests {
             div!["Hello world"]
         }
 
-        #[wasm_bindgen_test]
+        #[wasm_bindgen]
         pub fn render() {
             seed::App::build(Model::default(), update, view)
-                .mount("main")
+                .mount("body")
                 .finish()
                 .run();
         }

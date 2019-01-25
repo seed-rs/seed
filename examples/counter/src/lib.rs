@@ -125,6 +125,5 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
 pub fn render() {
     let app_builder = seed::App::build(Model::default(), update, view);
 
-    app_builder.clone().mount("main").finish().run();
-    // app_builder.clone().mount("app-2").finish().run();
+    app_builder.clone().finish().run();
 }

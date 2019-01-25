@@ -104,7 +104,6 @@ fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
 #[wasm_bindgen]
 pub fn render() {
     seed::App::build(Model::default(), update, view)
-        .mount("main")
         .window_events(window_events)
         .finish()
         .run();
