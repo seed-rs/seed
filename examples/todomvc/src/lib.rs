@@ -336,7 +336,7 @@ fn footer(model: &Model) -> El<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn todo_app(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
@@ -394,12 +394,9 @@ pub fn render() {
         "completed" => Msg::RoutePage(Visible::Completed),
     };
 
-    seed::run(
-        Model::default(),
-        update,
-        todo_app,
-        "main",
-        Some(routes),
-        None,
-    );
+    seed::App::build(Model::default(), update, todo_app)
+        .mount("main")
+        .routes(routes)
+        .finish()
+        .run();
 }

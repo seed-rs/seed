@@ -29,7 +29,7 @@ pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::push_route,
     util::{document, window},
-    vdom::{run, App},
+    vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 
@@ -93,14 +93,15 @@ pub mod tests {
     use wasm_bindgen_test::wasm_bindgen_test_configure;
     wasm_bindgen_test_configure!(run_in_browser);
 
-//    use wasm_bindgen::JsCast;
+    use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
-    //    use super::*;
 
     use crate as seed; // required for macros to work.
-    use crate::prelude::*;
-
-    use crate::{div};
+    use crate::{
+        div,
+        dom_types::{El, UpdateEl},
+        vdom::Update,
+    };
 
     #[derive(Clone)]
     enum Msg {
@@ -129,17 +130,20 @@ pub mod tests {
 
         fn update(msg: Msg, model: Model) -> Update<Model> {
             match msg {
-                Msg::Increment => Render(Model { val: model.val + 1 }),
+                Msg::Increment => Update::Render(Model { val: model.val + 1 }),
             }
         }
 
-        fn view(_state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+        fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             div!["Hello world"]
         }
 
-        #[wasm_bindgen]
+        #[wasm_bindgen_test]
         pub fn render() {
-            seed::run(Model::default(), update, view, "main", None, None);
+            seed::App::build(Model::default(), update, view)
+                .mount("main")
+                .finish()
+                .run();
         }
     }
 

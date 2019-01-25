@@ -38,8 +38,8 @@ enum Msg {
     KeyPressed(web_sys::KeyboardEvent),
 }
 
-fn update(msg: Msg, model: Model) -> Model {
-    match msg {
+fn update(msg: Msg, model: Model) -> Update<Model> {
+    Render(match msg {
         Msg::ToggleWatching => Model {
             watching: !model.watching,
             ..model
@@ -52,7 +52,7 @@ fn update(msg: Msg, model: Model) -> Model {
             last_keycode: ev.key_code(),
             ..model
         },
-    }
+    })
 }
 
 // View
@@ -76,7 +76,7 @@ fn misc_demo() -> El<Msg> {
     ]
 }
 
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         h2![model.coords_string()],
         h2![format!("Last key pressed: {}", model.last_keycode)],
@@ -103,12 +103,9 @@ fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(
-        Model::default(),
-        update,
-        view,
-        "main",
-        None,
-        Some(window_events),
-    );
+    seed::App::build(Model::default(), update, view)
+        .mount("main")
+        .window_events(window_events)
+        .finish()
+        .run();
 }

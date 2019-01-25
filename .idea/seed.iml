@@ -38,12 +38,17 @@
       <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/examples/server_integration/shared/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/websocket/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/websocket/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/websocket/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/websocket/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/examples/counter/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/homepage/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/server_integration/shared/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/server_integration/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/server_interaction/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/todomvc/target" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/websocket/target" />
       <excludeFolder url="file://$MODULE_DIR$/examples/window_events/target" />
       <excludeFolder url="file://$MODULE_DIR$/proc_macros/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

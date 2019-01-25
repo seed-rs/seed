@@ -13,8 +13,9 @@ pub enum Update<Mdl: 'static + Clone> {
 }
 
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
-type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, Mdl) -> El<Ms>;
+type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type Routes<Ms> = HashMap<String, Ms>;
+type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
 
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
@@ -45,28 +46,85 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct Data<Ms: Clone + 'static, Mdl: 'static + Clone> {
-    pub document: web_sys::Document, // todo take off pub if you no longer use it in init
-    pub mount_point: web_sys::Element,
+pub struct AppData<Ms: Clone + 'static, Mdl: 'static + Clone> {
     // Model is in a RefCell here so we can replace it in self.update().
-    pub model: RefCell<Mdl>,
-    pub update: UpdateFn<Ms, Mdl>,
-    pub view: ViewFn<Ms, Mdl>,
-    pub main_el_vdom: RefCell<El<Ms>>,
+    model: RefCell<Mdl>,
+    main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
     routes: RefCell<Option<Routes<Ms>>>,
-
-    pub window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
+#[derive(Clone)]
+struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
+    document: web_sys::Document,
+    mount_point: web_sys::Element,
+    update: UpdateFn<Ms, Mdl>,
+    view: ViewFn<Ms, Mdl>,
+    window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+}
+
 pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
-    pub data: Rc<Data<Ms, Mdl>>,
+    /// Stateless app configuration
+    cfg: AppCfg<Ms, Mdl>,
+    /// Mutable app state
+    pub data: Rc<AppData<Ms, Mdl>>,
+}
+
+#[derive(Clone)]
+pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
+    model: Mdl,
+    update: UpdateFn<Ms, Mdl>,
+    view: ViewFn<Ms, Mdl>,
+    parent_div_id: Option<&'static str>,
+    routes: Option<Routes<Ms>>,
+    window_events: Option<WindowEvents<Ms, Mdl>>,
+}
+
+impl<Ms: Clone + 'static, Mdl: Clone + 'static> AppBuilder<Ms, Mdl> {
+    pub fn mount(mut self, id: &'static str) -> Self {
+        self.parent_div_id = Some(id);
+        self
+    }
+    pub fn routes(mut self, routes: Routes<Ms>) -> Self {
+        self.routes = Some(routes);
+        self
+    }
+    pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
+        self.window_events = Some(evts);
+        self
+    }
+    pub fn finish(self) -> App<Ms, Mdl> {
+        let parent_div_id = self.parent_div_id.unwrap_or("app");
+
+        App::new(
+            self.model,
+            self.update,
+            self.view,
+            parent_div_id,
+            self.routes,
+            self.window_events,
+        )
+    }
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
 impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
+    pub fn build(
+        model: Mdl,
+        update: UpdateFn<Ms, Mdl>,
+        view: ViewFn<Ms, Mdl>,
+    ) -> AppBuilder<Ms, Mdl> {
+        AppBuilder {
+            model,
+            update,
+            view,
+            parent_div_id: None,
+            routes: None,
+            window_events: None,
+        }
+    }
     fn new(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
@@ -83,20 +141,78 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         let mount_point = document.get_element_by_id(parent_div_id).unwrap();
 
         Self {
-            data: Rc::new(Data {
+            cfg: AppCfg {
                 document,
                 mount_point,
-                model: RefCell::new(model),
                 update,
                 view,
+                window_events,
+            },
+            data: Rc::new(AppData {
+                model: RefCell::new(model),
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
 
-                window_events,
                 window_listeners: RefCell::new(Vec::new()),
             }),
         }
+    }
+
+    /// App initialization: Collect its fundamental components, setup, and perform
+    /// an initial render.
+    pub fn run(self) -> Self {
+        // Our initial render. Can't initialize in new due to mailbox() requiring self.
+        // TODO: maybe have view take an update instead of whole app?
+        // TODO: There's a lot of DRY between here and update.
+        //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
+
+        let window = util::window();
+
+        // Only clone model if we have window events.
+        let mut topel_vdom;
+        match self.cfg.window_events {
+            //TODO: use window events
+            Some(_window_events) => {
+                topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
+                setup_window_listeners(
+                    &util::window(),
+                    &mut Vec::new(),
+                    // TODO:
+                    // Fix this. Bug where if we try to add initial listeners,
+                    // we get many runtime panics. Workaround is to wait until
+                    // app.update, which means an event must be triggered
+                    // prior to window listeners working.
+                    &mut Vec::new(),
+                    // &mut (window_events)(model),
+                    &self.mailbox(),
+                );
+            }
+            None => {
+                topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
+            }
+        }
+
+        let document = window.document().expect("Problem getting document");
+        setup_els(&document, &mut topel_vdom, 0, 0);
+
+        attach_listeners(&mut topel_vdom, &self.mailbox());
+
+        // Attach all children: This is where our initial render occurs.
+        websys_bridge::attach_els(&mut topel_vdom, &self.cfg.mount_point);
+
+        self.data.main_el_vdom.replace(topel_vdom);
+
+        // If a route map is inlcluded, update the state on page load, based
+        // on the starting URL. Must be set up on the server as well.
+        if let Some(routes_inner) = self.data.routes.borrow().clone() {
+            let app2 = routing::initial(self.clone(), routes_inner.clone());
+            routing::update_popstate_listener(&app2, routes_inner);
+        }
+
+        // Allows panic messages to output to the browser console.error.
+        panic::set_hook(Box::new(console_error_panic_hook::hook));
+        self
     }
 
     /// This runs whenever the state is changed, ie the user-written update function is called.
@@ -117,7 +233,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
-        let updated_model = (self.data.update)(message, model_to_update);
+        let updated_model = (self.cfg.update)(message, model_to_update);
 
         let mut should_render = true;
         let updated_model = match updated_model {
@@ -130,7 +246,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
         // logic based on if we have window listeners.
-        if let Some(window_events) = self.data.window_events {
+        if let Some(window_events) = self.cfg.window_events {
             let mut new_listeners = (window_events)(updated_model.clone());
             setup_window_listeners(
                 &util::window(),
@@ -147,11 +263,11 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             // have ids, nest levels, or associated web_sys elements.
             // We accept cloning here, for the benefit of making data easier to work
             // with in the app.
-            let mut topel_new_vdom = (self.data.view)(self.clone(), updated_model.clone());
+            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &updated_model);
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
-            setup_els(&self.data.document, &mut topel_new_vdom, 0, 0);
+            setup_els(&self.cfg.document, &mut topel_new_vdom, 0, 0);
 
             // Detach all old listeners before patching. We'll re-add them as required during patching.
             // We'll get a runtime panic if any are left un-removed.
@@ -159,10 +275,10 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
             // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
             patch(
-                &self.data.document,
+                &self.cfg.document,
                 &mut self.data.main_el_vdom.borrow_mut(),
                 &mut topel_new_vdom,
-                &self.data.mount_point,
+                &self.cfg.mount_point,
                 &self.mailbox(),
             );
 
@@ -221,6 +337,7 @@ where
 impl<Ms: Clone + 'static, Mdl: 'static + Clone> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
+            cfg: self.cfg.clone(),
             data: Rc::clone(&self.data),
         }
     }
@@ -490,82 +607,6 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
     //    }
 
     score
-}
-
-/// App initialization: Collect its fundamental components, setup, and perform
-/// an initial render.
-pub fn run<Ms, Mdl>(
-    model: Mdl,
-    update: UpdateFn<Ms, Mdl>,
-    view: ViewFn<Ms, Mdl>,
-    mount_point_id: &str,
-    routes: Option<Routes<Ms>>,
-    window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
-) -> App<Ms, Mdl>
-where
-    Ms: Clone + 'static,
-    Mdl: Clone + 'static,
-{
-    let app = App::new(
-        model.clone(),
-        update,
-        view,
-        mount_point_id,
-        routes.clone(),
-        window_events,
-    );
-
-    // Our initial render. Can't initialize in new due to mailbox() requiring self.
-    // TODO: maybe have view take an update instead of whole app?
-    // TODO: There's a lot of DRY between here and update.
-    //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
-
-    let window = util::window();
-
-    // Only clone model if we have window events.
-    let mut topel_vdom;
-    match app.data.window_events {
-        //TODO: use window events
-        Some(_window_events) => {
-            topel_vdom = (app.data.view)(app.clone(), model.clone());
-            setup_window_listeners(
-                &util::window(),
-                &mut Vec::new(),
-                // TODO:
-                // Fix this. Bug where if we try to add initial listeners,
-                // we get many runtime panics. Workaround is to wait until
-                // app.update, which means an event must be triggered
-                // prior to window listeners working.
-                &mut Vec::new(),
-                // &mut (window_events)(model),
-                &app.mailbox(),
-            );
-        }
-        None => {
-            topel_vdom = (app.data.view)(app.clone(), model);
-        }
-    }
-
-    let document = window.document().expect("Problem getting document");
-    setup_els(&document, &mut topel_vdom, 0, 0);
-
-    attach_listeners(&mut topel_vdom, &app.mailbox());
-
-    // Attach all children: This is where our initial render occurs.
-    websys_bridge::attach_els(&mut topel_vdom, &app.data.mount_point);
-
-    app.data.main_el_vdom.replace(topel_vdom);
-
-    // If a route map is inlcluded, update the state on page load, based
-    // on the starting URL. Must be set up on the server as well.
-    if let Some(routes_inner) = routes {
-        let app2 = routing::initial(app.clone(), routes_inner.clone());
-        routing::update_popstate_listener(&app2, routes_inner);
-    }
-
-    // Allows panic messages to output to the browser console.error.
-    panic::set_hook(Box::new(console_error_panic_hook::hook));
-    app
 }
 
 pub trait Attrs: PartialEq + ToString {

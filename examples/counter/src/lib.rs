@@ -75,7 +75,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output a single El.
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
@@ -123,6 +123,8 @@ fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    // The final parameter is an optional routing map.
-    seed::run(Model::default(), update, view, "main", None, None);
+    let app_builder = seed::App::build(Model::default(), update, view);
+
+    app_builder.clone().mount("main").finish().run();
+    // app_builder.clone().mount("app-2").finish().run();
 }

@@ -78,6 +78,7 @@ members = [
     "examples/server_interaction",
     "examples/todomvc",
     "examples/window_events",
+    "examples/websocket",
     "proc_macros",
 ]
 

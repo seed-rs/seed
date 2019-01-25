@@ -114,7 +114,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
 
 // View
 
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         div![
             format!(
@@ -132,5 +132,8 @@ fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, view, "main", None, None);
+    seed::App::build(Model::default(), update, view)
+        .mount("main")
+        .finish()
+        .run();
 }
