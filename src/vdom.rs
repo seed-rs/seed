@@ -46,23 +46,29 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct Data<Ms: Clone + 'static, Mdl: 'static + Clone> {
-    pub document: web_sys::Document, // todo take off pub if you no longer use it in init
-    pub mount_point: web_sys::Element,
+pub struct AppData<Ms: Clone + 'static, Mdl: 'static + Clone> {
     // Model is in a RefCell here so we can replace it in self.update().
-    pub model: RefCell<Mdl>,
-    pub update: UpdateFn<Ms, Mdl>,
-    pub view: ViewFn<Ms, Mdl>,
-    pub main_el_vdom: RefCell<El<Ms>>,
+    model: RefCell<Mdl>,
+    main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
     routes: RefCell<Option<Routes<Ms>>>,
-
-    pub window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
+#[derive(Clone)]
+struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
+    document: web_sys::Document,
+    mount_point: web_sys::Element,
+    update: UpdateFn<Ms, Mdl>,
+    view: ViewFn<Ms, Mdl>,
+    window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+}
+
 pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
-    pub data: Rc<Data<Ms, Mdl>>,
+    /// Stateless app configuration
+    cfg: AppCfg<Ms, Mdl>,
+    /// Mutable app state
+    pub data: Rc<AppData<Ms, Mdl>>,
 }
 
 #[derive(Clone)]
@@ -135,17 +141,19 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         let mount_point = document.get_element_by_id(parent_div_id).unwrap();
 
         Self {
-            data: Rc::new(Data {
+            cfg: AppCfg {
                 document,
                 mount_point,
-                model: RefCell::new(model),
                 update,
                 view,
+                window_events,
+            },
+            data: Rc::new(AppData {
+                model: RefCell::new(model),
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
 
-                window_events,
                 window_listeners: RefCell::new(Vec::new()),
             }),
         }
@@ -163,10 +171,10 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
         // Only clone model if we have window events.
         let mut topel_vdom;
-        match self.data.window_events {
+        match self.cfg.window_events {
             //TODO: use window events
             Some(_window_events) => {
-                topel_vdom = (self.data.view)(self.clone(), self.data.model.borrow().clone());
+                topel_vdom = (self.cfg.view)(self.clone(), self.data.model.borrow().clone());
                 setup_window_listeners(
                     &util::window(),
                     &mut Vec::new(),
@@ -181,7 +189,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
                 );
             }
             None => {
-                topel_vdom = (self.data.view)(self.clone(), self.data.model.borrow().clone());
+                topel_vdom = (self.cfg.view)(self.clone(), self.data.model.borrow().clone());
             }
         }
 
@@ -191,7 +199,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         attach_listeners(&mut topel_vdom, &self.mailbox());
 
         // Attach all children: This is where our initial render occurs.
-        websys_bridge::attach_els(&mut topel_vdom, &self.data.mount_point);
+        websys_bridge::attach_els(&mut topel_vdom, &self.cfg.mount_point);
 
         self.data.main_el_vdom.replace(topel_vdom);
 
@@ -225,7 +233,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
-        let updated_model = (self.data.update)(message, model_to_update);
+        let updated_model = (self.cfg.update)(message, model_to_update);
 
         let mut should_render = true;
         let updated_model = match updated_model {
@@ -238,7 +246,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
         // logic based on if we have window listeners.
-        if let Some(window_events) = self.data.window_events {
+        if let Some(window_events) = self.cfg.window_events {
             let mut new_listeners = (window_events)(updated_model.clone());
             setup_window_listeners(
                 &util::window(),
@@ -255,11 +263,11 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             // have ids, nest levels, or associated web_sys elements.
             // We accept cloning here, for the benefit of making data easier to work
             // with in the app.
-            let mut topel_new_vdom = (self.data.view)(self.clone(), updated_model.clone());
+            let mut topel_new_vdom = (self.cfg.view)(self.clone(), updated_model.clone());
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
-            setup_els(&self.data.document, &mut topel_new_vdom, 0, 0);
+            setup_els(&self.cfg.document, &mut topel_new_vdom, 0, 0);
 
             // Detach all old listeners before patching. We'll re-add them as required during patching.
             // We'll get a runtime panic if any are left un-removed.
@@ -267,10 +275,10 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
 
             // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
             patch(
-                &self.data.document,
+                &self.cfg.document,
                 &mut self.data.main_el_vdom.borrow_mut(),
                 &mut topel_new_vdom,
-                &self.data.mount_point,
+                &self.cfg.mount_point,
                 &self.mailbox(),
             );
 
@@ -329,6 +337,7 @@ where
 impl<Ms: Clone + 'static, Mdl: 'static + Clone> std::clone::Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
+            cfg: self.cfg.clone(),
             data: Rc::clone(&self.data),
         }
     }
