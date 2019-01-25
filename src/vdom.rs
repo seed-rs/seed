@@ -13,7 +13,7 @@ pub enum Update<Mdl: 'static + Clone> {
 }
 
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
-type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, Mdl) -> El<Ms>;
+type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type Routes<Ms> = HashMap<String, Ms>;
 type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
 
@@ -174,7 +174,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         match self.cfg.window_events {
             //TODO: use window events
             Some(_window_events) => {
-                topel_vdom = (self.cfg.view)(self.clone(), self.data.model.borrow().clone());
+                topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
                 setup_window_listeners(
                     &util::window(),
                     &mut Vec::new(),
@@ -189,7 +189,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
                 );
             }
             None => {
-                topel_vdom = (self.cfg.view)(self.clone(), self.data.model.borrow().clone());
+                topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
             }
         }
 
@@ -263,7 +263,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
             // have ids, nest levels, or associated web_sys elements.
             // We accept cloning here, for the benefit of making data easier to work
             // with in the app.
-            let mut topel_new_vdom = (self.cfg.view)(self.clone(), updated_model.clone());
+            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &updated_model);
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().

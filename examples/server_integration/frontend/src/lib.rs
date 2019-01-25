@@ -56,7 +56,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
 
 // View
 
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         h1![format!("Val: {} Text: {}", model.data.val, model.data.text)],
         button![

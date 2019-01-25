@@ -76,7 +76,7 @@ fn misc_demo() -> El<Msg> {
     ]
 }
 
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         h2![model.coords_string()],
         h2![format!("Last key pressed: {}", model.last_keycode)],
