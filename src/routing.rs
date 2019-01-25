@@ -11,6 +11,8 @@ fn get_path() -> String {
     path[1..path.len()].to_string()
 }
 
+
+/// For setting up landing page routing.
 pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: HashMap<String, Ms>) -> App<Ms, Mdl>
 where
     Ms: Clone + 'static,
@@ -61,8 +63,11 @@ where
     app.data.popstate_closure.replace(Some(closure));
 }
 
-//pub fn push<Ms: Clone + 'static>(path: &str, message: Ms) {
-pub fn push_route(path: &str) {
+pub fn push_route<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, path: &str, message: Ms) -> Mdl
+    where Ms: Clone + 'static, Mdl: 'static + Clone
+{
+    app.add_route(path, message.clone());
+
     let history = util::window().history().expect("Can't find history");
     // The second parameter, title, is currently unused by Firefox at least.
     // The first, an arbitrary state object, we could possibly use.
@@ -70,8 +75,17 @@ pub fn push_route(path: &str) {
 
     // We're documenting our API to not prepend /. Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
+
     let path = &(String::from("/") + path);
     history
         .push_state_with_url(&JsValue::null(), "", Some(path))
         .expect("Problem pushing state");
+
+    // Return the updated model; we must first extract from the enum.
+    // This allows simpler syntax in the update function.
+    let up = (app.cfg.update)(message, app.data.model.borrow().clone());
+    match up {
+        crate::vdom::Update::Render(model) => model,
+        crate::vdom::Update::Skip(model) => model,
+    }
 }

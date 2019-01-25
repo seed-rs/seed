@@ -133,6 +133,8 @@ pub mod tests {
             div!["Hello world"]
         }
 
+        // todo: test routing and window events here too.
+
         #[wasm_bindgen]
         pub fn render() {
             seed::App::build(Model::default(), update, view)

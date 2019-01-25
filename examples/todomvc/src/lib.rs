@@ -107,7 +107,7 @@ enum Msg {
     Toggle(usize),
     ToggleAll,
     NewTodo(web_sys::Event),
-    SetVisibility(Visible),
+    SetVisibility(seed::App<Msg, Model>, Visible),
 
     EditItem(usize),
     EditSubmit(usize),
@@ -183,9 +183,8 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
                 Render(model)
             }
         }
-        Msg::SetVisibility(visible) => {
-            seed::push_route(&visible.to_string());
-            update(Msg::RoutePage(visible), model)
+        Msg::SetVisibility(state, visible) => {
+            Render(seed::push_route(state, &visible.to_string(), Msg::RoutePage(visible)))
         }
 
         Msg::EditItem(posit) => {
@@ -292,7 +291,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     ]
 }
 
-fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
+fn selection_li(state: seed::App<Msg, Model>, text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![a![
         class![if visible == highlighter {
             "selected"
@@ -300,12 +299,12 @@ fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
             ""
         }],
         style! {"cursor" => "pointer"},
-        simple_ev("click", Msg::SetVisibility(highlighter)),
+        simple_ev("click", Msg::SetVisibility(state, highlighter)),
         text
     ]]
 }
 
-fn footer(model: &Model) -> El<Msg> {
+fn footer(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     let optional_s = if model.todos.len() == 1 { "" } else { "s" };
 
     let clear_button = if model.completed_count() > 0 {
@@ -327,9 +326,9 @@ fn footer(model: &Model) -> El<Msg> {
         ],
         ul![
             class!["filters"],
-            selection_li("All", model.visible, Visible::All),
-            selection_li("Active", model.visible, Visible::Active),
-            selection_li("Completed", model.visible, Visible::Completed)
+            selection_li(state.clone(), "All", model.visible, Visible::All),
+            selection_li(state.clone(), "Active", model.visible, Visible::Active),
+            selection_li(state, "Completed", model.visible, Visible::Completed)
         ],
         clear_button
     ]
@@ -379,7 +378,7 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         ],
         main,
         if model.active_count() > 0 || model.completed_count() > 0 {
-            footer(&model)
+            footer(state, &model)
         } else {
             seed::empty()
         }

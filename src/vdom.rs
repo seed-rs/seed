@@ -48,24 +48,24 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
     // Model is in a RefCell here so we can replace it in self.update().
-    model: RefCell<Mdl>,
+    pub model: RefCell<Mdl>,
     main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
-    routes: RefCell<Option<Routes<Ms>>>,
+    pub routes: RefCell<Routes<Ms>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
-struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
+pub struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
     document: web_sys::Document,
     mount_point: web_sys::Element,
-    update: UpdateFn<Ms, Mdl>,
+    pub update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Ms, Mdl>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
 pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
     /// Stateless app configuration
-    cfg: Rc<AppCfg<Ms, Mdl>>,
+    pub cfg: Rc<AppCfg<Ms, Mdl>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
@@ -76,7 +76,7 @@ pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Ms, Mdl>,
     parent_div_id: Option<&'static str>,
-    routes: Option<Routes<Ms>>,
+    routes: Routes<Ms>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
@@ -86,7 +86,8 @@ impl<Ms: Clone, Mdl: Clone> AppBuilder<Ms, Mdl> {
         self
     }
     pub fn routes(mut self, routes: Routes<Ms>) -> Self {
-        self.routes = Some(routes);
+//        self.routes = Some(routes);
+        self.routes = routes;
         self
     }
     pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
@@ -120,7 +121,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
             update,
             view,
             parent_div_id: None,
-            routes: None,
+            routes: HashMap::new(),
             window_events: None,
         }
     }
@@ -129,7 +130,8 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Ms, Mdl>,
         parent_div_id: &str,
-        routes: Option<Routes<Ms>>,
+//        routes: Option<Routes<Ms>>,
+        routes: Routes<Ms>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
         let window = util::window();
@@ -202,12 +204,11 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
 
         self.data.main_el_vdom.replace(topel_vdom);
 
-        // If a route map is inlcluded, update the state on page load, based
+        // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes_inner) = self.data.routes.borrow().clone() {
-            let app2 = routing::initial(self.clone(), routes_inner.clone());
-            routing::update_popstate_listener(&app2, routes_inner);
-        }
+        let routes_inner = self.data.routes.borrow().clone();
+        let app2 = routing::initial(self.clone(), routes_inner.clone());
+        routing::update_popstate_listener(&app2, routes_inner);
 
         // Allows panic messages to output to the browser console.error.
         panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -290,6 +291,17 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         // model for the next update.
         // Note: It appears that this step is why we need data.model to be in a RefCell.
         self.data.model.replace(updated_model);
+    }
+
+    pub fn add_route(&self, path: &str, message: Ms) {
+            // We're editing a HashMap wrapped in an Option wrapped in an RefCell.
+    let mut r = self.data.routes.borrow_mut().clone();
+    r.insert(path.to_string(), message.clone());
+
+    routing::update_popstate_listener(&self, r.clone());
+    self.data.routes.replace(r);
+
+    // Trigger an update, so the user doesn't have to recursively in the update func.
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
