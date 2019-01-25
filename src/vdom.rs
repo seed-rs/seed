@@ -635,7 +635,8 @@ pub mod tests {
     enum Msg {}
 
     #[ignore]
-    #[wasm_bindgen_test]
+//    #[wasm_bindgen_test]
+    #[test]
     fn el_added() {
         let mut old_vdom: El<Msg> = div!["text", vec![li!["child1"],]];
         let mut new_vdom: El<Msg> = div!["text", vec![li!["child1"], li!["child2"]]];

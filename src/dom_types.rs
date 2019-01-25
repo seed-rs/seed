@@ -1044,6 +1044,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     pub fn attrs() {
         let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
+        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
 
         let mut el: El<Msg> = section![
             attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
@@ -1051,6 +1052,7 @@ pub mod tests {
         ];
 
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-        assert_eq!(expected, el.el_ws.unwrap().outer_html());
+        assert!(expected == el.clone().el_ws.unwrap().outer_html() ||
+            expected2 == el.el_ws.unwrap().outer_html());
     }
 }

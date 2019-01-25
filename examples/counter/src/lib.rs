@@ -38,7 +38,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
             count: model.count + 1,
             ..model
         }),
-        Msg::Decrement => Skip(Model {
+        Msg::Decrement => Render(Model {
             count: model.count - 1,
             ..model
         }),
