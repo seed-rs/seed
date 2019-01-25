@@ -72,10 +72,10 @@ where
 }
 
 /// Create an event that passes a String of field text, for fast input handling.
-pub fn input_ev<Ms>(trigger: &str, mut handler: impl FnMut(String) -> Ms + 'static) -> Listener<Ms>
-where
-    Ms: Clone + 'static,
-{
+pub fn input_ev<Ms>(
+    trigger: &str,
+    mut handler: impl FnMut(String) -> Ms + 'static,
+) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         if let Some(target) = event.target() {
             if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
@@ -99,10 +99,7 @@ where
 pub fn raw_ev<Ms>(
     trigger: &str,
     mut handler: impl FnMut(web_sys::Event) -> Ms + 'static,
-) -> Listener<Ms>
-where
-    Ms: Clone + 'static,
-{
+) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| handler(event);
     Listener::new(&trigger.into(), Some(Box::new(closure)))
 }
@@ -112,10 +109,7 @@ where
 pub fn keyboard_ev<Ms>(
     trigger: &str,
     mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static,
-) -> Listener<Ms>
-where
-    Ms: Clone + 'static,
-{
+) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
     };
@@ -126,10 +120,7 @@ where
 pub fn mouse_ev<Ms>(
     trigger: &str,
     mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static,
-) -> Listener<Ms>
-where
-    Ms: Clone + 'static,
-{
+) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
     };
@@ -137,7 +128,7 @@ where
 }
 
 /// Event-handling for Elements
-pub struct Listener<Ms: Clone> {
+pub struct Listener<Ms> {
     pub trigger: String,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     // We store closure here so we can detach it later.
@@ -146,7 +137,7 @@ pub struct Listener<Ms: Clone> {
 }
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-impl<Ms: Clone + 'static> Listener<Ms> {
+impl<Ms> Listener<Ms> {
     pub fn new(event: &Event, handler: Option<Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
         Self {
             trigger: String::from(event.as_str()),
@@ -192,7 +183,7 @@ impl<Ms: Clone + 'static> Listener<Ms> {
     }
 }
 
-impl<Ms: Clone + 'static> PartialEq for Listener<Ms> {
+impl<Ms> PartialEq for Listener<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo we're only checking the trigger - will miss changes if
         // todo only the fn passed changes!
@@ -674,7 +665,7 @@ make_tags! {
 }
 
 /// An component in our virtual DOM.
-pub struct El<Ms: Clone + 'static> {
+pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
     // confusion with web_sys::Element.
@@ -707,7 +698,7 @@ pub struct El<Ms: Clone + 'static> {
     pub will_unmount: Option<Box<FnMut(&web_sys::Element)>>,
 }
 
-impl<Ms: Clone + 'static> El<Ms> {
+impl<Ms> El<Ms> {
     /// Create an empty element, specifying only the tag
     pub fn empty(tag: Tag) -> Self {
         Self {
@@ -857,7 +848,7 @@ impl<Ms: Clone + 'static> El<Ms> {
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
 /// closures within listeners or lifestyle hooks, so we ommit them.
-impl<Ms: Clone + 'static> Clone for El<Ms> {
+impl<Ms> Clone for El<Ms> {
     fn clone(&self) -> Self {
         Self {
             tag: self.tag.clone(),
@@ -880,7 +871,7 @@ impl<Ms: Clone + 'static> Clone for El<Ms> {
     }
 }
 
-impl<Ms: Clone + 'static> PartialEq for El<Ms> {
+impl<Ms> PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
@@ -1052,7 +1043,9 @@ pub mod tests {
         ];
 
         crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-        assert!(expected == el.clone().el_ws.unwrap().outer_html() ||
-            expected2 == el.el_ws.unwrap().outer_html());
+        assert!(
+            expected == el.clone().el_ws.unwrap().outer_html()
+                || expected2 == el.el_ws.unwrap().outer_html()
+        );
     }
 }

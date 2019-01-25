@@ -7,7 +7,7 @@ use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::closure::Closure;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
-pub enum Update<Mdl: 'static + Clone> {
+pub enum Update<Mdl: Clone> {
     Render(Mdl),
     Skip(Mdl),
 }
@@ -21,7 +21,7 @@ pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
 }
 
-impl<Ms: 'static> Mailbox<Ms> {
+impl<Ms> Mailbox<Ms> {
     pub fn new(func: impl Fn(Ms) + 'static) -> Self {
         Mailbox {
             func: Rc::new(func),
@@ -46,7 +46,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct AppData<Ms: Clone + 'static, Mdl: 'static + Clone> {
+pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
     // Model is in a RefCell here so we can replace it in self.update().
     model: RefCell<Mdl>,
     main_el_vdom: RefCell<El<Ms>>,
@@ -55,18 +55,17 @@ pub struct AppData<Ms: Clone + 'static, Mdl: 'static + Clone> {
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
 }
 
-#[derive(Clone)]
 struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
     document: web_sys::Document,
     mount_point: web_sys::Element,
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Ms, Mdl>,
-    window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+    window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
 pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
     /// Stateless app configuration
-    cfg: AppCfg<Ms, Mdl>,
+    cfg: Rc<AppCfg<Ms, Mdl>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
@@ -81,7 +80,7 @@ pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms: Clone + 'static, Mdl: Clone + 'static> AppBuilder<Ms, Mdl> {
+impl<Ms: Clone, Mdl: Clone> AppBuilder<Ms, Mdl> {
     pub fn mount(mut self, id: &'static str) -> Self {
         self.parent_div_id = Some(id);
         self
@@ -110,7 +109,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> AppBuilder<Ms, Mdl> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
-impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
+impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
     pub fn build(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
@@ -131,7 +130,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         view: ViewFn<Ms, Mdl>,
         parent_div_id: &str,
         routes: Option<Routes<Ms>>,
-        window_events: Option<fn(Mdl) -> Vec<dom_types::Listener<Ms>>>,
+        window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
         let window = util::window();
         let document = window
@@ -141,13 +140,13 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> App<Ms, Mdl> {
         let mount_point = document.get_element_by_id(parent_div_id).unwrap();
 
         Self {
-            cfg: AppCfg {
+            cfg: Rc::new(AppCfg {
                 document,
                 mount_point,
                 update,
                 view,
                 window_events,
-            },
+            }),
             data: Rc::new(AppData {
                 model: RefCell::new(model),
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
@@ -334,10 +333,10 @@ where
 //
 //}
 
-impl<Ms: Clone + 'static, Mdl: 'static + Clone> std::clone::Clone for App<Ms, Mdl> {
+impl<Ms: Clone, Mdl: Clone> Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
-            cfg: self.cfg.clone(),
+            cfg: Rc::clone(&self.cfg),
             data: Rc::clone(&self.data),
         }
     }
@@ -345,10 +344,7 @@ impl<Ms: Clone + 'static, Mdl: 'static + Clone> std::clone::Clone for App<Ms, Md
 
 // TODO: should this be here, or in a diff module?
 /// Recursively attach event-listeners. Run this at init.
-fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>)
-where
-    Ms: Clone + 'static,
-{
+fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
     let el_ws = el
         .el_ws
         .take()
@@ -366,10 +362,7 @@ where
 
 // TODO: should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
-fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>)
-where
-    Ms: Clone + 'static,
-{
+fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
     let el_ws = el
         .el_ws
         .take()
@@ -387,14 +380,12 @@ where
 
 /// We reattach all listeners, as with normal Els, since we have no
 /// way of diffing them.
-fn setup_window_listeners<Ms>(
+fn setup_window_listeners<Ms: Clone>(
     window: &Window,
     old: &mut Vec<dom_types::Listener<Ms>>,
     new: &mut Vec<dom_types::Listener<Ms>>,
     mailbox: &Mailbox<Ms>,
-) where
-    Ms: Clone + 'static,
-{
+) {
     for listener in old {
         listener.detach(window);
     }
@@ -404,15 +395,13 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-fn patch<Ms>(
+fn patch<Ms: Clone>(
     document: &Document,
     old: &mut El<Ms>,
     new: &mut El<Ms>,
     parent: &Element,
     mailbox: &Mailbox<Ms>,
-) where
-    Ms: Clone + 'static,
-{
+) {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
     // TODO: fix this later.
@@ -676,7 +665,7 @@ pub mod tests {
     enum Msg {}
 
     #[ignore]
-//    #[wasm_bindgen_test]
+    // #[wasm_bindgen_test]
     #[test]
     fn el_added() {
         let mut old_vdom: El<Msg> = div!["text", vec![li!["child1"],]];
