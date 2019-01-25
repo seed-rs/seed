@@ -97,9 +97,11 @@ pub mod tests {
     use wasm_bindgen_test::*;
 
     use crate as seed; // required for macros to work.
-    use crate::div;
-    use crate::dom_types::{El, UpdateEl};
-    use crate::vdom::Update;
+    use crate::{
+        div,
+        dom_types::{El, UpdateEl},
+        vdom::Update,
+    };
 
     #[derive(Clone)]
     enum Msg {
@@ -138,9 +140,7 @@ pub mod tests {
 
         #[wasm_bindgen_test]
         pub fn render() {
-            seed::App::build(Model::default())
-                .update(update)
-                .view(view)
+            seed::App::build(Model::default(), update, view)
                 .mount("main")
                 .finish()
                 .run();

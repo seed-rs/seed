@@ -89,7 +89,7 @@ impl<Ms: Clone + 'static, Mdl: Clone + 'static> AppBuilder<Ms, Mdl> {
         self
     }
     pub fn finish(self) -> App<Ms, Mdl> {
-        let parent_div_id = self.parent_div_id.unwrap_or("body");
+        let parent_div_id = self.parent_div_id.unwrap_or("app");
 
         App::new(
             self.model,
