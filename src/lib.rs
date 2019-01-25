@@ -35,7 +35,7 @@ pub use crate::{
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub fn empty<Ms: Clone>() -> dom_types::El<Ms> {
+pub fn empty<Ms>() -> dom_types::El<Ms> {
     // The tag doesn't matter here, but this seems semantically appropriate.
     let mut el = dom_types::El::empty(dom_types::Tag::Del);
     el.add_attr("dummy-element".into(), "true".into());

@@ -1,8 +1,6 @@
+use crate::{util, App};
 use std::collections::HashMap;
-
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
-
-use crate::util;
 
 /// A convenience function to prevent repetitions
 fn get_path() -> String {
@@ -13,10 +11,7 @@ fn get_path() -> String {
     path[1..path.len()].to_string()
 }
 
-pub fn initial<Ms, Mdl>(
-    app: crate::vdom::App<Ms, Mdl>,
-    routes: HashMap<String, Ms>,
-) -> crate::vdom::App<Ms, Mdl>
+pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: HashMap<String, Ms>) -> App<Ms, Mdl>
 where
     Ms: Clone + 'static,
     Mdl: Clone + 'static,
@@ -30,12 +25,10 @@ where
     app
 }
 
-pub fn update_popstate_listener<Ms, Mdl>(
-    app: &crate::vdom::App<Ms, Mdl>,
-    routes: HashMap<String, Ms>,
-) where
-    Ms: Clone + 'static,
-    Mdl: Clone + 'static,
+pub fn update_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: HashMap<String, Ms>)
+where
+    Ms: Clone,
+    Mdl: Clone,
 {
     let window = util::window();
     if let Some(ps_closure) = app.data.popstate_closure.borrow().as_ref() {
