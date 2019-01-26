@@ -393,6 +393,10 @@ pub fn render() {
         "completed" => Msg::RoutePage(Visible::Completed),
     };
 
+//    let mut routes2 = HashMap::new();
+//    routes2.insert(vec![])
+
+
     seed::App::build(Model::default(), update, todo_app)
         .routes(routes)
         .finish()
