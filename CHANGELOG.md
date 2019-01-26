@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.4
+- Changed render func to use a new pattern (Breaking)
+- Default mount point added: \"app\" for element id
+- View func now takes a ref to the model instead of the model itself
+- Routing refactored; now works dynamically
+- Update function now returns an enum that returns Render or Skip,
+to allow conditional rendering (Breaking)
+-Elements can now store more than 1 text node.
+
 ## V0.2.3
 - Fixed a bug where initially-empty text won't update
 - Added more tests
