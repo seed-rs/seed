@@ -3,6 +3,16 @@
 #![allow(unused_macros)]
 //#![feature(custom_attribute)]  // For testing
 
+pub use crate::{
+    dom_types::Listener,
+    fetch::{Method, Request, spawn_local},
+    routing::push_route,
+    util::{document, window},
+    vdom::App,
+    websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
+};
+use wasm_bindgen::{closure::Closure, JsCast};
+
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;
@@ -11,8 +21,6 @@ pub mod storage;
 mod util;
 mod vdom;
 mod websys_bridge;
-
-use wasm_bindgen::{closure::Closure, JsCast};
 
 // todo: Why does this work without importing web_sys??
 
@@ -23,15 +31,6 @@ use wasm_bindgen::{closure::Closure, JsCast};
 // todo local storage
 // todo High-level css-grid and flex api?
 // todo keyed elements?
-
-pub use crate::{
-    dom_types::Listener,
-    fetch::{spawn_local, Method, Request},
-    routing::push_route,
-    util::{document, window},
-    vdom::App,
-    websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
-};
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
@@ -72,18 +71,19 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
 /// Expose the wasm_bindgen prelude, and lifecycle hooks.
 pub mod prelude {
     pub use std::collections::HashMap;
-
     pub use crate::{
         dom_types::{
-            did_mount, did_update, input_ev, keyboard_ev, mouse_ev, raw_ev, simple_ev,
-            will_unmount, El, Tag, UpdateEl,
+            did_mount, did_update, El, input_ev, keyboard_ev, mouse_ev, raw_ev,
+            simple_ev, Tag, UpdateEl, will_unmount,
         },
         shortcuts::*, // appears not to work.
         vdom::{Update, Update::Render, Update::Skip},
     };
-    //    pub use proc_macros::seed_update;
 
     pub use wasm_bindgen::prelude::*;
+
+    //    pub use proc_macros::seed_update;
+
     //    pub use wasm_bindgen_macro::wasm_bindgen;
 
 }
@@ -102,7 +102,8 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::{
             div,
-            dom_types::{El, UpdateEl},
+            routes,
+            dom_types::{El, UpdateEl, mouse_ev},
             vdom::Update,
         };
         use crate::prelude::*;
@@ -133,12 +134,23 @@ pub mod tests {
             div!["Hello world"]
         }
 
-        // todo: test routing and window events here too.
+        fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
+            vec![
+                mouse_ev("mousemove", |_| Msg::Increment)
+            ]
+        }
 
         #[wasm_bindgen]
         pub fn render() {
+            let routes = routes! {
+                "page1" => Msg::Increment,
+                "page2" => Msg::Increment,
+            };
+
             seed::App::build(Model::default(), update, view)
                 .mount("body")
+                .routes(routes)
+                .window_events(window_events)
                 .finish()
                 .run();
         }

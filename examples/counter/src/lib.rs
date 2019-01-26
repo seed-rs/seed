@@ -86,6 +86,8 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
+    let v = seed::document().create_text_node("MOOSE");
+
     div![
         outer_style,
         h1!["The Grand Total"],
@@ -118,6 +120,7 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             attrs! {"value" => model.what_we_count},
             input_ev("input", Msg::ChangeWWC)
         ],
+        p![ "Today it's ".to_string(), em!["not"], " gonna rain, this ", em!["is"], " so ", strong![ "good!" ] ]
     ]
 }
 

@@ -21,7 +21,7 @@ use crate::dom_types;
 //}
 
 /// Add a shim to make check logic more natural than the DOM handles it.
-fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
+fn set_attr_shim(el_ws: &web_sys::Node, name: &str, val: &str) {
     let mut set_special = false;
 
     if name == "checked" {
@@ -98,7 +98,10 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
     }
 
     if !set_special {
-        el_ws
+        el_ws.dyn_ref::<web_sys::Element>()
+            .expect("Problem casting Node as Element")
+
+//        el_ws2
             .set_attribute(name, val)
             .expect("Problem setting an atrribute.");
     }
@@ -110,18 +113,36 @@ fn set_attr_shim(el_ws: &web_sys::Element, name: &str, val: &str) {
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
 pub fn make_websys_el<Ms: Clone>(
-    el_vdom: &dom_types::El<Ms>,
+    el_vdom: &mut dom_types::El<Ms>,
     document: &web_sys::Document,
-) -> web_sys::Element {
+//) -> web_sys::Element {
+) -> web_sys::Node {
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
+
+    // An element from raw html.
+    if el_vdom.raw_html {
+        let el_ws = document
+            .create_element(tag)
+            .expect("Problem creating web-sys El");
+        el_ws.set_inner_html(&el_vdom.text.clone().expect("Missing text on raw HTML element"));
+        return el_ws.into()
+    }
+
+    // A simple text node.
+    if let Some(text) = &el_vdom.text {
+        return document.create_text_node(&text).into();
+    }
+
     let el_ws = match el_vdom.namespace {
         Some(ref ns) => document
             .create_element_ns(Some(ns.as_str()), tag)
             .expect("Problem creating web-sys El"),
-        None => document
-            .create_element(tag)
-            .expect("Problem creating web-sys El"),
+        None => {
+            document
+                .create_element(tag)
+                .expect("Problem creating web-sys El")
+        }
     };
 
     for (name, val) in &el_vdom.attrs.vals {
@@ -131,29 +152,33 @@ pub fn make_websys_el<Ms: Clone>(
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-        el_ws
+//        el_ws
+        el_ws.dyn_ref::<web_sys::Element>()
+            .expect("Problem casting Node as Element")
             .set_attribute("style", &el_vdom.style.to_string())
             .expect("Problem setting style");
     }
 
-    // We store text as Option<String>, but set_text_content uses Option<&str>.
-    // A naive match Some(t) => Some(&t) does not work.
+    // todo don't even create the element if it's a text node.
+
+
+        // A naive match Some(t) => Some(&t) does not work.
     // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
-    let text = el_vdom.text.as_ref().map(String::as_ref);
-    if el_vdom.raw_html {
-        el_ws.set_inner_html(text.unwrap())
-    } else {
-        el_ws.set_text_content(text);
-    }
+//    let text = el_vdom.text.as_ref().map(String::as_ref);
+//    if el_vdom.raw_html {
+//        el_ws.set_inner_html(text.unwrap())
+//    } else {
+//        el_ws.set_text_content(text);
+//    }
 
     // Don't attach listeners here,
-    el_ws
+    el_ws.into()
 }
 
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Element) {
+pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Node) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
@@ -184,7 +209,7 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
 }
 
 /// Recursively remove all children.
-pub fn _remove_children(el: &web_sys::Element) {
+pub fn _remove_children(el: &web_sys::Node) {
     while let Some(child) = el.last_child() {
         el.remove_child(&child).unwrap();
     }
@@ -196,8 +221,7 @@ pub fn _remove_children(el: &web_sys::Element) {
 pub fn patch_el_details<Ms: Clone>(
     old: &mut dom_types::El<Ms>,
     new: &mut dom_types::El<Ms>,
-    old_el_ws: &web_sys::Element,
-    document: &web_sys::Document,
+    old_el_ws: &web_sys::Node,
 ) {
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut old.did_update {
@@ -219,7 +243,9 @@ pub fn patch_el_details<Ms: Clone>(
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
-                old_el_ws
+//                old_el_ws
+                old_el_ws.dyn_ref::<web_sys::Element>()
+                    .expect("Problem casting Node as Element")
                     .remove_attribute(name)
                     .expect("Removing an attribute");
             }
@@ -229,7 +255,9 @@ pub fn patch_el_details<Ms: Clone>(
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        old_el_ws
+//        old_el_ws
+        old_el_ws.dyn_ref::<web_sys::Element>()
+            .expect("Problem casting Node as Element")
             .set_attribute("style", &new.style.to_string())
             .expect("Setting style");
     }
@@ -242,32 +270,19 @@ pub fn patch_el_details<Ms: Clone>(
         // Text is stored in special Text nodes that don't have a direct-relation to
         // the vdom.
 
-        let text = new.text.clone().unwrap_or_default();
 
         if new.raw_html {
-            old_el_ws.set_inner_html(&text)
+//            old_el_ws.
+            old_el_ws.dyn_ref::<web_sys::Element>()
+                .expect("Problem casting Node as Element")
+                .set_inner_html(&new.text.clone().unwrap_or_default())
         } else {
-            if old.text.is_none() {
-                // There's no old node to find: Add it.
-                let new_next_node = document.create_text_node(&text);
-                old_el_ws.append_child(&new_next_node).unwrap();
-            } else {
-                // Iterating over a NodeList, unfortunately, is not as clean as you might expect.
-                if old_el_ws.has_child_nodes() {
-                    let children = old_el_ws.child_nodes();
-                    for i in 0..children.length() {
-                        let node = children.item(i).unwrap();
-                        // We've found it; there will be not more than 1 text node.
-                        if node.node_type() == 3 {
-                            node.set_text_content(Some(&text));
-                            break;
-                        }
-                    }
-                } else {
-                    let new_next_node = document.create_text_node(&text);
-                    old_el_ws.append_child(&new_next_node).unwrap();
-                }
-            }
+
+            // We need to change from Option<String> to Option<&str>
+            match new.text.clone() {
+                Some(text) => old_el_ws.set_text_content(Some(&text)),
+                None => old_el_ws.set_text_content(None)
+            };
         }
     }
 }

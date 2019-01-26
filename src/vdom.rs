@@ -411,7 +411,7 @@ fn patch<Ms: Clone>(
     document: &Document,
     old: &mut El<Ms>,
     new: &mut El<Ms>,
-    parent: &Element,
+    parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
 ) {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
@@ -460,7 +460,7 @@ fn patch<Ms: Clone>(
         }
 
         // Patch parts of the Element.
-        websys_bridge::patch_el_details(old, new, &old_el_ws, document);
+        websys_bridge::patch_el_details(old, new, &old_el_ws);
     }
 
     // Before running patch, assume we've removed all listeners from the old element.
