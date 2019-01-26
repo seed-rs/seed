@@ -9,6 +9,8 @@
 
 The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
 
+# Quickstart
+
 ## Setup
 This framework requires you to install [Rust](https://www.rust-lang.org/tools/install).
 
@@ -21,10 +23,11 @@ And wasm-bindgen: `cargo install wasm-bindgen-cli`
 If you run into errors while installing `wasm-bindgen-cli`, you may need to install C++
 build tools. On linux, run `sudo apt install build-essential`. On Windows, download and install
 [Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
+[Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
 include the C++ workload.
 
 ## The theoretical minimum
-To start, clone [This quickstart repo](https://github.com/David-OConnor/seed-quickstart),
+To start, clone [The quickstart repo](https://github.com/David-OConnor/seed-quickstart),
 run `build.sh` or `build.ps1` in a terminal, then start a dev server that supports WASM.
 For example, with [Python](https://www.python.org/downloads/) installed, run `python serve.py`.
 (Linux users may need to run `python3 serve.py`.)
@@ -118,11 +121,11 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Model {
+fn update(msg: Msg, model: Model) -> Update<Model> {
     match msg {
-        Msg::Increment => Model {count: model.count + 1, ..model},
-        Msg::Decrement => Model {count: model.count - 1, ..model},
-        Msg::ChangeWWC(what_we_count) => Model {what_we_count, ..model }
+        Msg::Increment => Render(Model {count: model.count + 1, ..model}),
+        Msg::Decrement => Render(Model {count: model.count - 1, ..model}),
+        Msg::ChangeWWC(what_we_count) => Render(Model {what_we_count, ..model })
     }
 }
 
@@ -179,7 +182,9 @@ fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::run(Model::default(), update, view, "main", None, None);
+    seed::App::build(Model::default(), update, view)
+        .finish()
+        .run();
 }
 ```
 For a truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/David-OConnor/seed-quickstart/blob/master/src/lib.rs)
@@ -220,8 +225,7 @@ to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.i
 `seed = { path = "../../"` with `seed = "^0.1.8"`, and in the build script, remove the leading `../../` on the second
 line.
 
-
-## About
+# About
 
 ## Goals
 - Learning the syntax, creating a project, and building it should be easy - regardless
@@ -264,7 +268,7 @@ of Seed apps mimicks that of The Elm Architecture.
 
 ## There are already several Rust/WASM frameworks; why add another?
 
- I'm distinguising Seed through clear examples and documentation, and using `wasm-bindgen`/`web-sys` internally. I started this
+ I'm distinguishing Seed through clear examples and documentation, and using `wasm-bindgen`/`web-sys` internally. I started this
 project after being unable to get existing frameworks working
 due to lack of documented examples, and inconsistency between documentation and 
 published versions. My intent is for anyone who's proficient in a frontend
@@ -278,7 +282,7 @@ This decision will not appeal to everyone, but I think it integrates more natura
 the language.
 
 
-## Why build a frontend app in Rust over Elm, or Javascript-based frameworks?
+## Why build a frontend in Rust over Elm, or Javascript-based frameworks?
 You may prefer writing in Rust, and using packages from Cargo vice npm. Getting started with
 this framework will in most cases be easier, and require less config and setup overhead than
 with JS frameworks. You may appreciate Rust's compile-time error-checking, and built-in testing.
@@ -290,7 +294,7 @@ Compared with React, you may appreciate the consistency of how to write apps:
 There's no distinction between logic and display code; no restrictions on comments;
 no distinction between components and normal functions. The API is
 flexible, and avoids OOP boilerplate. Its integrated routing and message system
-avoids the dependency glue-code associated with Redux and React Router.
+avoids the dependency glue-code associated with Redux and React-Router.
 
 
 ### Shoutouts
@@ -306,15 +310,12 @@ avoids the dependency glue-code associated with Redux and React Router.
 - Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
 
 ### Features to add
-- Improve fetch API
 - Dynamic SVG creation and modification
-- More flexible routing
-- Add data-struct integration for Rust servers. (Eg to avoid [de]serializing if Rust on front and backend)
+- Websocket API
+- Better recursive updating
 - Virtual DOM optimization
 - High-level CSS-grid/Flexbox API ?
  
-### Bugs to fix
-- Text renders above children instead of below
  
 ## Reference
 - [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)
