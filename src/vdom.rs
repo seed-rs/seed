@@ -15,6 +15,7 @@ pub enum Update<Mdl: Clone> {
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type Routes<Ms> = HashMap<String, Ms>;
+//type Routes<Ms> = HashMap<Vec<String>, Fn() -> Ms>;
 type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
 
 pub struct Mailbox<Message: 'static> {

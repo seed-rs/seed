@@ -257,30 +257,29 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
 fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     let mut att = attrs! {};
     if item.completed {
-        att.add("class", "completed");
+        att.add(At::Class, "completed");
     }
     if item.editing {
-        att.add("class", "editing");
+        att.add(At::Class, "editing");
     }
-    att.add("key", &item.title);
 
     li![
         att,
         div![
-            class!["view"],
+            class!("view"),
             input![
-                attrs! {"class" => "toggle"; "type" => "checkbox"; "checked" => item.completed },
+                attrs! {At::Class => "toggle"; At::Type => "checkbox"; At::Checked => item.completed },
                 simple_ev("click", Msg::Toggle(posit))
             ],
             label![simple_ev("dblclick", Msg::EditItem(posit)), item.title],
             button![
-                attrs! {"class" => "destroy"},
+                class!("destroy"),
                 simple_ev("click", Msg::Destroy(posit))
             ]
         ],
         if item.editing {
             input![
-                attrs! {"class" => "edit"; "value" => edit_text},
+                attrs! {At::Class => "edit"; At::Value => edit_text},
                 simple_ev("blur", Msg::EditSubmit(posit)),
                 input_ev("input", Msg::EditChange),
                 keyboard_ev("keydown", move |ev| Msg::EditKeyDown(posit, ev.key_code())),
@@ -352,11 +351,11 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         section![
             class!["main"],
             input![
-                attrs! {"id" => "toggle-all"; "class" => "toggle-all"; "type" => "checkbox";
-                "checked" => model.active_count() == 0},
+                attrs! {At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox";
+                At::Checked => model.active_count() == 0},
                 simple_ev("click", Msg::ToggleAll)
             ],
-            label![attrs! {"for" => "toggle-all"}, "Mark all as complete"],
+            label![attrs! {At::For => "toggle-all"}, "Mark all as complete"],
             ul![class!["todo-list"], todo_els]
         ]
     } else {
@@ -369,9 +368,9 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             h1!["todos"],
             input![
                 attrs! {
-                    "class" => "new-todo";
-                    "placeholder" => "What needs to be done?";
-                    "auto-focus" => true
+                    At::Class => "new-todo";
+                    At::PlaceHolder => "What needs to be done?";
+                    At::AutoFocus => true
                 },
                 raw_ev("keydown", Msg::NewTodo)
             ]

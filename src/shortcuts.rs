@@ -1159,13 +1159,17 @@ macro_rules! tspan {
 macro_rules! attrs {
     { $($key:expr => $value:expr);* $(;)* } => {
         {
+//            let mut result = Attrs::empty();
             let mut vals = std::collections::HashMap::new();
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
-                vals.insert(String::from($key), $value.to_string());
+                vals.insert($key.into(), $value.to_string());
+//                vals.insert(String::from($key), $value.to_string());
+//                $key.update(&mut result);
             )*
             seed::dom_types::Attrs::new(vals)
+//            result
         }
      };
 }
@@ -1180,7 +1184,7 @@ macro_rules! class {
             $(
                 classes.push($class);
             )*
-            result.add_multiple("class", classes);
+            result.add_multiple("class".into(), classes);
             result
         }
      };

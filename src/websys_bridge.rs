@@ -21,10 +21,11 @@ use crate::dom_types;
 //}
 
 /// Add a shim to make check logic more natural than the DOM handles it.
-fn set_attr_shim(el_ws: &web_sys::Node, name: &str, val: &str) {
+fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     let mut set_special = false;
+    let at = at.as_str();
 
-    if name == "checked" {
+    if at == "checked" {
         let input_el = el_ws.dyn_ref::<web_sys::HtmlInputElement>();
         if let Some(el) = input_el {
             match val {
@@ -42,7 +43,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, name: &str, val: &str) {
     // todo DRY! Massive dry between checked and auto, and in autofocus.
     // https://www.w3schools.com/tags/att_autofocus.asp
     //todo needs to work for other type sof input!
-    else if name == "autofocus" {
+    else if at == "autofocus" {
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
             //            autofocus_helper(input)
             match val {
@@ -102,7 +103,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, name: &str, val: &str) {
             .expect("Problem casting Node as Element")
 
 //        el_ws2
-            .set_attribute(name, val)
+            .set_attribute(at, val)
             .expect("Problem setting an atrribute.");
     }
 }
@@ -145,8 +146,8 @@ pub fn make_websys_el<Ms: Clone>(
         }
     };
 
-    for (name, val) in &el_vdom.attrs.vals {
-        set_attr_shim(&el_ws, name, val);
+    for (at, val) in &el_vdom.attrs.vals {
+        set_attr_shim(&el_ws, at, val);
     }
 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
@@ -246,7 +247,7 @@ pub fn patch_el_details<Ms: Clone>(
 //                old_el_ws
                 old_el_ws.dyn_ref::<web_sys::Element>()
                     .expect("Problem casting Node as Element")
-                    .remove_attribute(name)
+                    .remove_attribute(name.as_str())
                     .expect("Removing an attribute");
             }
         }

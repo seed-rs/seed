@@ -117,10 +117,9 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         success_level(model.count), // Incorporating a separate component
         h3!["What precisely is it we're counting?"],
         input![
-            attrs! {"value" => model.what_we_count},
+            attrs! {At::Value => model.what_we_count},
             input_ev("input", Msg::ChangeWWC)
         ],
-        p![ "Today it's ".to_string(), em!["not"], " gonna rain, this ", em!["is"], " so ", strong![ "good!" ] ]
     ]
 }
 

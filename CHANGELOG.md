@@ -7,7 +7,7 @@
 - Routing refactored; now works dynamically
 - Update function now returns an enum that returns Render or Skip,
 to allow conditional rendering (Breaking)
--Elements can now store more than 1 text node.
+- Elements can now store more than 1 text node.
 
 ## V0.2.3
 - Fixed a bug where initially-empty text won't update

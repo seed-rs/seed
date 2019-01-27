@@ -74,7 +74,7 @@ pub mod prelude {
     pub use crate::{
         dom_types::{
             did_mount, did_update, El, input_ev, keyboard_ev, mouse_ev, raw_ev,
-            simple_ev, Tag, UpdateEl, will_unmount,
+            simple_ev, Tag, UpdateEl, will_unmount, At
         },
         shortcuts::*, // appears not to work.
         vdom::{Update, Update::Render, Update::Skip},
@@ -103,7 +103,7 @@ pub mod tests {
         use crate::{
             div,
             routes,
-            dom_types::{El, UpdateEl, mouse_ev},
+            dom_types::{El, At, UpdateEl, mouse_ev},
             vdom::Update,
         };
         use crate::prelude::*;

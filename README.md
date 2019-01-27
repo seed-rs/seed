@@ -40,7 +40,7 @@ appname` should be replaced with the name of your app.
 
 If not using the quickstart repo, create an Html file with a body that contains this:
 ```html
-<section id="main"></section>
+<section id="app"></section>
 
 <script src='./pkg/package.js'></script>
 
@@ -75,8 +75,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.1.12"
-wasm-bindgen = "^0.2.29"
+seed = "^0.2.4"
+wasm-bindgen = "^0.2.33"
 web-sys = "^0.3.6"
 ```
 
@@ -144,7 +144,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 }
 
 /// The top-level component we pass to the virtual dom.
-fn view(state: seed::App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
     // Attrs, Style, Events, and children may be defined separately.
@@ -222,7 +222,7 @@ navigate to that folder in a terminal,
 run the build script for your system (`build.sh` or `build.ps1`), then start a dev server
  as described above. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
-`seed = { path = "../../"` with `seed = "^0.1.8"`, and in the build script, remove the leading `../../` on the second
+`seed = { path = "../../"` with `seed = "^0.2.4"`, and in the build script, remove the leading `../../` on the second
 line.
 
 # About

@@ -283,34 +283,131 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Tag {
     }
 }
 
-//#[derive(Debug)]
-pub enum _Attr {
-    // https://www.w3schools.com/tags/ref_attributes.asp
-    // This enum primarily exists to ensure only valid attrs are allowed.
-    Action,
-    Alt,
-    Class,
-    Disabled,
-    Height,
-    Href,
-    Id,
-    Lang,
-    OnChange,
-    OnClick,
-    OnContextMenu,
-    OnDblClick,
-    OnMouseOver,
-    Src,
-    Title,
-    Width,
+///// Handle either strings, or enums for the Attrs and Style macros.
+//pub trait UpdateAttrs {
+//    // T is the type of thing we're updating; eg attrs, style, events etc.
+//    fn update(self, attrs: &mut T, val: &str);
+//}
+//
+//impl UpdateAttrs for Attr {
+//    fn update(self, attrs: &mut Attrs, val: &str) {
+//        attrs.vals.insert(self, val.into())
+//    }
+//}
+//
+//impl UpdateAttrs for &str {
+//    fn update(self, attrs: &mut Attrs, val: &str) {
+//        attrs.vals.insert(self.into(), val.into())
+//    }
+//}
+
+
+
+/// Similar to tag population.
+macro_rules! make_attrs {
+    // Create shortcut macros for any element; populate these functions in this module.
+    { $($attr_camel:ident => $attr:expr),+ } => {
+
+        /// The Event enum restricts element-creation to only valid event names, as defined here:
+        /// https://developer.mozilla.org/en-US/docs/Web/Events
+        #[derive(Clone, PartialEq, Eq, Hash)]
+        pub enum At {
+            $(
+                $attr_camel,
+            )+
+            Custom(String)
+        }
+
+        impl At {
+            pub fn as_str(&self) -> &str {
+                match self {
+                    $ (
+                        At::$attr_camel => $attr,
+                    ) +
+                    At::Custom(val) => &val
+                }
+            }
+        }
+
+        impl From<&str> for At {
+            fn from(attr: &str) -> Self {
+                match attr {
+                    $ (
+                          $attr => At::$attr_camel,
+                    ) +
+                    _ => {
+                        crate::log(&format!("Can't find this attribute: {}", attr));
+                        At::Accept
+                    }
+                }
+            }
+        }
+        impl From<String> for At {
+            fn from(attr: String) -> Self {
+                match attr.as_ref() {
+                    $ (
+                          $attr => At::$attr_camel,
+                    ) +
+                    _ => {
+                        crate::log(&format!("Can't find this attribute: {}", attr));
+                        At::Accept
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+/// Comprehensive list: https://www.w3schools.com/tags/ref_attributes.asp
+make_attrs! {
+    // Missing data-*
+    Accept => "accept", AcceptCharset => "accept-charset", AccessKey => "accesskey", Action => "action",
+    Alt => "alt", Async => "async", AutoComplete => "autocomplete", AutoFocus => "autofocus",
+    AutoPlay => "autoplay", Charset => "charset", Checked => "checked", Cite => "cite", Class => "class",
+    Color => "color", Cols => "cols", ColSpan => "colspan", Content => "content", ContentEditable => "contenteditable",
+    Controls => "controls", Coords => "coords", Data => "data", DateTime => "datetime", Default => "default",
+    Defer => "defer", Dir => "dir", DirName => "dirname", Disabled => "disabled", Download => "download",
+    Draggable => "draggable", DropZone => "dropzone", EncType => "enctype", For => "for", Form => "form",
+    FormAction => "formaction", Headers => "headers", Height => "height", Hidden => "hidden", High => "high",
+    Href => "href", Hreflang => "hreflang", HttpEquiv => "http-equiv", Id => "id", IsMap => "ismap",
+    Kind => "kind", Label => "label", Lang => "lang", List => "list", Loop => "loop", Low => "low",
+    Max => "max", MaxLength => "maxlength", Media => "media", Method => "method", Min => "min", Multiple => "multiple",
+    Muted => "muted", Name => "name", NoValidate => "novalidate", OnAbort => "onabort", OnAfterPrint => "onafterprint",
+    OnBeforePrint => "onbeforeprint", OnBeforeUnload => "onbeforeunload", OnBlur => "onblur", OnCanPlay => "oncanplay",
+    OnCanPlayThrough => "oncanplaythrough", OnChange => "onchange", OnClick => "onclick", OnContextMenu => "oncontextmenu",
+    OnCopy => "oncopy", OnCueChange => "oncuechange", OnCut => "oncut", OnDblClick => "ondblclick",
+    OnDrag => "ondrag", OnDragend => "ondragend", OnDragEnter => "ondragenter", OnDragLeave => "ondragleave",
+    OnDragOver => "ondragover", OnDragStart => "ondragstart", OnDrop => "ondrop", OnDurationChange => "ondurationchange",
+    OnEmptied => "onemptied", OnEnded => "onended", OnError => "onerror", OnFocus => "onfocus",
+    OnHashChange => "onhashchange", OnInput => "oninput", OnInvalid => "oninvalid", OnKeyDown => "onkeydown",
+    OnKeyPress => "onkeypress", OnKeyUp => "onkeyup", OnLoad => "onload", OnLoadedData => "onloadeddata",
+    OnLoadedMetaData => "onloadedmetadata", OnLoadStart => "onloadstart", OnMouseDown => "onmousedown",
+    OnMouseMove => "onmousemove", OnMouseOut => "onmouseout", OnMouseOver => "onmouseover", OnMouseUp => "onmouseup",
+    OnMouseWheel => "onmousewheel", OnOffline => "onoffline", OnOnline => "ononline", OnPageHide => "onpagehide",
+    OnPageShow => "onpageshow", OnPaste => "onpaste", OnPause => "onpause", OnPlay => "onplay",
+    OnPlaying => "onplaying", OnPopstate => "onpopstate", OnProgress => "onprogress", OnRateChangen => "onratechange",
+    OnRest => "onreset", OnResize => "onresize", OnScroll => "onscroll", OnSearch => "onsearch",
+    OnSeeked => "onseeked", OnSeeking => "onseeking", OnSelect => "onselect", OnStalled => "onstalled",
+    OnStorage => "onstorage", OnSubmit => "onsubmit", Onsuspend => "onsuspend", OnTimeUpdate => "ontimeupdate",
+    OnToggle => "ontoggle", OnUnload => "onunload", OnVolumeChange => "onvolumechange", OnWaiting => "onwaiting",
+    OnWheel => "onwheel", Open => "open", Optimum => "optimum", Pattern => "pattern", PlaceHolder => "placeholder",
+    Poster => "poster", Preload => "preload", ReadOnly => "readonly", Rel => "rel", Required => "required",
+    Reversed => "reversed", Rows => "rows", RowSpan => "rowspan", Sandbox => "sandbox", Scope => "scope",
+    Selected => "selected", Shape => "shape", Size => "size", Span => "span", SpellCheck => "spellcheck",
+    Src => "src", SrcDoc => "srcdoc", SrcLang => "srclang", SrcSet => "srcset", Start => "start",
+    Step => "step", Style => "style", TabIndex => "tabindex", Target => "target", Title => "title",
+    Translate => "translate", Type => "type", UseMap => "usemap", Value => "value", Width => "width",
+    Wrap => "wrap",
+
+    // Special, for iding dummy els:
+    Dummy => "dummy-element"
 }
 
 /// A thinly-wrapped HashMap holding DOM attributes
 #[derive(Clone, PartialEq)]
 pub struct Attrs {
-    // todo: Custom implm where we ignore checked.
-    // todo enum of only allowed attrs?
-    pub vals: HashMap<String, String>,
+    pub vals: HashMap<At, String>,
 }
 
 //impl PartialEq for Attrs {
@@ -332,7 +429,7 @@ pub struct Attrs {
 //}
 
 impl Attrs {
-    pub fn new(vals: HashMap<String, String>) -> Self {
+    pub fn new(vals: HashMap<At, String>) -> Self {
         Self { vals }
     }
 
@@ -346,7 +443,7 @@ impl Attrs {
     /// Generally called with the id! macro.
     pub fn from_id(name: &str) -> Self {
         let mut result = Self::empty();
-        result.add("id", name);
+        result.add(At::Id, name);
         result
     }
 
@@ -354,21 +451,21 @@ impl Attrs {
     pub fn to_string(&self) -> String {
         self.vals
             .iter()
-            .map(|(k, v)| format!("{}=\"{}\"", k, v))
+            .map(|(k, v)| format!("{}=\"{}\"", k.as_str(), v))
             .collect::<Vec<_>>()
             .join(" ")
     }
 
     /// Add a new key, value pair
-    pub fn add(&mut self, key: &str, val: &str) {
-        self.vals.insert(key.to_string(), val.to_string());
+    pub fn add(&mut self, key: At, val: &str) {
+        self.vals.insert(key, val.to_string());
     }
 
     // Add multiple values for a single attribute. Useful for classes.
-    pub fn add_multiple(&mut self, name: &str, items: Vec<&str>) {
+    pub fn add_multiple(&mut self, key: At, items: Vec<&str>) {
         // We can't loop through self.add, single the value we need is a single,
         // concatonated string.
-        self.add(name, &items.join(" "));
+        self.add(key, &items.join(" "));
     }
 
     /// Combine with another Attrs; if there's a conflict, use the other one.
@@ -789,7 +886,7 @@ impl<Ms> El<Ms> {
 
     /// Add an attribute (eg class, or href)
     pub fn add_attr(&mut self, key: String, val: String) {
-        self.attrs.vals.insert(key, val);
+        self.attrs.vals.insert(key.into(), val);
     }
 
     /// Add a new style (eg display, or height)
@@ -850,7 +947,7 @@ impl<Ms> El<Ms> {
     /// system, but we don't want to render anything.
     pub fn is_dummy(&self) -> bool {
         if let Tag::Del = self.tag {
-            if self.attrs.vals.get("dummy-element").is_some() {
+            if self.attrs.vals.get(&At::Dummy).is_some() {
                 return true;
             }
         }
