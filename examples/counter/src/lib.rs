@@ -100,8 +100,8 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             },
             // We can use normal Rust code and comments in the view.
             h3![text, did_update(|_| log!("This shows when we increment"))],
-            button![simple_ev("click", Msg::Increment), "+"],
-            button![simple_ev("click", Msg::Decrement), "-"],
+            button![simple_ev(Ev::Click, Msg::Increment), "+"],
+            button![simple_ev(Ev::Click, Msg::Decrement), "-"],
             // Optionally-displaying an element, and lifecycle hooks
             if model.count >= 10 {
                 h2![
@@ -118,7 +118,7 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         h3!["What precisely is it we're counting?"],
         input![
             attrs! {At::Value => model.what_we_count},
-            input_ev("input", Msg::ChangeWWC)
+            input_ev(Ev::Input, Msg::ChangeWWC)
         ],
     ]
 }

@@ -269,20 +269,20 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
             class!("view"),
             input![
                 attrs! {At::Class => "toggle"; At::Type => "checkbox"; At::Checked => item.completed },
-                simple_ev("click", Msg::Toggle(posit))
+                simple_ev(Ev::Click, Msg::Toggle(posit))
             ],
-            label![simple_ev("dblclick", Msg::EditItem(posit)), item.title],
+            label![simple_ev(Ev::DblClick, Msg::EditItem(posit)), item.title],
             button![
                 class!("destroy"),
-                simple_ev("click", Msg::Destroy(posit))
+                simple_ev(Ev::Click, Msg::Destroy(posit))
             ]
         ],
         if item.editing {
             input![
                 attrs! {At::Class => "edit"; At::Value => edit_text},
-                simple_ev("blur", Msg::EditSubmit(posit)),
-                input_ev("input", Msg::EditChange),
-                keyboard_ev("keydown", move |ev| Msg::EditKeyDown(posit, ev.key_code())),
+                simple_ev(Ev::Blur, Msg::EditSubmit(posit)),
+                input_ev(Ev::Input, Msg::EditChange),
+                keyboard_ev(Ev::KeyDown, move |ev| Msg::EditKeyDown(posit, ev.key_code())),
             ]
         } else {
             seed::empty()
@@ -298,7 +298,7 @@ fn selection_li(state: seed::App<Msg, Model>, text: &str, visible: Visible, high
             ""
         }],
         style! {"cursor" => "pointer"},
-        simple_ev("click", Msg::SetVisibility(state, highlighter)),
+        simple_ev(Ev::Click, Msg::SetVisibility(state, highlighter)),
         text
     ]]
 }
@@ -309,7 +309,7 @@ fn footer(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     let clear_button = if model.completed_count() > 0 {
         button![
             class!["clear-completed"],
-            simple_ev("click", Msg::ClearCompleted),
+            simple_ev(Ev::Click, Msg::ClearCompleted),
             "Clear completed"
         ]
     } else {
@@ -343,7 +343,7 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         .clone()
         .into_iter()
         .enumerate()
-        .filter(|(posit, todo)| todo.visible(&model.visible))
+        .filter(|(_posit, todo)| todo.visible(&model.visible))
         .map(|(posit, todo)| todo_item(todo, posit, model.edit_text.clone()))
         .collect();
 
@@ -353,7 +353,7 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             input![
                 attrs! {At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox";
                 At::Checked => model.active_count() == 0},
-                simple_ev("click", Msg::ToggleAll)
+                simple_ev(Ev::Click, Msg::ToggleAll)
             ],
             label![attrs! {At::For => "toggle-all"}, "Mark all as complete"],
             ul![class!["todo-list"], todo_els]
@@ -372,7 +372,7 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
                     At::PlaceHolder => "What needs to be done?";
                     At::AutoFocus => true
                 },
-                raw_ev("keydown", Msg::NewTodo)
+                raw_ev(Ev::KeyDown, Msg::NewTodo)
             ]
         ],
         main,

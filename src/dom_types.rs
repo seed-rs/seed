@@ -2,13 +2,11 @@
 //! These are the types used internally by our virtual dom.
 
 use core::convert::AsRef;
-use std::collections::HashMap;
-
+use crate::vdom::Mailbox;
 use pulldown_cmark;
+use std::collections::HashMap;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
-
-use crate::vdom::Mailbox;
 
 //  pub tag: Tag,
 //    pub attrs: Attrs,
@@ -62,18 +60,18 @@ impl Namespace {
 
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
-pub fn simple_ev<Ms>(trigger: &str, message: Ms) -> Listener<Ms>
+pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 where
-    Ms: Clone + 'static,
+    Ms: Clone + 'static, T: ToString
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
-    Listener::new(&trigger.into(), Some(Box::new(closure)))
+    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
 /// Create an event that passes a String of field text, for fast input handling.
-pub fn input_ev<Ms>(
-    trigger: &str,
+pub fn input_ev<Ms, T: ToString>(
+    trigger: T,
     mut handler: impl FnMut(String) -> Ms + 'static,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
@@ -91,45 +89,45 @@ pub fn input_ev<Ms>(
         handler(String::new())
     };
 
-    Listener::new(&trigger.into(), Some(Box::new(closure)))
+    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
 /// Create an event that passes a web_sys::Event, allowing full control of
 /// event-handling
-pub fn raw_ev<Ms>(
-    trigger: &str,
+pub fn raw_ev<Ms, T: ToString>(
+    trigger: T,
     mut handler: impl FnMut(web_sys::Event) -> Ms + 'static,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| handler(event);
-    Listener::new(&trigger.into(), Some(Box::new(closure)))
+    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
 /// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
 /// to items like key_code() and key().
-pub fn keyboard_ev<Ms>(
-    trigger: &str,
+pub fn keyboard_ev<Ms, T: ToString>(
+    trigger: T,
     mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
     };
-    Listener::new(&trigger.into(), Some(Box::new(closure)))
+    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
 /// See keyboard_ev
-pub fn mouse_ev<Ms>(
-    trigger: &str,
+pub fn mouse_ev<Ms, T: ToString>(
+    trigger: T,
     mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
     };
-    Listener::new(&trigger.into(), Some(Box::new(closure)))
+    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
-/// Event-handling for Elements
+/// Ev-handling for Elements
 pub struct Listener<Ms> {
-    pub trigger: String,
+    pub trigger: Ev,
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
@@ -138,9 +136,11 @@ pub struct Listener<Ms> {
 
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms> Listener<Ms> {
-    pub fn new(event: &Event, handler: Option<Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
+    pub fn new(trigger: &str, handler: Option<Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
         Self {
-            trigger: String::from(event.as_str()),
+            // We use &str instead of Event here to allow flexibility in helper funcs,
+            // without macros by using ToString.
+            trigger: trigger.into(),
             handler,
             closure: None,
             id: None,
@@ -162,7 +162,7 @@ impl<Ms> Listener<Ms> {
             );
 
         (el_ws.as_ref() as &web_sys::EventTarget)
-            .add_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(self.trigger.as_str(), closure.as_ref().unchecked_ref())
             .expect("problem adding listener to element");
 
         // Store the closure so we can detach it later. Not detaching it when an element
@@ -178,7 +178,7 @@ impl<Ms> Listener<Ms> {
         // This and attach taken from Draco.
         let closure = self.closure.as_ref().unwrap();
         (el_ws.as_ref() as &web_sys::EventTarget)
-            .remove_event_listener_with_callback(&self.trigger, closure.as_ref().unchecked_ref())
+            .remove_event_listener_with_callback(&self.trigger.as_str(), closure.as_ref().unchecked_ref())
             .expect("problem removing listener from element");
     }
 }
@@ -308,8 +308,8 @@ macro_rules! make_attrs {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($attr_camel:ident => $attr:expr),+ } => {
 
-        /// The Event enum restricts element-creation to only valid event names, as defined here:
-        /// https://developer.mozilla.org/en-US/docs/Web/Events
+        /// The Ev enum restricts element-creation to only valid event names, as defined here:
+        /// https://developer.mozilla.org/en-US/docs/Web/Evs
         #[derive(Clone, PartialEq, Eq, Hash)]
         pub enum At {
             $(
@@ -540,43 +540,67 @@ macro_rules! make_events {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($event_camel:ident => $event:expr),+ } => {
 
-        /// The Event enum restricts element-creation to only valid event names, as defined here:
-        /// https://developer.mozilla.org/en-US/docs/Web/Events
-        #[derive(Clone)]
-        pub enum Event {
+        /// The Ev enum restricts element-creation to only valid event names, as defined here:
+        /// https://developer.mozilla.org/en-US/docs/Web/Evs
+        #[derive(Clone, PartialEq)]
+        pub enum Ev {
             $(
                 $event_camel,
             )+
         }
 
-        impl Event {
+        impl Ev {
             pub fn as_str(&self) -> &str {
                 match self {
                     $ (
-                        Event::$event_camel => $event,
+                        Ev::$event_camel => $event,
                     ) +
                 }
             }
         }
 
-        impl From<&str> for Event {
+        impl From<&str> for Ev {
             fn from(event: &str) -> Self {
                 match event {
                     $ (
-                          $event => Event::$event_camel,
+                          $event => Ev::$event_camel,
                     ) +
                     _ => {
                         crate::log(&format!("Can't find this event: {}", event));
-                        Event::Click
+                        Ev::Click
                     }
                 }
             }
         }
 
+        impl From<String> for Ev {
+            fn from(event: String) -> Self {
+                match event.as_ref(){
+                    $ (
+                          $event => Ev::$event_camel,
+                    ) +
+                    _ => {
+                        crate::log(&format!("Can't find this event: {}", event));
+                        Ev::Click
+                    }
+                }
+            }
+        }
+
+        impl ToString for Ev {
+            fn to_string( & self ) -> String {
+                match self {
+                    $ (
+                        Ev::$ event_camel => $ event.into(),
+                    ) +
+
+                }
+            }
+        }
     }
 }
 
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
+/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Evs
 make_events! {
     Cached => "cached", Error => "error", Abort => "abort", Load => "load", BeforeUnload => "beforeunload",
     Unload => "unload", Online => "online", Offline => "offline", Focus => "focus", Blur => "blur",
@@ -1096,16 +1120,15 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUn
 }
 
 #[cfg(test)]
+use crate as seed;
+// required for macros to work.
+                   //    use crate::prelude::*;
+use crate::{attrs, div, h1, p, section, span};
+use super::*;
+//use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
+//use wasm_bindgen_test::wasm_bindgen_test_configure;
 pub mod tests {
-    use wasm_bindgen_test::wasm_bindgen_test_configure;
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    use super::*;
-    use wasm_bindgen_test::*;
-
-    use crate as seed; // required for macros to work.
-                       //    use crate::prelude::*;
-    use crate::{attrs, div, h1, p, section, span};
+//    wasm_bindgen_test_configure!(run_in_browser);
 
     #[derive(Clone)]
     enum Msg {
