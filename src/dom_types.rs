@@ -336,8 +336,7 @@ macro_rules! make_attrs {
                           $attr => At::$attr_camel,
                     ) +
                     _ => {
-                        crate::log(&format!("Can't find this attribute: {}", attr));
-                        At::Accept
+                        At::Custom(attr.to_owned())
                     }
                 }
             }
@@ -349,8 +348,7 @@ macro_rules! make_attrs {
                           $attr => At::$attr_camel,
                     ) +
                     _ => {
-                        crate::log(&format!("Can't find this attribute: {}", attr));
-                        At::Accept
+                        At::Custom(attr)
                     }
                 }
             }
