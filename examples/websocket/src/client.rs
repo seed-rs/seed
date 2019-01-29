@@ -21,6 +21,7 @@ struct Model {
     connected: bool,
     msg_rx_cnt: usize,
     msg_tx_cnt: usize,
+    input_text: String,
     messages: Vec<String>,
 }
 
@@ -28,7 +29,9 @@ struct Model {
 enum Msg {
     Connected,
     ServerMsg(json::ServerMsg),
-    Send,
+    Send(json::ClientMsg),
+    Sent,
+    EditChange(String),
 }
 
 fn update(msg: Msg, mut model: Model) -> Update<Model> {
@@ -43,7 +46,16 @@ fn update(msg: Msg, mut model: Model) -> Update<Model> {
             model.messages.push(msg.text);
             Render(model)
         }
-        Msg::Send => Skip(model),
+        Msg::EditChange(input_text) => Render(Model {
+            input_text,
+            ..model
+        }),
+        Msg::Send(_) => Skip(model),
+        Msg::Sent => {
+            model.input_text = "".into();
+            model.msg_tx_cnt += 1;
+            Render(model)
+        }
     }
 }
 
@@ -57,10 +69,22 @@ fn view(_: App<Msg, Model>, model: &Model) -> El<Msg> {
         h1!["seed websocket example"],
         if model.connected {
             div![
-                input![attrs! {"type"=>"text";"id"=>"text"}],
+                input![
+                    attrs! {
+                        "type"=>"text";
+                        "id"=>"text";
+                        At::Value => model.input_text;
+                    },
+                    input_ev(Ev::Input, Msg::EditChange)
+                ],
                 button![
                     attrs! {"type"=>"button";"id"=>"send"},
-                    simple_ev("click", Msg::Send),
+                    simple_ev(
+                        "click",
+                        Msg::Send(json::ClientMsg {
+                            text: model.input_text.clone()
+                        })
+                    ),
                     "Send"
                 ]
             ]
@@ -74,7 +98,8 @@ fn view(_: App<Msg, Model>, model: &Model) -> El<Msg> {
             } else {
                 p!["Disconnected"]
             },
-            p![format!("{} messages received", model.msg_rx_cnt),]
+            p![format!("{} messages received", model.msg_rx_cnt)],
+            p![format!("{} messages sent", model.msg_tx_cnt)]
         ]
     ]
 }
@@ -93,12 +118,13 @@ fn open_ws(state: App<Msg, Model>) {
         log_1(&"WebSocket connection was closed".into());
     }) as Box<FnMut(JsValue)>);
 
+    let s = state.clone();
     let on_message = Closure::wrap(Box::new(move |ev: MessageEvent| {
         log_1(&"Client received a message".into());
         let txt = ev.data().as_string().unwrap();
         let json: json::ServerMsg = serde_json::from_str(&txt).unwrap();
         log_2(&"text message:".into(), &txt.into());
-        state.update(Msg::ServerMsg(json));
+        s.update(Msg::ServerMsg(json));
     }) as Box<FnMut(MessageEvent)>);
 
     let on_error = Closure::wrap(Box::new(|_| {
@@ -113,6 +139,15 @@ fn open_ws(state: App<Msg, Model>) {
     on_message.forget();
     ws.set_onerror(Some(on_error.as_ref().unchecked_ref()));
     on_error.forget();
+    let app = state.clone();
+    state.add_message_listener(move |msg| match msg {
+        Msg::Send(msg) => {
+            let s = serde_json::to_string(msg).unwrap();
+            ws.send_with_str(&s).unwrap();
+            app.update(Msg::Sent);
+        }
+        _ => {}
+    });
 }
 
 #[wasm_bindgen]

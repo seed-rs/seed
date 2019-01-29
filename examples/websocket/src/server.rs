@@ -99,7 +99,14 @@ fn user_connected(ws: WebSocket, users: Users) -> impl Future<Item = (), Error =
     // Make an extra clone to give to our disconnection handler...
     let users2 = users.clone();
 
-    user_message(my_id, Message::text("::connected::"), &users);
+    let m = json::ClientMsg {
+        text: "::connected::".into(),
+    };
+    user_message(
+        my_id,
+        Message::text(serde_json::to_string(&m).unwrap()),
+        &users,
+    );
 
     user_ws_rx
         // Every time the user sends a message, broadcast it to
@@ -127,10 +134,11 @@ fn user_message(my_id: usize, msg: Message, users: &Users) {
     } else {
         return;
     };
+    let msg: json::ClientMsg = serde_json::from_str(msg).unwrap();
 
     let new_msg = json::ServerMsg {
         id: my_id,
-        text: format!("<User#{}>: {}", my_id, msg),
+        text: format!("<User#{}>: {}", my_id, msg.text),
     };
 
     let new_msg = serde_json::to_string(&new_msg).unwrap();
