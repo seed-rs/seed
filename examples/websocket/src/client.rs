@@ -52,7 +52,7 @@ fn render_messages(msgs: &[String]) -> El<Msg> {
     div![msgs]
 }
 
-fn view(_: App<Msg, Model>, model: Model) -> El<Msg> {
+fn view(_: App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         h1!["seed websocket example"],
         if model.connected {
@@ -118,6 +118,6 @@ fn open_ws(state: App<Msg, Model>) {
 #[wasm_bindgen]
 pub fn start() {
     log_1(&"start the websocket client app".into());
-    let app = seed::run(Model::default(), update, view, "main", None, None);
+    let app = App::build(Model::default(), update, view).finish().run();
     open_ws(app);
 }
