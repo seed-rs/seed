@@ -54,6 +54,7 @@ pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Routes<Ms>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
+    msg_listeners: RefCell<Vec<Box<Fn(&Ms)>>>,
 }
 
 pub struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
@@ -155,8 +156,8 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
-
                 window_listeners: RefCell::new(Vec::new()),
+                msg_listeners: RefCell::new(Vec::new()),
             }),
         }
     }
@@ -228,6 +229,10 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
     /// the actual DOM, via web_sys, when we need.
     /// The model storred in inner is the old model; updated_model is a newly-calculated one.
     pub fn update(&self, message: Ms) {
+
+        for l in self.data.msg_listeners.borrow().iter() {
+            (l)(&message)
+        }
         // data.model is the old model; pass it to the update function created in the app,
         // which outputs an updated model.
         // We clone the model before running update, and again before passing it
@@ -303,6 +308,12 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
     self.data.routes.replace(r);
 
     // Trigger an update, so the user doesn't have to recursively in the update func.
+    }
+
+    pub fn add_message_listener<F>(&self, listener: F)
+        where F: Fn(&Ms) + 'static
+    {
+       self.data.msg_listeners.borrow_mut().push(Box::new(listener));
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
