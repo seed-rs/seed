@@ -49,6 +49,7 @@ impl Todo {
 struct Model {
     todos: Vec<Todo>,
     visible: Visible,
+    entry_text: String,
     edit_text: String,
     local_storage: web_sys::Storage,
 }
@@ -92,6 +93,7 @@ impl Default for Model {
         Self {
             todos,
             visible: Visible::All,
+            entry_text: String::new(),
             edit_text: String::new(),
             local_storage,
         }
@@ -108,6 +110,7 @@ enum Msg {
     ToggleAll,
     NewTodo(web_sys::Event),
     SetVisibility(seed::App<Msg, Model>, Visible),
+    EditEntry(String),
 
     EditItem(usize),
     EditSubmit(usize),
@@ -186,6 +189,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
         Msg::SetVisibility(state, visible) => {
             Render(seed::push_route(state, &visible.to_string(), Msg::RoutePage(visible)))
         }
+        Msg::EditEntry(entry_text) => Render(Model{ entry_text, ..model }),
 
         Msg::EditItem(posit) => {
             let mut todos: Vec<Todo> = model
@@ -266,14 +270,14 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     li![
         att,
         div![
-            class!("view"),
+            class!["view"],
             input![
                 attrs! {At::Class => "toggle"; At::Type => "checkbox"; At::Checked => item.completed },
                 simple_ev(Ev::Click, Msg::Toggle(posit))
             ],
             label![simple_ev(Ev::DblClick, Msg::EditItem(posit)), item.title],
             button![
-                class!("destroy"),
+                class!["destroy"],
                 simple_ev(Ev::Click, Msg::Destroy(posit))
             ]
         ],
@@ -370,9 +374,11 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
                 attrs! {
                     At::Class => "new-todo";
                     At::PlaceHolder => "What needs to be done?";
-                    At::AutoFocus => true
+                    At::AutoFocus => true;
+                    At::Value => model.entry_text;
                 },
-                raw_ev(Ev::KeyDown, Msg::NewTodo)
+                raw_ev(Ev::KeyDown, Msg::NewTodo),
+                input_ev(Ev::Input, Msg::EditEntry),
             ]
         ],
         main,

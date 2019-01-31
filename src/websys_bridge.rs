@@ -127,6 +127,14 @@ pub fn make_websys_el<Ms: Clone>(
             .create_element(tag)
             .expect("Problem creating web-sys El");
         el_ws.set_inner_html(&el_vdom.text.clone().expect("Missing text on raw HTML element"));
+
+        // todo DRY
+        if el_vdom.style.vals.keys().len() > 0 {
+            el_ws.dyn_ref::<web_sys::Element>()
+                .expect("Problem casting Node as Element")
+                .set_attribute("style", &el_vdom.style.to_string())
+                .expect("Problem setting style");
+        }
         return el_ws.into()
     }
 
@@ -153,7 +161,6 @@ pub fn make_websys_el<Ms: Clone>(
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-//        el_ws
         el_ws.dyn_ref::<web_sys::Element>()
             .expect("Problem casting Node as Element")
             .set_attribute("style", &el_vdom.style.to_string())

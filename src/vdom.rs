@@ -4,7 +4,7 @@ use crate::{
     routing, util, websys_bridge,
 };
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
-use wasm_bindgen::closure::Closure;
+use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
 pub enum Update<Mdl: Clone> {
@@ -140,7 +140,8 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
             .document()
             .expect("Can't find the window's document.");
 
-        let mount_point = document.get_element_by_id(parent_div_id).unwrap();
+        let mount_point = document.get_element_by_id(parent_div_id)
+            .expect("Problem finding parent div");
 
         Self {
             cfg: Rc::new(AppCfg {
@@ -213,6 +214,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
 
         // Allows panic messages to output to the browser console.error.
         panic::set_hook(Box::new(console_error_panic_hook::hook));
+
         self
     }
 
@@ -313,6 +315,27 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
     }
 }
 
+/// Used to identify input/textarea/select elements that don't have an input trigger
+/// so we can manually keep them in sync with the model.
+fn input_listener_exists<Ms>(el_vdom: &El<Ms>) -> bool
+    where Ms: Clone + 'static
+{
+
+    let checkbox = match el_vdom.attrs.vals.get(&dom_types::At::Type) {
+        Some(t) => if t == "checkbox" {true} else {false}
+        None => false
+    };
+
+    // todo handle checkboxes.
+
+    for listener in &el_vdom.listeners {
+        if !checkbox && listener.trigger == dom_types::Ev::Input {
+            return true
+        }
+    }
+    return false
+}
+
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
 pub fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
@@ -326,9 +349,61 @@ where
     id += 1; // Raise the id after each element we process.
     el_vdom.nest_level = Some(active_level);
 
+    // Set up controlled components: Input elements must stay in sync with the state;
+    // don't let them get out of syn with state from typing, which occurs if a change
+    // doesn't trigger a re-render.
+    match el_vdom.tag {
+        dom_types::Tag::Input => {
+            if !input_listener_exists(el_vdom) {
+                el_vdom.controlled = true;
+            }
+        },
+        dom_types::Tag::TextArea => {
+            if !input_listener_exists(el_vdom) {
+                el_vdom.controlled = true;
+            }
+        }
+        dom_types::Tag::Select => {
+            if !input_listener_exists(el_vdom) {
+                el_vdom.controlled = true;
+            }
+        }
+        _ => (),
+    }
+
     // Create the web_sys element; add it to the working tree; store it in
     // its corresponding vdom El.
     let el_ws = websys_bridge::make_websys_el(el_vdom, document);
+
+
+    if el_vdom.controlled {
+        let e2 = el_ws.clone();
+        let closure =
+            Closure::wrap(
+                Box::new(move |event: web_sys::Event| {
+                    crate::log("EDITING");
+                    &e2.dyn_ref::<web_sys::Element>()
+                        .expect("Problem casting Node as Element")
+                        .set_attribute("value", "1111")
+
+                        .expect("Problem setting an atrribute.")
+                    ;
+
+                })
+                    as Box<FnMut(web_sys::Event) + 'static>,
+            );
+        el_vdom.listeners.push(dom_types::Listener::new_control());
+
+
+//        (&el_ws.as_ref() as &web_sys::EventTarget)
+//            .add_event_listener_with_callback("input", closure.as_ref().unchecked_ref())
+//            .expect("problem adding listener to element");
+    }
+
+
+
+
+
     el_vdom.el_ws = Some(el_ws);
     for child in &mut el_vdom.children {
         // Raise the active level once per recursion.
@@ -355,7 +430,26 @@ impl<Ms: Clone, Mdl: Clone> Clone for App<Ms, Mdl> {
     }
 }
 
-// TODO: should this be here, or in a diff module?
+/// Normally, we only have the handler at this point, and build/store the closure
+/// with Listener.attach. For controlled-ones, there's no handler, but we have the closure.
+fn attach_controlled_listener<Ms: Clone>(listener: &mut dom_types::Listener<Ms>, el_ws: &web_sys::Node, value: String) {
+    let e2 = el_ws.clone();
+    let closure =
+        Closure::wrap(
+            Box::new(move |event: web_sys::Event| {
+                util::set_value(&e2, &value)
+            })
+                as Box<FnMut(web_sys::Event) + 'static>,
+        );
+
+    (el_ws.as_ref() as &web_sys::EventTarget)
+        .add_event_listener_with_callback(listener.trigger.as_str(), closure
+            .as_ref().unchecked_ref())
+        .expect("problem adding controlled listener to element");
+
+    listener.closure = Some(closure);
+}
+
 /// Recursively attach event-listeners. Run this at init.
 fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
     let el_ws = el
@@ -364,11 +458,43 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
         .expect("Missing el_ws on attach_all_listeners");
 
     for listener in &mut el.listeners {
-        listener.attach(&el_ws, mailbox.clone());
+        if !listener.control {
+            listener.attach(&el_ws, mailbox.clone());
+        } else {
+            attach_controlled_listener(listener, &el_ws, util::input_value2(&el_ws));
+        }
     }
     for child in &mut el.children {
         attach_listeners(child, mailbox)
     }
+
+
+
+    // Set up controlled components: Input elements must stay in sync with the state;
+    // don't let them get out of syn with state from typing, which occurs if a change
+    // doesn't trigger a re-render.
+
+//    if el.controlled {
+//        let e2 = el_ws.clone();
+//        let closure =
+//            Closure::wrap(
+//                Box::new(move |event: web_sys::Event| {
+//                    crate::log("EDITING");
+//                    &e2.dyn_ref::<web_sys::Element>()
+//                        .expect("Problem casting Node as Element")
+//                        .set_attribute("value", "1111")
+//
+//                        .expect("Problem setting an atrribute.")
+//                    ;
+//
+//                })
+//                    as Box<FnMut(web_sys::Event) + 'static>,
+//            );
+//
+//        (&el_ws.as_ref() as &web_sys::EventTarget)
+//            .add_event_listener_with_callback("input", closure.as_ref().unchecked_ref())
+//            .expect("problem adding listener to element");
+//    }
 
     el.el_ws.replace(el_ws);
 }
@@ -470,7 +596,11 @@ fn patch<Ms: Clone>(
     // Note that unlike the attach_listeners function, this only attaches for the currently
     // element.
     for listener in &mut new.listeners {
-        listener.attach(&old_el_ws, mailbox.clone());
+        if !listener.control {
+            listener.attach(&old_el_ws, mailbox.clone());
+        } else {
+            attach_controlled_listener(listener, &old_el_ws, util::input_value2(&old_el_ws));
+        }
     }
 
     // Now pair up children as best we can.
@@ -678,7 +808,7 @@ pub mod tests {
     enum Msg {}
 
     #[ignore]
-    // #[wasm_bindgen_test]
+//    #[wasm_bindgen_test]
     #[test]
     fn el_added() {
         let mut old_vdom: El<Msg> = div!["text", vec![li!["child1"],]];

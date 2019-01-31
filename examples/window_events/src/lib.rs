@@ -64,7 +64,7 @@ fn misc_demo() -> El<Msg> {
     custom_el.set_text(""); // Demo of set_text.
 
     let mut attributes = attrs! {};
-    attributes.add_multiple("class", vec!["a-modicum-of", "hardly-any"]);
+    attributes.add_multiple(At::Class, vec!["a-modicum-of", "hardly-any"]);
 
     custom![
         Tag::Custom("superdiv".into()),
@@ -76,12 +76,12 @@ fn misc_demo() -> El<Msg> {
     ]
 }
 
-fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         h2![model.coords_string()],
         h2![format!("Last key pressed: {}", model.last_keycode)],
         button![
-            simple_ev("click", Msg::ToggleWatching),
+            simple_ev(Ev::Click, Msg::ToggleWatching),
             if model.watching {
                 "Stop watching"
             } else {
@@ -95,8 +95,8 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
 fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
     let mut result = Vec::new();
     if model.watching {
-        result.push(mouse_ev("mousemove", |ev| Msg::UpdateCoords(ev)));
-        result.push(keyboard_ev("keydown", |ev| Msg::KeyPressed(ev)));
+        result.push(mouse_ev(Ev::MouseMove, |ev| Msg::UpdateCoords(ev)));
+        result.push(keyboard_ev(Ev::KeyDown, |ev| Msg::KeyPressed(ev)));
     }
     result
 }

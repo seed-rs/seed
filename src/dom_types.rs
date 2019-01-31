@@ -8,34 +8,6 @@ use std::collections::HashMap;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
 
-//  pub tag: Tag,
-//    pub attrs: Attrs,
-//    pub style: Style,
-//    pub listeners: Vec<Listener<Ms>>,
-//    pub text: Option<String>,
-//    pub children: Vec<El<Ms>>,
-//
-//    // Things that get filled in later, to assist with rendering.
-//    pub id: Option<u32>,  // todo maybe not optional...
-//    pub nest_level: Option<u32>,
-//    pub el_ws: Option<web_sys::Element>,
-//
-//    // todo temp?
-////    pub key: Option<u32>,
-//
-//    pub raw_html: bool,
-//    pub namespace: Option<Namespace>,
-//
-//     // static: bool
-//     // static_to_parent: bool
-//    // ancestors: Vec<u32>  // ids of parent, grandparent etc.
-//
-//    // Lifecycle hooks
-//    pub did_mount: Option<Box<Fn(&web_sys::Element)>>,
-//    pub did_update: Option<Box<Fn(&web_sys::Element)>>,
-//    pub will_unmount: Option<Box<Fn(&web_sys::Element)>>,
-//
-//
 
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
@@ -76,15 +48,7 @@ pub fn input_ev<Ms, T: ToString>(
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         if let Some(target) = event.target() {
-            if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-                return handler(input.value());
-            }
-            if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-                return handler(input.value());
-            }
-            if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-                return handler(input.value());
-            }
+            return handler(util::input_value(&target))
         }
         handler(String::new())
     };
@@ -131,6 +95,9 @@ pub struct Listener<Ms> {
     pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
+    // Control listeners prevent input on controlled input elements, and
+    // are not assoicated with a message.
+    pub control: bool,
     pub id: Option<u32>,
 }
 
@@ -143,8 +110,19 @@ impl<Ms> Listener<Ms> {
             trigger: trigger.into(),
             handler,
             closure: None,
+            control: false,
             id: None,
         }
+    }
+
+    pub fn new_control() -> Self {
+        Self {
+                trigger: dom_types::Ev::Input,
+                handler: None,
+                closure: None,
+                control: true,
+                id: None,
+            }
     }
 
     /// This method is where the processing logic for events happens.
@@ -176,7 +154,9 @@ impl<Ms> Listener<Ms> {
         T: AsRef<web_sys::EventTarget>,
     {
         // This and attach taken from Draco.
-        let closure = self.closure.as_ref().unwrap();
+        let closure = self.closure.as_ref()
+            .expect("Can't find closure to detach");
+
         (el_ws.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(&self.trigger.as_str(), closure.as_ref().unchecked_ref())
             .expect("problem removing listener from element");
@@ -283,26 +263,6 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Tag {
     }
 }
 
-///// Handle either strings, or enums for the Attrs and Style macros.
-//pub trait UpdateAttrs {
-//    // T is the type of thing we're updating; eg attrs, style, events etc.
-//    fn update(self, attrs: &mut T, val: &str);
-//}
-//
-//impl UpdateAttrs for Attr {
-//    fn update(self, attrs: &mut Attrs, val: &str) {
-//        attrs.vals.insert(self, val.into())
-//    }
-//}
-//
-//impl UpdateAttrs for &str {
-//    fn update(self, attrs: &mut Attrs, val: &str) {
-//        attrs.vals.insert(self.into(), val.into())
-//    }
-//}
-
-
-
 /// Similar to tag population.
 macro_rules! make_attrs {
     // Create shortcut macros for any element; populate these functions in this module.
@@ -402,6 +362,83 @@ make_attrs! {
 
     // Special, for iding dummy els:
     Dummy => "dummy-element"
+}
+
+/// Similar to tag population.
+/// // Tod: DRY with At (almost identical), Ev, and similar to Tag.
+macro_rules! make_styles {
+    // Create shortcut macros for any element; populate these functions in this module.
+    { $($st_camel:ident => $st:expr),+ } => {
+
+        /// The Ev enum restricts element-creation to only valid event names, as defined here:
+        /// https://developer.mozilla.org/en-US/docs/Web/Evs
+        #[derive(Clone, PartialEq, Eq, Hash)]
+        pub enum St {
+            $(
+                $st_camel,
+            )+
+            Custom(String)
+        }
+
+        impl St {
+            pub fn as_str(&self) -> &str {
+                match self {
+                    $ (
+                        St::$st_camel => $st,
+                    ) +
+                    St::Custom(val) => &val
+                }
+            }
+        }
+
+        impl From<&str> for St {
+            fn from(st: &str) -> Self {
+                match st {
+                    $ (
+                          $st => St::$st_camel,
+                    ) +
+                    _ => {
+                        crate::log(&format!("Can't find this attribute: {}", st));
+                        St::Background
+                    }
+                }
+            }
+        }
+        impl From<String> for St {
+            fn from(st: String) -> Self {
+                match st.as_ref() {
+                    $ (
+                          $st => St::$st_camel,
+                    ) +
+                    _ => {
+                        crate::log(&format!("Can't find this attribute: {}", st));
+                        St::Background
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+// todo finish and implement this.
+/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference
+/// Most common: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Properties_Reference
+make_styles! {
+   AdditiveSymbols => "additive-symbols", AlignContent => "align-content", AlignItems => "align-items",
+   AlignSelf => "align-self", All => "all", Angle => "angle", Animation => "animation", AnimationDelay => "animation-delay",
+   AnimationDirection => "animation-direction", AnimationDuration => "animation-duration",
+
+   AnimationFillMode => "animation-fill-mode", AnimationIterationCount => "animation-iteration-count",
+   AnimationName => "animation-name", AnimationPlayState => "animation-play-state",
+
+   // Most common
+   Background => "background", BackgroundAttachment => "background-attachment", BackgroundColor => "background-color",
+   BackgroundImage => "background-image", BackgroundPosition => "background-position", BackgroundRepeat => "background-repeat",
+   Border => "border", BorderBottom => "border-bottom", BorderBottomColor => "border-bottom-color",
+   BorderBottomStyle => "border-bottom-style", BorderBottomWidth => "border-bottom-width", BorderColor => "border-color"
+
+
 }
 
 /// A thinly-wrapped HashMap holding DOM attributes
@@ -812,6 +849,8 @@ pub struct El<Ms: 'static> {
     pub text_node: bool,
     pub namespace: Option<Namespace>,
 
+    // Controlled means we keep its text input (value) in sync with the model.
+    pub controlled: bool,
     // static: bool
     // static_to_parent: bool
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
@@ -840,6 +879,8 @@ impl<Ms> El<Ms> {
             raw_html: false,
             text_node: false,
             namespace: None,
+
+            controlled: false,
 
             // static: false,
             // static_to_parent: false,
@@ -960,6 +1001,7 @@ impl<Ms> El<Ms> {
             raw_html: self.raw_html,
             text_node: self.text_node,
             namespace: self.namespace.clone(),
+            controlled: self.controlled,
 
             did_mount: None,
             did_update: None,
@@ -997,6 +1039,7 @@ impl<Ms> Clone for El<Ms> {
             raw_html: self.raw_html,
             text_node: self.text_node,
             namespace: self.namespace.clone(),
+            controlled: self.controlled,
 
             did_mount: None,
             did_update: None,

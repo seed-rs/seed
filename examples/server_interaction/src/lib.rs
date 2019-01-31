@@ -124,7 +124,7 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             did_mount(move |_| spawn_local(get_data(state.clone())))
         ],
         button![
-            raw_ev("click", move |_| Msg::Send),
+            raw_ev(Ev::Click, move |_| Msg::Send),
             "Send an urgent message"
         ]
     ]
