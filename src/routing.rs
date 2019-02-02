@@ -3,10 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{util, App};
 
+// todo: There's a bug where going back to the start results in a mysterious error.
+
 /// Contains all information used in pushing and handling routes.
 /// Based on React-Reason's router:
 /// https://github.com/reasonml/reason-react/blob/master/docs/router.md
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Url {
     pub path: Vec<String>,
     pub hash: Option<String>,
@@ -42,33 +44,64 @@ impl Url {
     }
 }
 
-///// A convenience function to prevent repetitions
-//fn get_path() -> String {
-//    let path = util::window()
-//        .location()
-//        .pathname()
-//        .expect("Can't find pathname");
-//    path[1..path.len()].to_string()
-//}
+/// Get the current url path, without a prepended /
+fn get_path() -> String {
+    let path = util::window()
+        .location()
+        .pathname()
+        .expect("Can't find pathname");
+    path[1..path.len()].to_string()
+}
 
-/// For setting up landing page routing.
+// todo DRY
+fn get_hash() -> String {
+    let hash = util::window()
+        .location()
+        .hash()
+        .expect("Can't find hash");
+    hash.to_string()
+}
+
+fn get_search() -> String {
+    let search = util::window()
+        .location()
+        .search()
+        .expect("Can't find search");
+    search.to_string()
+}
+
+/// For setting up landing page routing. Unlike normal routing, we can't rely
+/// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(Url) -> Ms) -> App<Ms, Mdl>
 where
     Ms: Clone + 'static,
     Mdl: Clone + 'static,
 {
-//    let path = get_path();
-    // todo this is where you start tmw
-    crate::log(path);
+    let raw_path = get_path();
+    let path_ref: Vec<&str> = raw_path.split("/").collect();
+    let path: Vec<String> = path_ref.into_iter().map(|p| p.to_string()).collect();
+
+    let raw_hash = get_hash();
+    let hash = match raw_hash.len() {
+        0 => None,
+        _ => Some(raw_hash)
+    };
+
+    let raw_search = get_search();
+    let search = match raw_search.len() {
+        0 => None,
+        _ => Some(raw_search)
+    };
 
     let url = Url {
-        path: vec![],
-        hash: None,
-        search: None,
+        path,
+        hash,
+        search,
         title: None,
     };
-//    app.update(routes(url));  // todo errors here yo
 
+    push_route(url.clone());
+    app.update(routes(url));  // todo errors here yo
     app
 }
 
@@ -84,12 +117,12 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> M
         let ev = ev.dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
-        let state_str = ev.state().as_string()
-            .expect("Problem casting state as string");
-
-        let url: Url = serde_json::from_str(&state_str)
-            .expect("Problem deserialzing popstate state");
-//        crate::log(format!("{:?}", url));
+        let url: Url = match ev.state().as_string() {
+            Some(state_str) => serde_json::from_str(&state_str)
+                .expect("Problem deserialzing popstate state"),
+            // This might happen if we go back to a page before we started routing. (?)
+            None => Url::new(vec![])
+        };
 
         app_for_closure.update(routes(url));
 
@@ -121,18 +154,26 @@ pub fn push_route(url: Url) {
     // the existing path. Not doing so will add the path to the existing one.
     let mut path = String::from("/") + &url.path.join("/");
 
-    if let Some(search) = url.search {
-        path += "?";
-        path += &search;
-    }
+
+    let location = util::window().location();
+
     if let Some(hash) = url.hash {
+//        location.set_hash(&hash).expect("Problem setting hash");
+        // todo which way should we handle this?  seems buggy when using set_hash/set_search.
         path += "#";
         path += &hash;
+    }
+
+    if let Some(search) = url.search {
+//        location.set_search(&search).expect("Problem setting search");
+        path += "?";
+        path += &search;
     }
 
     util::window().history()
         .expect("Can't find history")
         .push_state_with_url(&data, &title, Some(&path))
         .expect("Problem pushing state");
+
 }
 

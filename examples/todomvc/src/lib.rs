@@ -109,7 +109,7 @@ enum Msg {
     Toggle(usize),
     ToggleAll,
     NewTodo(web_sys::Event),
-    SetVisibility(Visible),
+    RouteVisibility(Visible),
     EditEntry(String),
 
     EditItem(usize),
@@ -117,7 +117,7 @@ enum Msg {
     EditChange(String),
     EditKeyDown(usize, u32), // item position, keycode
 
-    RoutePage(Visible),
+    ChangeVisibility(Visible),
 }
 
 fn update(msg: Msg, model: Model) -> Update<Model> {
@@ -186,11 +186,11 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
                 Render(model)
             }
         }
-        Msg::SetVisibility(visible) => {
+        Msg::RouteVisibility(visible) => {
             seed::push_route(
-                seed::URL::new([&visible.to_string()])
+                seed::Url::new(vec![&visible.to_string()])
             );
-            update(Msg::SetVisibility(visible), model)
+            update(Msg::ChangeVisibility(visible), model)
         }
         Msg::EditEntry(entry_text) => Render(Model{ entry_text, ..model }),
 
@@ -255,7 +255,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
             }
         }
 
-        Msg::RoutePage(visible) => Render(Model { visible, ..model }),
+        Msg::ChangeVisibility(visible) => Render(Model { visible, ..model }),
     }
 }
 
@@ -305,12 +305,12 @@ fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
             ""
         }],
         style! {"cursor" => "pointer"},
-        simple_ev(Ev::Click, Msg::SetVisibility(highlighter)),
+        simple_ev(Ev::Click, Msg::RouteVisibility(highlighter)),
         text
     ]]
 }
 
-fn footer(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn footer(model: &Model) -> El<Msg> {
     let optional_s = if model.todos.len() == 1 { "" } else { "s" };
 
     let clear_button = if model.completed_count() > 0 {
@@ -341,7 +341,7 @@ fn footer(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
@@ -386,7 +386,7 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         ],
         main,
         if model.active_count() > 0 || model.completed_count() > 0 {
-            footer(state, &model)
+            footer(&model)
         } else {
             seed::empty()
         }
@@ -395,21 +395,14 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
 
 fn routes(url: seed::Url) -> Msg {
     match url.path[0].as_ref() {
-        "active" => Msg::RoutePage(Visible::Active),
-        "completed" => Msg::RoutePage(Visible::Completed),
-        _ => Msg::RoutePage(Visible::All),
+        "active" => Msg::ChangeVisibility(Visible::Active),
+        "completed" => Msg::ChangeVisibility(Visible::Completed),
+        _ => Msg::ChangeVisibility(Visible::All),
     }
 }
 
 #[wasm_bindgen]
 pub fn render() {
-    let routes = routes! {
-        "" => Msg::RoutePage(Visible::All),
-        "active" => Msg::RoutePage(Visible::Active),
-        "completed" => Msg::RoutePage(Visible::Completed),
-    };
-
-
     seed::App::build(Model::default(), update, view)
         .routes(routes)
         .finish()

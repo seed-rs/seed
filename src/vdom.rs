@@ -213,8 +213,8 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         // on the starting URL. Must be set up on the server as well.
         if let Some(routes) = self.data.routes.borrow().clone() {
             routing::setup_popstate_listener(
-//                &routing::initial(self.clone(), routes.clone()),
-                &self.clone(),
+                &routing::initial(self.clone(), routes.clone()),  // todo need to clone routes here?
+//                &self.clone(),
                 routes
             );
         }
