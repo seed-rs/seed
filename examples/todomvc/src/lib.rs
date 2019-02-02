@@ -109,7 +109,7 @@ enum Msg {
     Toggle(usize),
     ToggleAll,
     NewTodo(web_sys::Event),
-    SetVisibility(seed::App<Msg, Model>, Visible),
+    SetVisibility(Visible),
     EditEntry(String),
 
     EditItem(usize),
@@ -186,8 +186,11 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
                 Render(model)
             }
         }
-        Msg::SetVisibility(state, visible) => {
-            Render(seed::push_route(state, &visible.to_string(), Msg::RoutePage(visible)))
+        Msg::SetVisibility(visible) => {
+            seed::push_route(
+                seed::URL::new([&visible.to_string()])
+            );
+            update(Msg::SetVisibility(visible), model)
         }
         Msg::EditEntry(entry_text) => Render(Model{ entry_text, ..model }),
 
@@ -294,7 +297,7 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
     ]
 }
 
-fn selection_li(state: seed::App<Msg, Model>, text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
+fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![a![
         class![if visible == highlighter {
             "selected"
@@ -302,7 +305,7 @@ fn selection_li(state: seed::App<Msg, Model>, text: &str, visible: Visible, high
             ""
         }],
         style! {"cursor" => "pointer"},
-        simple_ev(Ev::Click, Msg::SetVisibility(state, highlighter)),
+        simple_ev(Ev::Click, Msg::SetVisibility(highlighter)),
         text
     ]]
 }
@@ -329,16 +332,16 @@ fn footer(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         ],
         ul![
             class!["filters"],
-            selection_li(state.clone(), "All", model.visible, Visible::All),
-            selection_li(state.clone(), "Active", model.visible, Visible::Active),
-            selection_li(state, "Completed", model.visible, Visible::Completed)
+            selection_li("All", model.visible, Visible::All),
+            selection_li("Active", model.visible, Visible::Active),
+            selection_li("Completed", model.visible, Visible::Completed)
         ],
         clear_button
     ]
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
@@ -390,6 +393,14 @@ fn todo_app(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     ]
 }
 
+fn routes(url: seed::Url) -> Msg {
+    match url.path[0].as_ref() {
+        "active" => Msg::RoutePage(Visible::Active),
+        "completed" => Msg::RoutePage(Visible::Completed),
+        _ => Msg::RoutePage(Visible::All),
+    }
+}
+
 #[wasm_bindgen]
 pub fn render() {
     let routes = routes! {
@@ -398,11 +409,8 @@ pub fn render() {
         "completed" => Msg::RoutePage(Visible::Completed),
     };
 
-//    let mut routes2 = HashMap::new();
-//    routes2.insert(vec![])
 
-
-    seed::App::build(Model::default(), update, todo_app)
+    seed::App::build(Model::default(), update, view)
         .routes(routes)
         .finish()
         .run();

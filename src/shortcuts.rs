@@ -1319,6 +1319,21 @@ macro_rules! routes {
      };
 }
 
+#[macro_export]
+macro_rules! routes2 {
+    { $($path:expr => $message:expr),* $(,)* } => {
+        {
+            let mut result = std::collections::HashMap::new();
+            $(
+                // We can handle arguments of multiple types by using this:
+                // Strings, &strs, bools, numbers etc.
+                result.insert($key.to_string(), $value);
+            )*
+            result
+        }
+     };
+}
+
 /// A HashMap literal, where the keys and valsmust implement ToString.
 #[macro_export]
 macro_rules! hashmap_string {

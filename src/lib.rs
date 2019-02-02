@@ -6,7 +6,7 @@
 pub use crate::{
     dom_types::Listener,
     fetch::{Method, Request, spawn_local},
-    routing::push_route,
+    routing::{push_route, Url},
     util::{document, window},
     vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},

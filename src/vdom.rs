@@ -14,8 +14,7 @@ pub enum Update<Mdl: Clone> {
 
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
-type Routes<Ms> = HashMap<String, Ms>;
-//type Routes<Ms> = HashMap<Vec<String>, Fn() -> Ms>;
+type RoutesFn<Ms> = fn(crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
 
 pub struct Mailbox<Message: 'static> {
@@ -52,7 +51,7 @@ pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
     pub model: RefCell<Mdl>,
     main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
-    pub routes: RefCell<Routes<Ms>>,
+    pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
     msg_listeners: RefCell<Vec<Box<Fn(&Ms)>>>,
 }
@@ -78,7 +77,7 @@ pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Ms, Mdl>,
     parent_div_id: Option<&'static str>,
-    routes: Routes<Ms>,
+    routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
@@ -87,15 +86,17 @@ impl<Ms: Clone, Mdl: Clone> AppBuilder<Ms, Mdl> {
         self.parent_div_id = Some(id);
         self
     }
-    pub fn routes(mut self, routes: Routes<Ms>) -> Self {
-//        self.routes = Some(routes);
-        self.routes = routes;
+
+    pub fn routes(mut self, routes: RoutesFn<Ms>) -> Self {
+        self.routes = Some(routes);
         self
     }
+
     pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
         self.window_events = Some(evts);
         self
     }
+
     pub fn finish(self) -> App<Ms, Mdl> {
         let parent_div_id = self.parent_div_id.unwrap_or("app");
 
@@ -123,17 +124,18 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
             update,
             view,
             parent_div_id: None,
-            routes: HashMap::new(),
+            routes: None,
             window_events: None,
         }
     }
+
     fn new(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Ms, Mdl>,
         parent_div_id: &str,
 //        routes: Option<Routes<Ms>>,
-        routes: Routes<Ms>,
+        routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
         let window = util::window();
@@ -209,9 +211,14 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        let routes_inner = self.data.routes.borrow().clone();
-        let app2 = routing::initial(self.clone(), routes_inner.clone());
-        routing::update_popstate_listener(&app2, routes_inner);
+        if let Some(routes) = self.data.routes.borrow().clone() {
+            routing::setup_popstate_listener(
+//                &routing::initial(self.clone(), routes.clone()),
+                &self.clone(),
+                routes
+            );
+        }
+        // todo put back
 
         // Allows panic messages to output to the browser console.error.
         panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -301,17 +308,6 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         self.data.model.replace(updated_model);
     }
 
-    pub fn add_route(&self, path: &str, message: Ms) {
-            // We're editing a HashMap wrapped in an Option wrapped in an RefCell.
-    let mut r = self.data.routes.borrow_mut().clone();
-    r.insert(path.to_string(), message.clone());
-
-    routing::update_popstate_listener(&self, r.clone());
-    self.data.routes.replace(r);
-
-    // Trigger an update, so the user doesn't have to recursively in the update func.
-    }
-
     pub fn add_message_listener<F>(&self, listener: F)
         where F: Fn(&Ms) + 'static
     {
@@ -386,34 +382,9 @@ where
     // its corresponding vdom El.
     let el_ws = websys_bridge::make_websys_el(el_vdom, document);
 
-
     if el_vdom.controlled {
-        let e2 = el_ws.clone();
-        let closure =
-            Closure::wrap(
-                Box::new(move |event: web_sys::Event| {
-                    crate::log("EDITING");
-                    &e2.dyn_ref::<web_sys::Element>()
-                        .expect("Problem casting Node as Element")
-                        .set_attribute("value", "1111")
-
-                        .expect("Problem setting an atrribute.")
-                    ;
-
-                })
-                    as Box<FnMut(web_sys::Event) + 'static>,
-            );
         el_vdom.listeners.push(dom_types::Listener::new_control());
-
-
-//        (&el_ws.as_ref() as &web_sys::EventTarget)
-//            .add_event_listener_with_callback("input", closure.as_ref().unchecked_ref())
-//            .expect("problem adding listener to element");
     }
-
-
-
-
 
     el_vdom.el_ws = Some(el_ws);
     for child in &mut el_vdom.children {
@@ -447,7 +418,7 @@ fn attach_controlled_listener<Ms: Clone>(listener: &mut dom_types::Listener<Ms>,
     let e2 = el_ws.clone();
     let closure =
         Closure::wrap(
-            Box::new(move |event: web_sys::Event| {
+            Box::new(move |_: web_sys::Event| {
                 util::set_value(&e2, &value)
             })
                 as Box<FnMut(web_sys::Event) + 'static>,

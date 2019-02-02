@@ -1,91 +1,138 @@
-use crate::{util, App};
-use std::collections::HashMap;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use serde::{Deserialize, Serialize};
 
-/// A convenience function to prevent repetitions
-fn get_path() -> String {
-    let path = util::window()
-        .location()
-        .pathname()
-        .expect("Can't find pathname");
-    path[1..path.len()].to_string()
+use crate::{util, App};
+
+/// Contains all information used in pushing and handling routes.
+/// Based on React-Reason's router:
+/// https://github.com/reasonml/reason-react/blob/master/docs/router.md
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Url {
+    pub path: Vec<String>,
+    pub hash: Option<String>,
+    pub search: Option<String>,
+    pub title: Option<String>,
 }
 
+impl Url {
+
+    /// Helper that ignores hash, search and title, and converts path to Strings.
+    pub fn new(path: Vec<&str>) -> Self {
+        Self {
+            path: path.into_iter().map(|p| p.to_string()).collect(),
+            hash: None,
+            search: None,
+            title: None,
+        }
+    }
+
+    pub fn hash(mut self, hash: &str) -> Self {
+        self.hash = Some(hash.into());
+        self
+    }
+
+    pub fn search(mut self, search: &str) -> Self {
+        self.search = Some(search.into());
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+}
+
+///// A convenience function to prevent repetitions
+//fn get_path() -> String {
+//    let path = util::window()
+//        .location()
+//        .pathname()
+//        .expect("Can't find pathname");
+//    path[1..path.len()].to_string()
+//}
 
 /// For setting up landing page routing.
-pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: HashMap<String, Ms>) -> App<Ms, Mdl>
+pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(Url) -> Ms) -> App<Ms, Mdl>
 where
     Ms: Clone + 'static,
     Mdl: Clone + 'static,
 {
-    for (route, route_message) in routes.into_iter() {
-        if route == get_path() {
-            app.update(route_message);
-            break;
-        }
-    }
+//    let path = get_path();
+    // todo this is where you start tmw
+    crate::log(path);
+
+    let url = Url {
+        path: vec![],
+        hash: None,
+        search: None,
+        title: None,
+    };
+//    app.update(routes(url));  // todo errors here yo
+
     app
 }
 
-pub fn update_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: HashMap<String, Ms>)
-where
-    Ms: Clone,
-    Mdl: Clone,
+pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> Ms)
+    where
+        Ms: Clone,
+        Mdl: Clone,
 {
-    let window = util::window();
-    if let Some(ps_closure) = app.data.popstate_closure.borrow().as_ref() {
-        (window.as_ref() as &web_sys::EventTarget)
-            .remove_event_listener_with_callback("popstate", ps_closure.as_ref().unchecked_ref())
-            .expect("Problem removing old popstate listener");
-    }
-
     // We can't reuse the app later to store the popstate once moved into the closure.
     let app_for_closure = app.clone();
+    let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
 
-    let closure = Closure::wrap(Box::new(move |_| {
-        if let Some(route_message) = routes.get(&get_path()) {
-            app_for_closure.update(route_message.clone());
-        }
+        let ev = ev.dyn_ref::<web_sys::PopStateEvent>()
+            .expect("Problem casting as Popstate event");
 
-        // todo we currently don't use state/events.
-        //            let event = event.dyn_into::<web_sys::PopStateEvent>()
-        //                .expect("Unable to cast as a PopStateEvent");
-        // todo: It looks like we could use either the event, or path name.
-        // todo path name might be easier, since
-        //                    if let Some(state) = event.state().as_string() {
-        //                        crate::log("state: ".to_string() + &state);
-        //                    }
+        let state_str = ev.state().as_string()
+            .expect("Problem casting state as string");
+
+        let url: Url = serde_json::from_str(&state_str)
+            .expect("Problem deserialzing popstate state");
+//        crate::log(format!("{:?}", url));
+
+        app_for_closure.update(routes(url));
+
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
-    (window.as_ref() as &web_sys::EventTarget)
+    (util::window().as_ref() as &web_sys::EventTarget)
         .add_event_listener_with_callback("popstate", closure.as_ref().unchecked_ref())
         .expect("Problem adding popstate listener");
     app.data.popstate_closure.replace(Some(closure));
 }
 
-pub fn push_route<Ms, Mdl>(app: crate::vdom::App<Ms, Mdl>, path: &str, message: Ms) -> Mdl
-    where Ms: Clone + 'static, Mdl: 'static + Clone
-{
-    app.add_route(path, message.clone());
+/// Add a new route using history's push_state method.
+///https://developer.mozilla.org/en-US/docs/Web/API/History_API
+pub fn push_route(url: Url) {
+    // We use data to evaluate the path instead of the path displayed in the url.
+    let data = JsValue::from_serde(
+        &serde_json::to_string(&url)
+            .expect("Problem serializing route data")
+    )
+        .expect("Problem converting route data to JsValue");
 
-    let history = util::window().history().expect("Can't find history");
-    // The second parameter, title, is currently unused by Firefox at least.
-    // The first, an arbitrary state object, we could possibly use.
-    // todo: Look into using state/events
+    // title is currently unused by Firefox.
+    let title = match url.title {
+        Some(t) => t,
+        None => "".into()
+    };
 
-    // We're documenting our API to not prepend /. Prepending / means replace
+    // Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
+    let mut path = String::from("/") + &url.path.join("/");
 
-    let path = &(String::from("/") + path);
-    history
-        .push_state_with_url(&JsValue::null(), "", Some(path))
-        .expect("Problem pushing state");
-
-    // Return the updated model; we must first extract from the enum.
-    // This allows simpler syntax in the update function.
-    let up = (app.cfg.update)(message, app.data.model.borrow().clone());
-    match up {
-        crate::vdom::Update::Render(model) => model,
-        crate::vdom::Update::Skip(model) => model,
+    if let Some(search) = url.search {
+        path += "?";
+        path += &search;
     }
+    if let Some(hash) = url.hash {
+        path += "#";
+        path += &hash;
+    }
+
+    util::window().history()
+        .expect("Can't find history")
+        .push_state_with_url(&data, &title, Some(&path))
+        .expect("Problem pushing state");
 }
+

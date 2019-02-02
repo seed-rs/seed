@@ -75,7 +75,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output a single El.
-fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
@@ -85,8 +85,6 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             "flex-direction" => "column";
             "text-align" => "center"
     };
-
-    let v = seed::document().create_text_node("MOOSE");
 
     div![
         outer_style,
