@@ -4,7 +4,7 @@
 use crate::vdom::Mailbox;
 use core::convert::AsRef;
 use pulldown_cmark;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
 
@@ -89,10 +89,12 @@ pub fn mouse_ev<Ms, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
+type EventHandler<Ms> = Box<FnMut(web_sys::Event) -> Ms>;
+
 /// Ev-handling for Elements
 pub struct Listener<Ms> {
     pub trigger: Ev,
-    pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
+    pub handler: Option<EventHandler<Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
     // Control listeners prevent input on controlled input elements, and
@@ -101,9 +103,23 @@ pub struct Listener<Ms> {
     pub id: Option<u32>,
 }
 
+impl<Ms> fmt::Debug for Listener<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}, id:{:?} }}",
+            self.trigger,
+            fmt_hook_fn(&self.handler),
+            fmt_hook_fn(&self.closure),
+            self.control,
+            self.id
+        )
+    }
+}
+
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms> Listener<Ms> {
-    pub fn new(trigger: &str, handler: Option<Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
+    pub fn new(trigger: &str, handler: Option<EventHandler<Ms>>) -> Self {
         Self {
             // We use &str instead of Event here to allow flexibility in helper funcs,
             // without macros by using ToString.
@@ -223,19 +239,19 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount {
     fn update(self, el: &mut El<Ms>) {
-        el.did_mount = Some(self.actions)
+        el.hooks.did_mount = Some(self.actions)
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for DidUpdate {
     fn update(self, el: &mut El<Ms>) {
-        el.did_update = Some(self.actions)
+        el.hooks.did_update = Some(self.actions)
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount {
     fn update(self, el: &mut El<Ms>) {
-        el.will_unmount = Some(self.actions)
+        el.hooks.will_unmount = Some(self.actions)
     }
 }
 
@@ -827,6 +843,7 @@ make_tags! {
 }
 
 /// An component in our virtual DOM.
+#[derive(Debug)]
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -859,9 +876,35 @@ pub struct El<Ms: 'static> {
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
 
     // Lifecycle hooks
-    pub did_mount: Option<Box<FnMut(&web_sys::Node)>>,
-    pub did_update: Option<Box<FnMut(&web_sys::Node)>>,
-    pub will_unmount: Option<Box<FnMut(&web_sys::Node)>>,
+    pub hooks: LifecycleHooks,
+}
+
+type HookFn = Box<FnMut(&web_sys::Node)>;
+
+#[derive(Default)]
+pub struct LifecycleHooks {
+    pub did_mount: Option<HookFn>,
+    pub did_update: Option<HookFn>,
+    pub will_unmount: Option<HookFn>,
+}
+
+fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
+    match h {
+        Some(_) => "Some(.. a dynamic handler ..)",
+        None => "None",
+    }
+}
+
+impl fmt::Debug for LifecycleHooks {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "LifecycleHooks {{ did_mount:{:?}, did_update:{:?}, will_unmount:{} }}",
+            fmt_hook_fn(&self.did_mount),
+            fmt_hook_fn(&self.did_update),
+            fmt_hook_fn(&self.will_unmount)
+        )
+    }
 }
 
 impl<Ms> El<Ms> {
@@ -887,9 +930,7 @@ impl<Ms> El<Ms> {
 
             // static: false,
             // static_to_parent: false,
-            did_mount: None,
-            did_update: None,
-            will_unmount: None,
+            hooks: LifecycleHooks::default(),
         }
     }
 
@@ -1005,10 +1046,7 @@ impl<Ms> El<Ms> {
             text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
-
-            did_mount: None,
-            did_update: None,
-            will_unmount: None,
+            hooks: LifecycleHooks::default(),
         }
     }
 
@@ -1043,10 +1081,7 @@ impl<Ms> Clone for El<Ms> {
             text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
-
-            did_mount: None,
-            did_update: None,
-            will_unmount: None,
+            hooks: LifecycleHooks::default(),
         }
     }
 }
