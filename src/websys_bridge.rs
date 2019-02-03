@@ -236,7 +236,7 @@ pub fn patch_el_details<Ms: Clone>(
     old_el_ws: &web_sys::Node,
 ) {
     // Perform side-effects specified for updating
-    if let Some(update_actions) = &mut old.did_update {
+    if let Some(update_actions) = &mut old.hooks.did_update {
         update_actions(old_el_ws)
     }
 

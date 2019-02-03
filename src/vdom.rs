@@ -576,7 +576,7 @@ fn patch<Ms: Clone>(
         // TODO:, but I'm not sure how to patch them, or deal with them.
         if old.tag != new.tag {
             // TODO: DRY here between this and later in func.
-            if let Some(unmount_actions) = &mut old.will_unmount {
+            if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 unmount_actions(&old_el_ws)
             }
             parent
@@ -666,7 +666,7 @@ fn patch<Ms: Clone>(
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // TODO: DRY here between this and earlier in func
-        if let Some(unmount_actions) = &mut child.will_unmount {
+        if let Some(unmount_actions) = &mut child.hooks.will_unmount {
             unmount_actions(&child_el_ws)
         }
         old_el_ws
