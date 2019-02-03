@@ -1,5 +1,5 @@
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 use crate::{util, App};
 
@@ -15,7 +15,6 @@ pub struct Url {
 }
 
 impl Url {
-
     /// Helper that ignores hash, search and title, and converts path to Strings.
     pub fn new(path: Vec<&str>) -> Self {
         Self {
@@ -104,17 +103,16 @@ where
 }
 
 pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> Ms)
-    where
-        Ms: Clone,
-        Mdl: Clone,
+where
+    Ms: Clone,
+    Mdl: Clone,
 {
     // We can't reuse the app later to store the popstate once moved into the closure.
     let app_for_closure = app.clone();
     let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
-
-        let ev = ev.dyn_ref::<web_sys::PopStateEvent>()
+        let ev = ev
+            .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
-
 
         let url: Url = match ev.state().as_string() {
             Some(state_str) => serde_json::from_str(&state_str)
@@ -125,7 +123,6 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> M
         };
 
         app_for_closure.update(routes(url));
-
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -138,16 +135,14 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> M
 ///https://developer.mozilla.org/en-US/docs/Web/API/History_API
 pub fn push_route(url: Url) {
     // We use data to evaluate the path instead of the path displayed in the url.
-    let data = JsValue::from_serde(
-        &serde_json::to_string(&url)
-            .expect("Problem serializing route data")
-    )
-        .expect("Problem converting route data to JsValue");
+    let data =
+        JsValue::from_serde(&serde_json::to_string(&url).expect("Problem serializing route data"))
+            .expect("Problem converting route data to JsValue");
 
     // title is currently unused by Firefox.
     let title = match url.title {
         Some(t) => t,
-        None => "".into()
+        None => "".into(),
     };
 
     // Prepending / means replace
@@ -170,10 +165,10 @@ pub fn push_route(url: Url) {
 //        path += &search;
     }
 
-    util::window().history()
+    util::window()
+        .history()
         .expect("Can't find history")
         .push_state_with_url(&data, &title, Some(&path))
         .expect("Problem pushing state");
 
 }
-

@@ -99,10 +99,10 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     }
 
     if !set_special {
-        el_ws.dyn_ref::<web_sys::Element>()
+        el_ws
+            .dyn_ref::<web_sys::Element>()
             .expect("Problem casting Node as Element")
-
-//        el_ws2
+            //        el_ws2
             .set_attribute(at, val)
             .expect("Problem setting an atrribute.");
     }
@@ -116,7 +116,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
 pub fn make_websys_el<Ms: Clone>(
     el_vdom: &mut dom_types::El<Ms>,
     document: &web_sys::Document,
-//) -> web_sys::Element {
+    //) -> web_sys::Element {
 ) -> web_sys::Node {
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
@@ -126,16 +126,22 @@ pub fn make_websys_el<Ms: Clone>(
         let el_ws = document
             .create_element(tag)
             .expect("Problem creating web-sys El");
-        el_ws.set_inner_html(&el_vdom.text.clone().expect("Missing text on raw HTML element"));
+        el_ws.set_inner_html(
+            &el_vdom
+                .text
+                .clone()
+                .expect("Missing text on raw HTML element"),
+        );
 
         // todo DRY
         if el_vdom.style.vals.keys().len() > 0 {
-            el_ws.dyn_ref::<web_sys::Element>()
+            el_ws
+                .dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element")
                 .set_attribute("style", &el_vdom.style.to_string())
                 .expect("Problem setting style");
         }
-        return el_ws.into()
+        return el_ws.into();
     }
 
     // A simple text node.
@@ -147,11 +153,9 @@ pub fn make_websys_el<Ms: Clone>(
         Some(ref ns) => document
             .create_element_ns(Some(ns.as_str()), tag)
             .expect("Problem creating web-sys El"),
-        None => {
-            document
-                .create_element(tag)
-                .expect("Problem creating web-sys El")
-        }
+        None => document
+            .create_element(tag)
+            .expect("Problem creating web-sys El"),
     };
 
     for (at, val) in &el_vdom.attrs.vals {
@@ -161,7 +165,8 @@ pub fn make_websys_el<Ms: Clone>(
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-        el_ws.dyn_ref::<web_sys::Element>()
+        el_ws
+            .dyn_ref::<web_sys::Element>()
             .expect("Problem casting Node as Element")
             .set_attribute("style", &el_vdom.style.to_string())
             .expect("Problem setting style");
@@ -169,15 +174,14 @@ pub fn make_websys_el<Ms: Clone>(
 
     // todo don't even create the element if it's a text node.
 
-
-        // A naive match Some(t) => Some(&t) does not work.
+    // A naive match Some(t) => Some(&t) does not work.
     // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
-//    let text = el_vdom.text.as_ref().map(String::as_ref);
-//    if el_vdom.raw_html {
-//        el_ws.set_inner_html(text.unwrap())
-//    } else {
-//        el_ws.set_text_content(text);
-//    }
+    //    let text = el_vdom.text.as_ref().map(String::as_ref);
+    //    if el_vdom.raw_html {
+    //        el_ws.set_inner_html(text.unwrap())
+    //    } else {
+    //        el_ws.set_text_content(text);
+    //    }
 
     // Don't attach listeners here,
     el_ws.into()
@@ -251,8 +255,9 @@ pub fn patch_el_details<Ms: Clone>(
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
-//                old_el_ws
-                old_el_ws.dyn_ref::<web_sys::Element>()
+                //                old_el_ws
+                old_el_ws
+                    .dyn_ref::<web_sys::Element>()
                     .expect("Problem casting Node as Element")
                     .remove_attribute(name.as_str())
                     .expect("Removing an attribute");
@@ -263,8 +268,9 @@ pub fn patch_el_details<Ms: Clone>(
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-//        old_el_ws
-        old_el_ws.dyn_ref::<web_sys::Element>()
+        //        old_el_ws
+        old_el_ws
+            .dyn_ref::<web_sys::Element>()
             .expect("Problem casting Node as Element")
             .set_attribute("style", &new.style.to_string())
             .expect("Setting style");
@@ -278,18 +284,17 @@ pub fn patch_el_details<Ms: Clone>(
         // Text is stored in special Text nodes that don't have a direct-relation to
         // the vdom.
 
-
         if new.raw_html {
-//            old_el_ws.
-            old_el_ws.dyn_ref::<web_sys::Element>()
+            //            old_el_ws.
+            old_el_ws
+                .dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element")
                 .set_inner_html(&new.text.clone().unwrap_or_default())
         } else {
-
             // We need to change from Option<String> to Option<&str>
             match new.text.clone() {
                 Some(text) => old_el_ws.set_text_content(Some(&text)),
-                None => old_el_ws.set_text_content(None)
+                None => old_el_ws.set_text_content(None),
             };
         }
     }
