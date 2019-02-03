@@ -1,6 +1,5 @@
-use web_sys;
 use wasm_bindgen::JsCast;
-
+use web_sys;
 
 /// Convenience function to avoid repeating expect logic.
 pub fn window() -> web_sys::Window {
@@ -24,7 +23,7 @@ pub fn input_value(target: &web_sys::EventTarget) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
         return input.value();
     }
-    return "".into()
+    return "".into();
 }
 
 /// todo DRY just to accept an arg of diff type.
@@ -38,9 +37,8 @@ pub fn input_value2(target: &web_sys::Node) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
         return input.value();
     }
-    return "".into()
+    return "".into();
 }
-
 
 /// Set the value of an element; see note on input_value.
 pub fn set_value(target: &web_sys::Node, value: &str) {

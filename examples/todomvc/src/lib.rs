@@ -192,7 +192,10 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
             );
             update(Msg::ChangeVisibility(visible), model)
         }
-        Msg::EditEntry(entry_text) => Render(Model{ entry_text, ..model }),
+        Msg::EditEntry(entry_text) => Render(Model {
+            entry_text,
+            ..model
+        }),
 
         Msg::EditItem(posit) => {
             let mut todos: Vec<Todo> = model
@@ -279,17 +282,17 @@ fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
                 simple_ev(Ev::Click, Msg::Toggle(posit))
             ],
             label![simple_ev(Ev::DblClick, Msg::EditItem(posit)), item.title],
-            button![
-                class!["destroy"],
-                simple_ev(Ev::Click, Msg::Destroy(posit))
-            ]
+            button![class!["destroy"], simple_ev(Ev::Click, Msg::Destroy(posit))]
         ],
         if item.editing {
             input![
                 attrs! {At::Class => "edit"; At::Value => edit_text},
                 simple_ev(Ev::Blur, Msg::EditSubmit(posit)),
                 input_ev(Ev::Input, Msg::EditChange),
-                keyboard_ev(Ev::KeyDown, move |ev| Msg::EditKeyDown(posit, ev.key_code())),
+                keyboard_ev(Ev::KeyDown, move |ev| Msg::EditKeyDown(
+                    posit,
+                    ev.key_code()
+                )),
             ]
         } else {
             seed::empty()

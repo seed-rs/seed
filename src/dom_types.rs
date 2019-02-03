@@ -1,13 +1,12 @@
 //! This module contains structs and enums that represent dom types, and their parts.
 //! These are the types used internally by our virtual dom.
 
-use core::convert::AsRef;
 use crate::vdom::Mailbox;
+use core::convert::AsRef;
 use pulldown_cmark;
 use std::collections::HashMap;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
-
 
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
@@ -34,7 +33,8 @@ impl Namespace {
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 where
-    Ms: Clone + 'static, T: ToString
+    Ms: Clone + 'static,
+    T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -48,7 +48,7 @@ pub fn input_ev<Ms, T: ToString>(
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         if let Some(target) = event.target() {
-            return handler(util::input_value(&target))
+            return handler(util::input_value(&target));
         }
         handler(String::new())
     };
@@ -117,12 +117,12 @@ impl<Ms> Listener<Ms> {
 
     pub fn new_control() -> Self {
         Self {
-                trigger: dom_types::Ev::Input,
-                handler: None,
-                closure: None,
-                control: true,
-                id: None,
-            }
+            trigger: dom_types::Ev::Input,
+            handler: None,
+            closure: None,
+            control: true,
+            id: None,
+        }
     }
 
     /// This method is where the processing logic for events happens.
@@ -140,7 +140,10 @@ impl<Ms> Listener<Ms> {
             );
 
         (el_ws.as_ref() as &web_sys::EventTarget)
-            .add_event_listener_with_callback(self.trigger.as_str(), closure.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(
+                self.trigger.as_str(),
+                closure.as_ref().unchecked_ref(),
+            )
             .expect("problem adding listener to element");
 
         // Store the closure so we can detach it later. Not detaching it when an element
@@ -154,11 +157,13 @@ impl<Ms> Listener<Ms> {
         T: AsRef<web_sys::EventTarget>,
     {
         // This and attach taken from Draco.
-        let closure = self.closure.as_ref()
-            .expect("Can't find closure to detach");
+        let closure = self.closure.as_ref().expect("Can't find closure to detach");
 
         (el_ws.as_ref() as &web_sys::EventTarget)
-            .remove_event_listener_with_callback(&self.trigger.as_str(), closure.as_ref().unchecked_ref())
+            .remove_event_listener_with_callback(
+                &self.trigger.as_str(),
+                closure.as_ref().unchecked_ref(),
+            )
             .expect("problem removing listener from element");
     }
 }
@@ -238,7 +243,7 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(El::new_text(self))
-//        el.text = Some(self.into());
+        //        el.text = Some(self.into());
     }
 }
 
@@ -1163,13 +1168,13 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUn
 #[cfg(test)]
 use crate as seed;
 // required for macros to work.
-                   //    use crate::prelude::*;
-use crate::{attrs, div, h1, p, section, span};
+//    use crate::prelude::*;
 use super::*;
+use crate::{attrs, div, h1, p, section, span};
 //use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
 //use wasm_bindgen_test::wasm_bindgen_test_configure;
 pub mod tests {
-//    wasm_bindgen_test_configure!(run_in_browser);
+    //    wasm_bindgen_test_configure!(run_in_browser);
 
     #[derive(Clone)]
     enum Msg {
@@ -1177,16 +1182,16 @@ pub mod tests {
     }
 
     // todo now that we use text nodes, same problem as nested
-//    #[wasm_bindgen_test]
-//    pub fn single() {
-//        let expected = "<div>test</div>";
-//
-//        let mut el: El<Msg> = div!["test"];
-//        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-//        assert_eq!(expected, el.el_ws.unwrap()
-//            .dyn_ref::<web_sys::Element>().unwrap()
-//            .outer_html());
-//    }
+    //    #[wasm_bindgen_test]
+    //    pub fn single() {
+    //        let expected = "<div>test</div>";
+    //
+    //        let mut el: El<Msg> = div!["test"];
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        assert_eq!(expected, el.el_ws.unwrap()
+    //            .dyn_ref::<web_sys::Element>().unwrap()
+    //            .outer_html());
+    //    }
 
     // todo children are not showing up not sure why.
     //    #[wasm_bindgen_test]
@@ -1210,24 +1215,24 @@ pub mod tests {
     //    }
 
     // todo now that we use text nodes, same problem as nested
-//    #[wasm_bindgen_test]
-//    pub fn attrs() {
-//        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
-//        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
-//
-//        let mut el: El<Msg> = section![
-//            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
-//            "ok"
-//        ];
-//
-//        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-//        assert!(
-//            expected == el.clone().el_ws.unwrap()
-//                .dyn_ref::<web_sys::Element>().unwrap()
-//                .outer_html()
-//                || expected2 == el.el_ws.unwrap()
-//                .dyn_ref::<web_sys::Element>().unwrap()
-//                .outer_html()
-//        );
-//    }
+    //    #[wasm_bindgen_test]
+    //    pub fn attrs() {
+    //        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
+    //        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
+    //
+    //        let mut el: El<Msg> = section![
+    //            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
+    //            "ok"
+    //        ];
+    //
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        assert!(
+    //            expected == el.clone().el_ws.unwrap()
+    //                .dyn_ref::<web_sys::Element>().unwrap()
+    //                .outer_html()
+    //                || expected2 == el.el_ws.unwrap()
+    //                .dyn_ref::<web_sys::Element>().unwrap()
+    //                .outer_html()
+    //        );
+    //    }
 }
