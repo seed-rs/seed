@@ -270,7 +270,7 @@ macro_rules! make_attrs {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, PartialEq, Eq, Hash)]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum At {
             $(
                 $attr_camel,
@@ -370,7 +370,7 @@ macro_rules! make_styles {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, PartialEq, Eq, Hash)]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum St {
             $(
                 $st_camel,
@@ -440,7 +440,7 @@ make_styles! {
 }
 
 /// A thinly-wrapped HashMap holding DOM attributes
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
     pub vals: HashMap<At, String>,
 }
@@ -515,7 +515,7 @@ impl Attrs {
 
 /// Handle Style separately from Attrs, since it commonly involves multiple parts,
 /// and has a different semantic meaning.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Style {
     // todo enum for key?
     pub vals: HashMap<String, String>,
@@ -577,7 +577,7 @@ macro_rules! make_events {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone, Debug, PartialEq)]
         pub enum Ev {
             $(
                 $event_camel,
@@ -682,7 +682,7 @@ macro_rules! make_tags {
 
         /// The Tag enum restricts element-creation to only valid tags, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone, Debug, PartialEq)]
         pub enum Tag {
             Custom(String),
             $(
