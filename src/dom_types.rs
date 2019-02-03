@@ -1,13 +1,12 @@
 //! This module contains structs and enums that represent dom types, and their parts.
 //! These are the types used internally by our virtual dom.
 
-use core::convert::AsRef;
 use crate::vdom::Mailbox;
+use core::convert::AsRef;
 use pulldown_cmark;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
-
 
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
@@ -35,7 +34,8 @@ impl Namespace {
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 // Ignore clippy for these events re &T; let's keep the API clean
 where
-    Ms: Clone + 'static, T: ToString
+    Ms: Clone + 'static,
+    T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -49,7 +49,7 @@ pub fn input_ev<Ms, T: ToString>(
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         if let Some(target) = event.target() {
-            return handler(util::input_value(&target))
+            return handler(util::input_value(&target));
         }
         handler(String::new())
     };
@@ -90,10 +90,12 @@ pub fn mouse_ev<Ms, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
+type EventHandler<Ms> = Box<FnMut(web_sys::Event) -> Ms>;
+
 /// Ev-handling for Elements
 pub struct Listener<Ms> {
     pub trigger: Ev,
-    pub handler: Option<Box<FnMut(web_sys::Event) -> Ms>>,
+    pub handler: Option<EventHandler<Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
     // Control listeners prevent input on controlled input elements, and
@@ -102,9 +104,23 @@ pub struct Listener<Ms> {
     pub id: Option<u32>,
 }
 
+impl<Ms> fmt::Debug for Listener<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}, id:{:?} }}",
+            self.trigger,
+            fmt_hook_fn(&self.handler),
+            fmt_hook_fn(&self.closure),
+            self.control,
+            self.id
+        )
+    }
+}
+
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 impl<Ms> Listener<Ms> {
-    pub fn new(trigger: &str, handler: Option<Box<FnMut(web_sys::Event) -> Ms>>) -> Self {
+    pub fn new(trigger: &str, handler: Option<EventHandler<Ms>>) -> Self {
         Self {
             // We use &str instead of Event here to allow flexibility in helper funcs,
             // without macros by using ToString.
@@ -118,12 +134,12 @@ impl<Ms> Listener<Ms> {
 
     pub fn new_control() -> Self {
         Self {
-                trigger: dom_types::Ev::Input,
-                handler: None,
-                closure: None,
-                control: true,
-                id: None,
-            }
+            trigger: dom_types::Ev::Input,
+            handler: None,
+            closure: None,
+            control: true,
+            id: None,
+        }
     }
 
     /// This method is where the processing logic for events happens.
@@ -141,7 +157,10 @@ impl<Ms> Listener<Ms> {
             );
 
         (el_ws.as_ref() as &web_sys::EventTarget)
-            .add_event_listener_with_callback(self.trigger.as_str(), closure.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(
+                self.trigger.as_str(),
+                closure.as_ref().unchecked_ref(),
+            )
             .expect("problem adding listener to element");
 
         // Store the closure so we can detach it later. Not detaching it when an element
@@ -155,11 +174,13 @@ impl<Ms> Listener<Ms> {
         T: AsRef<web_sys::EventTarget>,
     {
         // This and attach taken from Draco.
-        let closure = self.closure.as_ref()
-            .expect("Can't find closure to detach");
+        let closure = self.closure.as_ref().expect("Can't find closure to detach");
 
         (el_ws.as_ref() as &web_sys::EventTarget)
-            .remove_event_listener_with_callback(&self.trigger.as_str(), closure.as_ref().unchecked_ref())
+            .remove_event_listener_with_callback(
+                &self.trigger.as_str(),
+                closure.as_ref().unchecked_ref(),
+            )
             .expect("problem removing listener from element");
     }
 }
@@ -219,19 +240,19 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount {
     fn update(self, el: &mut El<Ms>) {
-        el.did_mount = Some(self.actions)
+        el.hooks.did_mount = Some(self.actions)
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for DidUpdate {
     fn update(self, el: &mut El<Ms>) {
-        el.did_update = Some(self.actions)
+        el.hooks.did_update = Some(self.actions)
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount {
     fn update(self, el: &mut El<Ms>) {
-        el.will_unmount = Some(self.actions)
+        el.hooks.will_unmount = Some(self.actions)
     }
 }
 
@@ -239,6 +260,10 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(El::new_text(self))
+<<<<<<< HEAD
+=======
+        //        el.text = Some(self.into());
+>>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
     }
 }
 
@@ -270,7 +295,7 @@ macro_rules! make_attrs {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, PartialEq, Eq, Hash)]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum At {
             $(
                 $attr_camel,
@@ -370,7 +395,7 @@ macro_rules! make_styles {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, PartialEq, Eq, Hash)]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum St {
             $(
                 $st_camel,
@@ -440,7 +465,7 @@ make_styles! {
 }
 
 /// A thinly-wrapped HashMap holding DOM attributes
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
     pub vals: HashMap<At, String>,
 }
@@ -515,7 +540,7 @@ impl Attrs {
 
 /// Handle Style separately from Attrs, since it commonly involves multiple parts,
 /// and has a different semantic meaning.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Style {
     // todo enum for key?
     pub vals: HashMap<String, String>,
@@ -577,7 +602,7 @@ macro_rules! make_events {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone, Debug, PartialEq)]
         pub enum Ev {
             $(
                 $event_camel,
@@ -682,7 +707,7 @@ macro_rules! make_tags {
 
         /// The Tag enum restricts element-creation to only valid tags, as defined here:
         /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone, Debug, PartialEq)]
         pub enum Tag {
             Custom(String),
             $(
@@ -822,6 +847,7 @@ make_tags! {
 }
 
 /// An component in our virtual DOM.
+#[derive(Debug)]
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -854,9 +880,35 @@ pub struct El<Ms: 'static> {
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
 
     // Lifecycle hooks
-    pub did_mount: Option<Box<FnMut(&web_sys::Node)>>,
-    pub did_update: Option<Box<FnMut(&web_sys::Node)>>,
-    pub will_unmount: Option<Box<FnMut(&web_sys::Node)>>,
+    pub hooks: LifecycleHooks,
+}
+
+type HookFn = Box<FnMut(&web_sys::Node)>;
+
+#[derive(Default)]
+pub struct LifecycleHooks {
+    pub did_mount: Option<HookFn>,
+    pub did_update: Option<HookFn>,
+    pub will_unmount: Option<HookFn>,
+}
+
+fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
+    match h {
+        Some(_) => "Some(.. a dynamic handler ..)",
+        None => "None",
+    }
+}
+
+impl fmt::Debug for LifecycleHooks {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "LifecycleHooks {{ did_mount:{:?}, did_update:{:?}, will_unmount:{} }}",
+            fmt_hook_fn(&self.did_mount),
+            fmt_hook_fn(&self.did_update),
+            fmt_hook_fn(&self.will_unmount)
+        )
+    }
 }
 
 impl<Ms> El<Ms> {
@@ -882,9 +934,7 @@ impl<Ms> El<Ms> {
 
             // static: false,
             // static_to_parent: false,
-            did_mount: None,
-            did_update: None,
-            will_unmount: None,
+            hooks: LifecycleHooks::default(),
         }
     }
 
@@ -1000,10 +1050,7 @@ impl<Ms> El<Ms> {
             text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
-
-            did_mount: None,
-            did_update: None,
-            will_unmount: None,
+            hooks: LifecycleHooks::default(),
         }
     }
 
@@ -1051,10 +1098,7 @@ impl<Ms> Clone for El<Ms> {
             text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
-
-            did_mount: None,
-            did_update: None,
-            will_unmount: None,
+            hooks: LifecycleHooks::default(),
         }
     }
 }
@@ -1115,13 +1159,13 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUn
 #[cfg(test)]
 use crate as seed;
 // required for macros to work.
-                   //    use crate::prelude::*;
-use crate::{attrs, div, h1, p, section, span};
+//    use crate::prelude::*;
 use super::*;
+use crate::{attrs, div, h1, p, section, span};
 //use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
 //use wasm_bindgen_test::wasm_bindgen_test_configure;
 pub mod tests {
-//    wasm_bindgen_test_configure!(run_in_browser);
+    //    wasm_bindgen_test_configure!(run_in_browser);
 
     #[derive(Clone)]
     enum Msg {
@@ -1129,16 +1173,16 @@ pub mod tests {
     }
 
     // todo now that we use text nodes, same problem as nested
-//    #[wasm_bindgen_test]
-//    pub fn single() {
-//        let expected = "<div>test</div>";
-//
-//        let mut el: El<Msg> = div!["test"];
-//        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-//        assert_eq!(expected, el.el_ws.unwrap()
-//            .dyn_ref::<web_sys::Element>().unwrap()
-//            .outer_html());
-//    }
+    //    #[wasm_bindgen_test]
+    //    pub fn single() {
+    //        let expected = "<div>test</div>";
+    //
+    //        let mut el: El<Msg> = div!["test"];
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        assert_eq!(expected, el.el_ws.unwrap()
+    //            .dyn_ref::<web_sys::Element>().unwrap()
+    //            .outer_html());
+    //    }
 
     // todo children are not showing up not sure why.
     //    #[wasm_bindgen_test]
@@ -1162,24 +1206,24 @@ pub mod tests {
     //    }
 
     // todo now that we use text nodes, same problem as nested
-//    #[wasm_bindgen_test]
-//    pub fn attrs() {
-//        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
-//        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
-//
-//        let mut el: El<Msg> = section![
-//            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
-//            "ok"
-//        ];
-//
-//        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
-//        assert!(
-//            expected == el.clone().el_ws.unwrap()
-//                .dyn_ref::<web_sys::Element>().unwrap()
-//                .outer_html()
-//                || expected2 == el.el_ws.unwrap()
-//                .dyn_ref::<web_sys::Element>().unwrap()
-//                .outer_html()
-//        );
-//    }
+    //    #[wasm_bindgen_test]
+    //    pub fn attrs() {
+    //        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
+    //        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
+    //
+    //        let mut el: El<Msg> = section![
+    //            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
+    //            "ok"
+    //        ];
+    //
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        assert!(
+    //            expected == el.clone().el_ws.unwrap()
+    //                .dyn_ref::<web_sys::Element>().unwrap()
+    //                .outer_html()
+    //                || expected2 == el.el_ws.unwrap()
+    //                .dyn_ref::<web_sys::Element>().unwrap()
+    //                .outer_html()
+    //        );
+    //    }
 }

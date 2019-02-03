@@ -5,7 +5,7 @@
 
 pub use crate::{
     dom_types::Listener,
-    fetch::{Method, Request, spawn_local},
+    fetch::{spawn_local, Method, Request},
     routing::{push_route, Url},
     util::{document, window},
     vdom::App,
@@ -70,15 +70,15 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
 /// for element-creation macros, input event constructors, and the History struct.
 /// Expose the wasm_bindgen prelude, and lifecycle hooks.
 pub mod prelude {
-    pub use std::collections::HashMap;
     pub use crate::{
         dom_types::{
-            did_mount, did_update, El, input_ev, keyboard_ev, mouse_ev, raw_ev,
-            simple_ev, Tag, UpdateEl, will_unmount, At, Ev
+            did_mount, did_update, input_ev, keyboard_ev, mouse_ev, raw_ev, simple_ev,
+            will_unmount, At, El, Ev, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
         vdom::{Update, Update::Render, Update::Skip},
     };
+    pub use std::collections::HashMap;
 
     pub use wasm_bindgen::prelude::*;
 
@@ -100,12 +100,17 @@ pub mod tests {
     #[wasm_bindgen_test]
     pub fn app_builds() {
         use crate as seed; // required for macros to work.
+        use crate::prelude::*;
         use crate::{
             div,
+<<<<<<< HEAD
             dom_types::{El, At, UpdateEl, mouse_ev},
+=======
+            dom_types::{mouse_ev, At, El, UpdateEl},
+            routes,
+>>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
             vdom::Update,
         };
-        use crate::prelude::*;
 
         #[derive(Clone)]
         struct Model {
@@ -134,9 +139,7 @@ pub mod tests {
         }
 
         fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
-            vec![
-                mouse_ev("mousemove", |_| Msg::Increment)
-            ]
+            vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 
         fn routes(url: seed::Url) -> Msg {
