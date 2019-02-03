@@ -1105,6 +1105,7 @@ impl<Ms> PartialEq for El<Ms> {
         // Don't check children.
         self.tag == other.tag &&
         self.text_node == other.text_node &&
+//        self.get_text() == other.get_text() &&
         self.raw_html == other.raw_html &&
         self.attrs == other.attrs &&
         self.style == other.style &&

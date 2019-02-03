@@ -530,6 +530,8 @@ fn patch<Ms: Clone>(
         None => return
     };
 
+//    crate::log(format!("{:?}", old));
+
     if old != new {
         // Something about this element itself is different: patch it.
         // At this step, we already assume we have the right element - either
@@ -623,6 +625,10 @@ fn patch<Ms: Clone>(
 
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
+            crate::log("Best match:");
+            crate::log(format!("{:?}", best_match.text));
+            crate::log(format!("{:?}", child_new.text));
+
             patch(document, &mut best_match, child_new, &old_el_ws, &mailbox);
         }
     }
@@ -650,7 +656,7 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
     // children_to_eval is the number of children to look at on each nest level.
     //    let children_to_eval = 3;
     // Don't weight children as heavily as the parent. This effect acculates the further down we go.
-    let child_score_significance = 0.6;
+    let child_score_significance: f32 = 0.6;
 
     let mut score = 0.;
 
@@ -712,14 +718,15 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
         score -= 0.15
     };
 
-    // Weight each child subsequently-less.  This is effective for some HTML patterns.
-//        for posit in 0..old.children.len() {
-//            if let Some(child_old) = &old.children.get(posit) {
-//                if let Some(child_new) = &old.children.get(posit) {
-//                    score += child_score_significance * match_score(child_old, posit, child_new, posit);
-//                }
-//            }
-//        }
+    // Weight each child subsequently-less by taking powers of child_significant.
+        for posit in 0..old.children.len() {
+            if let Some(child_old) = &old.children.get(posit) {
+                if let Some(child_new) = &new.children.get(posit) {
+                    score += child_score_significance.powi(posit as i32) *
+                        match_score(child_old, posit, child_new, posit);
+                }
+            }
+        }
 
     score
 }
