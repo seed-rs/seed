@@ -212,7 +212,7 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
     }
 
     // Perform side-effects specified for mounting.
-    if let Some(mount_actions) = &mut el_vdom.did_mount {
+    if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
         mount_actions(&el_ws)
     }
 
@@ -278,21 +278,8 @@ pub fn patch_el_details<Ms: Clone>(
 
     // Patch text
     if old.text != new.text {
-<<<<<<< HEAD
         if new.raw_html {
             old_el_ws.dyn_ref::<web_sys::Element>()
-=======
-        // This is not as straightforward as it looks: There can be multiple text nodes
-        // in the DOM, even though our API only allows for 1 per element. If we
-        // naively run set_text_content(), all child nodes will be removed.
-        // Text is stored in special Text nodes that don't have a direct-relation to
-        // the vdom.
-
-        if new.raw_html {
-            //            old_el_ws.
-            old_el_ws
-                .dyn_ref::<web_sys::Element>()
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
                 .expect("Problem casting Node as Element")
                 .set_inner_html(&new.text.clone().unwrap_or_default())
         } else {

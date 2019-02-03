@@ -334,19 +334,8 @@ where
     Ms: Clone + 'static,
 {
     let checkbox = match el_vdom.attrs.vals.get(&dom_types::At::Type) {
-<<<<<<< HEAD
         Some(t) => t == "checkbox",
         None => false
-=======
-        Some(t) => {
-            if t == "checkbox" {
-                true
-            } else {
-                false
-            }
-        }
-        None => false,
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
     };
 
     // todo handle checkboxes.
@@ -356,11 +345,7 @@ where
             return true;
         }
     }
-<<<<<<< HEAD
     false
-=======
-    return false;
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
 }
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
@@ -473,35 +458,6 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
         attach_listeners(child, mailbox)
     }
 
-<<<<<<< HEAD
-=======
-    // Set up controlled components: Input elements must stay in sync with the state;
-    // don't let them get out of syn with state from typing, which occurs if a change
-    // doesn't trigger a re-render.
-
-    //    if el.controlled {
-    //        let e2 = el_ws.clone();
-    //        let closure =
-    //            Closure::wrap(
-    //                Box::new(move |event: web_sys::Event| {
-    //                    crate::log("EDITING");
-    //                    &e2.dyn_ref::<web_sys::Element>()
-    //                        .expect("Problem casting Node as Element")
-    //                        .set_attribute("value", "1111")
-    //
-    //                        .expect("Problem setting an atrribute.")
-    //                    ;
-    //
-    //                })
-    //                    as Box<FnMut(web_sys::Event) + 'static>,
-    //            );
-    //
-    //        (&el_ws.as_ref() as &web_sys::EventTarget)
-    //            .add_event_listener_with_callback("input", closure.as_ref().unchecked_ref())
-    //            .expect("problem adding listener to element");
-    //    }
-
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
     el.el_ws.replace(el_ws);
 }
 

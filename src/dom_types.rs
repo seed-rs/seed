@@ -260,10 +260,6 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(El::new_text(self))
-<<<<<<< HEAD
-=======
-        //        el.text = Some(self.into());
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
     }
 }
 

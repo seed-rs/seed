@@ -103,12 +103,7 @@ pub mod tests {
         use crate::prelude::*;
         use crate::{
             div,
-<<<<<<< HEAD
             dom_types::{El, At, UpdateEl, mouse_ev},
-=======
-            dom_types::{mouse_ev, At, El, UpdateEl},
-            routes,
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
             vdom::Update,
         };
 

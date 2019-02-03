@@ -23,11 +23,7 @@ pub fn input_value(target: &web_sys::EventTarget) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
         return input.value();
     }
-<<<<<<< HEAD
     "".into()
-=======
-    return "".into();
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
 }
 
 /// todo DRY just to accept an arg of diff type.
@@ -41,11 +37,7 @@ pub fn input_value2(target: &web_sys::Node) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
         return input.value();
     }
-<<<<<<< HEAD
     "".into()
-=======
-    return "".into();
->>>>>>> a36c04e642082cc50688f631309ba845ec3b5f3e
 }
 
 /// Set the value of an element; see note on input_value.
