@@ -43,7 +43,7 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
 
 /// A convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
-pub fn log<S: ToString>(text: S) {
+pub fn log<S: ToString>(text: S) {  // ignore clippy about &S
     web_sys::console::log_1(&text.to_string().into());
 }
 
@@ -102,7 +102,6 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::{
             div,
-            routes,
             dom_types::{El, At, UpdateEl, mouse_ev},
             vdom::Update,
         };
@@ -140,13 +139,12 @@ pub mod tests {
             ]
         }
 
+        fn routes(url: seed::Url) -> Msg {
+            Msg::Increment
+        }
+
         #[wasm_bindgen]
         pub fn render() {
-            let routes = routes! {
-                "page1" => Msg::Increment,
-                "page2" => Msg::Increment,
-            };
-
             seed::App::build(Model::default(), update, view)
                 .mount("body")
                 .routes(routes)

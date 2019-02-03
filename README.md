@@ -54,7 +54,8 @@ If not using the quickstart repo, create an Html file with a body that contains 
         .catch(console.error);
 </script>
 ```
-The first line above is an empty element with id: It's where your app will render. The subsequent ones load your app's wasm modules.
+The first line above is an empty element with id: It's where your app will render.
+The subsequent ones load your app's wasm modules.
 
 The quickstart repo includes this file. You will eventually need to modify it to 
 change the page's title, add a description, favicon, stylesheet etc.
@@ -165,8 +166,8 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             },
             // We can use normal Rust code and comments in the view.
             h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-            button![ simple_ev("click", Msg::Increment), "+" ],
-            button![ simple_ev("click", Msg::Decrement), "-" ],
+            button![ simple_ev(Ev::Click, Msg::Increment), "+" ],
+            button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
 
             // Optionally-displaying an element
             if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
@@ -175,7 +176,7 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{"value" => model.what_we_count}, input_ev("input", Msg::ChangeWWC) ]
+        input![ attrs!{At::Value => model.what_we_count}, input_ev(Ev::Input, Msg::ChangeWWC) ]
     ]
 }
 
@@ -224,6 +225,7 @@ run the build script for your system (`build.sh` or `build.ps1`), then start a d
 to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
 `seed = { path = "../../"` with `seed = "^0.2.4"`, and in the build script, remove the leading `../../` on the second
 line.
+
 
 # About
 
@@ -326,4 +328,3 @@ avoids the dependency glue-code associated with Redux and React-Router.
 - [Seed's API docs](https://docs.rs/seed)
 - [Learn Rust](https://www.rust-lang.org/learn)
 - [Testing in Headless Browsers](https://rustwasm.github.io/wasm-bindgen/wasm-bindgen-test/browsers.html)
-

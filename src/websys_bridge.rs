@@ -272,15 +272,7 @@ pub fn patch_el_details<Ms: Clone>(
 
     // Patch text
     if old.text != new.text {
-        // This is not as straightforward as it looks: There can be multiple text nodes
-        // in the DOM, even though our API only allows for 1 per element. If we
-        // naively run set_text_content(), all child nodes will be removed.
-        // Text is stored in special Text nodes that don't have a direct-relation to
-        // the vdom.
-
-
         if new.raw_html {
-//            old_el_ws.
             old_el_ws.dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element")
                 .set_inner_html(&new.text.clone().unwrap_or_default())

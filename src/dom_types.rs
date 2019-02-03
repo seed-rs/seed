@@ -33,6 +33,7 @@ impl Namespace {
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
+// Ignore clippy for these events re &T; let's keep the API clean
 where
     Ms: Clone + 'static, T: ToString
 {
@@ -238,7 +239,6 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(El::new_text(self))
-//        el.text = Some(self.into());
     }
 }
 
@@ -496,8 +496,8 @@ impl Attrs {
         self.vals.insert(key, val.to_string());
     }
 
-    // Add multiple values for a single attribute. Useful for classes.
-    pub fn add_multiple(&mut self, key: At, items: Vec<&str>) {
+    /// Add multiple values for a single attribute. Useful for classes.
+    pub fn add_multiple(&mut self, key: At, items: Vec<&str>) { // Ignore clippy re &[&str]
         // We can't loop through self.add, single the value we need is a single,
         // concatonated string.
         self.add(key, &items.join(" "));
@@ -1007,6 +1007,19 @@ impl<Ms> El<Ms> {
         }
     }
 
+    // Pull text from child text nodes
+    pub fn get_text(&self) -> String {
+        let mut result = String::new();
+
+        for child in &self.children {
+            if child.text_node {
+                result += &child.clone().text.unwrap_or_default();
+            }
+        }
+
+        result
+    }
+
     /// Dummy elements are used when logic must return an El due to the type
     /// system, but we don't want to render anything.
     pub fn is_dummy(&self) -> bool {
@@ -1051,6 +1064,8 @@ impl<Ms> PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
+        self.text_node == other.text_node &&
+        self.raw_html == other.raw_html &&
         self.attrs == other.attrs &&
         self.style == other.style &&
         self.text == other.text &&
@@ -1060,69 +1075,6 @@ impl<Ms> PartialEq for El<Ms> {
         self.nest_level == other.nest_level
     }
 }
-
-//impl <Ms: Clone + 'static>crate::vdom::DomEl<Ms> for El<Ms> {
-//    type Tg = Tag;
-//    type At = Attrs;
-//    type St = Style;
-//    type Ls = Listener<Ms>;
-//    type Tx = String;
-//
-//    fn tag(self) -> Tag {
-//        self.tag
-//    }
-//    fn attrs(self) -> Attrs {
-//        self.attrs
-//    }
-//    fn style(self) -> Style {
-//        self.style
-//    }
-//    fn listeners(self) -> Vec<Listener<Ms>> {
-//        self.listeners
-//    }
-//    fn text(self) -> Option<String> {
-//        self.text
-//    }
-//    fn children(self) -> Vec<Self> {
-//        self.children
-//    }
-//    fn did_mount(self) -> Option<Box<FnMut(&web_sys::Element)>> {
-//        self.did_mount
-//    }
-//    fn did_update(self) -> Option<Box<FnMut(&web_sys::Element)>> {
-//        self.did_mount
-//    }
-//    fn will_unmount(self) -> Option<Box<FnMut(&web_sys::Element)>> {
-//        self.did_mount
-//    }
-//    fn websys_el(self) -> Option<web_sys::Element> {
-//        self.el_ws
-//    }
-//    fn id(self) -> Option<u32> {
-//        self.id
-//    }
-//    fn raw_html(self) -> bool {
-//        self.raw_html
-//    }
-//        fn namespace(self) -> Option<Namespace> {
-//        self.namespace
-//    }
-//
-//    fn empty(self) -> Self {
-//        self.empty()
-//    }
-//
-//    fn set_id(&mut self, id: Option<u32>) {
-//        self.id = id
-//    }
-//    fn set_websys_el(&mut self, el_ws: Option<web_sys::Element>) {
-//        self.el_ws = el_ws
-//}
-
-//    fn make_websys_el(&mut self, document: &web_sys::Document) -> web_sys::Element {
-//        crate::websys_bridge::make_websys_el(self, document)
-//    }
-//}
 
 pub struct DidMount {
     actions: Box<FnMut(&web_sys::Node)>,

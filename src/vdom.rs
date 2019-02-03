@@ -16,6 +16,7 @@ type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type RoutesFn<Ms> = fn(crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
+type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
 
 pub struct Mailbox<Message: 'static> {
     func: Rc<Fn(Message)>,
@@ -53,7 +54,7 @@ pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
-    msg_listeners: RefCell<Vec<Box<Fn(&Ms)>>>,
+    msg_listeners: RefCell<MsgListeners<Ms>>,
 }
 
 pub struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
@@ -211,9 +212,9 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes) = self.data.routes.borrow().clone() {
+        if let Some(routes) = self.data.routes.borrow().clone() {  // ignore clippy re clone() on copy
             routing::setup_popstate_listener(
-                &routing::initial(self.clone(), routes.clone()),  // todo need to clone routes here?
+                &routing::initial(self.clone(), routes),
 //                &self.clone(),
                 routes
             );
@@ -328,7 +329,7 @@ fn input_listener_exists<Ms>(el_vdom: &El<Ms>) -> bool
 {
 
     let checkbox = match el_vdom.attrs.vals.get(&dom_types::At::Type) {
-        Some(t) => if t == "checkbox" {true} else {false}
+        Some(t) => t == "checkbox",
         None => false
     };
 
@@ -339,7 +340,7 @@ fn input_listener_exists<Ms>(el_vdom: &El<Ms>) -> bool
             return true
         }
     }
-    return false
+    false
 }
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
@@ -449,34 +450,6 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
         attach_listeners(child, mailbox)
     }
 
-
-
-    // Set up controlled components: Input elements must stay in sync with the state;
-    // don't let them get out of syn with state from typing, which occurs if a change
-    // doesn't trigger a re-render.
-
-//    if el.controlled {
-//        let e2 = el_ws.clone();
-//        let closure =
-//            Closure::wrap(
-//                Box::new(move |event: web_sys::Event| {
-//                    crate::log("EDITING");
-//                    &e2.dyn_ref::<web_sys::Element>()
-//                        .expect("Problem casting Node as Element")
-//                        .set_attribute("value", "1111")
-//
-//                        .expect("Problem setting an atrribute.")
-//                    ;
-//
-//                })
-//                    as Box<FnMut(web_sys::Event) + 'static>,
-//            );
-//
-//        (&el_ws.as_ref() as &web_sys::EventTarget)
-//            .add_event_listener_with_callback("input", closure.as_ref().unchecked_ref())
-//            .expect("problem adding listener to element");
-//    }
-
     el.el_ws.replace(el_ws);
 }
 
@@ -492,9 +465,6 @@ fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
         Some(e) => el_ws2 = e,
         None => return
     }
-
-
-//        .expect("Missing el_ws on detach_all_listeners");
 
     for listener in &mut el.listeners {
         listener.detach(&el_ws2);
@@ -560,8 +530,8 @@ fn patch<Ms: Clone>(
 
         // If the tag's different, we must redraw the element and its children; there's
         // no way to patch one element type into another.
-        // TODO: forcing a rerender for differnet listeners is potentially sloppy,
-        // TODO:, but I'm not sure how to patch them, or deal with them.
+        // TODO: forcing a rerender for differnet listeners is inefficient
+        // TODO:, but I'm not sure how to patch them.
         if old.tag != new.tag {
             // TODO: DRY here between this and later in func.
             if let Some(unmount_actions) = &mut old.will_unmount {
@@ -607,10 +577,10 @@ fn patch<Ms: Clone>(
     // One approach would be check all combinations, combine scores within each combo, and pick the one
     // with the highest total score, but this increases with the factorial of
     // child size!
-    // TODO:: Look into this improvement sometime after the initial release.
+    // TODO:: Look into improving this
 
     let avail_old_children = &mut old.children;
-    for child_new in &mut new.children {
+    for (i_new, child_new) in new.children.iter_mut().enumerate() {
         if avail_old_children.is_empty() {
             // One or more new children has been added, or much content has
             // changed, or we've made a mistake: Attach new children.
@@ -623,7 +593,8 @@ fn patch<Ms: Clone>(
             // patching and/or attaching (rendering) to do in subsequent recursions.
             let mut scores: Vec<(u32, f32)> = avail_old_children
                 .iter()
-                .map(|c| (c.id.unwrap(), match_score(c, child_new)))
+                .enumerate()
+                .map(|(i_old, c_old)| (c_old.id.unwrap(), match_score(c_old, i_old, child_new, i_new)))
                 .collect();
 
             // should put highest score at the end.
@@ -644,8 +615,7 @@ fn patch<Ms: Clone>(
 
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
-            // TODO: do we really need to clone the mb again ehre? Keep this under control!
-            patch(document, &mut best_match, child_new, &old_el_ws, &mailbox); // TODO: old vs new for par
+            patch(document, &mut best_match, child_new, &old_el_ws, &mailbox);
         }
     }
 
@@ -668,11 +638,11 @@ fn patch<Ms: Clone>(
 }
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
-fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
+fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posit: usize) -> f32 {
     // children_to_eval is the number of children to look at on each nest level.
     //    let children_to_eval = 3;
     // Don't weight children as heavily as the parent. This effect acculates the further down we go.
-    //    let child_score_significance = 0.6;
+    let child_score_significance = 0.6;
 
     let mut score = 0.;
 
@@ -682,6 +652,15 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
     } else {
         score -= 0.3
     };
+    if old.text_node == new.text_node {
+        score += 0.2
+    } else {
+        score -= 0.2
+    };
+    // Position will not change in many cases.
+    if old_posit == new_posit {
+        score += 0.1
+    }
     // Attrs are not likely to change.
     // TODO:: Compare attrs more directly.
     if old.attrs == new.attrs {
@@ -702,6 +681,12 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
         score -= 0.05
     };
 
+    if old.get_text() == new.get_text() {
+        score += 0.15
+    } else {
+        score -= 0.15
+    };
+
     // For children length, don't do it based on the difference, since children that actually change in
     // len may have very large changes. But having identical length is a sanity check.
     if old.children.len() == new.children.len() {
@@ -719,16 +704,14 @@ fn match_score<Ms: Clone>(old: &El<Ms>, new: &El<Ms>) -> f32 {
         score -= 0.15
     };
 
-    // For now, just look at the first child: Easier to code, and still helps.
-    // Doing indefinite recursion of first child for now. Weight each child
-    // subsequently-less.  This is effective for some common HTML patterns.
-    //    for posit in 0..children_to_eval {
-    //        if let Some(child_old) = &old.children.get(posit) {
-    //            if let Some(child_new) = &old.children.get(posit) {
-    //                score += child_score_significance * match_score(child_old, child_new);
-    //            }
-    //        }
-    //    }
+    // Weight each child subsequently-less.  This is effective for some HTML patterns.
+//        for posit in 0..old.children.len() {
+//            if let Some(child_old) = &old.children.get(posit) {
+//                if let Some(child_new) = &old.children.get(posit) {
+//                    score += child_score_significance * match_score(child_old, posit, child_new, posit);
+//                }
+//            }
+//        }
 
     score
 }

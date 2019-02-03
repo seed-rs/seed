@@ -76,7 +76,7 @@ where
     Mdl: Clone + 'static,
 {
     let raw_path = get_path();
-    let path_ref: Vec<&str> = raw_path.split("/").collect();
+    let path_ref: Vec<&str> = raw_path.split('/').collect();
     let path: Vec<String> = path_ref.into_iter().map(|p| p.to_string()).collect();
 
     let raw_hash = get_hash();
