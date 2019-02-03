@@ -3,8 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{util, App};
 
-// todo: There's a bug where going back to the start results in a mysterious error.
-
 /// Contains all information used in pushing and handling routes.
 /// Based on React-Reason's router:
 /// https://github.com/reasonml/reason-react/blob/master/docs/router.md
@@ -117,11 +115,13 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> M
         let ev = ev.dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
+
         let url: Url = match ev.state().as_string() {
             Some(state_str) => serde_json::from_str(&state_str)
                 .expect("Problem deserialzing popstate state"),
             // This might happen if we go back to a page before we started routing. (?)
             None => Url::new(vec![])
+//            crate::log("Problem with setting state as string")
         };
 
         app_for_closure.update(routes(url));
@@ -152,22 +152,22 @@ pub fn push_route(url: Url) {
 
     // Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
-    let mut path = String::from("/") + &url.path.join("/");
-
+    let path = String::from("/") + &url.path.join("/");
 
     let location = util::window().location();
 
     if let Some(hash) = url.hash {
-//        location.set_hash(&hash).expect("Problem setting hash");
+        location.set_hash(&hash).expect("Problem setting hash");
         // todo which way should we handle this?  seems buggy when using set_hash/set_search.
-        path += "#";
-        path += &hash;
+//        path += "#";
+//        path += &hash;
     }
 
     if let Some(search) = url.search {
-//        location.set_search(&search).expect("Problem setting search");
-        path += "?";
-        path += &search;
+        // todo hash and serach currently bugged
+        location.set_search(&search).expect("Problem setting search");
+//        path += "?";
+//        path += &search;
     }
 
     util::window().history()

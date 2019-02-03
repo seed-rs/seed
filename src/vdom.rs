@@ -238,7 +238,6 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
     /// the actual DOM, via web_sys, when we need.
     /// The model storred in inner is the old model; updated_model is a newly-calculated one.
     pub fn update(&self, message: Ms) {
-
         for l in self.data.msg_listeners.borrow().iter() {
             (l)(&message)
         }
@@ -486,17 +485,25 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
 fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
     let el_ws = el
         .el_ws
-        .take()
-        .expect("Missing el_ws on detach_all_listeners");
+        .take();
+
+    let el_ws2;
+    match el_ws {
+        Some(e) => el_ws2 = e,
+        None => return
+    }
+
+
+//        .expect("Missing el_ws on detach_all_listeners");
 
     for listener in &mut el.listeners {
-        listener.detach(&el_ws);
+        listener.detach(&el_ws2);
     }
     for child in &mut el.children {
         detach_listeners(child)
     }
 
-    el.el_ws.replace(el_ws);
+    el.el_ws.replace(el_ws2);
 }
 
 /// We reattach all listeners, as with normal Els, since we have no
@@ -540,7 +547,10 @@ fn patch<Ms: Clone>(
 
     //        if new.is_dummy() == true { return }
 
-    let old_el_ws = old.el_ws.take().expect("No old elws");
+    let old_el_ws = match old.el_ws.take() {
+        Some(o) => o,
+        None => return
+    };
 
     if old != new {
         // Something about this element itself is different: patch it.

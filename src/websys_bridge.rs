@@ -199,17 +199,17 @@ pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::
 
     parent.append_child(&el_ws).unwrap();
 
-    // Perform side-effects specified for mounting.
-    if let Some(mount_actions) = &mut el_vdom.did_mount {
-        mount_actions(&el_ws)
-    }
-
     // todo: It seesm like if text is present along with children, it'll bbe
     // todo shown before them instead of after. Fix this.
 
     for child in &mut el_vdom.children {
         // Raise the active level once per recursion.
         attach_els(child, &el_ws)
+    }
+
+    // Perform side-effects specified for mounting.
+    if let Some(mount_actions) = &mut el_vdom.did_mount {
+        mount_actions(&el_ws)
     }
 
     // Replace the web_sys el... Indiana-Jones-style.
