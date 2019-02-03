@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.5
+- Attributes and Events now can use `At` and `Ev` enums
+- Routing overhauled; modelled after react-reason. Cleaner syntax, and more flexible.
+- Input, Textarea, and Select elements are now "controlled" - they always
+stay in sync with the model.
+- index.html file updated in examples and quickstart to use relative paths,
+which fixes some routing problems
+
 ## v0.2.4
 - Changed render func to use a new pattern (Breaking)
 - Default mount point added: \"app\" for element id

@@ -507,7 +507,7 @@ fn patch<Ms: Clone>(
     new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-) {
+) -> El<Ms> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
     // TODO: fix this later.
@@ -527,7 +527,7 @@ fn patch<Ms: Clone>(
 
     let old_el_ws = match old.el_ws.take() {
         Some(o) => o,
-        None => return
+        None => return new.clone()
     };
 
 //    crate::log(format!("{:?}", old));
@@ -555,7 +555,7 @@ fn patch<Ms: Clone>(
             let mut new = new;
             attach_listeners(&mut new, &mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
-            return;
+            return new.clone();
         }
 
         // Patch parts of the Element.
@@ -587,9 +587,10 @@ fn patch<Ms: Clone>(
     // One approach would be check all combinations, combine scores within each combo, and pick the one
     // with the highest total score, but this increases with the factorial of
     // child size!
-    // TODO:: Look into improving this
 
     let avail_old_children = &mut old.children;
+    let mut prev_best: Option<El<Ms>> = None;
+//    let mut t;
     for (i_new, child_new) in new.children.iter_mut().enumerate() {
         if avail_old_children.is_empty() {
             // One or more new children has been added, or much content has
@@ -625,11 +626,28 @@ fn patch<Ms: Clone>(
 
             let mut best_match = avail_old_children.pop().expect("Probably popping");
 
-            crate::log("Best match:");
-            crate::log(format!("{:?}", best_match.text));
-            crate::log(format!("{:?}", child_new.text));
-
-            patch(document, &mut best_match, child_new, &old_el_ws, &mailbox);
+            let best2 = patch(document, &mut best_match, child_new, &old_el_ws, &mailbox);
+            crate::log("Suba");
+            // Now make sure the order is correct; the code above will place children
+            // in the wrong order, if the best_match guess is wrong.
+//            let best_ws = best_match.clone().el_ws;
+            let best_ws = best2.clone().el_ws;
+            if best_ws.is_none() {
+                continue
+            }
+            crate::log("A");
+            if let Some(prev) = prev_best {
+                crate::log("B");
+                best_match
+                    .clone()
+                    .el_ws;
+//                    .expect("Problem finding el_ws in sorting")
+//                    .dyn_ref::<web_sys::Element>()
+//                    .expect("Problem casting node as element")
+//                    .after_with_node_1(&prev.el_ws.expect("Problem finding prev web_sys element"))
+//                    .expect("Problem reordering children");
+            }
+            prev_best = Some(best_match);
         }
     }
 
@@ -649,6 +667,8 @@ fn patch<Ms: Clone>(
     }
 
     new.el_ws = Some(old_el_ws);
+
+    new.clone()
 }
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
@@ -695,11 +715,12 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
         score -= 0.05
     };
 
-    if old.get_text() == new.get_text() {
-        score += 0.15
-    } else {
-        score -= 0.15
-    };
+    // todo put back
+//    if old.get_text() == new.get_text() {
+//        score += 0.15
+//    } else {
+//        score -= 0.15
+//    };
 
     // For children length, don't do it based on the difference, since children that actually change in
     // len may have very large changes. But having identical length is a sanity check.
@@ -719,14 +740,15 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
     };
 
     // Weight each child subsequently-less by taking powers of child_significant.
-        for posit in 0..old.children.len() {
-            if let Some(child_old) = &old.children.get(posit) {
-                if let Some(child_new) = &new.children.get(posit) {
-                    score += child_score_significance.powi(posit as i32) *
-                        match_score(child_old, posit, child_new, posit);
-                }
-            }
-        }
+    // todo put back
+//        for posit in 0..old.children.len() {
+//            if let Some(child_old) = &old.children.get(posit) {
+//                if let Some(child_new) = &new.children.get(posit) {
+//                    score += child_score_significance.powi(posit as i32) *
+//                        match_score(child_old, posit, child_new, posit);
+//                }
+//            }
+//        }
 
     score
 }

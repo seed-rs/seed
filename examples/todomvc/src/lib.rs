@@ -187,9 +187,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
             }
         }
         Msg::RouteVisibility(visible) => {
-            seed::push_route(
-                seed::Url::new(vec![&visible.to_string()])
-            );
+            seed::push_path(vec![visible]);
             update(Msg::ChangeVisibility(visible), model)
         }
         Msg::EditEntry(entry_text) => Render(Model {

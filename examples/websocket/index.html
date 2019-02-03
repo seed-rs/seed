@@ -7,11 +7,11 @@
   </head>
   <body>
     <section id="app"></section>
-    <script src='./pkg/websocket.js'></script>
+    <script src='/pkg/websocket.js'></script>
     <script>
         const { start } = wasm_bindgen;
         function run() { start(); }
-        wasm_bindgen('./pkg/websocket_bg.wasm')
+        wasm_bindgen('/pkg/websocket_bg.wasm')
           .then(run)
           .catch(console.error);
     </script>

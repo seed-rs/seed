@@ -16,7 +16,7 @@ pub struct Url {
 
 impl Url {
     /// Helper that ignores hash, search and title, and converts path to Strings.
-    pub fn new(path: Vec<&str>) -> Self {
+    pub fn new<T: ToString>(path: Vec<T>) -> Self {
         Self {
             path: path.into_iter().map(|p| p.to_string()).collect(),
             hash: None,
@@ -47,7 +47,7 @@ fn get_path() -> String {
         .location()
         .pathname()
         .expect("Can't find pathname");
-    path[1..path.len()].to_string()
+    path[1..path.len()].to_string()  // Remove leading /
 }
 
 // todo DRY
@@ -56,7 +56,7 @@ fn get_hash() -> String {
         .location()
         .hash()
         .expect("Can't find hash");
-    hash.to_string()
+    hash.to_string().replace("#", "")
 }
 
 fn get_search() -> String {
@@ -64,7 +64,7 @@ fn get_search() -> String {
         .location()
         .search()
         .expect("Can't find search");
-    search.to_string()
+    search.to_string().replace("?", "")
 }
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
@@ -118,8 +118,10 @@ where
             Some(state_str) => serde_json::from_str(&state_str)
                 .expect("Problem deserialzing popstate state"),
             // This might happen if we go back to a page before we started routing. (?)
-            None => Url::new(vec![])
-//            crate::log("Problem with setting state as string")
+            None => {
+                let empty: Vec<String> = Vec::new();
+                Url::new(empty)
+            }
         };
 
         app_for_closure.update(routes(url));
@@ -149,26 +151,25 @@ pub fn push_route(url: Url) {
     // the existing path. Not doing so will add the path to the existing one.
     let path = String::from("/") + &url.path.join("/");
 
-    let location = util::window().location();
-
-    if let Some(hash) = url.hash {
-        location.set_hash(&hash).expect("Problem setting hash");
-        // todo which way should we handle this?  seems buggy when using set_hash/set_search.
-//        path += "#";
-//        path += &hash;
-    }
-
-    if let Some(search) = url.search {
-        // todo hash and serach currently bugged
-        location.set_search(&search).expect("Problem setting search");
-//        path += "?";
-//        path += &search;
-    }
-
     util::window()
         .history()
         .expect("Can't find history")
         .push_state_with_url(&data, &title, Some(&path))
         .expect("Problem pushing state");
 
+    // Must set hash and search after push_state, or the url will be overwritten.
+    let location = util::window().location();
+
+    if let Some(hash) = url.hash {
+        location.set_hash(&hash).expect("Problem setting hash");
+    }
+
+    if let Some(search) = url.search {
+        location.set_search(&search).expect("Problem setting search");
+    }
+}
+
+/// A convenience function, for use when only a path is required.
+pub fn push_path<T: ToString>(path: Vec<T>) {
+    push_route(Url::new(path));
 }
