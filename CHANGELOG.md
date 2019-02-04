@@ -1,8 +1,8 @@
 # Changelog
 
 ## v0.2.6
-- Fixed a bug in vdom rendering of children
-- Improved vdom logic
+- Fixed a bug where children would render out-of-order
+- Improved vdom diffing logic
 
 ## v0.2.5
 - Attributes and Events now can use `At` and `Ev` enums
