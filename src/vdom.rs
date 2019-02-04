@@ -295,6 +295,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
                 &mut self.data.main_el_vdom.borrow_mut(),
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
+//                None,
                 &self.mailbox(),
             );
 
@@ -506,8 +507,9 @@ fn patch<Ms: Clone>(
     old: &mut El<Ms>,
     new: &mut El<Ms>,
     parent: &web_sys::Node,
+//    prev_child: Option<web_sys::Node>,   // todo remove
     mailbox: &Mailbox<Ms>,
-) -> El<Ms> {
+) {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
     // TODO: fix this later.
@@ -527,7 +529,7 @@ fn patch<Ms: Clone>(
 
     let old_el_ws = match old.el_ws.take() {
         Some(o) => o,
-        None => return new.clone()
+        None => return
     };
 
 //    crate::log(format!("{:?}", old));
@@ -555,7 +557,7 @@ fn patch<Ms: Clone>(
             let mut new = new;
             attach_listeners(&mut new, &mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
-            return new.clone();
+            return
         }
 
         // Patch parts of the Element.
@@ -575,84 +577,120 @@ fn patch<Ms: Clone>(
         }
     }
 
-    // Now pair up children as best we can.
-    // If there are the same number of children, assume there's a 1-to-1 mapping,
-    // where we will not add or remove any; but patch as needed.
+    // todo new, less-sophisticated approach that should avoid order problems,
+    // todo compared to the commented-out code below.
+    let mut old_children_patched: Vec<u32> = Vec::new();
 
-    // A more sophisticated approach would be to find the best match of every
-    // combination of score of new vs old, then rank them somehow. (Eg even
-    // if old id=2 is the best match for the first new, if it's only a marginal
-    // winner, but a strong winner for the second, it makes sense to put it
-    // in the second, but we are not allowing it this opporunity as-is.
-    // One approach would be check all combinations, combine scores within each combo, and pick the one
-    // with the highest total score, but this increases with the factorial of
-    // child size!
-
-    let avail_old_children = &mut old.children;
-    let mut prev_best: Option<El<Ms>> = None;
-//    let mut t;
     for (i_new, child_new) in new.children.iter_mut().enumerate() {
-        if avail_old_children.is_empty() {
-            // One or more new children has been added, or much content has
-            // changed, or we've made a mistake: Attach new children.
-            websys_bridge::attach_els(child_new, &old_el_ws);
-            let mut child_new = child_new;
-            attach_listeners(&mut child_new, &mailbox);
-        } else {
-            // We still have old children to pick a match from. If we pick
-            // incorrectly, or there is no "good" match, we'll have some
-            // patching and/or attaching (rendering) to do in subsequent recursions.
-            let mut scores: Vec<(u32, f32)> = avail_old_children
-                .iter()
-                .enumerate()
-                .map(|(i_old, c_old)| (c_old.id.unwrap(), match_score(c_old, i_old, child_new, i_new)))
-                .collect();
-
-            // should put highest score at the end.
-            scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
-
-            // Sorting children vice picking the best one makes this easier to handle
-            // without irking the borrow checker, despite appearing less counter-intuitive,
-            // due to the convenient pop method.
-            avail_old_children.sort_by(|b, a| {
-                scores
-                    .iter()
-                    .find(|s| s.0 == b.id.unwrap())
-                    .unwrap()
-                    .1
-                    .partial_cmp(&scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1)
-                    .unwrap()
-            });
-
-            let mut best_match = avail_old_children.pop().expect("Probably popping");
-
-            let best2 = patch(document, &mut best_match, child_new, &old_el_ws, &mailbox);
-            crate::log("Suba");
-            // Now make sure the order is correct; the code above will place children
-            // in the wrong order, if the best_match guess is wrong.
-//            let best_ws = best_match.clone().el_ws;
-            let best_ws = best2.clone().el_ws;
-            if best_ws.is_none() {
-                continue
+        match old.children.get(i_new) {
+            Some(mut child_old) => {
+                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
+                old_children_patched.push(child_old.id.expect("Can't find child's id"));
+            },
+            None => {
+                // We ran out of old children to patch; create new ones.
+                websys_bridge::attach_els(child_new, &old_el_ws);
+                let mut child_new = child_new;
+                attach_listeners(&mut child_new, &mailbox);
             }
-            crate::log("A");
-            if let Some(prev) = prev_best {
-                crate::log("B");
-                best_match
-                    .clone()
-                    .el_ws;
-//                    .expect("Problem finding el_ws in sorting")
-//                    .dyn_ref::<web_sys::Element>()
-//                    .expect("Problem casting node as element")
-//                    .after_with_node_1(&prev.el_ws.expect("Problem finding prev web_sys element"))
-//                    .expect("Problem reordering children");
-            }
-            prev_best = Some(best_match);
         }
     }
 
-    // Now purge any existing children; they're not part of the new model.
-    for child in avail_old_children {
+
+//
+//
+//    // Now pair up children as best we can.
+//    // If there are the same number of children, assume there's a 1-to-1 mapping,
+//    // where we will not add or remove any; but patch as needed.
+//    let avail_old_children = &mut old.children;
+//    let mut prev_child: Option<web_sys::Node> = None;
+//    let mut best_match;
+////    let mut t;
+//    for (i_new, child_new) in new.children.iter_mut().enumerate() {
+//        if avail_old_children.is_empty() {
+//            // One or more new children has been added, or much content has
+//            // changed, or we've made a mistake: Attach new children.
+//            websys_bridge::attach_els(child_new, &old_el_ws);
+//            let mut child_new = child_new;
+//            attach_listeners(&mut child_new, &mailbox);
+//
+//        } else {
+//            // We still have old children to pick a match from. If we pick
+//            // incorrectly, or there is no "good" match, we'll have some
+//            // patching and/or attaching (rendering) to do in subsequent recursions.
+//            let mut scores: Vec<(u32, f32)> = avail_old_children
+//                .iter()
+//                .enumerate()
+//                .map(|(i_old, c_old)| (c_old.id.unwrap(), match_score(c_old, i_old, child_new, i_new)))
+//                .collect();
+//
+//            // should put highest score at the end.
+//            scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
+//
+//            // Sorting children vice picking the best one makes this easier to handle
+//            // without irking the borrow checker, despite appearing less counter-intuitive,
+//            // due to the convenient pop method.
+//            avail_old_children.sort_by(|b, a| {
+//                scores
+//                    .iter()
+//                    .find(|s| s.0 == b.id.unwrap())
+//                    .unwrap()
+//                    .1
+//                    .partial_cmp(&scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1)
+//                    .unwrap()
+//            });
+//
+//            best_match = avail_old_children.pop().expect("Problem popping");
+
+
+
+
+
+//            crate::log(best_match.el_ws.is_some());
+//            crate::log(prev_child.is_some());
+
+//
+//            let expected_posit = i_new;
+//            let actual_posit = __;
+
+
+//            // Now make sure the order is correct; the code above will place children
+//            // in the wrong order, if the best_match guess is wrong.
+////            let best_ws = best_match.clone().el_ws;
+////            let best_ws = best2.clone().el_ws;
+//            if let Some(prev) = prev_child {
+//                best_match
+//                    .clone()
+//                    .el_ws
+//                    .expect("Problem finding el_ws in sorting")
+//                    .dyn_ref::<web_sys::Element>()
+//                    .expect("Problem casting node as element")
+//                    .after_with_node_1(&prev)
+//                    .expect("Problem reordering children");
+//            }
+//
+//
+//
+//            // Set up the previous child before patching, since patching will strip out the web_sys el.
+//            prev_child = best_match.el_ws.clone();
+
+//            patch(document, &mut best_match, child_new, &old_el_ws, prev_child, &mailbox);
+//            patch(document, &mut best_match, child_new, &old_el_ws, None, &mailbox);
+
+//            prev_best = Some(best_match);
+
+
+            // todo remove the extra param you added
+
+//        }
+//    }
+
+    // Now purge any existing no-longer-needed children; they're not part of the new vdom.
+//    for child in avail_old_children {
+    for child in old.children.iter_mut()
+        .filter(|c| !old_children_patched
+            .contains(&c.id.expect("Can't find child's id")) ) {
+
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // TODO: DRY here between this and earlier in func
@@ -667,8 +705,6 @@ fn patch<Ms: Clone>(
     }
 
     new.el_ws = Some(old_el_ws);
-
-    new.clone()
 }
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
@@ -715,12 +751,11 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
         score -= 0.05
     };
 
-    // todo put back
-//    if old.get_text() == new.get_text() {
-//        score += 0.15
-//    } else {
-//        score -= 0.15
-//    };
+    if old.get_text() == new.get_text() {
+        score += 0.15
+    } else {
+        score -= 0.15
+    };
 
     // For children length, don't do it based on the difference, since children that actually change in
     // len may have very large changes. But having identical length is a sanity check.
@@ -740,15 +775,14 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
     };
 
     // Weight each child subsequently-less by taking powers of child_significant.
-    // todo put back
-//        for posit in 0..old.children.len() {
-//            if let Some(child_old) = &old.children.get(posit) {
-//                if let Some(child_new) = &new.children.get(posit) {
-//                    score += child_score_significance.powi(posit as i32) *
-//                        match_score(child_old, posit, child_new, posit);
-//                }
-//            }
-//        }
+    for posit in 0..old.children.len() {
+        if let Some(child_old) = &old.children.get(posit) {
+            if let Some(child_new) = &new.children.get(posit) {
+                score += child_score_significance.powi(posit as i32) *
+                    match_score(child_old, posit, child_new, posit);
+            }
+        }
+    }
 
     score
 }

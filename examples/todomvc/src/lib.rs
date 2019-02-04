@@ -16,8 +16,8 @@ enum Visible {
     Completed,
 }
 
-impl Visible {
-    fn to_string(self) -> String {
+impl ToString for Visible {
+    fn to_string(&self) -> String {
         match self {
             Visible::All => "".into(),
             Visible::Active => "active".into(),
