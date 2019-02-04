@@ -262,7 +262,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
 
 // View
 
-fn todo_item(item: Todo, posit: usize, edit_text: String) -> El<Msg> {
+fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
     let mut att = attrs! {};
     if item.completed {
         att.add(At::Class, "completed");
@@ -352,7 +352,7 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         .into_iter()
         .enumerate()
         .filter(|(_posit, todo)| todo.visible(&model.visible))
-        .map(|(posit, todo)| todo_item(todo, posit, model.edit_text.clone()))
+        .map(|(posit, todo)| todo_item(&todo, posit, &model.edit_text))
         .collect();
 
     let main = if !model.todos.is_empty() {
@@ -394,8 +394,8 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         ]
 }
 
-fn routes(url: seed::Url) -> Msg {
-    if url.path.len() == 0 {
+fn routes(url: &seed::Url) -> Msg {
+    if url.path.is_empty() {
         return Msg::ChangeVisibility(Visible::All)
     }
 

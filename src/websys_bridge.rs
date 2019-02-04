@@ -2,6 +2,7 @@
 use wasm_bindgen::JsCast;
 
 use crate::dom_types;
+use crate::dom_types::El;
 
 /// Reduces DRY
 /// todo can't find a suitable trait for this. Seems like set_autofocus is
@@ -114,7 +115,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
 /// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
 /// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
 pub fn make_websys_el<Ms: Clone>(
-    el_vdom: &mut dom_types::El<Ms>,
+    el_vdom: &mut El<Ms>,
     document: &web_sys::Document,
     //) -> web_sys::Element {
 ) -> web_sys::Node {
@@ -187,28 +188,39 @@ pub fn make_websys_el<Ms: Clone>(
     el_ws.into()
 }
 
+
+/// Similar to attach_el_and_children, but assumes we've already attached the parent.
+pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
+    let el_ws = el_vdom.el_ws.take().expect("Missing websys el in attach children");
+
+    for child in &mut el_vdom.children {
+        // Raise the active level once per recursion.
+        attach_el_and_children(child, &el_ws)
+    }
+
+    // Replace the web_sys el... Indiana-Jones-style.
+    el_vdom.el_ws.replace(el_ws);
+}
+
+
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_els<Ms: Clone>(el_vdom: &mut dom_types::El<Ms>, parent: &web_sys::Node) {
+pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
     // Don't render if we're dealing with a dummy element.
-    // todo get this working. it pr
-    // odues panics
+    // todo get this working. it produces panics
     //    if el_vdom.is_dummy() == true { return }
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
     parent.append_child(&el_ws).unwrap();
 
-    // todo: It seesm like if text is present along with children, it'll bbe
-    // todo shown before them instead of after. Fix this.
-
     for child in &mut el_vdom.children {
         // Raise the active level once per recursion.
-        attach_els(child, &el_ws)
+        attach_el_and_children(child, &el_ws)
     }
 
     // Perform side-effects specified for mounting.
@@ -231,8 +243,8 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms: Clone>(
-    old: &mut dom_types::El<Ms>,
-    new: &mut dom_types::El<Ms>,
+    old: &mut El<Ms>,
+    new: &mut El<Ms>,
     old_el_ws: &web_sys::Node,
 ) {
     // Perform side-effects specified for updating

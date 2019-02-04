@@ -4,7 +4,7 @@
 //#![feature(custom_attribute)]  // For testing
 
 pub use crate::{
-    dom_types::Listener,
+//    dom_types::Listener,
     fetch::{spawn_local, Method, Request},
     routing::{push_route, push_path, Url},
     util::{document, window},
@@ -133,7 +133,7 @@ pub mod tests {
             div!["Hello world"]
         }
 
-        fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
+        fn window_events(model: Model) -> Vec<seed::dom_types::Listener<Msg>> {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 

@@ -16,6 +16,7 @@ pub struct Url {
 
 impl Url {
     /// Helper that ignores hash, search and title, and converts path to Strings.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/History_API
     pub fn new<T: ToString>(path: Vec<T>) -> Self {
         Self {
             path: path.into_iter().map(|p| p.to_string()).collect(),
@@ -25,11 +26,15 @@ impl Url {
         }
     }
 
+    /// Builder-pattern method for defining hash.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/hash
     pub fn hash(mut self, hash: &str) -> Self {
         self.hash = Some(hash.into());
         self
     }
 
+    /// Builder-pattern method for defining search.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/search
     pub fn search(mut self, search: &str) -> Self {
         self.search = Some(search.into());
         self
@@ -69,7 +74,7 @@ fn get_search() -> String {
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
-pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(Url) -> Ms) -> App<Ms, Mdl>
+pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(&Url) -> Ms) -> App<Ms, Mdl>
 where
     Ms: Clone + 'static,
     Mdl: Clone + 'static,
@@ -98,11 +103,11 @@ where
     };
 
     push_route(url.clone());
-    app.update(routes(url));  // todo errors here yo
+    app.update(routes(&url));
     app
 }
 
-pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(Url) -> Ms)
+pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms)
 where
     Ms: Clone,
     Mdl: Clone,
@@ -124,7 +129,7 @@ where
             }
         };
 
-        app_for_closure.update(routes(url));
+        app_for_closure.update(routes(&url));
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
     (util::window().as_ref() as &web_sys::EventTarget)

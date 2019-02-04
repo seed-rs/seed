@@ -14,7 +14,7 @@ pub enum Update<Mdl: Clone> {
 
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
-type RoutesFn<Ms> = fn(crate::routing::Url) -> Ms;
+type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
 
@@ -135,7 +135,6 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Ms, Mdl>,
         parent_div_id: &str,
-        //        routes: Option<Routes<Ms>>,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
@@ -207,7 +206,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         attach_listeners(&mut topel_vdom, &self.mailbox());
 
         // Attach all children: This is where our initial render occurs.
-        websys_bridge::attach_els(&mut topel_vdom, &self.cfg.mount_point);
+        websys_bridge::attach_el_and_children(&mut topel_vdom, &self.cfg.mount_point);
 
         self.data.main_el_vdom.replace(topel_vdom);
 
@@ -295,7 +294,6 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
                 &mut self.data.main_el_vdom.borrow_mut(),
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
-//                None,
                 &self.mailbox(),
             );
 
@@ -507,7 +505,6 @@ fn patch<Ms: Clone>(
     old: &mut El<Ms>,
     new: &mut El<Ms>,
     parent: &web_sys::Node,
-//    prev_child: Option<web_sys::Node>,   // todo remove
     mailbox: &Mailbox<Ms>,
 ) {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
@@ -515,7 +512,6 @@ fn patch<Ms: Clone>(
     // TODO: fix this later.
     // We make an assumption that most of the page is not dramatically changed
     // by each event, to optimize.
-    // TODO: There are a lot of ways you could make this more sophisticated.
 
     // Assume setup_vdom has been run on the new el, all listeners have been removed
     // from the old el_ws, and the only the old el vdom's elements are still attached.
@@ -532,8 +528,6 @@ fn patch<Ms: Clone>(
         None => return
     };
 
-//    crate::log(format!("{:?}", old));
-
     if old != new {
         // Something about this element itself is different: patch it.
         // At this step, we already assume we have the right element - either
@@ -549,11 +543,23 @@ fn patch<Ms: Clone>(
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 unmount_actions(&old_el_ws)
             }
-            parent
-                .remove_child(&old_el_ws)
-                .expect("Problem removing an element");
 
-            websys_bridge::attach_els(new, parent);
+            // todo: Perhaps some of this next segment should be moved to websys_bridge
+            websys_bridge::attach_children(new);
+
+            let new_el_ws = new.el_ws.take().expect("Missing websys el");
+
+            parent
+                .replace_child(&new_el_ws, &old_el_ws)
+                .expect("Problem replacing element");
+
+            // Perform side-effects specified for mounting.
+            if let Some(mount_actions) = &mut new.hooks.did_mount {
+                mount_actions(&new_el_ws)
+            }
+
+            new.el_ws.replace(new_el_ws);
+
             let mut new = new;
             attach_listeners(&mut new, &mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
@@ -579,17 +585,19 @@ fn patch<Ms: Clone>(
 
     // todo new, less-sophisticated approach that should avoid order problems,
     // todo compared to the commented-out code below.
-    let mut old_children_patched: Vec<u32> = Vec::new();
+    let mut old_children_patched = Vec::new();
 
     for (i_new, child_new) in new.children.iter_mut().enumerate() {
         match old.children.get(i_new) {
-            Some(mut child_old) => {
+            Some(child_old) => {
+                // Don't compare equality here; we do that at the top of this function
+                // in the recursion.
                 patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
                 old_children_patched.push(child_old.id.expect("Can't find child's id"));
             },
             None => {
                 // We ran out of old children to patch; create new ones.
-                websys_bridge::attach_els(child_new, &old_el_ws);
+                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
                 let mut child_new = child_new;
                 attach_listeners(&mut child_new, &mailbox);
             }
@@ -597,8 +605,6 @@ fn patch<Ms: Clone>(
     }
 
 
-//
-//
 //    // Now pair up children as best we can.
 //    // If there are the same number of children, assume there's a 1-to-1 mapping,
 //    // where we will not add or remove any; but patch as needed.
@@ -643,48 +649,6 @@ fn patch<Ms: Clone>(
 //            best_match = avail_old_children.pop().expect("Problem popping");
 
 
-
-
-
-//            crate::log(best_match.el_ws.is_some());
-//            crate::log(prev_child.is_some());
-
-//
-//            let expected_posit = i_new;
-//            let actual_posit = __;
-
-
-//            // Now make sure the order is correct; the code above will place children
-//            // in the wrong order, if the best_match guess is wrong.
-////            let best_ws = best_match.clone().el_ws;
-////            let best_ws = best2.clone().el_ws;
-//            if let Some(prev) = prev_child {
-//                best_match
-//                    .clone()
-//                    .el_ws
-//                    .expect("Problem finding el_ws in sorting")
-//                    .dyn_ref::<web_sys::Element>()
-//                    .expect("Problem casting node as element")
-//                    .after_with_node_1(&prev)
-//                    .expect("Problem reordering children");
-//            }
-//
-//
-//
-//            // Set up the previous child before patching, since patching will strip out the web_sys el.
-//            prev_child = best_match.el_ws.clone();
-
-//            patch(document, &mut best_match, child_new, &old_el_ws, prev_child, &mailbox);
-//            patch(document, &mut best_match, child_new, &old_el_ws, None, &mailbox);
-
-//            prev_best = Some(best_match);
-
-
-            // todo remove the extra param you added
-
-//        }
-//    }
-
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
 //    for child in avail_old_children {
     for child in old.children.iter_mut()
@@ -708,7 +672,7 @@ fn patch<Ms: Clone>(
 }
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
-fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posit: usize) -> f32 {
+fn _match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posit: usize) -> f32 {
     // children_to_eval is the number of children to look at on each nest level.
     //    let children_to_eval = 3;
     // Don't weight children as heavily as the parent. This effect acculates the further down we go.
@@ -779,7 +743,7 @@ fn match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posi
         if let Some(child_old) = &old.children.get(posit) {
             if let Some(child_new) = &new.children.get(posit) {
                 score += child_score_significance.powi(posit as i32) *
-                    match_score(child_old, posit, child_new, posit);
+                    _match_score(child_old, posit, child_new, posit);
             }
         }
     }
