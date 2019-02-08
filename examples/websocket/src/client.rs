@@ -110,12 +110,12 @@ fn open_ws(state: App<Msg, Model>) {
 
     let s = state.clone();
     let on_open = Closure::wrap(Box::new(move |_| {
-        log_1(&"WebSocket connection is open now".into());
+        log!("WebSocket connection is open now");
         s.update(Msg::Connected);
     }) as Box<FnMut(JsValue)>);
 
     let on_close = Closure::wrap(Box::new(|_| {
-        log_1(&"WebSocket connection was closed".into());
+        log!("WebSocket connection was closed");
     }) as Box<FnMut(JsValue)>);
 
     let s = state.clone();
@@ -152,7 +152,7 @@ fn open_ws(state: App<Msg, Model>) {
 
 #[wasm_bindgen]
 pub fn start() {
-    log_1(&"start the websocket client app".into());
+    log!("start the websocket client app");
     let app = App::build(Model::default(), update, view).finish().run();
     open_ws(app);
 }

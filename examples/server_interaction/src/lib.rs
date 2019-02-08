@@ -80,8 +80,8 @@ impl Default for Model {
     fn default() -> Self {
         Self {
             data: Branch {
-                name: "Test".into(),
-                commit: Commit { sha: "123".into() },
+                name: "Loading...".into(),
+                commit: Commit { sha: "Loading...".into() },
             },
         }
     }
@@ -121,7 +121,9 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
                 "Repo info: name: {}, sha: {}",
                 model.data.name, model.data.commit.sha
             ),
-            did_mount(move |_| spawn_local(get_data(state.clone())))
+
+            // Another approach that would work for initial loading:
+//            did_mount(move |_| spawn_local(get_data(state.clone())))
         ],
         button![
             raw_ev(Ev::Click, move |_| Msg::Send),
@@ -132,8 +134,10 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::App::build(Model::default(), update, view)
+    let state = seed::App::build(Model::default(), update, view)
         .mount("main")
         .finish()
         .run();
+
+    spawn_local(get_data(state));
 }

@@ -133,11 +133,11 @@ pub mod tests {
             div!["Hello world"]
         }
 
-        fn window_events(model: Model) -> Vec<seed::dom_types::Listener<Msg>> {
+        fn window_events(model: &Model) -> Vec<seed::dom_types::Listener<Msg>> {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 
-        fn routes(url: seed::Url) -> Msg {
+        fn routes(url: &seed::Url) -> Msg {
             Msg::Increment
         }
 

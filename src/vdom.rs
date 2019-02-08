@@ -15,7 +15,7 @@ pub enum Update<Mdl: Clone> {
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
-type WindowEvents<Ms, Mdl> = fn(Mdl) -> Vec<dom_types::Listener<Ms>>;
+type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
 
 pub struct Mailbox<Message: 'static> {
@@ -262,7 +262,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
         // logic based on if we have window listeners.
         if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(updated_model.clone());
+            let mut new_listeners = (window_events)(&updated_model);
             setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),

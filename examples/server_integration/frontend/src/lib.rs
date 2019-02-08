@@ -9,20 +9,9 @@ use shared::Data;
 
 // Model
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct Model {
     pub data: Data,
-}
-
-impl Default for Model {
-    fn default() -> Self {
-        Self {
-            data: Data {
-                val: 0,
-                text: "".into(),
-            },
-        }
-    }
 }
 
 fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsValue> {

@@ -102,7 +102,6 @@ where
         title: None,
     };
 
-    push_route(url.clone());
     app.update(routes(&url));
     app
 }

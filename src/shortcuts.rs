@@ -865,7 +865,7 @@ macro_rules! iframe {
 // --- SVG shape elements ---
 
 #[macro_export]
-macro_rules! line {
+macro_rules! line_ {
     ( $($part:expr),* $(,)* ) => {
         {
             let mut el = El::empty_svg(seed::dom_types::Tag::Line);

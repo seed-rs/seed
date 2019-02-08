@@ -2,11 +2,11 @@
 
 #[macro_use]
 extern crate seed;
-use seed::prelude::*;
+use seed::{prelude::*, dom_types::Listener};
 
 // Model
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct Model {
     watching: bool,
     coords: (i32, i32),
@@ -16,16 +16,6 @@ struct Model {
 impl Model {
     fn coords_string(&self) -> String {
         format!("X: {}, Y: {}", self.coords.0, self.coords.1)
-    }
-}
-
-impl Default for Model {
-    fn default() -> Self {
-        Self {
-            watching: false,
-            coords: (0, 0),
-            last_keycode: 0,
-        }
     }
 }
 
@@ -92,11 +82,11 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     ]
 }
 
-fn window_events(model: Model) -> Vec<seed::Listener<Msg>> {
+fn window_events(model: &Model) -> Vec<Listener<Msg>> {
     let mut result = Vec::new();
     if model.watching {
-        result.push(mouse_ev(Ev::MouseMove, |ev| Msg::UpdateCoords(ev)));
-        result.push(keyboard_ev(Ev::KeyDown, |ev| Msg::KeyPressed(ev)));
+        result.push(mouse_ev(Ev::MouseMove, Msg::UpdateCoords));
+        result.push(keyboard_ev(Ev::KeyDown, Msg::KeyPressed));
     }
     result
 }
