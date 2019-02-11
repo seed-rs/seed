@@ -134,6 +134,9 @@ pub fn make_websys_el<Ms: Clone>(
                 .expect("Missing text on raw HTML element"),
         );
 
+        // We know that there is a child because we just attached it
+        let el_ws = el_ws.first_element_child().unwrap();
+
         // todo DRY
         if el_vdom.style.vals.keys().len() > 0 {
             el_ws
