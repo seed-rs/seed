@@ -3,7 +3,7 @@ use wasm_bindgen::JsCast;
 
 use crate::dom_types;
 use crate::dom_types::El;
-
+use web_sys::HtmlElement;
 /// Reduces DRY
 /// todo can't find a suitable trait for this. Seems like set_autofocus is
 /// implemented individually for each of these el types.
@@ -134,9 +134,6 @@ pub fn make_websys_el<Ms: Clone>(
                 .expect("Missing text on raw HTML element"),
         );
 
-        // We know that there is a child because we just attached it
-        let el_ws = el_ws.first_element_child().unwrap();
-
         // todo DRY
         if el_vdom.style.vals.keys().len() > 0 {
             el_ws
@@ -219,12 +216,44 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
-    parent.append_child(&el_ws).unwrap();
 
-    for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
-        attach_el_and_children(child, &el_ws)
+
+    if !el_vdom.raw_html {
+        // appending the element
+        parent.append_child(&el_ws).unwrap();
+        // appending the its children to the el_ws
+        for child in &mut el_vdom.children {
+            // Raise the active level once per recursion.
+            attach_el_and_children(child, &el_ws)
+        }
+    }else{
+        // If its a raw_html we put its "text" into the parent as inner_html and ignore its tag
+        // <span><div>title</div><h1>subtitle</h1><h2>text</h2></span>
+        // Node_type == 1 means we are dealing with an Element node and there is an inner_html function
+        // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
+
+        if !parent.node_type() == 1{
+            panic!("Raw HTML can put inside an element node (<p>, <a>, <div> etc) because it uses\
+            the set_inner_html function");
+        }
+
+        let parent_as_element_node = parent.dyn_ref::<web_sys::Element>()
+            .expect("Could not cast raw_html parent node to Element, this is a bug, report it.");
+
+        let new_raw_html = el_vdom.text.as_ref().map_or("", |s| s.as_str());
+        let current_inner_html = parent_as_element_node.inner_html();
+        let new_inner_html = format!("{}{}", current_inner_html, new_raw_html);
+
+        parent_as_element_node.set_inner_html(&new_inner_html);
+
+        // appending its children directly to the parent
+        for child in &mut el_vdom.children {
+            // Raise the active level once per recursion.
+            attach_el_and_children(child, parent)
+        }
     }
+
+
 
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
