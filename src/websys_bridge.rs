@@ -109,6 +109,15 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     }
 }
 
+/// Convenience function to reduce repetition
+fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
+    el_ws
+        .dyn_ref::<web_sys::Element>()
+        .expect("Problem casting Node as Element")
+        .set_attribute("style", &style.to_string())
+        .expect("Problem setting style");
+}
+
 /// Create and return a web_sys Element from our virtual-dom El. The web_sys
 /// Element is a close analog to JS/DOM elements.
 /// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
@@ -117,7 +126,6 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
 pub fn make_websys_el<Ms: Clone>(
     el_vdom: &mut El<Ms>,
     document: &web_sys::Document,
-    //) -> web_sys::Element {
 ) -> web_sys::Node {
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
@@ -126,7 +134,7 @@ pub fn make_websys_el<Ms: Clone>(
     if el_vdom.raw_html {
         let el_ws = document
             .create_element(tag)
-            .expect("Problem creating web-sys El");
+            .expect("Problem creating web-sys element");
         el_ws.set_inner_html(
             &el_vdom
                 .text
@@ -134,17 +142,10 @@ pub fn make_websys_el<Ms: Clone>(
                 .expect("Missing text on raw HTML element"),
         );
 
-        // We know that there is a child because we just attached it
-        let el_ws = el_ws.first_element_child().unwrap();
-
-        // todo DRY
         if el_vdom.style.vals.keys().len() > 0 {
-            el_ws
-                .dyn_ref::<web_sys::Element>()
-                .expect("Problem casting Node as Element")
-                .set_attribute("style", &el_vdom.style.to_string())
-                .expect("Problem setting style");
+            set_style(&el_ws, &el_vdom.style)
         }
+
         return el_ws.into();
     }
 
@@ -169,23 +170,8 @@ pub fn make_websys_el<Ms: Clone>(
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el_vdom.style.vals.keys().len() > 0 {
-        el_ws
-            .dyn_ref::<web_sys::Element>()
-            .expect("Problem casting Node as Element")
-            .set_attribute("style", &el_vdom.style.to_string())
-            .expect("Problem setting style");
+        set_style(&el_ws, &el_vdom.style)
     }
-
-    // todo don't even create the element if it's a text node.
-
-    // A naive match Some(t) => Some(&t) does not work.
-    // See https://stackoverflow.com/questions/31233938/converting-from-optionstring-to-optionstr
-    //    let text = el_vdom.text.as_ref().map(String::as_ref);
-    //    if el_vdom.raw_html {
-    //        el_ws.set_inner_html(text.unwrap())
-    //    } else {
-    //        el_ws.set_text_content(text);
-    //    }
 
     // Don't attach listeners here,
     el_ws.into()
@@ -197,11 +183,9 @@ pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el in attach children");
 
     for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
         attach_el_and_children(child, &el_ws)
     }
 
-    // Replace the web_sys el... Indiana-Jones-style.
     el_vdom.el_ws.replace(el_ws);
 }
 
@@ -219,10 +203,28 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
-    parent.append_child(&el_ws).unwrap();
+    // Don't attach if raw_html; these are initially wrapped in a span tag. We'll
+    // extract the children, and attach those instead in the looop below.
+    if el_vdom.raw_html {
+        let html_children = el_ws.child_nodes();
+        crate::log(html_children.length());
+
+        for i in 0..html_children.length() {
+            let child_in_span = html_children.item(i)
+//            let child_in_span = html_children.get(i)
+                .expect("Missing child in raw html element");
+
+            el_ws.remove_child(&child_in_span)
+                .expect("Problem removing child from span in raw html element");
+            parent.append_child(&child_in_span)
+                .expect("Problem appending child in raw html element");
+        }
+    }
+        else {
+            parent.append_child(&el_ws).expect("Problem appending child");
+        }
 
     for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
         attach_el_and_children(child, &el_ws)
     }
 
@@ -283,12 +285,7 @@ pub fn patch_el_details<Ms: Clone>(
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        //        old_el_ws
-        old_el_ws
-            .dyn_ref::<web_sys::Element>()
-            .expect("Problem casting Node as Element")
-            .set_attribute("style", &new.style.to_string())
-            .expect("Setting style");
+        set_style(&old_el_ws, &new.style)
     }
 
     // Patch text

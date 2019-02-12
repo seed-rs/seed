@@ -563,20 +563,6 @@ impl Style {
         }
     }
 
-    /// Output style as a string, as would be set in the DOM as the attribute value
-    /// for 'style'. Eg: "display: flex; font-size: 1.5em"
-    pub fn to_string(&self) -> String {
-        if self.vals.keys().len() > 0 {
-            self.vals
-                .iter()
-                .map(|(k, v)| format!("{}:{}", k, v))
-                .collect::<Vec<_>>()
-                .join(";")
-        } else {
-            String::new()
-        }
-    }
-
     pub fn add(&mut self, key: &str, val: &str) {
         self.vals.insert(key.to_string(), val.to_string());
     }
@@ -588,6 +574,22 @@ impl Style {
             result.vals.insert(key.clone(), val.clone());
         }
         result
+    }
+}
+
+impl ToString for Style {
+    /// Output style as a string, as would be set in the DOM as the attribute value
+/// for 'style'. Eg: "display: flex; font-size: 1.5em"
+    fn to_string(&self) -> String {
+        if self.vals.keys().len() > 0 {
+            self.vals
+                .iter()
+                .map(|(k, v)| format!("{}:{}", k, v))
+                .collect::<Vec<_>>()
+                .join(";")
+        } else {
+            String::new()
+        }
     }
 }
 

@@ -398,15 +398,6 @@ where
     }
 }
 
-// trying this approach leads to lifetime problems.
-//fn mailbox<Ms, Mdl>(app: &'static App<Ms, Mdl>) -> Mailbox<Ms>
-//    where Ms: Clone + 'static, Mdl: Clone + 'static {
-//    Mailbox::new(move |message| {
-//        app.clone().update(message);
-//    })
-//
-//}
-
 impl<Ms: Clone, Mdl: Clone> Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
@@ -793,8 +784,6 @@ pub trait DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
     // setters
     fn set_id(&mut self, id: Option<u32>);
     fn set_websys_el(&mut self, el: Option<Element>);
-
-    //    fn make_websys_el(&self, document: &web_sys::Document) -> web_sys::Element;
 }
 
 pub trait DomElLifecycle {

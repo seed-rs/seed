@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.7
+- Fixed a bug where `line!` macro interfered with builtin in
+- Fixed a bug with routing search (ie `?`)
+
 ## v0.2.6
 - Fixed a bug where children would render out-of-order
 - Improved vdom diffing logic
