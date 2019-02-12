@@ -142,10 +142,6 @@ pub fn make_websys_el<Ms: Clone>(
                 .expect("Missing text on raw HTML element"),
         );
 
-<<<<<<< HEAD
-=======
-        // todo DRY
->>>>>>> c0d3cf271f06cbadbcccf63e9bbe324629673170
         if el_vdom.style.vals.keys().len() > 0 {
             set_style(&el_ws, &el_vdom.style)
         }
@@ -207,31 +203,31 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
-<<<<<<< HEAD
-    // Don't attach if raw_html; these are initially wrapped in a span tag. We'll
-    // extract the children, and attach those instead in the looop below.
-    if el_vdom.raw_html {
-        let html_children = el_ws.child_nodes();
-        crate::log(html_children.length());
-
-        for i in 0..html_children.length() {
-            let child_in_span = html_children.item(i)
-//            let child_in_span = html_children.get(i)
-                .expect("Missing child in raw html element");
-
-            el_ws.remove_child(&child_in_span)
-                .expect("Problem removing child from span in raw html element");
-            parent.append_child(&child_in_span)
-                .expect("Problem appending child in raw html element");
-        }
-    }
-        else {
-            parent.append_child(&el_ws).expect("Problem appending child");
-        }
-
-    for child in &mut el_vdom.children {
-        attach_el_and_children(child, &el_ws)
-=======
+//<<<<<<< HEAD
+//    // Don't attach if raw_html; these are initially wrapped in a span tag. We'll
+//    // extract the children, and attach those instead in the looop below.
+//    if el_vdom.raw_html {
+//        let html_children = el_ws.child_nodes();
+//        crate::log(html_children.length());
+//
+//        for i in 0..html_children.length() {
+//            let child_in_span = html_children.item(i)
+////            let child_in_span = html_children.get(i)
+//                .expect("Missing child in raw html element");
+//
+//            el_ws.remove_child(&child_in_span)
+//                .expect("Problem removing child from span in raw html element");
+//            parent.append_child(&child_in_span)
+//                .expect("Problem appending child in raw html element");
+//        }
+//    }
+//        else {
+//            parent.append_child(&el_ws).expect("Problem appending child");
+//        }
+//
+//    for child in &mut el_vdom.children {
+//        attach_el_and_children(child, &el_ws)
+//=======
 
 
     if !el_vdom.raw_html {
@@ -242,13 +238,13 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
             // Raise the active level once per recursion.
             attach_el_and_children(child, &el_ws)
         }
-    }else{
+    } else {
         // If its a raw_html we put its "text" into the parent as inner_html and ignore its tag
         // <span><div>title</div><h1>subtitle</h1><h2>text</h2></span>
         // Node_type == 1 means we are dealing with an Element node and there is an inner_html function
         // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 
-        if !parent.node_type() == 1{
+        if !parent.node_type() == 1 {
             panic!("Raw HTML can put inside an element node (<p>, <a>, <div> etc) because it uses\
             the set_inner_html function");
         }
@@ -267,7 +263,7 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
             // Raise the active level once per recursion.
             attach_el_and_children(child, parent)
         }
->>>>>>> c0d3cf271f06cbadbcccf63e9bbe324629673170
+//>>>>>>> c0d3cf271f06cbadbcccf63e9bbe324629673170
     }
 
 
