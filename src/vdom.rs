@@ -641,7 +641,6 @@ fn patch<Ms: Clone>(
 
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-//    for child in avail_old_children {
     for child in old.children.iter_mut()
         .filter(|c| !old_children_patched
             .contains(&c.id.expect("Can't find child's id")) ) {
@@ -774,7 +773,6 @@ pub trait DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
     fn children(self) -> Vec<Self>;
     fn websys_el(self) -> Option<web_sys::Element>;
     fn id(self) -> Option<u32>;
-    fn raw_html(self) -> bool;
     // TODO: tying to dom_types is temp - defeats the urpose of the trait
     fn namespace(self) -> Option<Namespace>;
 

@@ -200,37 +200,37 @@ pub trait UpdateEl<T> {
     fn update(self, el: &mut T);
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for Attrs {
+impl<Ms> UpdateEl<El<Ms>> for Attrs {
     fn update(self, el: &mut El<Ms>) {
         el.attrs = self;
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for &Attrs {
+impl<Ms> UpdateEl<El<Ms>> for &Attrs {
     fn update(self, el: &mut El<Ms>) {
         el.attrs = self.clone();
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for Style {
+impl<Ms> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
         el.style = self;
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for &Style {
+impl<Ms> UpdateEl<El<Ms>> for &Style {
     fn update(self, el: &mut El<Ms>) {
         el.style = self.clone();
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for Listener<Ms> {
+impl<Ms> UpdateEl<El<Ms>> for Listener<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.listeners.push(self)
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
+impl<Ms> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         for listener in self.into_iter() {
             el.listeners.push(listener)
@@ -238,32 +238,32 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount {
+impl<Ms> UpdateEl<El<Ms>> for DidMount {
     fn update(self, el: &mut El<Ms>) {
         el.hooks.did_mount = Some(self.actions)
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for DidUpdate {
+impl<Ms> UpdateEl<El<Ms>> for DidUpdate {
     fn update(self, el: &mut El<Ms>) {
         el.hooks.did_update = Some(self.actions)
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount {
+impl<Ms> UpdateEl<El<Ms>> for WillUnmount {
     fn update(self, el: &mut El<Ms>) {
         el.hooks.will_unmount = Some(self.actions)
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
+impl<Ms> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(El::new_text(self))
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
+impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         for child in self.into_iter() {
             el.children.push(child);
@@ -271,14 +271,14 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     }
 }
 
-impl<Ms: Clone> UpdateEl<El<Ms>> for El<Ms> {
+impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.children.push(self)
     }
 }
 
 /// This is intended only to be used for the custom! element macro.
-impl<Ms: Clone> UpdateEl<El<Ms>> for Tag {
+impl<Ms> UpdateEl<El<Ms>> for Tag {
     fn update(self, el: &mut El<Ms>) {
         el.tag = self;
     }
@@ -723,6 +723,19 @@ macro_rules! make_tags {
                 }
             }
         }
+
+        impl From<String> for Tag {
+            fn from(tag: String) -> Self {
+                match tag.as_ref() {
+                    $ (
+                          $tag => Tag::$tag_camel,
+                    ) +
+                    _ => {
+                        Tag::Span
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -856,7 +869,7 @@ pub struct El<Ms: 'static> {
     pub attrs: Attrs,
     pub style: Style,
     pub listeners: Vec<Listener<Ms>>,
-    // Text should be None unless raw_html or text_node is true.
+    // Text should be None unless text_node is true.
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
@@ -867,7 +880,6 @@ pub struct El<Ms: 'static> {
 
     // todo temp?
     //    pub key: Option<u32>,
-    pub raw_html: bool,
     pub text_node: bool,
     pub namespace: Option<Namespace>,
 
@@ -924,7 +936,6 @@ impl<Ms> El<Ms> {
             nest_level: None,
             el_ws: None,
 
-            raw_html: false,
             text_node: false,
             namespace: None,
 
@@ -950,43 +961,32 @@ impl<Ms> El<Ms> {
         el
     }
 
-    /// Create an element that will display markdown from the text you pass to it, as HTML
-    pub fn from_markdown(markdown: &str) -> Self {
+    /// Create elements from a markdown string.
+    pub fn from_markdown(markdown: &str) -> Vec<Self> {
         let parser = pulldown_cmark::Parser::new(markdown);
         let mut html_text = String::new();
         pulldown_cmark::html::push_html(&mut html_text, parser);
-        //
-        // todo: Syntect crate is currently bugged with wasm target.
-        //        let ss = syntect::parsing::SyntaxSet::load_defaults_newlines();
-        //        let sr = ss.find_syntax_by_token("rust").unwrap();
-        //        let ts = syntect::highlighting::Theme::default();
-        //
-        //        let replacer = |match_group| {
-        //            syntect::html::highlighted_html_for_string(
-        //                match_group, &ss, sr, &ts
-        //            )
-        //        };
 
-        //        let replacer = |match_grp: &regex::Captures| match_grp.name("code").unwrap().as_str();
-
-        //        let re = Regex::new(r"<code>(?P<code>.*?)</code>").expect("Error creating Regex");
-        //         re.replace_all(&html_text, replacer);
-
-        //        crate::log(&html_text);
-        //
-        //        let highlighted_html = syntect::html::highlighted_html_for_string(text,  ss, sr, ts);
-
-        let mut result = Self::empty(Tag::Span);
-        result.raw_html = true;
-        result.text = Some(html_text);
-        result
+        Self::from_html(&html_text)
     }
 
-    /// Create an element that will display raw HTML
-    pub fn from_html(html: &str) -> Self {
-        let mut result = Self::empty(Tag::Span);
-        result.raw_html = true;
-        result.text = Some(html.into());
+    /// Create elements from an HTML string.
+    pub fn from_html(html: &str) -> Vec<Self> {
+        // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.
+        // We allow web_sys to parse into a DOM tree, then analyze the tree to create our vdom
+        // element.
+        let el_ws_wrapper = util::document()
+            .create_element("div")
+            .expect("Problem creating web-sys element");
+        el_ws_wrapper.set_inner_html(html);
+
+        let mut result = Vec::new();
+        let children = el_ws_wrapper.child_nodes();
+        for i in 0..children.length() {
+            let child = children.get(i)
+                .expect("Can't find child in raw html element.");
+            result.push(websys_bridge::el_from_ws(&child))
+        }
         result
     }
 
@@ -1044,7 +1044,6 @@ impl<Ms> El<Ms> {
             id: None,
             nest_level: None,
             el_ws: self.el_ws.clone(),
-            raw_html: self.raw_html,
             text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
@@ -1092,7 +1091,6 @@ impl<Ms> Clone for El<Ms> {
             nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
-            raw_html: self.raw_html,
             text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
@@ -1108,7 +1106,6 @@ impl<Ms> PartialEq for El<Ms> {
         self.tag == other.tag &&
         self.text_node == other.text_node &&
 //        self.get_text() == other.get_text() &&
-        self.raw_html == other.raw_html &&
         self.attrs == other.attrs &&
         self.style == other.style &&
         self.text == other.text &&

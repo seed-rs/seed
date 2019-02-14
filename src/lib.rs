@@ -50,6 +50,7 @@ pub fn log<S: ToString>(text: S) {  // ignore clippy about &S
 /// A high-level wrapper for web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0:
 /// https://rustwasm.github.io/wasm-bindgen/examples/closures.html
 /// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Window.html
+/// https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval
 pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
     let window = web_sys::window().expect("Can't find window");
@@ -62,8 +63,19 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     callback.forget();
 }
 
-// todo: Perhaps put did_mount etc here so we call with seed:: instead of in prelude.
-// todo or maybe not, for consistency with events.
+/// See set_interval
+/// https://developer.mozilla.org/en-US/docs/Wemb/API/WindowOrWorkerGlobalScope/setTimeout
+pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
+    let callback = Closure::wrap(handler as Box<dyn Fn()>);
+    let window = web_sys::window().expect("Can't find window");
+    window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(
+            callback.as_ref().unchecked_ref(),
+            timeout,
+        )
+        .expect("Problem setting timeout");
+    callback.forget();
+}
 
 /// Introduce El and Tag into the global namespace for convenience (El will be repeated
 /// often in the output type of components), and UpdateEl, which is required

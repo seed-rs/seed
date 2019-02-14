@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.8
+- Reflowed `El::from_html` and `El::from_markdown` to return `Vec`s of `El`s, instead of wrapping
+them in a single span.
+- Added `set_timeout` wrapper
+
 ## v0.2.7
 - Fixed a bug where `line!` macro interfered with builtin in
 - Fixed a bug with routing search (ie `?`)

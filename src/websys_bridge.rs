@@ -3,7 +3,7 @@ use wasm_bindgen::JsCast;
 
 use crate::dom_types;
 use crate::dom_types::El;
-use web_sys::HtmlElement;
+
 /// Reduces DRY
 /// todo can't find a suitable trait for this. Seems like set_autofocus is
 /// implemented individually for each of these el types.
@@ -102,8 +102,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     if !set_special {
         el_ws
             .dyn_ref::<web_sys::Element>()
-            .expect("Problem casting Node as Element")
-            //        el_ws2
+            .expect("Problem casting Node as Element while setting an attribute")
             .set_attribute(at, val)
             .expect("Problem setting an atrribute.");
     }
@@ -113,7 +112,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
 fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
     el_ws
         .dyn_ref::<web_sys::Element>()
-        .expect("Problem casting Node as Element")
+        .expect("Problem casting Node as Element while setting style")
         .set_attribute("style", &style.to_string())
         .expect("Problem setting style");
 }
@@ -129,25 +128,6 @@ pub fn make_websys_el<Ms: Clone>(
 ) -> web_sys::Node {
     // Create the DOM-analog element; it won't render until attached to something.
     let tag = el_vdom.tag.as_str();
-
-    // An element from raw html.
-    if el_vdom.raw_html {
-        let el_ws = document
-            .create_element(tag)
-            .expect("Problem creating web-sys element");
-        el_ws.set_inner_html(
-            &el_vdom
-                .text
-                .clone()
-                .expect("Missing text on raw HTML element"),
-        );
-
-        if el_vdom.style.vals.keys().len() > 0 {
-            set_style(&el_ws, &el_vdom.style)
-        }
-
-        return el_ws.into();
-    }
 
     // A simple text node.
     if let Some(text) = &el_vdom.text {
@@ -203,70 +183,13 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
-//<<<<<<< HEAD
-//    // Don't attach if raw_html; these are initially wrapped in a span tag. We'll
-//    // extract the children, and attach those instead in the looop below.
-//    if el_vdom.raw_html {
-//        let html_children = el_ws.child_nodes();
-//        crate::log(html_children.length());
-//
-//        for i in 0..html_children.length() {
-//            let child_in_span = html_children.item(i)
-////            let child_in_span = html_children.get(i)
-//                .expect("Missing child in raw html element");
-//
-//            el_ws.remove_child(&child_in_span)
-//                .expect("Problem removing child from span in raw html element");
-//            parent.append_child(&child_in_span)
-//                .expect("Problem appending child in raw html element");
-//        }
-//    }
-//        else {
-//            parent.append_child(&el_ws).expect("Problem appending child");
-//        }
-//
-//    for child in &mut el_vdom.children {
-//        attach_el_and_children(child, &el_ws)
-//=======
-
-
-    if !el_vdom.raw_html {
-        // appending the element
-        parent.append_child(&el_ws).unwrap();
-        // appending the its children to the el_ws
-        for child in &mut el_vdom.children {
-            // Raise the active level once per recursion.
-            attach_el_and_children(child, &el_ws)
-        }
-    } else {
-        // If its a raw_html we put its "text" into the parent as inner_html and ignore its tag
-        // <span><div>title</div><h1>subtitle</h1><h2>text</h2></span>
-        // Node_type == 1 means we are dealing with an Element node and there is an inner_html function
-        // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
-
-        if !parent.node_type() == 1 {
-            panic!("Raw HTML can put inside an element node (<p>, <a>, <div> etc) because it uses\
-            the set_inner_html function");
-        }
-
-        let parent_as_element_node = parent.dyn_ref::<web_sys::Element>()
-            .expect("Could not cast raw_html parent node to Element, this is a bug, report it.");
-
-        let new_raw_html = el_vdom.text.as_ref().map_or("", |s| s.as_str());
-        let current_inner_html = parent_as_element_node.inner_html();
-        let new_inner_html = format!("{}{}", current_inner_html, new_raw_html);
-
-        parent_as_element_node.set_inner_html(&new_inner_html);
-
-        // appending its children directly to the parent
-        for child in &mut el_vdom.children {
-            // Raise the active level once per recursion.
-            attach_el_and_children(child, parent)
-        }
-//>>>>>>> c0d3cf271f06cbadbcccf63e9bbe324629673170
+    // Append the element
+    parent.append_child(&el_ws).unwrap();
+    // appending the its children to the el_ws
+    for child in &mut el_vdom.children {
+        // Raise the active level once per recursion.
+        attach_el_and_children(child, &el_ws)
     }
-
-
 
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
@@ -315,7 +238,7 @@ pub fn patch_el_details<Ms: Clone>(
                 //                old_el_ws
                 old_el_ws
                     .dyn_ref::<web_sys::Element>()
-                    .expect("Problem casting Node as Element")
+                    .expect("Problem casting Node as Element while removing an attribute")
                     .remove_attribute(name.as_str())
                     .expect("Removing an attribute");
             }
@@ -330,16 +253,10 @@ pub fn patch_el_details<Ms: Clone>(
 
     // Patch text
     if old.text != new.text {
-        if new.raw_html {
-            old_el_ws.dyn_ref::<web_sys::Element>()
-                .expect("Problem casting Node as Element")
-                .set_inner_html(&new.text.clone().unwrap_or_default())
-        } else {
-            // We need to change from Option<String> to Option<&str>
-            match new.text.clone() {
-                Some(text) => old_el_ws.set_text_content(Some(&text)),
-                None => old_el_ws.set_text_content(None),
-            };
+        // We need to change from Option<String> to Option<&str>
+        match new.text.clone() {
+            Some(text) => old_el_ws.set_text_content(Some(&text)),
+            None => old_el_ws.set_text_content(None),
         }
     }
 }
@@ -386,4 +303,58 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
     event
         .dyn_ref::<web_sys::MouseEvent>()
         .expect("Unable to cast as a mouse event")
+}
+
+/// Create a vdom node from a web_sys::Element. Used in creating elements from html
+/// and markdown strings. Includes children, recursively added.
+pub fn el_from_ws<Ms>(node: &web_sys::Node) -> El<Ms> {
+    match node.node_type() {
+        1 => {  // Element node
+            let el_ws = node.dyn_ref::<web_sys::Element>()
+                .expect("Problem casting Node as Element");
+            // Result of tag_name is all caps, but tag From<String> expects lower.
+            let mut result = El::empty(el_ws.tag_name().to_lowercase().into());
+
+            // Populate attributes
+            let mut attrs = dom_types::Attrs::empty();
+            el_ws.get_attribute_names().for_each(
+                &mut |attr_name, _, _| {
+                    let attr_name2 = attr_name.as_string()
+                        .expect("problem converting attr to string");
+                    if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
+                        attrs.add(attr_name2.into(), &attr_val);
+                    }
+                }
+            );
+            result.attrs = attrs;
+
+            let children = el_ws.child_nodes();
+            for i in 0..children.length() {
+                let child = children.get(i)
+                    .expect("Can't find child in raw html element.");
+                result.children.push(el_from_ws(&child));
+            }
+            result
+        }
+        3 => {  // Text node
+//            crate::log(node.text_content().unwrap_or_default());
+            let text = node.text_content().expect("Can't find text");
+//            crate::log(text);
+            let mut result = El::empty(dom_types::Tag::Span);
+//            result.text_node = true;
+            result.set_text("MOO");
+//            result.text = None;
+//            result.text = node.text_content();
+            result
+//            El::new_text(&node.text_content().expect("Can't find text"))
+        }
+        _ => {
+            crate::log("Unexpected node type found from raw html");
+            El::empty(dom_types::Tag::Span)
+        }
+
+    }
+
+
+
 }
