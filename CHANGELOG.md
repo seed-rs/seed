@@ -6,7 +6,7 @@ them in a single span.
 - Added `set_timeout` wrapper
 
 ## v0.2.7
-- Fixed a bug where `line!` macro interfered with builtin in
+- Fixed a bug where `line!` macro interfered with builtin
 - Fixed a bug with routing search (ie `?`)
 
 ## v0.2.6

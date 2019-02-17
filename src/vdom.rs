@@ -651,9 +651,17 @@ fn patch<Ms: Clone>(
         if let Some(unmount_actions) = &mut child.hooks.will_unmount {
             unmount_actions(&child_el_ws)
         }
-        old_el_ws
-            .remove_child(&child_el_ws)
-            .expect("Problem removing child");
+
+        // todo get to the bottom of this
+        match old_el_ws.remove_child(&child_el_ws) {
+            Ok(_) => {},
+            Err(_) => {crate::log("Minor error patching html element. (remove)");}
+
+        }
+
+//        old_el_ws
+//            .remove_child(&child_el_ws)
+//            .expect("Problem removing child");
 
         child.el_ws.replace(child_el_ws);
     }
@@ -675,11 +683,6 @@ fn _match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_pos
         score += 0.3
     } else {
         score -= 0.3
-    };
-    if old.text_node == new.text_node {
-        score += 0.2
-    } else {
-        score -= 0.2
     };
     // Position will not change in many cases.
     if old_posit == new_posit {

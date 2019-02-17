@@ -858,7 +858,7 @@ make_tags! {
 }
 
 /// An component in our virtual DOM.
-#[derive(Debug)]
+#[derive(Debug)]  // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -869,7 +869,7 @@ pub struct El<Ms: 'static> {
     pub attrs: Attrs,
     pub style: Style,
     pub listeners: Vec<Listener<Ms>>,
-    // Text should be None unless text_node is true.
+    // Text is None unless this is a text node.
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
@@ -880,7 +880,6 @@ pub struct El<Ms: 'static> {
 
     // todo temp?
     //    pub key: Option<u32>,
-    pub text_node: bool,
     pub namespace: Option<Namespace>,
 
     // Controlled means we keep its text input (value) in sync with the model.
@@ -936,7 +935,6 @@ impl<Ms> El<Ms> {
             nest_level: None,
             el_ws: None,
 
-            text_node: false,
             namespace: None,
 
             controlled: false,
@@ -949,7 +947,6 @@ impl<Ms> El<Ms> {
 
     pub fn new_text(text: &str) -> Self {
         let mut result = Self::empty(Tag::Span);
-        result.text_node = true;
         result.text = Some(text.into());
         result
     }
@@ -1044,7 +1041,6 @@ impl<Ms> El<Ms> {
             id: None,
             nest_level: None,
             el_ws: self.el_ws.clone(),
-            text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
             hooks: LifecycleHooks::default(),
@@ -1056,8 +1052,8 @@ impl<Ms> El<Ms> {
         let mut result = String::new();
 
         for child in &self.children {
-            if child.text_node {
-                result += &child.clone().text.unwrap_or_default();
+            if let Some(text) = &child.text {
+                result += text;
             }
         }
 
@@ -1091,7 +1087,6 @@ impl<Ms> Clone for El<Ms> {
             nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
-            text_node: self.text_node,
             namespace: self.namespace.clone(),
             controlled: self.controlled,
             hooks: LifecycleHooks::default(),
@@ -1104,7 +1099,6 @@ impl<Ms> PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
-        self.text_node == other.text_node &&
 //        self.get_text() == other.get_text() &&
         self.attrs == other.attrs &&
         self.style == other.style &&

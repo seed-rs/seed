@@ -23,7 +23,6 @@ And wasm-bindgen: `cargo install wasm-bindgen-cli`
 If you run into errors while installing `wasm-bindgen-cli`, you may need to install C++
 build tools. On linux, run `sudo apt install build-essential`. On Windows, download and install
 [Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
-[Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
 include the C++ workload.
 
 ## The theoretical minimum
@@ -171,8 +170,7 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
 
             // Optionally-displaying an element
             if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
-
-            ],
+        ],
         success_level(model.count),  // Incorporating a separate component
 
         h3![ "What precisely is it we're counting?" ],
