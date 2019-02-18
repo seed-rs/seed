@@ -12,22 +12,41 @@ use web_sys;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Namespace {
     /// SVG Namespace
+    Html,
     Svg,
+    MathMl,
+    Xul,
+    Xbl,
     Custom(String),
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/Document/createElementNS
 impl Namespace {
     pub fn as_str(&self) -> &str {
         use self::Namespace::*;
         match self {
+            Html => "http://www.w3.org/1999/xhtml",
             Svg => "http://www.w3.org/2000/svg",
+            MathMl => "http://www.w3.org/1998/mathml",
+            Xul => "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+            Xbl => "http://www.mozilla.org/xbl",
             Custom(s) => s,
         }
     }
 }
 
-// todo cleanup enums vs &strs for restricting events/styles/attrs to
-// todo valid ones.
+impl From<String> for Namespace {
+    fn from(ns: String) -> Self {
+        match ns.as_ref() {
+            "http://www.w3.org/1999/xhtml" => Namespace::Html,
+            "http://www.w3.org/2000/svg" => Namespace::Svg,
+            "http://www.w3.org/1998/mathml" => Namespace::MathMl,
+            "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" => Namespace::Xul,
+            "http://www.mozilla.org/xbl" => Namespace::Xbl,
+            _ => Namespace::Custom(ns),
+        }
+    }
+}
 
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
@@ -380,7 +399,10 @@ make_attrs! {
     Wrap => "wrap",
 
     // Special, for iding dummy els:
-    Dummy => "dummy-element"
+    Dummy => "dummy-element",
+
+    // SVG
+    Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "ViewBox", Fill => "fill"
 }
 
 /// Similar to tag population.
@@ -982,7 +1004,10 @@ impl<Ms> El<Ms> {
         for i in 0..children.length() {
             let child = children.get(i)
                 .expect("Can't find child in raw html element.");
-            result.push(websys_bridge::el_from_ws(&child))
+
+            if let Some(child_vdom) = websys_bridge::el_from_ws(&child) {
+                result.push(child_vdom)
+            }
         }
         result
     }

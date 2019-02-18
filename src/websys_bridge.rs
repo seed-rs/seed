@@ -101,22 +101,14 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
 
     if !set_special {
         match el_ws.node_type() {
-            1 => {
-                el_ws
-                    .dyn_ref::<web_sys::Element>()
-                    .expect("Problem casting Node as Element while setting an attribute")
-                    .set_attribute(at, val)
-                    .expect("Problem setting an atrribute.");
-            }
-
-            3 => {
-                {crate::log("Trying to set attr on text node. Bug?")}
-            }
-
-            _ => {crate::log("Found non el/text node.")}
+            1 => el_ws
+                .dyn_ref::<web_sys::Element>()
+                .expect("Problem casting Node as Element while setting an attribute")
+                .set_attribute(at, val)
+                .expect("Problem setting an atrribute."),
+            3 => crate::log("Trying to set attr on text node. Bug?"),
+            _ => crate::log("Found non el/text node."),
         }
-
-
     }
 }
 
@@ -337,13 +329,18 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 
 /// Create a vdom node from a web_sys::Element. Used in creating elements from html
 /// and markdown strings. Includes children, recursively added.
-pub fn el_from_ws<Ms>(node: &web_sys::Node) -> El<Ms> {
+pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
     match node.node_type() {
         1 => {  // Element node
             let el_ws = node.dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element");
+
             // Result of tag_name is all caps, but tag From<String> expects lower.
-            let mut result = El::empty(el_ws.tag_name().to_lowercase().into());
+            // Probably is more pure to match by xlmns attribute instead.
+            let mut result = match el_ws.tag_name().to_lowercase().as_ref() {
+                "svg" => El::empty_svg(el_ws.tag_name().to_lowercase().into()),
+                _ => El::empty(el_ws.tag_name().to_lowercase().into())
+            };
 
             // Populate attributes
             let mut attrs = dom_types::Attrs::empty();
@@ -358,42 +355,42 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> El<Ms> {
             );
             result.attrs = attrs;
 
+            if let Some(ns) = el_ws.namespace_uri() {
+                result.namespace = Some(ns.into());
+            }
+
             let children = el_ws.child_nodes();
             for i in 0..children.length() {
                 let child = children.get(i)
                     .expect("Can't find child in raw html element.");
-                result.children.push(el_from_ws(&child));
+
+                if let Some(child_vdom) = el_from_ws(&child) {
+                    result.children.push(child_vdom);
+                }
+
             }
-            result
+            Some(result)
         }
         3 => {  // Text node
-//            let mut result = El::empty(dom_types::Tag::Span);
-//            let text = node.text_content();
-//            match text {
+//            None
+//            match &node.text_content() {
 //                Some(t) => {
-//                    match t.chars().count() {
-//                        0 => {},
-//                        _ => {result.text = Some(t);}
+//                    if t.chars().count() < 0{
+//                        None
+//                    } else {
+//                        None
+////                        Some(El::new_text(t))
 //                    }
-//
 //                },
-//                None => {}
+//                None => None,
 //            }
-////            crate::log(text);
-////
-////            result.set_text(&(&text)[0..1]);
 
-
-//            result
-
-
-            El::new_text(&node.text_content().expect("Can't find text"))
+            Some(El::new_text(&node.text_content().expect("Can't find text")))
         }
         _ => {
             crate::log("Unexpected node type found from raw html");
-            El::empty(dom_types::Tag::Span)
+            None
         }
-
     }
 
 

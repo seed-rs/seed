@@ -3,6 +3,7 @@
 ## v0.2.8
 - Reflowed `El::from_html` and `El::from_markdown` to return `Vec`s of `El`s, instead of wrapping
 them in a single span.
+- Improved support for SVG and namespaces
 - Added `set_timeout` wrapper
 
 ## v0.2.7
