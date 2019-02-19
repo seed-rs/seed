@@ -188,9 +188,8 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
-    // Don't render if we're dealing with a dummy element.
-    // todo get this working. it produces panics
-        if el_vdom.empty { return }
+    // Don't render if we're dealing with an empty element.
+    if el_vdom.empty { return }
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 

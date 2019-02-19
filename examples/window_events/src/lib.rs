@@ -28,7 +28,7 @@ enum Msg {
     KeyPressed(web_sys::KeyboardEvent),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Model> {
+fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
     Render(match msg {
         Msg::ToggleWatching => Model {
             watching: !model.watching,

@@ -4,11 +4,11 @@
 //#![feature(custom_attribute)]  // For testing
 
 pub use crate::{
-//    dom_types::Listener,
     fetch::{spawn_local, Method, Request},
     routing::{push_route, push_path, Url},
     util::{document, window},
-    vdom::App,
+//    vdom::{App, update}, // todo remove App once new update system in place?
+    vdom::{App}, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -30,7 +30,6 @@ mod websys_bridge;
 // todo dynamic routing
 // todo local storage
 // todo High-level css-grid and flex api?
-// todo keyed elements?
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
@@ -88,16 +87,11 @@ pub mod prelude {
             will_unmount, At, El, Ev, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{Update, Update::Render, Update::Skip},
+        vdom::{Update, Update::Render, Update::Skip, Update::Effect},
     };
     pub use std::collections::HashMap;
 
     pub use wasm_bindgen::prelude::*;
-
-    //    pub use proc_macros::seed_update;
-
-    //    pub use wasm_bindgen_macro::wasm_bindgen;
-
 }
 
 #[cfg(test)]
@@ -135,7 +129,7 @@ pub mod tests {
             Increment,
         }
 
-        fn update(msg: Msg, model: Model) -> Update<Model> {
+        fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
             match msg {
                 Msg::Increment => Update::Render(Model { val: model.val + 1 }),
             }

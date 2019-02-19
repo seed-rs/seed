@@ -33,7 +33,7 @@ enum Msg {
     Replace(Data),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Model> {
+fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
     match msg {
         Msg::GetData(state) => {
             spawn_local(get_data(state));

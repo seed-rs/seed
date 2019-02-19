@@ -7,12 +7,13 @@ use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
-pub enum Update<Mdl: Clone> {
+pub enum Update<Msg, Mdl> {
     Render(Mdl),
     Skip(Mdl),
+    Effect(Mdl, Msg)  // todo EffectSkip and EffectRender??
 }
 
-type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Mdl>;
+type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Ms, Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
@@ -248,14 +249,19 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         // to the view func, instead of using refs, to improve API syntax.
         // This approach may have performance impacts of unknown magnitude.
         let model_to_update = self.data.model.borrow().clone();
-        let updated_model = (self.cfg.update)(message, model_to_update);
+        let updated_model_wrapped = (self.cfg.update)(message, model_to_update);
 
         let mut should_render = true;
-        let updated_model = match updated_model {
-            Update::Render(m) => m,
-            Update::Skip(m) => {
+        let mut effect_msg = None;
+        let updated_model = match updated_model_wrapped {
+            Update::Render(mdl) => mdl,
+            Update::Skip(mdl) => {
                 should_render = false;
-                m
+                mdl
+            },
+            Update::Effect(mdl, msg) => {
+                effect_msg = Some(msg);
+                mdl
             }
         };
 
@@ -306,6 +312,10 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         // model for the next update.
         // Note: It appears that this step is why we need data.model to be in a RefCell.
         self.data.model.replace(updated_model);
+
+        if let Some(msg) = effect_msg {
+            self.update(msg)
+        }
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
@@ -672,7 +682,7 @@ fn patch<Ms: Clone>(
 
         }
 
-//        old_el_ws
+//        old_el_wsf
 //            .remove_child(&child_el_ws)
 //            .expect("Problem removing child");
 
@@ -681,6 +691,14 @@ fn patch<Ms: Clone>(
 
     new.el_ws = Some(old_el_ws);
 }
+
+/// Update app state directly, ie not from a Listener/event.
+//pub fn update<Ms>(message: Ms {  // todo deal with this.
+//    let mailbox = Mailbox::new(move |msg| {
+//        app.update(msg);
+//    });
+//    mailbox.send(message);
+//}
 
 /// Compare two elements. Rank based on how similar they are, using subjective criteria.
 fn _match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posit: usize) -> f32 {

@@ -32,12 +32,13 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Update<Model> {
+fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
     match msg {
-        Msg::Increment => Render(Model {
+//        Msg::Increment => Render(Model {
+        Msg::Increment => Effect(Model {
             count: model.count + 1,
             ..model
-        }),
+        }, Msg::ChangeWWC("chocolates".into())),
         Msg::Decrement => Render(Model {
             count: model.count - 1,
             ..model
@@ -50,8 +51,7 @@ fn update(msg: Msg, model: Model) -> Update<Model> {
 }
 
 /// A mutable-style alternative:
-//fn update(msg: Msg, model: Model) -> ModelUpdate<Model> {
-//    let mut model = model;
+//fn update(msg: Msg, model: mut Model) -> ModelUpdate<Model> {
 //    match msg {
 //        Msg::Increment => model.count += 1,
 //        Msg::Decrement => model.count -= 1,

@@ -34,7 +34,7 @@ enum Msg {
     EditChange(String),
 }
 
-fn update(msg: Msg, mut model: Model) -> Update<Model> {
+fn update(msg: Msg, mut model: Model) -> Update<Msg, Model> {
     match msg {
         Msg::Connected => {
             model.connected = true;

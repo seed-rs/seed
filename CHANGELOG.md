@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.9
+- Added an `Effect` option to the `Update` enum, which allows chaining update
+messages.
+
 ## v0.2.8
 - Reflowed `El::from_html` and `El::from_markdown` to return `Vec`s of `El`s, instead of wrapping
 them in a single span.

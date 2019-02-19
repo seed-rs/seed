@@ -56,6 +56,17 @@ fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsVa
         })
 }
 
+//fn get_data() -> impl Future<Item = (), Error = JsValue> {
+//    let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
+//
+//    Request::new(url)
+//        .method(Method::Get)
+//        .fetch_json()
+//        .map(move |json| {
+//            state.update(Msg::Replace(json));
+//        })
+//}
+
 fn send() -> impl Future<Item = (), Error = JsValue> {
     let url = "https://infinitea.herokuapp.com/api/contact";
 
@@ -92,19 +103,25 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     Replace(Branch),
-    GetData(seed::App<Msg, Model>),
+//    GetData(seed::App<Msg, Model>),
+    GetData,
     Send,
 }
 
-fn update(msg: Msg, model: Model) -> Update<Model> {
+fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
     match msg {
         Msg::Replace(data) => Render(Model { data }),
         // Msg::GetData is unused in this example, but could be used when
-        // updating state from an event.
+        // updating state from an event.  // todo check this out
+//        Msg::GetData(state) => {
+//            spawn_local(get_data(state));
+//            Render(model)
+//        }
         Msg::GetData(state) => {
             spawn_local(get_data(state));
             Render(model)
         }
+
         Msg::Send => {
             spawn_local(send());
             Render(model)
@@ -140,4 +157,5 @@ pub fn render() {
         .run();
 
     spawn_local(get_data(state));
+//    update();
 }

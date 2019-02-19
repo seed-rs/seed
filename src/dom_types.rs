@@ -1,7 +1,6 @@
 //! This module contains structs and enums that represent dom types, and their parts.
 //! These are the types used internally by our virtual dom.
 
-use crate::vdom::Mailbox;
 use core::convert::AsRef;
 use pulldown_cmark;
 use std::{collections::HashMap, fmt};
@@ -109,6 +108,12 @@ pub fn mouse_ev<Ms, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
+///// Update app state directly, ie not from a Listener/event.
+//pub fn update<Ms>() -> Listener<Ms> {
+//    let closure = move |event: web_sys::Event| handler(event);
+//    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
+//}
+
 type EventHandler<Ms> = Box<FnMut(web_sys::Event) -> Ms>;
 
 /// Ev-handling for Elements
@@ -162,7 +167,7 @@ impl<Ms> Listener<Ms> {
     }
 
     /// This method is where the processing logic for events happens.
-    pub fn attach<T>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>)
+    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
     where
         T: AsRef<web_sys::EventTarget>,
     {
@@ -397,9 +402,6 @@ make_attrs! {
     Step => "step", Style => "style", TabIndex => "tabindex", Target => "target", Title => "title",
     Translate => "translate", Type => "type", UseMap => "usemap", Value => "value", Width => "width",
     Wrap => "wrap",
-
-    // Special, for iding dummy els:  // todo del
-//    Dummy => "dummy-element",
 
     // SVG
     // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute

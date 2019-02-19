@@ -120,7 +120,7 @@ enum Msg {
     ChangeVisibility(Visible),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Model> {
+fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
     // We take a verbose immutable-design/functional approach in this example.
     // Alternatively, you could re-declare model as mutable at the top, and mutate
     // what we need in each match leg. See the Update section of the guide for details.
