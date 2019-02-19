@@ -150,7 +150,7 @@ pub fn make_websys_el<Ms: Clone>(
     for (at, val) in &el_vdom.attrs.vals {
         set_attr_shim(&el_ws, at, val);
     }
-    if let Some(ns) = el_vdom.namespace {
+    if let Some(ns) = &el_vdom.namespace {
         el_ws
             .dyn_ref::<web_sys::Element>()
             .expect("Problem casting Node as Element while setting an attribute")

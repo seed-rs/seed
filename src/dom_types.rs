@@ -408,7 +408,7 @@ make_attrs! {
     ArabicForm => "arabic-form", Ascent => "ascent", AttributeName => "attributeName", attributeType => "attributeType",
     AutoReverse => "autoReverse", Azimuth => "azimumth", BaseFrequenc => "baseFrequency", BaselineShift => "baseline-shift",
     BaseProfile => "baseProfile", Bbox => "bbox", Begin => "begin", Bias => "bias", By => "by",
-    CalcMode => "calcMode", CapHeight => "cap-height", Clip => "clip"
+    CalcMode => "calcMode", CapHeight => "cap-height", Clip => "clip",
     // todo fill in rest from link above.
 
     Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "ViewBox", Fill => "fill"
