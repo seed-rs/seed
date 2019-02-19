@@ -519,7 +519,8 @@ fn patch<Ms: Clone>(
         None => return
     };
 
-    if old != new {
+    if old != new || old.namespace != new.namespace {
+        // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after

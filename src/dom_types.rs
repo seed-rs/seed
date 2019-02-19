@@ -402,6 +402,15 @@ make_attrs! {
     Dummy => "dummy-element",
 
     // SVG
+    // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
+    AccentHeight => "accent-height", Accumulate => "accumulate", Additive => "additive",
+    AlignmentBaseline => "alignment-baseline", AllowReorder => "allowReorder", Amplitude => "amplitude",
+    ArabicForm => "arabic-form", Ascent => "ascent", AttributeName => "attributeName", attributeType => "attributeType",
+    AutoReverse => "autoReverse", Azimuth => "azimumth", BaseFrequenc => "baseFrequency", BaselineShift => "baseline-shift",
+    BaseProfile => "baseProfile", Bbox => "bbox", Begin => "begin", Bias => "bias", By => "by",
+    CalcMode => "calcMode", CapHeight => "cap-height", Clip => "clip"
+    // todo fill in rest from link above.
+
     Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "ViewBox", Fill => "fill"
 }
 
