@@ -73,6 +73,12 @@ pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
+impl<Ms: Clone + 'static, Mdl: Clone + 'static> ::std::fmt::Debug for App<Ms, Mdl> {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "App")
+    }
+}
+
 #[derive(Clone)]
 pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
     model: Mdl,
