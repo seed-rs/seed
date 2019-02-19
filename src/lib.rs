@@ -37,7 +37,7 @@ mod websys_bridge;
 pub fn empty<Ms>() -> dom_types::El<Ms> {
     // The tag doesn't matter here, but this seems semantically appropriate.
     let mut el = dom_types::El::empty(dom_types::Tag::Del);
-    el.add_attr("dummy-element".into(), "true".into());
+    el.empty = true;
     el
 }
 

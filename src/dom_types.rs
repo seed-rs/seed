@@ -398,15 +398,15 @@ make_attrs! {
     Translate => "translate", Type => "type", UseMap => "usemap", Value => "value", Width => "width",
     Wrap => "wrap",
 
-    // Special, for iding dummy els:
-    Dummy => "dummy-element",
+    // Special, for iding dummy els:  // todo del
+//    Dummy => "dummy-element",
 
     // SVG
     // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
     AccentHeight => "accent-height", Accumulate => "accumulate", Additive => "additive",
     AlignmentBaseline => "alignment-baseline", AllowReorder => "allowReorder", Amplitude => "amplitude",
-    ArabicForm => "arabic-form", Ascent => "ascent", AttributeName => "attributeName", attributeType => "attributeType",
-    AutoReverse => "autoReverse", Azimuth => "azimumth", BaseFrequenc => "baseFrequency", BaselineShift => "baseline-shift",
+    ArabicForm => "arabic-form", Ascent => "ascent", AttributeName => "attributeName", AttributeType => "attributeType",
+    AutoReverse => "autoReverse", Azimuth => "azimumth", BaseFrequency => "baseFrequency", BaselineShift => "baseline-shift",
     BaseProfile => "baseProfile", Bbox => "bbox", Begin => "begin", Bias => "bias", By => "by",
     CalcMode => "calcMode", CapHeight => "cap-height", Clip => "clip",
     // todo fill in rest from link above.
@@ -921,6 +921,7 @@ pub struct El<Ms: 'static> {
 
     // Lifecycle hooks
     pub hooks: LifecycleHooks,
+    pub empty: bool,  // Indicates not to render anything.
 }
 
 type HookFn = Box<FnMut(&web_sys::Node)>;
@@ -973,6 +974,7 @@ impl<Ms> El<Ms> {
             // static: false,
             // static_to_parent: false,
             hooks: LifecycleHooks::default(),
+            empty: false
         }
     }
 
@@ -1078,6 +1080,7 @@ impl<Ms> El<Ms> {
             namespace: self.namespace.clone(),
             controlled: self.controlled,
             hooks: LifecycleHooks::default(),
+            empty: false,
         }
     }
 
@@ -1092,17 +1095,6 @@ impl<Ms> El<Ms> {
         }
 
         result
-    }
-
-    /// Dummy elements are used when logic must return an El due to the type
-    /// system, but we don't want to render anything.
-    pub fn is_dummy(&self) -> bool {
-        if let Tag::Del = self.tag {
-            if self.attrs.vals.get(&At::Dummy).is_some() {
-                return true;
-            }
-        }
-        false
     }
 }
 
@@ -1124,6 +1116,7 @@ impl<Ms> Clone for El<Ms> {
             namespace: self.namespace.clone(),
             controlled: self.controlled,
             hooks: LifecycleHooks::default(),
+            empty: self.empty,
         }
     }
 }
@@ -1133,14 +1126,15 @@ impl<Ms> PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
-//        self.get_text() == other.get_text() &&
         self.attrs == other.attrs &&
         self.style == other.style &&
         self.text == other.text &&
         self.listeners == other.listeners &&
         // TOdo not sure how nest-level should be used. Is it a given based on
         // todo how we iterate? Sanity-check for now.
-        self.nest_level == other.nest_level
+        self.nest_level == other.nest_level &&
+        self.namespace == other.namespace &&
+        self.empty == other.empty
     }
 }
 

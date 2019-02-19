@@ -512,16 +512,13 @@ fn patch<Ms: Clone>(
     // We remove it from the old el_vodom now, and at the end... add it to the new one.
     // We don't run attach_children() when patching, hence this approach.
 
-    //        if new.is_dummy() == true { return }
-
     let old_el_ws = match old.el_ws.take() {
         Some(o) => o,
         None => return
     };
 
-    if old != new || old.namespace != new.namespace {
-        // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
-        // Something about this element itself is different: patch it.
+    if old != new {
+
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
         // analyzing children
@@ -530,33 +527,48 @@ fn patch<Ms: Clone>(
         // no way to patch one element type into another.
         // TODO: forcing a rerender for differnet listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
-        if old.tag != new.tag {
-            // TODO: DRY here between this and later in func.
+        if new.empty && !old.empty {
+            parent.remove_child(&old_el_ws)
+                .expect("Problem removing old we_el when updating to empty");
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 unmount_actions(&old_el_ws)
             }
-
-            // todo: Perhaps some of this next segment should be moved to websys_bridge
-            websys_bridge::attach_children(new);
-
-            let new_el_ws = new.el_ws.take().expect("Missing websys el");
-
-            parent
-                .replace_child(&new_el_ws, &old_el_ws)
-                .expect("Problem replacing element");
-
-            // Perform side-effects specified for mounting.
-            if let Some(mount_actions) = &mut new.hooks.did_mount {
-                mount_actions(&new_el_ws)
-            }
-
-            new.el_ws.replace(new_el_ws);
-
-            let mut new = new;
-            attach_listeners(&mut new, &mailbox);
-            // We've re-rendered this child and all children; we're done with this recursion.
             return
         }
+            // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
+            // Something about this element itself is different: patch it.
+            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
+                // TODO: DRY here between this and later in func.
+                if let Some(unmount_actions) = &mut old.hooks.will_unmount {
+                    unmount_actions(&old_el_ws)
+                }
+
+                // todo: Perhaps some of this next segment should be moved to websys_bridge
+                websys_bridge::attach_children(new);
+
+                let new_el_ws = new.el_ws.take().expect("Missing websys el");
+
+                if old.empty {
+                    parent.append_child(&new_el_ws)
+                        .expect("Problem adding element to previously empty one");
+                } else {
+                    parent
+                        .replace_child(&new_el_ws, &old_el_ws)
+                        .expect("Problem replacing element");
+                }
+
+                // Perform side-effects specified for mounting.
+                if let Some(mount_actions) = &mut new.hooks.did_mount {
+                    mount_actions(&new_el_ws)
+                }
+
+                new.el_ws.replace(new_el_ws);
+
+                let mut new = new;
+                attach_listeners(&mut new, &mailbox);
+                // We've re-rendered this child and all children; we're done with this recursion.
+                return
+            }
 
         // Patch parts of the Element.
         websys_bridge::patch_el_details(old, new, &old_el_ws);

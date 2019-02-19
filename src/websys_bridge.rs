@@ -190,7 +190,7 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     // Don't render if we're dealing with a dummy element.
     // todo get this working. it produces panics
-    //    if el_vdom.is_dummy() == true { return }
+        if el_vdom.empty { return }
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
