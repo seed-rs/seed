@@ -51,9 +51,9 @@ impl From<String> for Namespace {
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 // Ignore clippy for these events re &T; let's keep the API clean
-where
-    Ms: Clone + 'static,
-    T: ToString,
+    where
+        Ms: Clone + 'static,
+        T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -168,15 +168,32 @@ impl<Ms> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-    where
-        T: AsRef<web_sys::EventTarget>,
+        where
+            T: AsRef<web_sys::EventTarget>,
     {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
-
+        let trigger = self.trigger.clone();
         let closure =
             Closure::wrap(
-                Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
+                Box::new(move |event: web_sys::Event| {
+                    let msg = handler(event.clone());
+                    if trigger == Ev::Input{
+                        let target = event.target().unwrap();
+                        let input_el = crate::to_input(&target);
+
+                        let value = input_el.value();
+                        if value == ""{
+                            let default_value = input_el.default_value();
+                            input_el.set_value(&default_value);
+                            log!("setting default_value", default_value);
+                        }else{
+                            input_el.set_value(&value);
+                            log!("setting value", value);
+                        }
+                    }
+                    mailbox.send(msg);
+                })
                     as Box<FnMut(web_sys::Event) + 'static>,
             );
 
@@ -194,8 +211,8 @@ impl<Ms> Listener<Ms> {
     }
 
     pub fn detach<T>(&self, el_ws: &T)
-    where
-        T: AsRef<web_sys::EventTarget>,
+        where
+            T: AsRef<web_sys::EventTarget>,
     {
         // This and attach taken from Draco.
         let closure = self.closure.as_ref().expect("Can't find closure to detach");
@@ -1128,15 +1145,15 @@ impl<Ms> PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
-        self.attrs == other.attrs &&
-        self.style == other.style &&
-        self.text == other.text &&
-        self.listeners == other.listeners &&
-        // TOdo not sure how nest-level should be used. Is it a given based on
-        // todo how we iterate? Sanity-check for now.
-        self.nest_level == other.nest_level &&
-        self.namespace == other.namespace &&
-        self.empty == other.empty
+            self.attrs == other.attrs &&
+            self.style == other.style &&
+            self.text == other.text &&
+            self.listeners == other.listeners &&
+            // TOdo not sure how nest-level should be used. Is it a given based on
+            // todo how we iterate? Sanity-check for now.
+            self.nest_level == other.nest_level &&
+            self.namespace == other.namespace &&
+            self.empty == other.empty
     }
 }
 
