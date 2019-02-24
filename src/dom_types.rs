@@ -174,25 +174,39 @@ impl<Ms> Listener<Ms> {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
         let trigger = self.trigger.clone();
+        // This is the closure ran when a DOM element has an user defined callback
         let closure =
             Closure::wrap(
                 Box::new(move |event: web_sys::Event| {
+                    // Let the seed user handle the event
                     let msg = handler(event.clone());
-                    if trigger == Ev::Input{
+                    mailbox.send(msg);
+                    // update the value field if needed
+                    // The update is needed when the event is of type input, the input field is
+                    // of type number, text or password and the DOM value field is different from
+                    // the default_value. Default value is the one set by the seed user when he sets the
+                    // value, setting the value in HTML only changes the default value, not
+                    // the actual value. To change the actual value it is necessary to call set_value
+                    if trigger == Ev::Input {
                         let target = event.target().unwrap();
                         let input_el = crate::to_input(&target);
-
-                        let value = input_el.value();
-                        if value == ""{
-                            let default_value = input_el.default_value();
-                            input_el.set_value(&default_value);
-                            log!("setting default_value", default_value);
-                        }else{
-                            input_el.set_value(&value);
-                            log!("setting value", value);
+                        let input_type = input_el.type_();
+                        // For number, text and password, might be useful for other inputs too
+                        // but breaks the file input for example, which cannot have its value
+                        // set by using the set_value function
+                        let should_trigger_rerender_with_set_value = {
+                            (input_type == "number"
+                                || input_type == "text"
+                                || input_type == "password")
+                        };
+                        if should_trigger_rerender_with_set_value {
+                            let value_set_by_seed_user = input_el.default_value();
+                            let actual_value = input_el.value();
+                            if !(value_set_by_seed_user == actual_value) {
+                                input_el.set_value(&value_set_by_seed_user);
+                            }
                         }
                     }
-                    mailbox.send(msg);
                 })
                     as Box<FnMut(web_sys::Event) + 'static>,
             );
