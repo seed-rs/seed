@@ -10,7 +10,6 @@ use seed::prelude::*;
 struct Model {
     count: i32,
     what_we_count: String,
-    checked: bool,
 }
 
 // Setup a default here, for initialization later.
@@ -19,7 +18,6 @@ impl Default for Model {
         Self {
             count: 0,
             what_we_count: "click".into(),
-            checked: false,
         }
     }
 }
@@ -31,7 +29,6 @@ enum Msg {
     Increment,
     Decrement,
     ChangeWWC(String),
-    Toggle,
 }
 
 /// The sole source of updating the model; returns a fresh one.
@@ -48,8 +45,7 @@ fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
         Msg::ChangeWWC(what_we_count) => Render(Model {
             what_we_count,
             ..model
-        }),
-        Msg::Toggle => Render(Model {checked: !model.checked, ..model})
+        })
     }
 }
 
@@ -119,11 +115,7 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         h3!["What precisely is it we're counting?"],
         input![
             attrs! {At::Value => model.what_we_count},
-//            input_ev(Ev::Blur, Msg::ChangeWWC)
-        ],
-        input![
-            attrs! {At::Type => "checkbox"; At::Checked => model.checked},
-//            simple_ev(Ev::Click, Msg::Toggle)
+            input_ev(Ev::Input, Msg::ChangeWWC)
         ],
     ]
 }

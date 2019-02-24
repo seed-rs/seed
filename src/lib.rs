@@ -1,13 +1,12 @@
 //! See readme for details.
 
 #![allow(unused_macros)]
-//#![feature(custom_attribute)]  // For testing
+//#![deny(missing_docs)]
 
 pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_route, push_path, Url},
     util::{document, window},
-//    vdom::{App, update}, // todo remove App once new update system in place?
     vdom::{App}, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };

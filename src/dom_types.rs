@@ -124,8 +124,9 @@ pub struct Listener<Ms> {
     pub closure: Option<Closure<FnMut(web_sys::Event)>>,
     // Control listeners prevent input on controlled input elements, and
     // are not assoicated with a message.
-    pub control: Option<String>,
-//    pub control: bool,
+    pub control_val: Option<String>,
+    pub control_checked: Option<bool>,
+    //    pub control: bool,
     pub id: Option<u32>,
 }
 
@@ -133,12 +134,12 @@ impl<Ms> fmt::Debug for Listener<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}, id:{:?} }}",
-//            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, id:{:?} }}",
+            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}{:?}, id:{:?} }}",
             self.trigger,
             fmt_hook_fn(&self.handler),
             fmt_hook_fn(&self.closure),
-            self.control,
+            self.control_val,
+            self.control_checked,
             self.id
         )
     }
@@ -152,7 +153,8 @@ impl<Ms> Listener<Ms> {
             trigger: trigger.into(),
             handler,
             closure: None,
-            control: None,
+            control_val: None,
+            control_checked: None,
             id: None,
         }
     }
@@ -161,10 +163,23 @@ impl<Ms> Listener<Ms> {
     /// from the model
     pub fn new_control(val: String) -> Self {
         Self {
+            trigger: dom_types::Ev::Input,
+            handler: None,
+            closure: None,
+            control_val: Some(val),
+            control_checked: None,
+            id: None,
+        }
+    }
+
+    /// Similar to new_control, but for checkboxes
+    pub fn new_control_check(checked: bool) -> Self {
+        Self {
             trigger: dom_types::Ev::Click,
             handler: None,
             closure: None,
-            control: Some(val),
+            control_val: None,
+            control_checked: Some(checked),
             id: None,
         }
     }
@@ -174,32 +189,8 @@ impl<Ms> Listener<Ms> {
         where
             T: AsRef<web_sys::EventTarget>,
     {
-//        let inner;
-//        // Set up a closure that forces the field to stay in sync with the model value,
-//        // which we've captured under self.control.
-//        if let Some(control) = self.control {
-//            let e2 = el_ws.clone();
-//            inner = Box::new(move |_: web_sys::Event| {
-//                if util::input_value((el_ws.as_ref() as &web_sys::EventTarget)) != control {
-//                    util::set_value2((el_ws.as_ref() as &web_sys::EventTarget), &control)
-//                }
-//
-//            }) as Box<FnMut(web_sys::Event) + 'static>;
-//
-//        } else {
-//        let mut handler = self.handler.take().expect("Can't find old handler");
-//        let inner =  Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
-//            as Box<FnMut(web_sys::Event) + 'static>;
-//        }
-
+        // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
-<<<<<<< HEAD
-        let inner =  Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
-            as Box<FnMut(web_sys::Event) + 'static>;
-
-        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-        let closure = Closure::wrap(inner);
-=======
         let trigger = self.trigger.clone();
         // This is the closure ran when a DOM element has an user defined callback
         let closure =
@@ -229,7 +220,7 @@ impl<Ms> Listener<Ms> {
                         if should_trigger_rerender_with_set_value {
                             let value_set_by_seed_user = input_el.default_value();
                             let actual_value = input_el.value();
-                            if !(value_set_by_seed_user == actual_value) {
+                            if value_set_by_seed_user != actual_value {
                                 input_el.set_value(&value_set_by_seed_user);
                             }
                         }
@@ -237,7 +228,6 @@ impl<Ms> Listener<Ms> {
                 })
                     as Box<FnMut(web_sys::Event) + 'static>,
             );
->>>>>>> 114e4c49024da7c6678e96f4d96a43e16f404812
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(
@@ -250,66 +240,64 @@ impl<Ms> Listener<Ms> {
         // is removed will trigger a panic.
         self.closure = Some(closure);
         //        self.handler.replace(handler);  // todo ?
-
     }
+
+
+//    /// This method is where the processing logic for events happens.
+//    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
+//        where
+//            T: AsRef<web_sys::EventTarget>,
+//    {
+//        let mut handler = self.handler.take().expect("Can't find old handler");
+//
+//        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
+//        let closure =
+//            Closure::wrap(
+//                Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
+//                    as Box<FnMut(web_sys::Event) + 'static>,
+//            );
+//
+//        (el_ws.as_ref() as &web_sys::EventTarget)
+//            .add_event_listener_with_callback(
+//                self.trigger.as_str(),
+//                closure.as_ref().unchecked_ref(),
+//            )
+//            .expect("problem adding listener to element");
+//
+//        // Store the closure so we can detach it later. Not detaching it when an element
+//        // is removed will trigger a panic.
+//        self.closure = Some(closure);
+//    }
+
+    // todo: Note this func and the above commented-out code: This approach, of passing
+    // todo control values from the model appears not to work, perhaps due to a clash between
+    // todo user-inputted, and control Ev::input listeners. This solution will not keep
+    // todo the model and field synced if the model changes due to somethign other
+    // todo than input, or if a value attribute isn't specified.
 
     /// todo: Would like this in the same fn as attach, but run into issues
     /// between el_ws as EventTarget, and as Node. Could possibly resolve using traits.
-        pub fn attach_control(&mut self, el_ws: &web_sys::Node)
+    pub fn attach_control(&mut self, el_ws: &web_sys::Node)
     {
-        let control = self.control.take().expect("Missing control");
-        let e2 = el_ws.clone();
-        let control2 = control.clone();
-        self.control.replace(control);
-
-//            let inner = Box::new(move |_: web_sys::Event| {
-//                if util::input_value((el_ws.as_ref() as &web_sys::EventTarget)) != control {
-//                    util::set_value2((el_ws.as_ref() as &web_sys::EventTarget), &control)
-//                }
-//            }) as Box<FnMut(web_sys::Event) + 'static>;
-
-        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-//        let closure = Closure::wrap(inner);
-        let closure = Closure::wrap(
-            Box::new(move |_: web_sys::Event| {
-                match el_ws
-                    .dyn_ref::<web_sys::Element>()
-                    .expect("Problem casting as Element in attach_control")
-                    .get_attribute("type") {
-                    Some(t) => {
-                        if t == "checkbox".to_string() {
-                            let input_el = el_ws.dyn_ref::<web_sys::HtmlInputElement>().expect("Problem casting as checkbox");
-
-                            if input_el.checked().to_string() != control {
-                                let control_bool = match control.as_ref() {
-                                    "true" => true,
-                                    "false" => false,
-                                    _ => panic!("Control must be true of false for checkbox")
-                                };
-                                input_el.set_checked(control_bool);
-                            }
-                        } else {
-                            // todo DRY
-                            if util::input_value(&e2) != control2.to_string() {
-                                util::set_value2(&e2, &control2);
-                            }
-                        }
-
-                    }
-                    None => {
-                        if util::input_value(&e2) != control2.to_string() {
-                            util::set_value2(&e2, &control2);
-                        }
-
-                    }
+        // Dummy vars outside the closure to avoid lifetime problems.
+        let val2 = self.control_val.clone();
+        let checked2 = self.control_checked;
+        let el_ws2 = el_ws.clone();
+        let closure = Closure::wrap(Box::new(move |_| {
+            if let Some(val) = val2.clone() {
+                if util::input_value(&el_ws2) != val {
+                    util::set_value(&el_ws2, &val);
                 }
-
-
-
-            }) as Box<FnMut(web_sys::Event) + 'static>
+            }
+            if let Some(checked) = checked2 {
+                let input_el = &el_ws2.dyn_ref::<web_sys::HtmlInputElement>()
+                    .expect("Problem casting as checkbox");
+                if input_el.checked() != checked {
+                    input_el.set_checked(checked);
+                }
+            }
+        }) as Box<FnMut(web_sys::Event) + 'static>,
         );
-
-
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(
@@ -321,8 +309,6 @@ impl<Ms> Listener<Ms> {
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
         self.closure = Some(closure);
-        //        self.handler.replace(handler);  // todo ?
-
     }
 
     pub fn detach<T>(&self, el_ws: &T)
@@ -1047,7 +1033,6 @@ pub struct El<Ms: 'static> {
     pub namespace: Option<Namespace>,
 
     // control means we keep its text input (value) in sync with the model.
-//    pub control: Some(String),
     // static: bool
     // static_to_parent: bool
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
@@ -1101,8 +1086,6 @@ impl<Ms> El<Ms> {
             el_ws: None,
 
             namespace: None,
-
-//            control: None,
 
             // static: false,
             // static_to_parent: false,
@@ -1247,7 +1230,6 @@ impl<Ms> Clone for El<Ms> {
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
-//            control: self.control,
             hooks: LifecycleHooks::default(),
             empty: self.empty,
         }

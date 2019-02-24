@@ -235,11 +235,9 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         if let Some(routes) = self.data.routes.borrow().clone() {  // ignore clippy re clone() on copy
             routing::setup_popstate_listener(
                 &routing::initial(self.clone(), routes),
-//                &self.clone(),
                 routes
             );
         }
-        // todo put back
 
         // Allows panic messages to output to the browser console.error.
         panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -355,27 +353,6 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
     }
 }
 
-/// Used to identify input/textarea/select elements that don't have an input trigger
-/// so we can manually keep them in sync with the model.
-fn input_listener_exists<Ms>(el_vdom: &El<Ms>) -> bool
-where
-    Ms: Clone + 'static,
-{
-    let checkbox = match el_vdom.attrs.vals.get(&dom_types::At::Type) {
-        Some(t) => t == "checkbox",
-        None => false
-    };
-
-    // todo handle checkboxes.
-
-    for listener in &el_vdom.listeners {
-        if !checkbox && listener.trigger == dom_types::Ev::Input {
-            return true;
-        }
-    }
-    false
-}
-
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
 pub fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
@@ -389,15 +366,25 @@ where
     id += 1; // Raise the id after each element we process.
     el_vdom.nest_level = Some(active_level);
 
-    // Set up controlled components: Input elements must stay in sync with the state;
-    // don't let them get out of syn with state from typing, which occurs if a change
-    // doesn't trigger a re-render.
-        // Handle controlled inputs: Ie force sync with the model.
+    // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
+    // don't let them get out of sync from typing or other events, which can occur if a change
+    // doesn't trigger a re-render, or if something else modifies them using a side effect.
+    // Handle controlled inputs: Ie force sync with the model.
     if el_vdom.tag == dom_types::Tag::Input || el_vdom.tag == dom_types::Tag::Select || el_vdom.tag == dom_types::Tag::TextArea {
-        if let Some(control_val) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
-            let mut listener = dom_types::Listener::new_control(control_val.to_string());
-            el_vdom.listeners.push(listener);  // Add to the El, so we can deattach later.
-        }
+        let listener = if let Some(checked) = el_vdom.attrs.vals.get(&dom_types::At::Checked) {
+            let checked_bool = match checked.as_ref() {
+                "true" => true,
+                "false" => false,
+                _ => panic!("checked must be true or false.")
+            };
+            dom_types::Listener::new_control_check(checked_bool)
+        } else if let Some(control_val) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
+            dom_types::Listener::new_control(control_val.to_string())
+        } else {
+            // If Value is not specified, force the field to be blank.
+            dom_types::Listener::new_control("".to_string())
+        };
+        el_vdom.listeners.push(listener);  // Add to the El, so we can deattach later.
     }
 
     // Create the web_sys element; add it to the working tree; store it in
@@ -429,8 +416,8 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
         .expect("Missing el_ws on attach_all_listeners");
 
     for listener in &mut el.listeners {
-        // todo ideally we unify attach as one func
-        if let Some(control) = &listener.control {
+        // todo ideally we unify attach as one method
+        if listener.control_val.is_some() || listener.control_checked.is_some() {
             listener.attach_control(&el_ws);
         } else {
             listener.attach(&el_ws, mailbox.clone());
@@ -571,7 +558,7 @@ fn patch<Ms: Clone>(
     // Note that unlike the attach_listeners function, this only attaches for the currently
     // element.
     for listener in &mut new.listeners {
-        if let Some(control) = &listener.control {
+        if listener.control_val.is_some() || listener.control_checked.is_some() {
             listener.attach_control(&old_el_ws);
         } else {
             listener.attach(&old_el_ws, mailbox.clone());
@@ -658,12 +645,7 @@ fn patch<Ms: Clone>(
         match old_el_ws.remove_child(&child_el_ws) {
             Ok(_) => {},
             Err(_) => {crate::log("Minor error patching html element. (remove)");}
-
         }
-
-//        old_el_wsf
-//            .remove_child(&child_el_ws)
-//            .expect("Problem removing child");
 
         child.el_ws.replace(child_el_ws);
     }
