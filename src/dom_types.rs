@@ -51,9 +51,9 @@ impl From<String> for Namespace {
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 // Ignore clippy for these events re &T; let's keep the API clean
-where
-    Ms: Clone + 'static,
-    T: ToString,
+    where
+        Ms: Clone + 'static,
+        T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -193,11 +193,51 @@ impl<Ms> Listener<Ms> {
 //        }
 
         let mut handler = self.handler.take().expect("Can't find old handler");
+<<<<<<< HEAD
         let inner =  Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
             as Box<FnMut(web_sys::Event) + 'static>;
 
         // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
         let closure = Closure::wrap(inner);
+=======
+        let trigger = self.trigger.clone();
+        // This is the closure ran when a DOM element has an user defined callback
+        let closure =
+            Closure::wrap(
+                Box::new(move |event: web_sys::Event| {
+                    // Let the seed user handle the event
+                    let msg = handler(event.clone());
+                    mailbox.send(msg);
+                    // update the value field if needed
+                    // The update is needed when the event is of type input, the input field is
+                    // of type number, text or password and the DOM value field is different from
+                    // the default_value. Default value is the one set by the seed user when he sets the
+                    // value, setting the value in HTML only changes the default value, not
+                    // the actual value. To change the actual value it is necessary to call set_value
+                    if trigger == Ev::Input {
+                        let target = event.target().unwrap();
+                        let input_el = crate::to_input(&target);
+                        let input_type = input_el.type_();
+                        // For number, text and password, might be useful for other inputs too
+                        // but breaks the file input for example, which cannot have its value
+                        // set by using the set_value function
+                        let should_trigger_rerender_with_set_value = {
+                            (input_type == "number"
+                                || input_type == "text"
+                                || input_type == "password")
+                        };
+                        if should_trigger_rerender_with_set_value {
+                            let value_set_by_seed_user = input_el.default_value();
+                            let actual_value = input_el.value();
+                            if !(value_set_by_seed_user == actual_value) {
+                                input_el.set_value(&value_set_by_seed_user);
+                            }
+                        }
+                    }
+                })
+                    as Box<FnMut(web_sys::Event) + 'static>,
+            );
+>>>>>>> 114e4c49024da7c6678e96f4d96a43e16f404812
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(
@@ -1219,15 +1259,15 @@ impl<Ms> PartialEq for El<Ms> {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
         self.tag == other.tag &&
-        self.attrs == other.attrs &&
-        self.style == other.style &&
-        self.text == other.text &&
-        self.listeners == other.listeners &&
-        // TOdo not sure how nest-level should be used. Is it a given based on
-        // todo how we iterate? Sanity-check for now.
-        self.nest_level == other.nest_level &&
-        self.namespace == other.namespace &&
-        self.empty == other.empty
+            self.attrs == other.attrs &&
+            self.style == other.style &&
+            self.text == other.text &&
+            self.listeners == other.listeners &&
+            // TOdo not sure how nest-level should be used. Is it a given based on
+            // todo how we iterate? Sanity-check for now.
+            self.nest_level == other.nest_level &&
+            self.namespace == other.namespace &&
+            self.empty == other.empty
     }
 }
 
