@@ -87,7 +87,8 @@ pub mod prelude {
             will_unmount, At, El, Ev, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{Update, Update::Render, Update::Skip, Update::Effect},
+//        vdom::{Update, Update::Render, Update::Skip, Update::RenderThen},
+        vdom::{Update, Update::*},
     };
     pub use std::collections::HashMap;
 

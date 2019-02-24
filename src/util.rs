@@ -26,7 +26,7 @@ pub fn input_value(target: &web_sys::EventTarget) -> String {
     "".into()
 }
 
-/// todo DRY just to accept an arg of diff type.
+/// todo DRY just to accept an arg of diff type.  Might be able to address using Traits.
 pub fn input_value2(target: &web_sys::Node) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         return input.value();
@@ -52,3 +52,17 @@ pub fn set_value(target: &web_sys::Node, value: &str) {
         input.set_value(value);
     }
 }
+
+/// todo more DRY that could be addressed by Traits. ?
+pub fn set_value2(target: &web_sys::EventTarget, value: &str) {
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+        input.set_value(value);
+    }
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+        input.set_value(value);
+    }
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+        input.set_value(value);
+    }
+}
+

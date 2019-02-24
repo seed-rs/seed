@@ -4,14 +4,27 @@ use crate::{
     routing, util, websys_bridge,
 };
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::closure::Closure;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
-pub enum Update<Msg, Mdl> {
+pub enum Update<Ms, Mdl> {
     Render(Mdl),
     Skip(Mdl),
-    Effect(Mdl, Msg)  // todo EffectSkip and EffectRender??
+    RenderThen(Mdl, Ms)
 }
+
+impl<Ms, Mdl> Update<Ms, Mdl> {
+    pub fn model(self) -> Mdl {
+        use Update::*;
+        match self {
+            Render(model) => model,
+            Skip(model) => model,
+            RenderThen(model, _) => model,
+        }
+    }
+}
+// todo should this go here? do we need it?
+
 
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Ms, Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
@@ -265,7 +278,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
                 should_render = false;
                 mdl
             },
-            Update::Effect(mdl, msg) => {
+            Update::RenderThen(mdl, msg) => {
                 effect_msg = Some(msg);
                 mdl
             }
@@ -379,32 +392,17 @@ where
     // Set up controlled components: Input elements must stay in sync with the state;
     // don't let them get out of syn with state from typing, which occurs if a change
     // doesn't trigger a re-render.
-    match el_vdom.tag {
-        dom_types::Tag::Input => {
-            if !input_listener_exists(el_vdom) {
-                el_vdom.controlled = true;
-            }
+        // Handle controlled inputs: Ie force sync with the model.
+    if el_vdom.tag == dom_types::Tag::Input || el_vdom.tag == dom_types::Tag::Select || el_vdom.tag == dom_types::Tag::TextArea {
+        if let Some(control_val) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
+            let mut listener = dom_types::Listener::new_control(control_val.to_string());
+            el_vdom.listeners.push(listener);  // Add to the El, so we can deattach later.
         }
-        dom_types::Tag::TextArea => {
-            if !input_listener_exists(el_vdom) {
-                el_vdom.controlled = true;
-            }
-        }
-        dom_types::Tag::Select => {
-            if !input_listener_exists(el_vdom) {
-                el_vdom.controlled = true;
-            }
-        }
-        _ => (),
     }
 
     // Create the web_sys element; add it to the working tree; store it in
     // its corresponding vdom El.
     let el_ws = websys_bridge::make_websys_el(el_vdom, document);
-
-    if el_vdom.controlled {
-        el_vdom.listeners.push(dom_types::Listener::new_control());
-    }
 
     el_vdom.el_ws = Some(el_ws);
     for child in &mut el_vdom.children {
@@ -423,30 +421,7 @@ impl<Ms: Clone, Mdl: Clone> Clone for App<Ms, Mdl> {
     }
 }
 
-/// Normally, we only have the handler at this point, and build/store the closure
-/// with Listener.attach. For controlled-ones, there's no handler, but we have the closure.
-fn attach_controlled_listener<Ms: Clone>(
-    listener: &mut dom_types::Listener<Ms>,
-    el_ws: &web_sys::Node,
-    value: String,
-) {
-    let e2 = el_ws.clone();
-    let closure = Closure::wrap(
-        Box::new(move |_: web_sys::Event| util::set_value(&e2, &value))
-            as Box<FnMut(web_sys::Event) + 'static>,
-    );
-
-    (el_ws.as_ref() as &web_sys::EventTarget)
-        .add_event_listener_with_callback(
-            listener.trigger.as_str(),
-            closure.as_ref().unchecked_ref(),
-        )
-        .expect("problem adding controlled listener to element");
-
-    listener.closure = Some(closure);
-}
-
-/// Recursively attach event-listeners. Run this at init.
+/// Recursively attach all event-listeners. Run this after creating fresh elements.
 fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
     let el_ws = el
         .el_ws
@@ -454,10 +429,11 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
         .expect("Missing el_ws on attach_all_listeners");
 
     for listener in &mut el.listeners {
-        if !listener.control {
-            listener.attach(&el_ws, mailbox.clone());
+        // todo ideally we unify attach as one func
+        if let Some(control) = &listener.control {
+            listener.attach_control(&el_ws);
         } else {
-            attach_controlled_listener(listener, &el_ws, util::input_value2(&el_ws));
+            listener.attach(&el_ws, mailbox.clone());
         }
     }
     for child in &mut el.children {
@@ -467,7 +443,6 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
     el.el_ws.replace(el_ws);
 }
 
-// TODO: should this be here, or in a diff module?
 /// Recursively detach event-listeners. Run this before patching.
 fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
     let el_ws = el
@@ -596,15 +571,13 @@ fn patch<Ms: Clone>(
     // Note that unlike the attach_listeners function, this only attaches for the currently
     // element.
     for listener in &mut new.listeners {
-        if !listener.control {
-            listener.attach(&old_el_ws, mailbox.clone());
+        if let Some(control) = &listener.control {
+            listener.attach_control(&old_el_ws);
         } else {
-            attach_controlled_listener(listener, &old_el_ws, util::input_value2(&old_el_ws));
+            listener.attach(&old_el_ws, mailbox.clone());
         }
     }
 
-    // todo new, less-sophisticated approach that should avoid order problems,
-    // todo compared to the commented-out code below.
     let mut old_children_patched = Vec::new();
 
     for (i_new, child_new) in new.children.iter_mut().enumerate() {
@@ -781,15 +754,15 @@ fn _match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_pos
     score
 }
 
-pub trait Attrs: PartialEq + ToString {
+pub trait _Attrs: PartialEq + ToString {
     fn vals(self) -> HashMap<String, String>;
 }
 
-pub trait Style: PartialEq + ToString {
+pub trait _Style: PartialEq + ToString {
     fn vals(self) -> HashMap<String, String>;
 }
 
-pub trait Listener<Ms>: Sized {
+pub trait _Listener<Ms>: Sized {
     fn attach<T: AsRef<EventTarget>>(&mut self, el_ws: &T, mailbox: Mailbox<Ms>);
     fn detach<T: AsRef<EventTarget>>(&self, el_ws: &T);
 }
@@ -797,11 +770,11 @@ pub trait Listener<Ms>: Sized {
 /// WIP towards a modular VDOM
 /// Assumes dependency on web_sys.
 // TODO:: Do we need <Ms> ?
-pub trait DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
+pub trait _DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
     type Tg: PartialEq + ToString; // TODO: tostring
-    type At: Attrs;
-    type St: Style;
-    type Ls: Listener<Ms>;
+    type At: _Attrs;
+    type St: _Style;
+    type Ls: _Listener<Ms>;
     type Tx: PartialEq + ToString + Clone + Default;
 
     // Fields
