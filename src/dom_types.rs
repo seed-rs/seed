@@ -1300,10 +1300,10 @@ use crate::{attrs, div, h1, p, section, span};
 pub mod tests {
     //    wasm_bindgen_test_configure!(run_in_browser);
 
-    #[derive(Clone)]
-    enum Msg {
-        Placeholder,
-    }
+//    #[derive(Clone)]
+//    enum Msg {
+//        Placeholder,
+//    }
 
     // todo now that we use text nodes, same problem as nested
     //    #[wasm_bindgen_test]

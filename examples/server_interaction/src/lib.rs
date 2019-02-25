@@ -103,8 +103,8 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     Replace(Branch),
-//    GetData(seed::App<Msg, Model>),
-    GetData,
+    GetData(seed::App<Msg, Model>),
+//    GetData,
     Send,
 }
 

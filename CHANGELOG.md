@@ -1,8 +1,9 @@
 # Changelog
 
 ## v0.2.9
-- Added an `Effect` option to the `Update` enum, which allows chaining update
-messages.
+- Added a `RenderThen` option to `Update`, which allows chaining update messages
+- Added a `.model` method to `Update`, allowing for cleaner recursion in updates
+- Improved controlled-comonent (sync fields with model) logic
 
 ## v0.2.8
 - Reflowed `El::from_html` and `El::from_markdown` to return `Vec`s of `El`s, instead of wrapping
