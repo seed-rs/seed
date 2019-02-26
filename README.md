@@ -121,7 +121,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Update<Model> {
+fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
     match msg {
         Msg::Increment => Render(Model {count: model.count + 1, ..model}),
         Msg::Decrement => Render(Model {count: model.count - 1, ..model}),
