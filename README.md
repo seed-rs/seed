@@ -234,7 +234,7 @@ of your familiarity with Rust.
 - Complete documentation that always matches the current version. Getting examples working, and
  starting a project should be painless, and require nothing beyond this guide.
  
-- Expressive, flexible vew syntax that's easy to read and write.
+- Expressive, flexible view syntax that's easy to read and write.
 
 
 ## A note on view syntax
