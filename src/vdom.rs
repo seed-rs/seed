@@ -361,7 +361,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
 // pub for tests.
 where
     Ms: Clone + 'static,
@@ -719,57 +719,69 @@ pub trait DomElLifecycle {
 
 #[cfg(test)]
 pub mod tests {
-    use wasm_bindgen_test::wasm_bindgen_test_configure;
+    use wasm_bindgen_test::*;
     wasm_bindgen_test_configure!(run_in_browser);
 
     use super::*;
-    use wasm_bindgen_test::*;
 
     use crate as seed; // required for macros to work.
     use crate::{div, li, prelude::*};
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     enum Msg {}
 
-    #[ignore]
-    //    #[wasm_bindgen_test]
-    #[test]
+    #[wasm_bindgen_test]
     fn el_added() {
-        let mut old_vdom: El<Msg> = div!["text", vec![li!["child1"],]];
-        let mut new_vdom: El<Msg> = div!["text", vec![li!["child1"], li!["child2"]]];
+        let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
-        let old_ws = doc.create_element("div").unwrap();
-        let new_ws = doc.create_element("div").unwrap();
-
-        let child1 = doc.create_element("li").unwrap();
-        let child2 = doc.create_element("li").unwrap();
-        // TODO: make this match how you're setting text_content, eg could
-        // TODO: be adding a text node.
-        old_ws.set_text_content(Some("text"));
-        child1.set_text_content(Some("child1"));
-        child2.set_text_content(Some("child2"));
-
-        old_ws.append_child(&child1).unwrap();
-        new_ws.append_child(&child1).unwrap();
-        new_ws.append_child(&child2).unwrap();
-
-        let mailbox = Mailbox::new(|msg: Msg| {});
-
         let parent = doc.create_element("div").unwrap();
-        patch(&doc, &mut old_vdom, &mut new_vdom, &parent, &mailbox);
+
+        let mut vdom: El<Msg> = El::empty(seed::dom_types::Tag::Div);
+        setup_els(&doc, &mut vdom, 0, 0);
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 0);
+
+        vdom = {
+            let mut new_vdom: El<Msg> = div!["text"];
+            setup_els(&doc, &mut new_vdom, 0, 0);
+            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(old_ws.child_nodes().length(), 1);
+            assert_eq!(old_ws.first_child().unwrap().text_content().unwrap(), "text");
+
+            new_vdom
+        };
+
+        {
+            let mut new_vdom: El<Msg> = div!["text", "more text", vec![li!["even more text"]]];
+            setup_els(&doc, &mut new_vdom, 0, 0);
+            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(old_ws.child_nodes().length(), 3);
+            assert_eq!(old_ws.child_nodes().item(0).unwrap().text_content().unwrap(), "text");
+            assert_eq!(old_ws.child_nodes().item(1).unwrap().text_content().unwrap(), "more text");
+            let child3 = old_ws.child_nodes().item(2).unwrap();
+            assert_eq!(child3.node_name(), "LI");
+            assert_eq!(child3.text_content().unwrap(), "even more text");
+        }
+    }
+
+    // #[wasm_bindgen_test]
+    fn _el_removed() {
         unimplemented!()
     }
 
-    #[ignore]
-    #[test]
-    fn el_removed() {
-        unimplemented!()
-    }
-
-    #[ignore]
-    #[test]
-    fn el_changed() {
+    // #[wasm_bindgen_test]
+    fn _el_changed() {
         unimplemented!()
     }
 }
