@@ -1,20 +1,17 @@
 /target
-**/*.rs.bk
+*.rs.bk
 Cargo.lock
 
 # Pycharm
 *.iws
 workspace.xml
 
-**.wasm
+*.wasm
 # Allow JS in example folders
 # wasm-bindgen won't automatically create this directory.
-# **/pkg/*
-**/.wasm
-**.d.ts
-**.ts
-**.js
-**/node_modules/
-**/target/
-**.log
-
+# pkg/
+*.d.ts
+*.ts
+*.js
+node_modules/
+*.log
