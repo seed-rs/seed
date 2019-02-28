@@ -113,7 +113,6 @@ pub mod tests {
             vdom::Update,
         };
 
-        #[derive(Clone)]
         struct Model {
             pub val: i32,
         }

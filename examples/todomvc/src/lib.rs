@@ -45,7 +45,6 @@ impl Todo {
     }
 }
 
-#[derive(Clone)]
 struct Model {
     todos: Vec<Todo>,
     visible: Visible,
