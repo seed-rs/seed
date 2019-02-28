@@ -62,8 +62,8 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
-    // Model is in a RefCell here so we can replace it in self.update().
-    pub model: RefCell<Mdl>,
+    // Model is in a RefCell<Option> here so we can replace it in self.update().
+    pub model: RefCell<Option<Mdl>>,
     main_el_vdom: RefCell<El<Ms>>,
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
@@ -176,7 +176,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
                 window_events,
             }),
             data: Rc::new(AppData {
-                model: RefCell::new(model),
+                model: RefCell::new(Some(model)),
                 main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
@@ -196,28 +196,26 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
 
         let window = util::window();
 
-        // Only clone model if we have window events.
-        let mut topel_vdom;
-        match self.cfg.window_events {
-            //TODO: use window events
-            Some(_window_events) => {
-                topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
-                setup_window_listeners(
-                    &util::window(),
-                    &mut Vec::new(),
-                    // TODO:
-                    // Fix this. Bug where if we try to add initial listeners,
-                    // we get many runtime panics. Workaround is to wait until
-                    // app.update, which means an event must be triggered
-                    // prior to window listeners working.
-                    &mut Vec::new(),
-                    // &mut (window_events)(model),
-                    &self.mailbox(),
-                );
-            }
-            None => {
-                topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
-            }
+        let mut topel_vdom = {
+            let model = self.data.model.borrow();
+            let model = model.as_ref().expect("missing model");
+            (self.cfg.view)(self.clone(), model)
+        };
+
+        // TODO: use window events
+        if self.cfg.window_events.is_some() {
+            setup_window_listeners(
+                &util::window(),
+                &mut Vec::new(),
+                // TODO:
+                // Fix this. Bug where if we try to add initial listeners,
+                // we get many runtime panics. Workaround is to wait until
+                // app.update, which means an event must be triggered
+                // prior to window listeners working.
+                &mut Vec::new(),
+                // &mut (window_events)(model),
+                &self.mailbox(),
+            );
         }
 
         let document = window.document().expect("Problem getting document");
@@ -245,32 +243,16 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
         self
     }
 
-    /// This runs whenever the state is changed, ie the user-written update function is called.
-    /// It updates the state, and any DOM elements affected by this change.
-    /// todo this is where we need to compare against differences and only update nodes affected
-    /// by the state change.
-    ///
-    /// We re-create the whole virtual dom each time (Is there a way around this? Probably not without
-    /// knowing what vars the model holds ahead of time), but only edit the rendered, web_sys dom
-    /// for things that have been changed.
-    /// We re-render the virtual DOM on every change, but (attempt to) only change
-    /// the actual DOM, via web_sys, when we need.
-    /// The model storred in inner is the old model; updated_model is a newly-calculated one.
-    pub fn update(&self, message: Ms) {
-        for l in self.data.msg_listeners.borrow().iter() {
-            (l)(&message)
-        }
-        // data.model is the old model; pass it to the update function created in the app,
-        // which outputs an updated model.
-        // We clone the model before running update, and again before passing it
-        // to the view func, instead of using refs, to improve API syntax.
-        // This approach may have performance impacts of unknown magnitude.
-        let model_to_update = self.data.model.borrow().clone();
-        let updated_model_wrapped = (self.cfg.update)(message, model_to_update);
+    /// Do the actual self.cfg.update call. Updates self.data.model and returns (should_render, effect_msg)
+    fn call_update(&self, message: Ms) -> (bool, Option<Ms>) {
+        // data.model is the old model; Remove model from self.data.model, then pass it to the
+        // update function created in the app, which outputs an updated model.
+        let model = self.data.model.borrow_mut().take().expect("missing model");
+        let updated_model_wrapped = (self.cfg.update)(message, model);
 
         let mut should_render = true;
         let mut effect_msg = None;
-        let updated_model = match updated_model_wrapped {
+        let model = match updated_model_wrapped {
             Update::Render(mdl) => mdl,
             Update::Skip(mdl) => {
                 should_render = false;
@@ -282,10 +264,35 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
             }
         };
 
-        // Unlike in run, we clone model here anyway, so no need to change top_new_vdom
-        // logic based on if we have window listeners.
+        // Store updated model back to self.data.model
+        self.data.model.borrow_mut().replace(model);
+
+        (should_render, effect_msg)
+    }
+
+    /// This runs whenever the state is changed, ie the user-written update function is called.
+    /// It updates the state, and any DOM elements affected by this change.
+    /// todo this is where we need to compare against differences and only update nodes affected
+    /// by the state change.
+    ///
+    /// We re-create the whole virtual dom each time (Is there a way around this? Probably not without
+    /// knowing what vars the model holds ahead of time), but only edit the rendered, web_sys dom
+    /// for things that have been changed.
+    /// We re-render the virtual DOM on every change, but (attempt to) only change
+    /// the actual DOM, via web_sys, when we need.
+    /// The model stored in inner is the old model; updated_model is a newly-calculated one.
+    pub fn update(&self, message: Ms) {
+        for l in self.data.msg_listeners.borrow().iter() {
+            (l)(&message)
+        }
+
+        let (should_render, effect_msg) = self.call_update(message);
+
+        let model = self.data.model.borrow();
+        let model = model.as_ref().expect("missing model");
+
         if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(&updated_model);
+            let mut new_listeners = (window_events)(model);
             setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
@@ -301,7 +308,7 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
             // have ids, nest levels, or associated web_sys elements.
             // We accept cloning here, for the benefit of making data easier to work
             // with in the app.
-            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &updated_model);
+            let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
@@ -324,11 +331,6 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
             // it will be used as the old El next (.
             self.data.main_el_vdom.replace(topel_new_vdom);
         }
-
-        // We're now done with this updated model; store it for use as the old
-        // model for the next update.
-        // Note: It appears that this step is why we need data.model to be in a RefCell.
-        self.data.model.replace(updated_model);
 
         if let Some(msg) = effect_msg {
             self.update(msg)
