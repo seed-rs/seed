@@ -61,7 +61,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
+pub struct AppData<Ms: Clone + 'static, Mdl> {
     // Model is in a RefCell<Option> here so we can replace it in self.update().
     pub model: RefCell<Option<Mdl>>,
     main_el_vdom: RefCell<El<Ms>>,
@@ -71,7 +71,7 @@ pub struct AppData<Ms: Clone + 'static, Mdl: Clone> {
     msg_listeners: RefCell<MsgListeners<Ms>>,
 }
 
-pub struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
+pub struct AppCfg<Ms: Clone + 'static, Mdl: 'static> {
     document: web_sys::Document,
     mount_point: web_sys::Element,
     pub update: UpdateFn<Ms, Mdl>,
@@ -79,21 +79,21 @@ pub struct AppCfg<Ms: Clone + 'static, Mdl: Clone + 'static> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms: Clone + 'static, Mdl: 'static + Clone> {
+pub struct App<Ms: Clone + 'static, Mdl: 'static> {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: Clone + 'static, Mdl: Clone + 'static> ::std::fmt::Debug for App<Ms, Mdl> {
+impl<Ms: Clone + 'static, Mdl: 'static> ::std::fmt::Debug for App<Ms, Mdl> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
 }
 
 #[derive(Clone)]
-pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
+pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Ms, Mdl>,
@@ -102,7 +102,7 @@ pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static + Clone> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms: Clone, Mdl: Clone> AppBuilder<Ms, Mdl> {
+impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
     pub fn mount(mut self, id: &'static str) -> Self {
         self.parent_div_id = Some(id);
         self
@@ -134,7 +134,7 @@ impl<Ms: Clone, Mdl: Clone> AppBuilder<Ms, Mdl> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetative sequences of parameters.
-impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
+impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     pub fn build(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
@@ -401,7 +401,7 @@ where
     }
 }
 
-impl<Ms: Clone, Mdl: Clone> Clone for App<Ms, Mdl> {
+impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
     fn clone(&self) -> Self {
         App {
             cfg: Rc::clone(&self.cfg),

@@ -77,7 +77,7 @@ fn get_search() -> String {
 pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(&Url) -> Ms) -> App<Ms, Mdl>
 where
     Ms: Clone + 'static,
-    Mdl: Clone + 'static,
+    Mdl: 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -109,7 +109,6 @@ where
 pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms)
 where
     Ms: Clone,
-    Mdl: Clone,
 {
     // We can't reuse the app later to store the popstate once moved into the closure.
     let app_for_closure = app.clone();
