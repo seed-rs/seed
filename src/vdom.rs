@@ -781,9 +781,44 @@ pub mod tests {
         }
     }
 
-    // #[wasm_bindgen_test]
-    fn _el_removed() {
-        unimplemented!()
+    #[wasm_bindgen_test]
+    fn el_removed() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        // First add some child nodes using the vdom
+        vdom = {
+            let mut new_vdom = make_vdom(
+                &doc,
+                div!["text", "more text", vec![li!["even more text"]]],
+            );
+            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+
+            assert_eq!(parent.children().length(), 1);
+            new_vdom
+        };
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 3);
+        let old_child1 = old_ws.child_nodes().item(0).unwrap();
+
+        // Now test that patch function removes the last 2 nodes
+        {
+            let mut new_vdom = make_vdom(&doc, div!["text"]);
+            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(old_ws.child_nodes().length(), 1);
+            assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
+        }
     }
 
     // #[wasm_bindgen_test]
