@@ -237,10 +237,14 @@ impl<Ms: Clone, Mdl: Clone> App<Ms, Mdl> {
                 &routing::initial(self.clone(), routes),
                 routes
             );
+            routing::setup_link_listener(&self, routes);
+
         }
 
         // Allows panic messages to output to the browser console.error.
         panic::set_hook(Box::new(console_error_panic_hook::hook));
+
+
 
         self
     }
@@ -661,80 +665,6 @@ fn patch<Ms: Clone>(
 //    mailbox.send(message);
 //}
 
-/// Compare two elements. Rank based on how similar they are, using subjective criteria.
-fn _match_score<Ms: Clone>(old: &El<Ms>, old_posit: usize, new: &El<Ms>, new_posit: usize) -> f32 {
-    // children_to_eval is the number of children to look at on each nest level.
-    //    let children_to_eval = 3;
-    // Don't weight children as heavily as the parent. This effect acculates the further down we go.
-    let child_score_significance: f32 = 0.6;
-
-    let mut score = 0.;
-
-    // Tags are not likely to change! Good indicator of it being the wrong element.
-    if old.tag == new.tag {
-        score += 0.3
-    } else {
-        score -= 0.3
-    };
-    // Position will not change in many cases.
-    if old_posit == new_posit {
-        score += 0.1
-    }
-    // Attrs are not likely to change.
-    // TODO:: Compare attrs more directly.
-    if old.attrs == new.attrs {
-        score += 0.15
-    } else {
-        score -= 0.15
-    };
-    // Style is likely to change.
-    if old.style == new.style {
-        score += 0.05
-    } else {
-        score -= 0.05
-    };
-    // Text is likely to change, but may still be a good indicator.
-    if old.text == new.text {
-        score += 0.05
-    } else {
-        score -= 0.05
-    };
-
-    if old.get_text() == new.get_text() {
-        score += 0.15
-    } else {
-        score -= 0.15
-    };
-
-    // For children length, don't do it based on the difference, since children that actually change in
-    // len may have very large changes. But having identical length is a sanity check.
-    if old.children.len() == new.children.len() {
-        score += 0.1
-    //    } else if (old.children.len() as i16 - new.children.len() as i16).abs() == 1 {
-    //        // Perhaps we've added or removed a child.
-    //        score += 0.05  // TODO: non-even transaction
-    } else {
-        score -= 0.1
-    }
-    // Same id implies it may have been added in the same order.
-    if old.id.expect("Missing id") == new.id.expect("Missing id") {
-        score += 0.15
-    } else {
-        score -= 0.15
-    };
-
-    // Weight each child subsequently-less by taking powers of child_significant.
-    for posit in 0..old.children.len() {
-        if let Some(child_old) = &old.children.get(posit) {
-            if let Some(child_new) = &new.children.get(posit) {
-                score += child_score_significance.powi(posit as i32) *
-                    _match_score(child_old, posit, child_new, posit);
-            }
-        }
-    }
-
-    score
-}
 
 pub trait _Attrs: PartialEq + ToString {
     fn vals(self) -> HashMap<String, String>;

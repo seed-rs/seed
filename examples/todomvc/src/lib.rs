@@ -109,7 +109,6 @@ enum Msg {
     Toggle(usize),
     ToggleAll,
     NewTodo(web_sys::Event),
-    RouteVisibility(Visible),
     EditEntry(String),
 
     EditItem(usize),
@@ -185,10 +184,6 @@ fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
             } else {
                 Render(model)
             }
-        }
-        Msg::RouteVisibility(visible) => {
-            seed::push_path(vec![visible]);
-            update(Msg::ChangeVisibility(visible), model)
         }
         Msg::EditEntry(entry_text) => Render(Model {
             entry_text,
@@ -299,16 +294,16 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
 }
 
 fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
-    li![a![
-        class![if visible == highlighter {
-            "selected"
-        } else {
-            ""
-        }],
-        style! {"cursor" => "pointer"},
-        simple_ev(Ev::Click, Msg::RouteVisibility(highlighter)),
-        text
-    ]]
+    li![
+        a![
+            attrs!{
+                At::Class => if visible == highlighter {"selected"} else {""};
+                At::Href => "/".to_string() + &highlighter.to_string();
+            },
+            style! {"cursor" => "pointer"},
+            text
+        ]
+    ]
 }
 
 fn footer(model: &Model) -> El<Msg> {

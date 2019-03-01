@@ -207,23 +207,34 @@ impl<Ms> Listener<Ms> {
                     // the actual value. To change the actual value it is necessary to call set_value
                     if trigger == Ev::Input {
                         let target = event.target().unwrap();
-                        let input_el = crate::to_input(&target);
-                        let input_type = input_el.type_();
-                        // For number, text and password, might be useful for other inputs too
-                        // but breaks the file input for example, which cannot have its value
-                        // set by using the set_value function
-                        let should_trigger_rerender_with_set_value = {
-                            (input_type == "number"
-                                || input_type == "text"
-                                || input_type == "password")
-                        };
-                        if should_trigger_rerender_with_set_value {
-                            let value_set_by_seed_user = input_el.default_value();
-                            let actual_value = input_el.value();
-                            if value_set_by_seed_user != actual_value {
-                                input_el.set_value(&value_set_by_seed_user);
+
+                        if let Some(input_el) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+                            let input_type = input_el.type_();
+                            // For number, text and password, might be useful for other inputs too
+                            // but breaks the file input for example, which cannot have its value
+                            // set by using the set_value function
+                            let should_trigger_rerender_with_set_value = {
+                                (input_type == "number"
+                                    || input_type == "text"
+                                    || input_type == "password")
+                            };
+                            if should_trigger_rerender_with_set_value {
+                                let value_set_by_seed_user = input_el.default_value();
+                                let actual_value = input_el.value();
+                                if value_set_by_seed_user != actual_value {
+                                    input_el.set_value(&value_set_by_seed_user);
+                                }
                             }
                         }
+//                            else if let Some(select_el) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+//                            let value_set_by_seed_user = select_el.default_value();
+//                            let actual_value = select_el.value();
+//                            if value_set_by_seed_user != actual_value {
+//                                select_el.set_value(&value_set_by_seed_user);
+//                            }
+//                        }
+                        // todo do we need to handle textarea separately?
+                        // todo should just get attach_control (below) working
                     }
                 })
                     as Box<FnMut(web_sys::Event) + 'static>,
