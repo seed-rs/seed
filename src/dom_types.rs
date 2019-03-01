@@ -6,6 +6,7 @@ use pulldown_cmark;
 use std::{collections::HashMap, fmt};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
+use super::{util, websys_bridge};
 
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
@@ -163,7 +164,7 @@ impl<Ms> Listener<Ms> {
     /// from the model
     pub fn new_control(val: String) -> Self {
         Self {
-            trigger: dom_types::Ev::Input,
+            trigger: Ev::Input,
             handler: None,
             closure: None,
             control_val: Some(val),
@@ -175,7 +176,7 @@ impl<Ms> Listener<Ms> {
     /// Similar to new_control, but for checkboxes
     pub fn new_control_check(checked: bool) -> Self {
         Self {
-            trigger: dom_types::Ev::Click,
+            trigger: Ev::Click,
             handler: None,
             closure: None,
             control_val: None,
@@ -1301,14 +1302,15 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUn
 }
 
 #[cfg(test)]
-use crate as seed;
-// required for macros to work.
-//    use crate::prelude::*;
-use super::*;
-use crate::{attrs, div, h1, p, section, span};
-//use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
-//use wasm_bindgen_test::wasm_bindgen_test_configure;
 pub mod tests {
+    use crate as seed;
+    // required for macros to work.
+    //    use crate::prelude::*;
+    use super::*;
+    use crate::{attrs, div, h1, p, section, span};
+    //use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
+    //use wasm_bindgen_test::wasm_bindgen_test_configure;
+
     //    wasm_bindgen_test_configure!(run_in_browser);
 
 //    #[derive(Clone)]

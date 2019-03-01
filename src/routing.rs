@@ -76,9 +76,9 @@ fn get_search() -> String {
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(&Url) -> Ms) -> App<Ms, Mdl>
-    where
-        Ms: Clone + 'static,
-        Mdl: Clone + 'static,
+where
+    Ms: Clone + 'static,
+    Mdl: 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -179,7 +179,6 @@ pub fn push_path<T: ToString>(path: Vec<T>) {
 pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms)
     where
         Ms: Clone,
-        Mdl: Clone,
 {
     // We can't reuse the app later to store the popstate once moved into the closure.
     let app_for_closure = app.clone();
@@ -215,7 +214,7 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> 
 
 /// Set up a listener that intercepts clicks on <a> and <button> tags, so we can prevent page reloads for
 /// internal links.  Run this on load.
-pub fn setup_link_listener<Ms: Clone, Mdl: Clone>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms) {
+pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms) {
     // todo DRY with setup_popstate listener.
     // todo Deal with excessive nesting.
 

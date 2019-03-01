@@ -40,7 +40,6 @@ struct ServerResponse {
     pub success: bool,
 }
 
-#[derive(Clone)]
 struct Model {
     data: Branch,
 }

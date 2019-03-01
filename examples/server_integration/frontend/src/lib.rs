@@ -9,7 +9,7 @@ use shared::Data;
 
 // Model
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 struct Model {
     pub data: Data,
 }
