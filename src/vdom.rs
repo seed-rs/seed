@@ -64,7 +64,7 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 pub struct AppData<Ms: Clone + 'static, Mdl> {
     // Model is in a RefCell<Option> here so we can replace it in self.update().
     pub model: RefCell<Option<Mdl>>,
-    main_el_vdom: RefCell<El<Ms>>,
+    main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
@@ -177,7 +177,8 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(Some(model)),
-                main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
+                // This is filled for the first time in run()
+                main_el_vdom: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
                 window_listeners: RefCell::new(Vec::new()),
@@ -226,7 +227,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         // Attach all children: This is where our initial render occurs.
         websys_bridge::attach_el_and_children(&mut topel_vdom, &self.cfg.mount_point);
 
-        self.data.main_el_vdom.replace(topel_vdom);
+        self.data.main_el_vdom.replace(Some(topel_vdom));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
@@ -318,14 +319,16 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // render them with attach_children; we try to do it cleverly via patch().
             setup_els(&self.cfg.document, &mut topel_new_vdom, 0, 0);
 
+            let mut old_vdom = self.data.main_el_vdom.borrow_mut().take().expect("missing main_el_vdom");
+
             // Detach all old listeners before patching. We'll re-add them as required during patching.
             // We'll get a runtime panic if any are left un-removed.
-            detach_listeners(&mut self.data.main_el_vdom.borrow_mut());
+            detach_listeners(&mut old_vdom);
 
             // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
             patch(
                 &self.cfg.document,
-                &mut self.data.main_el_vdom.borrow_mut(),
+                old_vdom,
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
                 &self.mailbox(),
@@ -333,7 +336,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
             // Now that we've re-rendered, replace our stored El with the new one;
             // it will be used as the old El next (.
-            self.data.main_el_vdom.replace(topel_new_vdom);
+            self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
         }
 
         if let Some(msg) = effect_msg {
@@ -477,7 +480,7 @@ fn setup_window_listeners<Ms: Clone>(
 
 fn patch<Ms: Clone>(
     document: &Document,
-    old: &mut El<Ms>,
+    mut old: El<Ms>,
     new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
@@ -501,7 +504,7 @@ fn patch<Ms: Clone>(
         None => return
     };
 
-    if old != new {
+    if old != *new {
 
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
@@ -555,7 +558,7 @@ fn patch<Ms: Clone>(
             }
 
         // Patch parts of the Element.
-        websys_bridge::patch_el_details(old, new, &old_el_ws);
+        websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
     }
 
     // Before running patch, assume we've removed all listeners from the old element.
@@ -571,25 +574,28 @@ fn patch<Ms: Clone>(
         }
     }
 
-    let mut old_children_patched = Vec::new();
+    let num_children_in_both = old.children.len().min(new.children.len());
+    let mut old_children_iter = old.children.into_iter();
+    let mut new_children_iter = new.children.iter_mut();
 
-    for (i_new, child_new) in new.children.iter_mut().enumerate() {
-        match old.children.get(i_new) {
-            Some(child_old) => {
-                // Don't compare equality here; we do that at the top of this function
-                // in the recursion.
-                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
-                old_children_patched.push(child_old.id.expect("Can't find child's id"));
-            },
-            None => {
-                // We ran out of old children to patch; create new ones.
-                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
-                let mut child_new = child_new;
-                attach_listeners(&mut child_new, &mailbox);
-            }
-        }
+    // Not using .zip() here to make sure we don't miss any of the children when one array is
+    // longer than the other.
+    for _i in 0..num_children_in_both {
+        let child_old = old_children_iter.next().unwrap();
+        let child_new = new_children_iter.next().unwrap();
+        // Don't compare equality here; we do that at the top of this function
+        // in the recursion.
+        patch(document, child_old, child_new, &old_el_ws, &mailbox);
     }
 
+    // Now one of the iterators is entirely consumed, and any items left in one iterator
+    // don't have any matching items in the other.
+
+    while let Some(child_new) = new_children_iter.next() {
+        // We ran out of old children to patch; create new ones.
+        websys_bridge::attach_el_and_children(child_new, &old_el_ws);
+        attach_listeners(child_new, &mailbox);
+    }
 
 //    // Now pair up children as best we can.
 //    // If there are the same number of children, assume there's a 1-to-1 mapping,
@@ -636,10 +642,7 @@ fn patch<Ms: Clone>(
 
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-    for child in old.children.iter_mut()
-        .filter(|c| !old_children_patched
-            .contains(&c.id.expect("Can't find child's id")) ) {
-
+    while let Some(mut child) = old_children_iter.next() {
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // TODO: DRY here between this and earlier in func
@@ -652,8 +655,6 @@ fn patch<Ms: Clone>(
             Ok(_) => {},
             Err(_) => {crate::log("Minor error patching html element. (remove)");}
         }
-
-        child.el_ws.replace(child_el_ws);
     }
 
     new.el_ws = Some(old_el_ws);
@@ -753,7 +754,7 @@ pub mod tests {
 
         vdom = {
             let mut new_vdom = make_vdom(&doc, div!["text"]);
-            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
 
             assert_eq!(parent.children().length(), 1);
             assert!(old_ws.is_same_node(parent.first_child().as_ref()));
@@ -768,7 +769,7 @@ pub mod tests {
                 &doc,
                 div!["text", "more text", vec![li!["even more text"]]],
             );
-            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
 
             assert_eq!(parent.children().length(), 1);
             assert!(old_ws.is_same_node(parent.first_child().as_ref()));
@@ -799,7 +800,7 @@ pub mod tests {
                 &doc,
                 div!["text", "more text", vec![li!["even more text"]]],
             );
-            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
 
             assert_eq!(parent.children().length(), 1);
             new_vdom
@@ -812,7 +813,7 @@ pub mod tests {
         // Now test that patch function removes the last 2 nodes
         {
             let mut new_vdom = make_vdom(&doc, div!["text"]);
-            patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
+            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
 
             assert_eq!(parent.children().length(), 1);
             assert!(old_ws.is_same_node(parent.first_child().as_ref()));
