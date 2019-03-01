@@ -107,32 +107,10 @@ where
     app
 }
 
-<<<<<<< HEAD
+
 fn remove_first(s: &str) -> Option<&str> {
     s.chars().next().map(|c| &s[c.len_utf8()..])
 }
-=======
-pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms)
-where
-    Ms: Clone,
-{
-    // We can't reuse the app later to store the popstate once moved into the closure.
-    let app_for_closure = app.clone();
-    let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
-        let ev = ev
-            .dyn_ref::<web_sys::PopStateEvent>()
-            .expect("Problem casting as Popstate event");
-
-        let url: Url = match ev.state().as_string() {
-            Some(state_str) => serde_json::from_str(&state_str)
-                .expect("Problem deserialzing popstate state"),
-            // This might happen if we go back to a page before we started routing. (?)
-            None => {
-                let empty: Vec<String> = Vec::new();
-                Url::new(empty)
-            }
-        };
->>>>>>> e449e6645f76720a29d6dfa7971198381acc247c
 
 fn clean_url(mut url: Url) -> Url {
     let mut cleaned_path = vec![];
@@ -173,8 +151,6 @@ pub fn push_route(mut url: Url) {
     // Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
     let path = String::from("/") + &url.path.join("/");
-
-    crate::log(&path);
 
     util::window()
         .history()
@@ -253,10 +229,12 @@ pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) 
                     }
                     if let Some(href) = el.get_attribute("href") {
                         if let Some(first) = href.chars().next() {
+                            // The first character being / indicates a rel link, which is what
+                            // we're intercepting.
                             if first == '/' {
                                 event.prevent_default();
-                                // Route internally based on href
-                                let url = Url::new(vec![href]);
+                                // Route internally based on href's value
+                                let url = Url::new(href.split('/').collect());
                                 app_for_closure.update(routes(&url));
                                 push_route(url);
                             }

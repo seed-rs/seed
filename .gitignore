@@ -9,7 +9,6 @@ workspace.xml
 *.wasm
 # Allow JS in example folders
 # wasm-bindgen won't automatically create this directory.
-<<<<<<< HEAD
 # **/pkg/*
 **/.wasm
 **.d.ts
@@ -18,11 +17,4 @@ workspace.xml
 **/node_modules/
 **/target/
 **.log
-=======
-# pkg/
-*.d.ts
-*.ts
-*.js
-node_modules/
-*.log
->>>>>>> e449e6645f76720a29d6dfa7971198381acc247c
+

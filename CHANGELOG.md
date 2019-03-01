@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.10
+- Routing can be triggered by clicking any element containing a `Href` attribute
+with value as a relative link
+- Internal links no longer trigger a page refresh
+- Models no longer need to implement `Clone`
+- Fixed a bug introduced in 0.2.9 for `select` elements
+
 ## v0.2.9
 - Added a `RenderThen` option to `Update`, which allows chaining update messages
 - Added a `.model` method to `Update`, allowing for cleaner recursion in updates
