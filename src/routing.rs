@@ -189,7 +189,7 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> 
 
             let url: Url = match ev.state().as_string() {
                 Some(state_str) => serde_json::from_str(&state_str)
-                    .expect("Problem deserialzing popstate state"),
+                    .expect("Problem deserializing popstate state"),
                 // This might happen if we go back to a page before we started routing. (?)
                 None => {
                     let empty: Vec<String> = Vec::new();

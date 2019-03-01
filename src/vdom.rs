@@ -133,7 +133,7 @@ impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
-/// repetative sequences of parameters.
+/// repetitive sequences of parameters.
 impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     pub fn build(
         model: Mdl,
@@ -161,7 +161,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         let window = util::window();
         let document = window
             .document()
-            .expect("Can't find the window's document.");
+            .expect("Can't find the window's document");
 
         let mount_point = document
             .get_element_by_id(parent_div_id)
@@ -730,6 +730,12 @@ pub mod tests {
     #[derive(Clone, Debug)]
     enum Msg {}
 
+    fn make_vdom(doc: &Document, el: El<Msg>) -> El<Msg> {
+        let mut vdom = el;
+        setup_els(doc, &mut vdom, 0, 0);
+        vdom
+    }
+
     #[wasm_bindgen_test]
     fn el_added() {
         let mailbox = Mailbox::new(|_msg: Msg| {});
@@ -737,8 +743,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom: El<Msg> = El::empty(seed::dom_types::Tag::Div);
-        setup_els(&doc, &mut vdom, 0, 0);
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
@@ -747,8 +752,7 @@ pub mod tests {
         assert_eq!(old_ws.child_nodes().length(), 0);
 
         vdom = {
-            let mut new_vdom: El<Msg> = div!["text"];
-            setup_els(&doc, &mut new_vdom, 0, 0);
+            let mut new_vdom = make_vdom(&doc, div!["text"]);
             patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
 
             assert_eq!(parent.children().length(), 1);
@@ -760,8 +764,10 @@ pub mod tests {
         };
 
         {
-            let mut new_vdom: El<Msg> = div!["text", "more text", vec![li!["even more text"]]];
-            setup_els(&doc, &mut new_vdom, 0, 0);
+            let mut new_vdom = make_vdom(
+                &doc,
+                div!["text", "more text", vec![li!["even more text"]]],
+            );
             patch(&doc, &mut vdom, &mut new_vdom, &parent, &mailbox);
 
             assert_eq!(parent.children().length(), 1);
