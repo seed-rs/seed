@@ -104,6 +104,7 @@ pub mod tests {
     /// This is a minimal app, that should build. Will fail if there's a breaking
     /// change.
     #[wasm_bindgen_test]
+    #[allow(dead_code)]
     pub fn app_builds() {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
