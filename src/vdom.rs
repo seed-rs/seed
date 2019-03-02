@@ -726,7 +726,8 @@ pub mod tests {
     use super::*;
 
     use crate as seed; // required for macros to work.
-    use crate::{div, li, prelude::*};
+    use crate::{class, div, li, prelude::*, span};
+    use wasm_bindgen::JsCast;
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -735,6 +736,18 @@ pub mod tests {
         let mut vdom = el;
         setup_els(doc, &mut vdom, 0, 0);
         vdom
+    }
+
+    fn setup_and_patch(
+        doc: &Document,
+        parent: &Element,
+        mailbox: &Mailbox<Msg>,
+        old_vdom: El<Msg>,
+        new_vdom: El<Msg>,
+    ) -> El<Msg> {
+        let mut new_vdom = make_vdom(&doc, new_vdom);
+        patch(&doc, old_vdom, &mut new_vdom, parent, mailbox);
+        new_vdom
     }
 
     #[wasm_bindgen_test]
@@ -752,34 +765,28 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = {
-            let mut new_vdom = make_vdom(&doc, div!["text"]);
-            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
+        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(old_ws.child_nodes().length(), 1);
+        assert_eq!(old_ws.first_child().unwrap().text_content().unwrap(), "text");
 
-            assert_eq!(parent.children().length(), 1);
-            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-            assert_eq!(old_ws.child_nodes().length(), 1);
-            assert_eq!(old_ws.first_child().unwrap().text_content().unwrap(), "text");
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["text", "more text", vec![li!["even more text"]]],
+        );
 
-            new_vdom
-        };
-
-        {
-            let mut new_vdom = make_vdom(
-                &doc,
-                div!["text", "more text", vec![li!["even more text"]]],
-            );
-            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
-
-            assert_eq!(parent.children().length(), 1);
-            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-            assert_eq!(old_ws.child_nodes().length(), 3);
-            assert_eq!(old_ws.child_nodes().item(0).unwrap().text_content().unwrap(), "text");
-            assert_eq!(old_ws.child_nodes().item(1).unwrap().text_content().unwrap(), "more text");
-            let child3 = old_ws.child_nodes().item(2).unwrap();
-            assert_eq!(child3.node_name(), "LI");
-            assert_eq!(child3.text_content().unwrap(), "even more text");
-        }
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(old_ws.child_nodes().length(), 3);
+        assert_eq!(old_ws.child_nodes().item(0).unwrap().text_content().unwrap(), "text");
+        assert_eq!(old_ws.child_nodes().item(1).unwrap().text_content().unwrap(), "more text");
+        let child3 = old_ws.child_nodes().item(2).unwrap();
+        assert_eq!(child3.node_name(), "LI");
+        assert_eq!(child3.text_content().unwrap(), "even more text");
     }
 
     #[wasm_bindgen_test]
@@ -795,35 +802,73 @@ pub mod tests {
         parent.append_child(&old_ws).unwrap();
 
         // First add some child nodes using the vdom
-        vdom = {
-            let mut new_vdom = make_vdom(
-                &doc,
-                div!["text", "more text", vec![li!["even more text"]]],
-            );
-            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
-
-            assert_eq!(parent.children().length(), 1);
-            new_vdom
-        };
+        vdom = setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["text", "more text", vec![li!["even more text"]]],
+        );
 
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 3);
         let old_child1 = old_ws.child_nodes().item(0).unwrap();
 
         // Now test that patch function removes the last 2 nodes
-        {
-            let mut new_vdom = make_vdom(&doc, div!["text"]);
-            patch(&doc, vdom, &mut new_vdom, &parent, &mailbox);
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["text"],
+        );
 
-            assert_eq!(parent.children().length(), 1);
-            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-            assert_eq!(old_ws.child_nodes().length(), 1);
-            assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
-        }
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(old_ws.child_nodes().length(), 1);
+        assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
     }
 
-    // #[wasm_bindgen_test]
-    fn _el_changed() {
-        unimplemented!()
+    #[wasm_bindgen_test]
+    fn el_changed() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        // First add some child nodes using the vdom
+        vdom = setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![span!["hello"], ", ", span!["world"]],
+        );
+
+        assert_eq!(parent.child_nodes().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 3);
+
+        // Now add some attributes
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![
+                span![class!["first"], "hello"],
+                ", ",
+                span![class!["second"], "world"],
+            ],
+        );
+
+        let child1 = old_ws.child_nodes().item(0).unwrap().dyn_into::<Element>().unwrap();
+        assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
+        let child3 = old_ws.child_nodes().item(2).unwrap().dyn_into::<Element>().unwrap();
+        assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
     }
 }
