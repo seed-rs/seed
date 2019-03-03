@@ -76,9 +76,9 @@ fn get_search() -> String {
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(&Url) -> Ms) -> App<Ms, Mdl>
-where
-    Ms: Clone + 'static,
-    Mdl: 'static,
+    where
+        Ms: Clone + 'static,
+        Mdl: 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -211,12 +211,10 @@ pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> 
     app.data.popstate_closure.replace(Some(closure));
 }
 
-/// Set up a listener that intercepts clicks on <a> and <button> tags, so we can prevent page reloads for
-/// internal links.  Run this on load.
+/// Set up a listener that intercepts clicks on elements containing an Href attribute,
+/// so we can prevent page refreshfor internal links, and route internally.  Run this on load.
 pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms) {
     // todo DRY with setup_popstate listener.
-    // todo Deal with excessive nesting.
-
     let app_for_closure = app.clone();
     let closure = Closure::wrap(
         Box::new(move |event: web_sys::Event| {
@@ -231,16 +229,17 @@ pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) 
                         if let Some(first) = href.chars().next() {
                             // The first character being / indicates a rel link, which is what
                             // we're intercepting.
-                            if first == '/' {
-                                event.prevent_default();
-                                // Route internally based on href's value
-                                let url = Url::new(href.split('/').collect());
-                                app_for_closure.update(routes(&url));
-                                push_route(url);
+                            // todo: Handle other cases that imply a relative link.
+                            if first != '/' {
+                                return
                             }
+                            event.prevent_default();  // Prevent page refresh
+                            // Route internally based on href's value
+                            let url = Url::new(href.split('/').collect());
+                            app_for_closure.update(routes(&url));
+                            push_route(url);
                         }
                     }
-
                 }
             }
         })

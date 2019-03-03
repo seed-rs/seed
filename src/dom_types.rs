@@ -437,6 +437,13 @@ impl<Ms> UpdateEl<El<Ms>> for Tag {
     }
 }
 
+impl<Ms> UpdateEl<El<Ms>> for Optimize {
+    // This, or some other mechanism seems to work for String too... note sure why.
+    fn update(self, el: &mut El<Ms>) {
+        el.optimizations.push(self)
+    }
+}
+
 /// Similar to tag population.
 macro_rules! make_attrs {
     // Create shortcut macros for any element; populate these functions in this module.
@@ -1019,6 +1026,13 @@ make_tags! {
     Style => "style", View => "view"
 }
 
+/// WIP that marks elements in ways to improve diffing and rendering efficiency.
+#[derive(Copy, Clone, Debug)]
+pub enum Optimize {
+    Key(u32), // Helps correctly match children, prevening unecessary rerenders
+    Static,  // unimplemented, and possibly unecessary
+}
+
 /// An component in our virtual DOM.
 #[derive(Debug)]  // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
@@ -1052,6 +1066,7 @@ pub struct El<Ms: 'static> {
     // Lifecycle hooks
     pub hooks: LifecycleHooks,
     pub empty: bool,  // Indicates not to render anything.
+    optimizations: Vec<Optimize>
 }
 
 type HookFn = Box<FnMut(&web_sys::Node)>;
@@ -1102,7 +1117,8 @@ impl<Ms> El<Ms> {
             // static: false,
             // static_to_parent: false,
             hooks: LifecycleHooks::default(),
-            empty: false
+            empty: false,
+            optimizations: Vec::new(),
         }
     }
 
@@ -1171,6 +1187,16 @@ impl<Ms> El<Ms> {
         self.text = Some(text.into())
     }
 
+    /// Shortcut for finding the key, if one exists
+    pub fn key(&self) -> Option<u32> {
+        for o in &self.optimizations {
+            if let Optimize::Key(key) = o {
+                return Some(*key)
+            }
+        }
+        None
+    }
+
     /// Output the HTML of this node, including all its children, recursively.
     fn _html(&self) -> String {
         let text = self.text.clone().unwrap_or_default();
@@ -1209,6 +1235,7 @@ impl<Ms> El<Ms> {
 //            control: self.control,
             hooks: LifecycleHooks::default(),
             empty: false,
+            optimizations: Vec::new(),
         }
     }
 
@@ -1244,6 +1271,7 @@ impl<Ms> Clone for El<Ms> {
             namespace: self.namespace.clone(),
             hooks: LifecycleHooks::default(),
             empty: self.empty,
+            optimizations: self.optimizations.clone(),
         }
     }
 }

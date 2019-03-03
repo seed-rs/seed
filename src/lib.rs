@@ -83,7 +83,7 @@ pub mod prelude {
     pub use crate::{
         dom_types::{
             did_mount, did_update, input_ev, keyboard_ev, mouse_ev, raw_ev, simple_ev,
-            will_unmount, At, El, Ev, Tag, UpdateEl,
+            will_unmount, At, El, Ev, Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
 //        vdom::{Update, Update::Render, Update::Skip, Update::RenderThen},

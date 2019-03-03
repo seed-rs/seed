@@ -574,8 +574,26 @@ fn patch<Ms: Clone>(
     let mut old_children_patched = Vec::new();
 
     for (i_new, child_new) in new.children.iter_mut().enumerate() {
+
+        // If a key's specified, use it to match the child
+        // There can be multiple optomizations, but assume one key. If there are multiple
+        // keys, use the first (There should only be one, but no constraints atm).
+        if let Some(key) = child_new.key() {
+            let _matching = old.children.iter().filter(|c| c.key() == Some(key));
+            // todo continue implementation: Patch and re-order.
+        }
+
+
         match old.children.get(i_new) {
             Some(child_old) => {
+                // todo: This approach is still inefficient use of key, since it overwrites
+                // todo non-matching keys, preventing them from being found later.
+                if let Some(key) = child_new.key() {
+                    if child_old.key() == Some(key) {
+                        continue
+                    }
+                }
+
                 // Don't compare equality here; we do that at the top of this function
                 // in the recursion.
                 patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
