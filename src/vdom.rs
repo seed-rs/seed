@@ -64,7 +64,7 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 pub struct AppData<Ms: Clone + 'static, Mdl> {
     // Model is in a RefCell<Option> here so we can replace it in self.update().
     pub model: RefCell<Option<Mdl>>,
-    main_el_vdom: RefCell<El<Ms>>,
+    main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
@@ -133,7 +133,7 @@ impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
 }
 
 /// We use a struct instead of series of functions, in order to avoid passing
-/// repetative sequences of parameters.
+/// repetitive sequences of parameters.
 impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     pub fn build(
         model: Mdl,
@@ -161,7 +161,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         let window = util::window();
         let document = window
             .document()
-            .expect("Can't find the window's document.");
+            .expect("Can't find the window's document");
 
         let mount_point = document
             .get_element_by_id(parent_div_id)
@@ -177,7 +177,8 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(Some(model)),
-                main_el_vdom: RefCell::new(El::empty(dom_types::Tag::Div)),
+                // This is filled for the first time in run()
+                main_el_vdom: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
                 window_listeners: RefCell::new(Vec::new()),
@@ -226,7 +227,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         // Attach all children: This is where our initial render occurs.
         websys_bridge::attach_el_and_children(&mut topel_vdom, &self.cfg.mount_point);
 
-        self.data.main_el_vdom.replace(topel_vdom);
+        self.data.main_el_vdom.replace(Some(topel_vdom));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
@@ -318,14 +319,16 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // render them with attach_children; we try to do it cleverly via patch().
             setup_els(&self.cfg.document, &mut topel_new_vdom, 0, 0);
 
+            let mut old_vdom = self.data.main_el_vdom.borrow_mut().take().expect("missing main_el_vdom");
+
             // Detach all old listeners before patching. We'll re-add them as required during patching.
             // We'll get a runtime panic if any are left un-removed.
-            detach_listeners(&mut self.data.main_el_vdom.borrow_mut());
+            detach_listeners(&mut old_vdom);
 
             // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
             patch(
                 &self.cfg.document,
-                &mut self.data.main_el_vdom.borrow_mut(),
+                old_vdom,
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
                 &self.mailbox(),
@@ -333,7 +336,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
             // Now that we've re-rendered, replace our stored El with the new one;
             // it will be used as the old El next (.
-            self.data.main_el_vdom.replace(topel_new_vdom);
+            self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
         }
 
         if let Some(msg) = effect_msg {
@@ -361,7 +364,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
 /// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
 /// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
 // pub for tests.
 where
     Ms: Clone + 'static,
@@ -477,7 +480,7 @@ fn setup_window_listeners<Ms: Clone>(
 
 fn patch<Ms: Clone>(
     document: &Document,
-    old: &mut El<Ms>,
+    mut old: El<Ms>,
     new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
@@ -501,7 +504,7 @@ fn patch<Ms: Clone>(
         None => return
     };
 
-    if old != new {
+    if old != *new {
 
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
@@ -555,7 +558,7 @@ fn patch<Ms: Clone>(
             }
 
         // Patch parts of the Element.
-        websys_bridge::patch_el_details(old, new, &old_el_ws);
+        websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
     }
 
     // Before running patch, assume we've removed all listeners from the old element.
@@ -571,43 +574,66 @@ fn patch<Ms: Clone>(
         }
     }
 
-    let mut old_children_patched = Vec::new();
+    let num_children_in_both = old.children.len().min(new.children.len());
+    let mut old_children_iter = old.children.into_iter();
+    let mut new_children_iter = new.children.iter_mut();
 
-    for (i_new, child_new) in new.children.iter_mut().enumerate() {
+    // Not using .zip() here to make sure we don't miss any of the children when one array is
+    // longer than the other.
+    for _i in 0..num_children_in_both {
+
+
+        let child_old = old_children_iter.next().unwrap();
+        let child_new = new_children_iter.next().unwrap();
 
         // If a key's specified, use it to match the child
         // There can be multiple optomizations, but assume one key. If there are multiple
         // keys, use the first (There should only be one, but no constraints atm).
-        if let Some(key) = child_new.key() {
-            let _matching = old.children.iter().filter(|c| c.key() == Some(key));
-            // todo continue implementation: Patch and re-order.
-        }
+//        if let Some(key) = child_new.key() {
+//            let _matching = old.children.iter().filter(|c| c.key() == Some(key));
+//            // todo continue implementation: Patch and re-order.
+//        }
+
+        //                match old.children.get(i_new) {
+//            Some(child_old) => {
+//                // todo: This approach is still inefficient use of key, since it overwrites
+//                // todo non-matching keys, preventing them from being found later.
+//                if let Some(key) = child_new.key() {
+//                    if child_old.key() == Some(key) {
+//                        continue
+//                    }
+//                }
+//
+//                // Don't compare equality here; we do that at the top of this function
+//                // in the recursion.
+//                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
+//                old_children_patched.push(child_old.id.expect("Can't find child's id"));
+//            },
+//            None => {
+//                // We ran out of old children to patch; create new ones.
+//                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
+//                let mut child_new = child_new;
+//                attach_listeners(&mut child_new, &mailbox);
+//            }
+//        }
 
 
-        match old.children.get(i_new) {
-            Some(child_old) => {
-                // todo: This approach is still inefficient use of key, since it overwrites
-                // todo non-matching keys, preventing them from being found later.
-                if let Some(key) = child_new.key() {
-                    if child_old.key() == Some(key) {
-                        continue
-                    }
-                }
+        // Don't compare equality here; we do that at the top of this function
+        // in the recursion.
+        patch(document, child_old, child_new, &old_el_ws, &mailbox);
 
-                // Don't compare equality here; we do that at the top of this function
-                // in the recursion.
-                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
-                old_children_patched.push(child_old.id.expect("Can't find child's id"));
-            },
-            None => {
-                // We ran out of old children to patch; create new ones.
-                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
-                let mut child_new = child_new;
-                attach_listeners(&mut child_new, &mailbox);
-            }
-        }
     }
 
+    // Now one of the iterators is entirely consumed, and any items left in one iterator
+    // don't have any matching items in the other.
+
+    while let Some(child_new) = new_children_iter.next() {
+
+
+        // We ran out of old children to patch; create new ones.
+        websys_bridge::attach_el_and_children(child_new, &old_el_ws);
+        attach_listeners(child_new, &mailbox);
+    }
 
 //    // Now pair up children as best we can.
 //    // If there are the same number of children, assume there's a 1-to-1 mapping,
@@ -654,10 +680,7 @@ fn patch<Ms: Clone>(
 
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-    for child in old.children.iter_mut()
-        .filter(|c| !old_children_patched
-            .contains(&c.id.expect("Can't find child's id")) ) {
-
+    while let Some(mut child) = old_children_iter.next() {
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // TODO: DRY here between this and earlier in func
@@ -670,8 +693,6 @@ fn patch<Ms: Clone>(
             Ok(_) => {},
             Err(_) => {crate::log("Minor error patching html element. (remove)");}
         }
-
-        child.el_ws.replace(child_el_ws);
     }
 
     new.el_ws = Some(old_el_ws);
@@ -737,57 +758,155 @@ pub trait DomElLifecycle {
 
 #[cfg(test)]
 pub mod tests {
-    use wasm_bindgen_test::wasm_bindgen_test_configure;
+    use wasm_bindgen_test::*;
     wasm_bindgen_test_configure!(run_in_browser);
 
     use super::*;
-    use wasm_bindgen_test::*;
 
     use crate as seed; // required for macros to work.
-    use crate::{div, li, prelude::*};
+    use crate::{class, div, li, prelude::*, span};
+    use wasm_bindgen::JsCast;
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     enum Msg {}
 
-    #[ignore]
-    //    #[wasm_bindgen_test]
-    #[test]
+    fn make_vdom(doc: &Document, el: El<Msg>) -> El<Msg> {
+        let mut vdom = el;
+        setup_els(doc, &mut vdom, 0, 0);
+        vdom
+    }
+
+    fn setup_and_patch(
+        doc: &Document,
+        parent: &Element,
+        mailbox: &Mailbox<Msg>,
+        old_vdom: El<Msg>,
+        new_vdom: El<Msg>,
+    ) -> El<Msg> {
+        let mut new_vdom = make_vdom(&doc, new_vdom);
+        patch(&doc, old_vdom, &mut new_vdom, parent, mailbox);
+        new_vdom
+    }
+
+    #[wasm_bindgen_test]
     fn el_added() {
-        let mut old_vdom: El<Msg> = div!["text", vec![li!["child1"],]];
-        let mut new_vdom: El<Msg> = div!["text", vec![li!["child1"], li!["child2"]]];
+        let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
-        let old_ws = doc.create_element("div").unwrap();
-        let new_ws = doc.create_element("div").unwrap();
-
-        let child1 = doc.create_element("li").unwrap();
-        let child2 = doc.create_element("li").unwrap();
-        // TODO: make this match how you're setting text_content, eg could
-        // TODO: be adding a text node.
-        old_ws.set_text_content(Some("text"));
-        child1.set_text_content(Some("child1"));
-        child2.set_text_content(Some("child2"));
-
-        old_ws.append_child(&child1).unwrap();
-        new_ws.append_child(&child1).unwrap();
-        new_ws.append_child(&child2).unwrap();
-
-        let mailbox = Mailbox::new(|msg: Msg| {});
-
         let parent = doc.create_element("div").unwrap();
-        patch(&doc, &mut old_vdom, &mut new_vdom, &parent, &mailbox);
-        unimplemented!()
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 0);
+
+        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(old_ws.child_nodes().length(), 1);
+        assert_eq!(old_ws.first_child().unwrap().text_content().unwrap(), "text");
+
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["text", "more text", vec![li!["even more text"]]],
+        );
+
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(old_ws.child_nodes().length(), 3);
+        assert_eq!(old_ws.child_nodes().item(0).unwrap().text_content().unwrap(), "text");
+        assert_eq!(old_ws.child_nodes().item(1).unwrap().text_content().unwrap(), "more text");
+        let child3 = old_ws.child_nodes().item(2).unwrap();
+        assert_eq!(child3.node_name(), "LI");
+        assert_eq!(child3.text_content().unwrap(), "even more text");
     }
 
-    #[ignore]
-    #[test]
+    #[wasm_bindgen_test]
     fn el_removed() {
-        unimplemented!()
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        // First add some child nodes using the vdom
+        vdom = setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["text", "more text", vec![li!["even more text"]]],
+        );
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 3);
+        let old_child1 = old_ws.child_nodes().item(0).unwrap();
+
+        // Now test that patch function removes the last 2 nodes
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["text"],
+        );
+
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(old_ws.child_nodes().length(), 1);
+        assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
     }
 
-    #[ignore]
-    #[test]
+    #[wasm_bindgen_test]
     fn el_changed() {
-        unimplemented!()
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        // First add some child nodes using the vdom
+        vdom = setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![span!["hello"], ", ", span!["world"]],
+        );
+
+        assert_eq!(parent.child_nodes().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 3);
+
+        // Now add some attributes
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![
+                span![class!["first"], "hello"],
+                ", ",
+                span![class!["second"], "world"],
+            ],
+        );
+
+        let child1 = old_ws.child_nodes().item(0).unwrap().dyn_into::<Element>().unwrap();
+        assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
+        let child3 = old_ws.child_nodes().item(2).unwrap().dyn_into::<Element>().unwrap();
+        assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
     }
 }

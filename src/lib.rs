@@ -104,12 +104,13 @@ pub mod tests {
     /// This is a minimal app, that should build. Will fail if there's a breaking
     /// change.
     #[wasm_bindgen_test]
+    #[allow(dead_code)]
     pub fn app_builds() {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
         use crate::{
             div,
-            dom_types::{El, At, UpdateEl, mouse_ev},
+            dom_types::{El, UpdateEl, mouse_ev},
             vdom::Update,
         };
 
@@ -134,15 +135,15 @@ pub mod tests {
             }
         }
 
-        fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+        fn view(_state: seed::App<Msg, Model>, _model: &Model) -> El<Msg> {
             div!["Hello world"]
         }
 
-        fn window_events(model: &Model) -> Vec<seed::dom_types::Listener<Msg>> {
+        fn window_events(_model: &Model) -> Vec<seed::dom_types::Listener<Msg>> {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 
-        fn routes(url: &seed::Url) -> Msg {
+        fn routes(_url: &seed::Url) -> Msg {
             Msg::Increment
         }
 

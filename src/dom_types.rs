@@ -1331,11 +1331,11 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUn
 
 #[cfg(test)]
 pub mod tests {
-    use crate as seed;
+    // use crate as seed;
     // required for macros to work.
     //    use crate::prelude::*;
-    use super::*;
-    use crate::{attrs, div, h1, p, section, span};
+    // use super::*;
+    // use crate::{attrs, div, h1, p, section, span};
     //use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
     //use wasm_bindgen_test::wasm_bindgen_test_configure;
 
