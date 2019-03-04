@@ -150,24 +150,21 @@ pub fn push_route(mut url: Url) {
 
     // Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
-    let path = String::from("/") + &url.path.join("/");
+    let mut path = String::from("/") + &url.path.join("/");
+    if let Some(search) = url.search {
+        path += "?";
+        path += &search;
+    }
+    if let Some(hash) = url.hash {
+        path += "#";
+        path += &hash;
+    }
 
     util::window()
         .history()
         .expect("Can't find history")
         .push_state_with_url(&data, &title, Some(&path))
         .expect("Problem pushing state");
-
-    // Must set hash and search after push_state, or the url will be overwritten.
-    let location = util::window().location();
-
-    if let Some(hash) = url.hash {
-        location.set_hash(&hash).expect("Problem setting hash");
-    }
-
-    if let Some(search) = url.search {
-        location.set_search(&search).expect("Problem setting search");
-    }
 }
 
 /// A convenience function, for use when only a path is required.
