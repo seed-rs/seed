@@ -764,7 +764,7 @@ pub mod tests {
     use super::*;
 
     use crate as seed; // required for macros to work.
-    use crate::{class, div, li, prelude::*, span};
+    use crate::{class, li, prelude::*};
     use wasm_bindgen::JsCast;
     use web_sys::Node;
 
