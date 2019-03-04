@@ -766,6 +766,7 @@ pub mod tests {
     use crate as seed; // required for macros to work.
     use crate::{class, div, li, prelude::*, span};
     use wasm_bindgen::JsCast;
+    use web_sys::Node;
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -786,6 +787,14 @@ pub mod tests {
         let mut new_vdom = make_vdom(&doc, new_vdom);
         patch(&doc, old_vdom, &mut new_vdom, parent, mailbox);
         new_vdom
+    }
+
+    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = Node> {
+        (0..list.length()).map(move |i| list.item(i).unwrap())
+    }
+
+    fn iter_child_nodes(node: &Node) -> impl Iterator<Item = Node> {
+        iter_nodelist(node.child_nodes())
     }
 
     #[wasm_bindgen_test]
@@ -908,5 +917,46 @@ pub mod tests {
         assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
         let child3 = old_ws.child_nodes().item(2).unwrap().dyn_into::<Element>().unwrap();
         assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
+    }
+
+    /// Test that if a seed::empty() is changed to a non-empty El, then the new element is
+    /// inserted at the correct position.
+    #[wasm_bindgen_test]
+    fn empty_changed_in_the_middle() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 0);
+
+        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["a", "c"],
+        );
+
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["a", "b", "c"],
+        );
+
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["a", "b", "c"],
+        );
     }
 }
