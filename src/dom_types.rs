@@ -128,20 +128,18 @@ pub struct Listener<Ms> {
     pub control_val: Option<String>,
     pub control_checked: Option<bool>,
     //    pub control: bool,
-    pub id: Option<u32>,
 }
 
 impl<Ms> fmt::Debug for Listener<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}{:?}, id:{:?} }}",
+            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}{:?} }}",
             self.trigger,
             fmt_hook_fn(&self.handler),
             fmt_hook_fn(&self.closure),
             self.control_val,
-            self.control_checked,
-            self.id
+            self.control_checked
         )
     }
 }
@@ -156,7 +154,6 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: None,
             control_checked: None,
-            id: None,
         }
     }
 
@@ -169,7 +166,6 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: Some(val),
             control_checked: None,
-            id: None,
         }
     }
 
@@ -181,7 +177,6 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: None,
             control_checked: Some(checked),
-            id: None,
         }
     }
 
@@ -345,7 +340,7 @@ impl<Ms> PartialEq for Listener<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo we're only checking the trigger - will miss changes if
         // todo only the fn passed changes!
-        self.trigger == other.trigger && self.id == other.id
+        self.trigger == other.trigger
     }
 }
 
