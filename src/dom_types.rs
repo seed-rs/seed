@@ -382,10 +382,8 @@ impl<Ms> UpdateEl<El<Ms>> for Listener<Ms> {
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
-    fn update(self, el: &mut El<Ms>) {
-        for listener in self.into_iter() {
-            el.listeners.push(listener)
-        }
+    fn update(mut self, el: &mut El<Ms>) {
+        el.listeners.append(&mut self);
     }
 }
 
@@ -415,10 +413,8 @@ impl<Ms> UpdateEl<El<Ms>> for &str {
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
-    fn update(self, el: &mut El<Ms>) {
-        for child in self.into_iter() {
-            el.children.push(child);
-        }
+    fn update(mut self, el: &mut El<Ms>) {
+        el.children.append(&mut self);
     }
 }
 
