@@ -99,6 +99,8 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
             button![simple_ev(Ev::Click, Msg::Increment), "+"],
             button![simple_ev(Ev::Click, Msg::Decrement), "-"],
             // Optionally-displaying an element, and lifecycle hooks
+            h2!["A"],
+            h2!["B"],
             if model.count >= 10 {
                 h2![
                     style! {"padding" => 50},
@@ -108,7 +110,9 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
                 ]
             } else {
                 seed::empty()
-            }
+            },
+            h2!["C"],
+            h2!["D"],
         ],
         success_level(model.count), // Incorporating a separate component
         h3!["What precisely is it we're counting?"],

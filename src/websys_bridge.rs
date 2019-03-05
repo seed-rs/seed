@@ -195,15 +195,11 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     // Append the element
 
-
-    // todo: Get to the bottom on this
+    // todo: This can occur with raw html elements, but am unsur eof the cause.
     match parent.append_child(&el_ws) {
         Ok(_) => {},
         Err(_) => {crate::log("Minor problem with html element (append)");}
-
     }
-//    parent.append_child(&el_ws).expect("Problem appending child");
-
 
     // appending the its children to the el_ws
     for child in &mut el_vdom.children {

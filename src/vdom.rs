@@ -4,7 +4,7 @@ use crate::{
     routing, util, websys_bridge,
 };
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
-use wasm_bindgen::closure::Closure;
+use wasm_bindgen::{JsCast, closure::Closure};
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
 pub enum Update<Ms, Mdl> {
@@ -163,9 +163,18 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             .document()
             .expect("Can't find the window's document");
 
-        let mount_point = document
-            .get_element_by_id(parent_div_id)
-            .expect("Problem finding parent div");
+        // We log an error instead of relying on panic/except due to the panic hook not yet
+        // being active.
+        let mount_point;
+        match document
+            .get_element_by_id(parent_div_id) {
+            Some(mp) => mount_point = mp,
+            None => {
+                let text = "Can't finding parent div id (defaults to \"app\", or can be set with the .mount() method)";
+                crate::error(text);
+                panic!(text);
+            },
+        }
 
         Self {
             cfg: Rc::new(AppCfg {
@@ -521,10 +530,13 @@ fn patch<Ms: Clone>(
                 unmount_actions(&old_el_ws)
             }
             return
+        } else if new.empty && old.empty {
+            return
         }
             // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
             // Something about this element itself is different: patch it.
-            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
+//            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
+            else if old.tag != new.tag || old.namespace != new.namespace {
                 // TODO: DRY here between this and later in func.
                 if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                     unmount_actions(&old_el_ws)
@@ -535,14 +547,16 @@ fn patch<Ms: Clone>(
 
                 let new_el_ws = new.el_ws.take().expect("Missing websys el");
 
-                if old.empty {
-                    parent.append_child(&new_el_ws)
-                        .expect("Problem adding element to previously empty one");
-                } else {
-                    parent
-                        .replace_child(&new_el_ws, &old_el_ws)
-                        .expect("Problem replacing element");
-                }
+//                if old.empty {
+//                    // When adding an empty element, there's no existing web_sys Element to
+//                    // replace, so we add it in the proper sequence of its parents' children.
+//                    parent.append_child(&new_el_ws)
+//                        .expect("Problem adding element to previously empty one");
+//                } else {
+                parent
+                    .replace_child(&new_el_ws, &old_el_ws)
+                    .expect("Problem replacing element");
+//                }
 
                 // Perform side-effects specified for mounting.
                 if let Some(mount_actions) = &mut new.hooks.did_mount {
@@ -556,6 +570,7 @@ fn patch<Ms: Clone>(
                 // We've re-rendered this child and all children; we're done with this recursion.
                 return
             }
+        // The fourth empty case, where old is empty and new isn't, is handled when iterating through children.
 
         // Patch parts of the Element.
         websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
@@ -580,9 +595,8 @@ fn patch<Ms: Clone>(
 
     // Not using .zip() here to make sure we don't miss any of the children when one array is
     // longer than the other.
-    for _i in 0..num_children_in_both {
-
-
+    let mut i_before_nolongerempty = 0;
+    for i in 0..num_children_in_both {
         let child_old = old_children_iter.next().unwrap();
         let child_new = new_children_iter.next().unwrap();
 
@@ -617,10 +631,41 @@ fn patch<Ms: Clone>(
 //            }
 //        }
 
+        // Don't let recursion handle replacing empty children with non-empty: The logic
+        // above in the function won't have a child web_sys El to replace, and
+        // won't know which order to insert it.
+        if child_old.empty && !child_new.empty {
+            let new_el_ws = new.el_ws.take().expect("Missing websys el");
 
-        // Don't compare equality here; we do that at the top of this function
-        // in the recursion.
-        patch(document, child_old, child_new, &old_el_ws, &mailbox);
+            match &old.children.get(i_before_nolongerempty) {
+                Some(older_brother) => {
+                    let ob_el_ws = older_brother.el_ws.take()
+                        .expect("Missing el_ws when adding element to previously empty one");
+
+                    ob_el_ws
+                        .dyn_ref::<Element>()
+                        .expect("Problem casting Node as Element")
+                        .after_with_node_1(&new_el_ws)
+                        .expect("Problem adding element to previously empty one");
+
+                    older_brother.el_ws.replace(ob_el_ws);
+                }
+                None => {
+                    old_el_ws.append_child(&new_el_ws)
+                        .expect("Problem adding element to previously empty one (No siblings)");
+                }
+            }
+
+            new.el_ws.replace(new_el_ws);
+
+        } else {
+            // Don't compare equality here; we do that at the top of this function
+            // in the recursion.
+            patch(document, child_old, child_new, &old_el_ws, &mailbox);
+            // We only consider non-empty elements to insert no-longer-empty ones; must have
+            // an web_sys El to insert after.
+            i_before_nolongerempty = i;
+        }
 
     }
 
