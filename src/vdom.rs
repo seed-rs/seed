@@ -424,42 +424,27 @@ impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
 /// Recursively attach all event-listeners. Run this after creating fresh elements.
 fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
     el.walk_tree_mut(|el| {
-        let el_ws = el
-            .el_ws
-            .take()
-            .expect("Missing el_ws on attach_all_listeners");
-
-        for listener in &mut el.listeners {
-            // todo ideally we unify attach as one method
-            if listener.control_val.is_some() || listener.control_checked.is_some() {
-                listener.attach_control(&el_ws);
-            } else {
-                listener.attach(&el_ws, mailbox.clone());
+        if let Some(el_ws) = el.el_ws.as_ref() {
+            for listener in &mut el.listeners {
+                // todo ideally we unify attach as one method
+                if listener.control_val.is_some() || listener.control_checked.is_some() {
+                    listener.attach_control(&el_ws);
+                } else {
+                    listener.attach(el_ws, mailbox.clone());
+                }
             }
         }
-
-        el.el_ws.replace(el_ws);
     });
 }
 
 /// Recursively detach event-listeners. Run this before patching.
 fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
     el.walk_tree_mut(|el| {
-        let el_ws = el
-            .el_ws
-            .take();
-
-        let el_ws2;
-        match el_ws {
-            Some(e) => el_ws2 = e,
-            None => return
+        if let Some(el_ws) = el.el_ws.as_ref() {
+            for listener in &mut el.listeners {
+                listener.detach(el_ws);
+            }
         }
-
-        for listener in &mut el.listeners {
-            listener.detach(&el_ws2);
-        }
-
-        el.el_ws.replace(el_ws2);
     });
 }
 
