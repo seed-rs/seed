@@ -323,11 +323,11 @@ impl<Ms> Listener<Ms> {
         self.closure = Some(closure);
     }
 
-    pub fn detach<T>(&self, el_ws: &T)
+    pub fn detach<T>(&mut self, el_ws: &T)
         where
             T: AsRef<web_sys::EventTarget>,
     {
-        let closure = self.closure.as_ref().expect("Can't find closure to detach");
+        let closure = self.closure.take().expect("Can't find closure to detach");
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(
