@@ -229,7 +229,8 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         }
 
         let document = window.document().expect("Problem getting document");
-        setup_els(&document, &mut topel_vdom);
+        setup_input_listeners(&mut topel_vdom);
+        setup_websys_el_and_children(&document, &mut topel_vdom);
 
         attach_listeners(&mut topel_vdom, &self.mailbox());
 
@@ -322,10 +323,6 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // have associated web_sys elements.
             let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
 
-            // We setup the vdom (which populates web_sys els through it, but don't
-            // render them with attach_children; we try to do it cleverly via patch().
-            setup_els(&self.cfg.document, &mut topel_new_vdom);
-
             let mut old_vdom = self.data.main_el_vdom.borrow_mut().take().expect("missing main_el_vdom");
 
             // Detach all old listeners before patching. We'll re-add them as required during patching.
@@ -403,17 +400,20 @@ where
     el.el_ws = Some(websys_bridge::make_websys_el(el, document));
 }
 
-/// Populate the attached web_sys elements. Run this after creating a vdom, but before using it to
-/// process the web_sys dom. Does not attach children in the DOM. Run this on the top-level
-/// element.
-fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>)
+/// Recursively sets up input listeners
+fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
 where
     Ms: Clone + 'static,
 {
-    el_vdom.walk_tree_mut(|el| {
-        setup_input_listener(el);
-        setup_websys_el(document, el);
-    });
+    el_vdom.walk_tree_mut(setup_input_listener);
+}
+
+/// Recursively sets up web_sys elements
+fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
+where
+    Ms: Clone + 'static,
+{
+    el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
 
 impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
@@ -524,6 +524,7 @@ fn patch<'a, Ms: Clone>(
                 }
 
                 // todo: Perhaps some of this next segment should be moved to websys_bridge
+                setup_websys_el_and_children(document, new);
                 websys_bridge::attach_children(new);
 
                 let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
@@ -633,6 +634,7 @@ fn patch<'a, Ms: Clone>(
 
 
         // We ran out of old children to patch; create new ones.
+        setup_websys_el_and_children(document, child_new);
         websys_bridge::attach_el_and_children(child_new, &old_el_ws);
         attach_listeners(child_new, &mailbox);
     }
@@ -774,20 +776,13 @@ pub mod tests {
     #[derive(Clone, Debug)]
     enum Msg {}
 
-    fn make_vdom(doc: &Document, el: El<Msg>) -> El<Msg> {
-        let mut vdom = el;
-        setup_els(doc, &mut vdom);
-        vdom
-    }
-
-    fn setup_and_patch(
+    fn call_patch(
         doc: &Document,
         parent: &Element,
         mailbox: &Mailbox<Msg>,
         old_vdom: El<Msg>,
-        new_vdom: El<Msg>,
+        mut new_vdom: El<Msg>,
     ) -> El<Msg> {
-        let mut new_vdom = make_vdom(&doc, new_vdom);
         patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox);
         new_vdom
     }
@@ -807,7 +802,8 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
@@ -815,13 +811,13 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(old_ws.child_nodes().length(), 1);
         assert_eq!(old_ws.first_child().unwrap().text_content().unwrap(), "text");
 
-        setup_and_patch(
+        call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -846,13 +842,14 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         // First add some child nodes using the vdom
-        vdom = setup_and_patch(
+        vdom = call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -865,7 +862,7 @@ pub mod tests {
         let old_child1 = old_ws.child_nodes().item(0).unwrap();
 
         // Now test that patch function removes the last 2 nodes
-        setup_and_patch(
+        call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -886,13 +883,14 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         // First add some child nodes using the vdom
-        vdom = setup_and_patch(
+        vdom = call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -904,7 +902,7 @@ pub mod tests {
         assert_eq!(old_ws.child_nodes().length(), 3);
 
         // Now add some attributes
-        setup_and_patch(
+        call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -931,7 +929,8 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
@@ -939,7 +938,7 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div![seed::empty(), "b", "c"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div![seed::empty(), "b", "c"]);
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
@@ -947,7 +946,7 @@ pub mod tests {
             &["b", "c"],
         );
 
-        setup_and_patch(
+        call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -972,7 +971,8 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
@@ -980,7 +980,7 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
@@ -988,7 +988,7 @@ pub mod tests {
             &["a", "c"],
         );
 
-        setup_and_patch(
+        call_patch(
             &doc,
             &parent,
             &mailbox,
