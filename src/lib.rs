@@ -1,6 +1,5 @@
 //! See readme for details.
 
-#![allow(unused_macros)]
 //#![deny(missing_docs)]
 
 pub use crate::{

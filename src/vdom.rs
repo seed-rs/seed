@@ -220,7 +220,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         }
 
         let document = window.document().expect("Problem getting document");
-        setup_els(&document, &mut topel_vdom, 0, 0);
+        setup_els(&document, &mut topel_vdom);
 
         attach_listeners(&mut topel_vdom, &self.mailbox());
 
@@ -310,14 +310,12 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         if should_render {
             // Create a new vdom: The top element, and all its children. Does not yet
-            // have ids, nest levels, or associated web_sys elements.
-            // We accept cloning here, for the benefit of making data easier to work
-            // with in the app.
+            // have associated web_sys elements.
             let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
-            setup_els(&self.cfg.document, &mut topel_new_vdom, 0, 0);
+            setup_els(&self.cfg.document, &mut topel_new_vdom);
 
             let mut old_vdom = self.data.main_el_vdom.borrow_mut().take().expect("missing main_el_vdom");
 
@@ -325,7 +323,6 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // We'll get a runtime panic if any are left un-removed.
             detach_listeners(&mut old_vdom);
 
-            // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
             patch(
                 &self.cfg.document,
                 old_vdom,
@@ -336,7 +333,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             );
 
             // Now that we've re-rendered, replace our stored El with the new one;
-            // it will be used as the old El next (.
+            // it will be used as the old El next time.
             self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
         }
 
@@ -363,19 +360,14 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     }
 }
 
-/// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
-/// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+/// Populate the attached web_sys elements. Run this after creating a vdom, but before using it to
+/// process the web_sys dom. Does not attach children in the DOM. Run this on the top-level
+/// element.
+pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>)
 // pub for tests.
 where
     Ms: Clone + 'static,
 {
-    // id iterates once per item; active-level once per nesting level.
-    let mut id = active_id;
-    el_vdom.id = Some(id);
-    id += 1; // Raise the id after each element we process.
-    el_vdom.nest_level = Some(active_level);
-
     // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
     // don't let them get out of sync from typing or other events, which can occur if a change
     // doesn't trigger a re-render, or if something else modifies them using a side effect.
@@ -403,9 +395,7 @@ where
 
     el_vdom.el_ws = Some(el_ws);
     for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
-        setup_els(document, child, active_level + 1, id);
-        id += 1;
+        setup_els(document, child);
     }
 }
 
@@ -561,7 +551,7 @@ fn patch<'a, Ms: Clone>(
     // Before running patch, assume we've removed all listeners from the old element.
     // Perform this attachment after we've verified we can patch this element, ie
     // it has the same tag - otherwise  we'd have to detach after the parent.remove_child step.
-    // Note that unlike the attach_listeners function, this only attaches for the currently
+    // Note that unlike the attach_listeners function, this only attaches for the current
     // element.
     for listener in &mut new.listeners {
         if listener.control_val.is_some() || listener.control_checked.is_some() {
@@ -781,7 +771,7 @@ pub mod tests {
 
     fn make_vdom(doc: &Document, el: El<Msg>) -> El<Msg> {
         let mut vdom = el;
-        setup_els(doc, &mut vdom, 0, 0);
+        setup_els(doc, &mut vdom);
         vdom
     }
 
