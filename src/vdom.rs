@@ -377,35 +377,34 @@ pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>)
 where
     Ms: Clone + 'static,
 {
-    // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
-    // don't let them get out of sync from typing or other events, which can occur if a change
-    // doesn't trigger a re-render, or if something else modifies them using a side effect.
-    // Handle controlled inputs: Ie force sync with the model.
-    if el_vdom.tag == dom_types::Tag::Input || el_vdom.tag == dom_types::Tag::Select || el_vdom.tag == dom_types::Tag::TextArea {
-        let listener = if let Some(checked) = el_vdom.attrs.vals.get(&dom_types::At::Checked) {
-            let checked_bool = match checked.as_ref() {
-                "true" => true,
-                "false" => false,
-                _ => panic!("checked must be true or false.")
+    el_vdom.walk_tree_mut(|el| {
+        // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
+        // don't let them get out of sync from typing or other events, which can occur if a change
+        // doesn't trigger a re-render, or if something else modifies them using a side effect.
+        // Handle controlled inputs: Ie force sync with the model.
+        if el.tag == dom_types::Tag::Input || el.tag == dom_types::Tag::Select || el.tag == dom_types::Tag::TextArea {
+            let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
+                let checked_bool = match checked.as_ref() {
+                    "true" => true,
+                    "false" => false,
+                    _ => panic!("checked must be true or false.")
+                };
+                dom_types::Listener::new_control_check(checked_bool)
+            } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
+                dom_types::Listener::new_control(control_val.to_string())
+            } else {
+                // If Value is not specified, force the field to be blank.
+                dom_types::Listener::new_control("".to_string())
             };
-            dom_types::Listener::new_control_check(checked_bool)
-        } else if let Some(control_val) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
-            dom_types::Listener::new_control(control_val.to_string())
-        } else {
-            // If Value is not specified, force the field to be blank.
-            dom_types::Listener::new_control("".to_string())
-        };
-        el_vdom.listeners.push(listener);  // Add to the El, so we can deattach later.
-    }
+            el.listeners.push(listener);  // Add to the El, so we can deattach later.
+        }
 
-    // Create the web_sys element; add it to the working tree; store it in
-    // its corresponding vdom El.
-    let el_ws = websys_bridge::make_websys_el(el_vdom, document);
+        // Create the web_sys element; add it to the working tree; store it in
+        // its corresponding vdom El.
+        let el_ws = websys_bridge::make_websys_el(el, document);
 
-    el_vdom.el_ws = Some(el_ws);
-    for child in &mut el_vdom.children {
-        setup_els(document, child);
-    }
+        el.el_ws = Some(el_ws);
+    });
 }
 
 impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
@@ -419,46 +418,44 @@ impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
 
 /// Recursively attach all event-listeners. Run this after creating fresh elements.
 fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
-    let el_ws = el
-        .el_ws
-        .take()
-        .expect("Missing el_ws on attach_all_listeners");
+    el.walk_tree_mut(|el| {
+        let el_ws = el
+            .el_ws
+            .take()
+            .expect("Missing el_ws on attach_all_listeners");
 
-    for listener in &mut el.listeners {
-        // todo ideally we unify attach as one method
-        if listener.control_val.is_some() || listener.control_checked.is_some() {
-            listener.attach_control(&el_ws);
-        } else {
-            listener.attach(&el_ws, mailbox.clone());
+        for listener in &mut el.listeners {
+            // todo ideally we unify attach as one method
+            if listener.control_val.is_some() || listener.control_checked.is_some() {
+                listener.attach_control(&el_ws);
+            } else {
+                listener.attach(&el_ws, mailbox.clone());
+            }
         }
-    }
-    for child in &mut el.children {
-        attach_listeners(child, mailbox)
-    }
 
-    el.el_ws.replace(el_ws);
+        el.el_ws.replace(el_ws);
+    });
 }
 
 /// Recursively detach event-listeners. Run this before patching.
 fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
-    let el_ws = el
-        .el_ws
-        .take();
+    el.walk_tree_mut(|el| {
+        let el_ws = el
+            .el_ws
+            .take();
 
-    let el_ws2;
-    match el_ws {
-        Some(e) => el_ws2 = e,
-        None => return
-    }
+        let el_ws2;
+        match el_ws {
+            Some(e) => el_ws2 = e,
+            None => return
+        }
 
-    for listener in &mut el.listeners {
-        listener.detach(&el_ws2);
-    }
-    for child in &mut el.children {
-        detach_listeners(child)
-    }
+        for listener in &mut el.listeners {
+            listener.detach(&el_ws2);
+        }
 
-    el.el_ws.replace(el_ws2);
+        el.el_ws.replace(el_ws2);
+    });
 }
 
 /// We reattach all listeners, as with normal Els, since we have no
