@@ -250,8 +250,9 @@ impl<Ms> Listener<Ms> {
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
-        self.closure = Some(closure);
-        //        self.handler.replace(handler);  // todo ?
+        if let Some(_) = self.closure.replace(closure) {
+            panic!("self.closure already set in attach");
+        }
     }
 
 
@@ -320,7 +321,9 @@ impl<Ms> Listener<Ms> {
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
-        self.closure = Some(closure);
+        if let Some(_) = self.closure.replace(closure) {
+            panic!("self.closure already set in attach_control");
+        }
     }
 
     pub fn detach<T>(&mut self, el_ws: &T)
