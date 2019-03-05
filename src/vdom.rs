@@ -369,6 +369,38 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     }
 }
 
+fn setup_el<Ms>(document: &Document, el: &mut El<Ms>)
+where
+    Ms: Clone + 'static,
+{
+    // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
+    // don't let them get out of sync from typing or other events, which can occur if a change
+    // doesn't trigger a re-render, or if something else modifies them using a side effect.
+    // Handle controlled inputs: Ie force sync with the model.
+    if el.tag == dom_types::Tag::Input || el.tag == dom_types::Tag::Select || el.tag == dom_types::Tag::TextArea {
+        let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
+            let checked_bool = match checked.as_ref() {
+                "true" => true,
+                "false" => false,
+                _ => panic!("checked must be true or false.")
+            };
+            dom_types::Listener::new_control_check(checked_bool)
+        } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
+            dom_types::Listener::new_control(control_val.to_string())
+        } else {
+            // If Value is not specified, force the field to be blank.
+            dom_types::Listener::new_control("".to_string())
+        };
+        el.listeners.push(listener);  // Add to the El, so we can deattach later.
+    }
+
+    // Create the web_sys element; add it to the working tree; store it in
+    // its corresponding vdom El.
+    let el_ws = websys_bridge::make_websys_el(el, document);
+
+    el.el_ws = Some(el_ws);
+}
+
 /// Populate the attached web_sys elements. Run this after creating a vdom, but before using it to
 /// process the web_sys dom. Does not attach children in the DOM. Run this on the top-level
 /// element.
@@ -377,34 +409,7 @@ pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>)
 where
     Ms: Clone + 'static,
 {
-    el_vdom.walk_tree_mut(|el| {
-        // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
-        // don't let them get out of sync from typing or other events, which can occur if a change
-        // doesn't trigger a re-render, or if something else modifies them using a side effect.
-        // Handle controlled inputs: Ie force sync with the model.
-        if el.tag == dom_types::Tag::Input || el.tag == dom_types::Tag::Select || el.tag == dom_types::Tag::TextArea {
-            let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
-                let checked_bool = match checked.as_ref() {
-                    "true" => true,
-                    "false" => false,
-                    _ => panic!("checked must be true or false.")
-                };
-                dom_types::Listener::new_control_check(checked_bool)
-            } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
-                dom_types::Listener::new_control(control_val.to_string())
-            } else {
-                // If Value is not specified, force the field to be blank.
-                dom_types::Listener::new_control("".to_string())
-            };
-            el.listeners.push(listener);  // Add to the El, so we can deattach later.
-        }
-
-        // Create the web_sys element; add it to the working tree; store it in
-        // its corresponding vdom El.
-        let el_ws = websys_bridge::make_websys_el(el, document);
-
-        el.el_ws = Some(el_ws);
-    });
+    el_vdom.walk_tree_mut(|el| setup_el(document, el));
 }
 
 impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
