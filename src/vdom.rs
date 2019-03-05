@@ -331,6 +331,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
                 old_vdom,
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
+                None,
                 &self.mailbox(),
             );
 
@@ -478,13 +479,14 @@ fn setup_window_listeners<Ms: Clone>(
     }
 }
 
-fn patch<Ms: Clone>(
+fn patch<'a, Ms: Clone>(
     document: &Document,
     mut old: El<Ms>,
-    new: &mut El<Ms>,
+    new: &'a mut El<Ms>,
     parent: &web_sys::Node,
+    next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-) {
+) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
     // TODO: fix this later.
@@ -499,10 +501,7 @@ fn patch<Ms: Clone>(
     // We remove it from the old el_vodom now, and at the end... add it to the new one.
     // We don't run attach_children() when patching, hence this approach.
 
-    let old_el_ws = match old.el_ws.take() {
-        Some(o) => o,
-        None => return
-    };
+    let old_el_ws = old.el_ws.take()?;
 
     if old != *new {
 
@@ -520,7 +519,7 @@ fn patch<Ms: Clone>(
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 unmount_actions(&old_el_ws)
             }
-            return
+            return None;
         }
             // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
             // Something about this element itself is different: patch it.
@@ -536,7 +535,7 @@ fn patch<Ms: Clone>(
                 let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
 
                 if old.empty {
-                    parent.append_child(new_el_ws)
+                    parent.insert_before(new_el_ws, next_node.as_ref())
                         .expect("Problem adding element to replace previously empty one");
                 } else {
                     parent
@@ -552,7 +551,7 @@ fn patch<Ms: Clone>(
                 let mut new = new;
                 attach_listeners(&mut new, &mailbox);
                 // We've re-rendered this child and all children; we're done with this recursion.
-                return
+                return new.el_ws.as_ref();
             }
 
         // Patch parts of the Element.
@@ -576,11 +575,11 @@ fn patch<Ms: Clone>(
     let mut old_children_iter = old.children.into_iter();
     let mut new_children_iter = new.children.iter_mut();
 
+    let mut last_visited_node: Option<web_sys::Node> = None;
+
     // Not using .zip() here to make sure we don't miss any of the children when one array is
     // longer than the other.
     for _i in 0..num_children_in_both {
-
-
         let child_old = old_children_iter.next().unwrap();
         let child_new = new_children_iter.next().unwrap();
 
@@ -615,11 +614,21 @@ fn patch<Ms: Clone>(
 //            }
 //        }
 
-
         // Don't compare equality here; we do that at the top of this function
         // in the recursion.
-        patch(document, child_old, child_new, &old_el_ws, &mailbox);
-
+        if let Some(new_el_ws) = patch(
+            document,
+            child_old,
+            child_new,
+            &old_el_ws,
+            match last_visited_node.as_ref() {
+                Some(node) => node.next_sibling(),
+                None => old_el_ws.first_child(),
+            },
+            &mailbox)
+        {
+            last_visited_node = Some(new_el_ws.clone());
+        }
     }
 
     // Now one of the iterators is entirely consumed, and any items left in one iterator
@@ -694,6 +703,7 @@ fn patch<Ms: Clone>(
     }
 
     new.el_ws = Some(old_el_ws);
+    new.el_ws.as_ref()
 }
 
 /// Update app state directly, ie not from a Listener/event.
@@ -783,7 +793,7 @@ pub mod tests {
         new_vdom: El<Msg>,
     ) -> El<Msg> {
         let mut new_vdom = make_vdom(&doc, new_vdom);
-        patch(&doc, old_vdom, &mut new_vdom, parent, mailbox);
+        patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox);
         new_vdom
     }
 
