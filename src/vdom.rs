@@ -533,23 +533,21 @@ fn patch<Ms: Clone>(
                 // todo: Perhaps some of this next segment should be moved to websys_bridge
                 websys_bridge::attach_children(new);
 
-                let new_el_ws = new.el_ws.take().expect("Missing websys el");
+                let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
 
                 if old.empty {
-                    parent.append_child(&new_el_ws)
-                        .expect("Problem adding element to previously empty one");
+                    parent.append_child(new_el_ws)
+                        .expect("Problem adding element to replace previously empty one");
                 } else {
                     parent
-                        .replace_child(&new_el_ws, &old_el_ws)
+                        .replace_child(new_el_ws, &old_el_ws)
                         .expect("Problem replacing element");
                 }
 
                 // Perform side-effects specified for mounting.
                 if let Some(mount_actions) = &mut new.hooks.did_mount {
-                    mount_actions(&new_el_ws)
+                    mount_actions(new_el_ws);
                 }
-
-                new.el_ws.replace(new_el_ws);
 
                 let mut new = new;
                 attach_listeners(&mut new, &mailbox);
