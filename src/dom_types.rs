@@ -1224,6 +1224,25 @@ impl<Ms> El<Ms> {
 
         result
     }
+
+    /// Call f(&mut el) for this El and each of its descendants
+    pub fn walk_tree_mut<F>(&mut self, mut f: F)
+    where F: FnMut(&mut Self)
+    {
+        // This inner function is required to avoid recursive compilation errors having to do
+        // with the generic trait bound on F.
+        fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
+        where F: FnMut(&mut El<Ms>)
+        {
+            f(el);
+
+            for child in el.children.iter_mut() {
+                walk_tree_mut_inner(child, f);
+            }
+        }
+
+        walk_tree_mut_inner(self, &mut f);
+    }
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
