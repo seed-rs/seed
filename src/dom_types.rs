@@ -128,20 +128,18 @@ pub struct Listener<Ms> {
     pub control_val: Option<String>,
     pub control_checked: Option<bool>,
     //    pub control: bool,
-    pub id: Option<u32>,
 }
 
 impl<Ms> fmt::Debug for Listener<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}{:?}, id:{:?} }}",
+            "Listener {{ trigger:{:?}, handler:{:?}, closure:{:?}, control:{:?}{:?} }}",
             self.trigger,
             fmt_hook_fn(&self.handler),
             fmt_hook_fn(&self.closure),
             self.control_val,
-            self.control_checked,
-            self.id
+            self.control_checked
         )
     }
 }
@@ -156,7 +154,6 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: None,
             control_checked: None,
-            id: None,
         }
     }
 
@@ -169,7 +166,6 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: Some(val),
             control_checked: None,
-            id: None,
         }
     }
 
@@ -181,7 +177,6 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: None,
             control_checked: Some(checked),
-            id: None,
         }
     }
 
@@ -250,8 +245,9 @@ impl<Ms> Listener<Ms> {
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
-        self.closure = Some(closure);
-        //        self.handler.replace(handler);  // todo ?
+        if let Some(_) = self.closure.replace(closure) {
+            panic!("self.closure already set in attach");
+        }
     }
 
 
@@ -320,14 +316,16 @@ impl<Ms> Listener<Ms> {
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
-        self.closure = Some(closure);
+        if let Some(_) = self.closure.replace(closure) {
+            panic!("self.closure already set in attach_control");
+        }
     }
 
-    pub fn detach<T>(&self, el_ws: &T)
+    pub fn detach<T>(&mut self, el_ws: &T)
         where
             T: AsRef<web_sys::EventTarget>,
     {
-        let closure = self.closure.as_ref().expect("Can't find closure to detach");
+        let closure = self.closure.take().expect("Can't find closure to detach");
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(
@@ -342,7 +340,7 @@ impl<Ms> PartialEq for Listener<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo we're only checking the trigger - will miss changes if
         // todo only the fn passed changes!
-        self.trigger == other.trigger && self.id == other.id
+        self.trigger == other.trigger
     }
 }
 
