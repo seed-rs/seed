@@ -1049,9 +1049,7 @@ pub struct El<Ms: 'static> {
     pub text: Option<String>,
     pub children: Vec<El<Ms>>,
 
-    // Things that get filled in later, to assist with rendering.
-    pub id: Option<u32>, // todo maybe not optional...
-    pub nest_level: Option<u32>,
+    /// The actual web element/node
     pub el_ws: Option<web_sys::Node>,
 
     // todo temp?
@@ -1108,8 +1106,6 @@ impl<Ms> El<Ms> {
             text: None,
             children: Vec::new(),
 
-            id: None,
-            nest_level: None,
             el_ws: None,
 
             namespace: None,
@@ -1218,27 +1214,6 @@ impl<Ms> El<Ms> {
         opening + &text + &inner + &closing
     }
 
-    /// This is used to provide access to el_ws while recursively appending children to it.
-    pub fn quick_clone(&self) -> Self {
-        Self {
-            tag: self.tag.clone(),
-            attrs: Attrs::empty(),
-            style: Style::empty(),
-            listeners: Vec::new(),
-            text: None,
-            children: Vec::new(),
-            //            key: None,
-            id: None,
-            nest_level: None,
-            el_ws: self.el_ws.clone(),
-            namespace: self.namespace.clone(),
-//            control: self.control,
-            hooks: LifecycleHooks::default(),
-            empty: false,
-            optimizations: Vec::new(),
-        }
-    }
-
     // Pull text from child text nodes
     pub fn get_text(&self) -> String {
         let mut result = String::new();
@@ -1254,7 +1229,7 @@ impl<Ms> El<Ms> {
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
-/// closures within listeners or lifestyle hooks, so we ommit them.
+/// closures within listeners or lifestyle hooks, so we omit them.
 impl<Ms> Clone for El<Ms> {
     fn clone(&self) -> Self {
         Self {
@@ -1264,8 +1239,6 @@ impl<Ms> Clone for El<Ms> {
             text: self.text.clone(),
             children: self.children.clone(),
             //            key: self.key,
-            id: self.id,
-            nest_level: self.nest_level,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
@@ -1285,9 +1258,6 @@ impl<Ms> PartialEq for El<Ms> {
             self.style == other.style &&
             self.text == other.text &&
             self.listeners == other.listeners &&
-            // TOdo not sure how nest-level should be used. Is it a given based on
-            // todo how we iterate? Sanity-check for now.
-            self.nest_level == other.nest_level &&
             self.namespace == other.namespace &&
             self.empty == other.empty
     }
@@ -1352,7 +1322,7 @@ pub mod tests {
     //        let expected = "<div>test</div>";
     //
     //        let mut el: El<Msg> = div!["test"];
-    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el);
     //        assert_eq!(expected, el.el_ws.unwrap()
     //            .dyn_ref::<web_sys::Element>().unwrap()
     //            .outer_html());
@@ -1374,7 +1344,7 @@ pub mod tests {
     //            span![ "This is a triumph" ]
     //        ];
     //
-    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el);
     ////        assert_eq!(expected, el.el_ws.unwrap().first_element_child().unwrap().outer_html());
     //        assert_eq!(expected, el.el_ws.unwrap().outer_html());
     //    }
@@ -1390,7 +1360,7 @@ pub mod tests {
     //            "ok"
     //        ];
     //
-    //        crate::vdom::setup_els(&crate::util::document(), &mut el, 0, 0);
+    //        crate::vdom::setup_els(&crate::util::document(), &mut el);
     //        assert!(
     //            expected == el.clone().el_ws.unwrap()
     //                .dyn_ref::<web_sys::Element>().unwrap()

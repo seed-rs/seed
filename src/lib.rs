@@ -1,6 +1,5 @@
 //! See readme for details.
 
-#![allow(unused_macros)]
 //#![deny(missing_docs)]
 
 pub use crate::{
@@ -15,6 +14,7 @@ use wasm_bindgen::{closure::Closure, JsCast};
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;
+#[macro_use]
 pub mod shortcuts;
 pub mod storage;
 mod util;
@@ -114,7 +114,6 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
         use crate::{
-            div,
             dom_types::{El, UpdateEl, mouse_ev},
             vdom::Update,
         };

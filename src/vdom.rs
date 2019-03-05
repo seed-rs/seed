@@ -4,7 +4,7 @@ use crate::{
     routing, util, websys_bridge,
 };
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
-use wasm_bindgen::{JsCast, closure::Closure};
+use wasm_bindgen::closure::Closure;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
 pub enum Update<Ms, Mdl> {
@@ -229,7 +229,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         }
 
         let document = window.document().expect("Problem getting document");
-        setup_els(&document, &mut topel_vdom, 0, 0);
+        setup_els(&document, &mut topel_vdom);
 
         attach_listeners(&mut topel_vdom, &self.mailbox());
 
@@ -319,14 +319,12 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         if should_render {
             // Create a new vdom: The top element, and all its children. Does not yet
-            // have ids, nest levels, or associated web_sys elements.
-            // We accept cloning here, for the benefit of making data easier to work
-            // with in the app.
+            // have associated web_sys elements.
             let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
-            setup_els(&self.cfg.document, &mut topel_new_vdom, 0, 0);
+            setup_els(&self.cfg.document, &mut topel_new_vdom);
 
             let mut old_vdom = self.data.main_el_vdom.borrow_mut().take().expect("missing main_el_vdom");
 
@@ -334,17 +332,17 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // We'll get a runtime panic if any are left un-removed.
             detach_listeners(&mut old_vdom);
 
-            // We haven't updated data.main_el_vdom, so we use it as our old (previous) state.
             patch(
                 &self.cfg.document,
                 old_vdom,
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
+                None,
                 &self.mailbox(),
             );
 
             // Now that we've re-rendered, replace our stored El with the new one;
-            // it will be used as the old El next (.
+            // it will be used as the old El next time.
             self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
         }
 
@@ -371,19 +369,14 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     }
 }
 
-/// Populate the attached web_sys elements, ids, and nest-levels. Run this after creating a vdom, but before
-/// using it to process the web_sys dom. Does not attach children in the DOM. Run this on the top-level element.
-pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>, active_level: u32, active_id: u32)
+/// Populate the attached web_sys elements. Run this after creating a vdom, but before using it to
+/// process the web_sys dom. Does not attach children in the DOM. Run this on the top-level
+/// element.
+pub(crate) fn setup_els<Ms>(document: &Document, el_vdom: &mut El<Ms>)
 // pub for tests.
 where
     Ms: Clone + 'static,
 {
-    // id iterates once per item; active-level once per nesting level.
-    let mut id = active_id;
-    el_vdom.id = Some(id);
-    id += 1; // Raise the id after each element we process.
-    el_vdom.nest_level = Some(active_level);
-
     // Set up controlled components: Input, Select, and TextArea elements must stay in sync with the model;
     // don't let them get out of sync from typing or other events, which can occur if a change
     // doesn't trigger a re-render, or if something else modifies them using a side effect.
@@ -411,9 +404,7 @@ where
 
     el_vdom.el_ws = Some(el_ws);
     for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
-        setup_els(document, child, active_level + 1, id);
-        id += 1;
+        setup_els(document, child);
     }
 }
 
@@ -487,13 +478,14 @@ fn setup_window_listeners<Ms: Clone>(
     }
 }
 
-fn patch<Ms: Clone>(
+fn patch<'a, Ms: Clone>(
     document: &Document,
     mut old: El<Ms>,
-    new: &mut El<Ms>,
+    new: &'a mut El<Ms>,
     parent: &web_sys::Node,
+    next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-) {
+) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
     // TODO: fix this later.
@@ -508,10 +500,7 @@ fn patch<Ms: Clone>(
     // We remove it from the old el_vodom now, and at the end... add it to the new one.
     // We don't run attach_children() when patching, hence this approach.
 
-    let old_el_ws = match old.el_ws.take() {
-        Some(o) => o,
-        None => return
-    };
+    let old_el_ws = old.el_ws.take()?;
 
     if old != *new {
 
@@ -529,9 +518,10 @@ fn patch<Ms: Clone>(
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 unmount_actions(&old_el_ws)
             }
-            return
+            return None;
+            // If new and old are empty, we don't need to do anything.
         } else if new.empty && old.empty {
-            return
+            return None;
         }
             // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
             // Something about this element itself is different: patch it.
@@ -545,30 +535,26 @@ fn patch<Ms: Clone>(
                 // todo: Perhaps some of this next segment should be moved to websys_bridge
                 websys_bridge::attach_children(new);
 
-                let new_el_ws = new.el_ws.take().expect("Missing websys el");
+                let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
 
-//                if old.empty {
-//                    // When adding an empty element, there's no existing web_sys Element to
-//                    // replace, so we add it in the proper sequence of its parents' children.
-//                    parent.append_child(&new_el_ws)
-//                        .expect("Problem adding element to previously empty one");
-//                } else {
-                parent
-                    .replace_child(&new_el_ws, &old_el_ws)
-                    .expect("Problem replacing element");
-//                }
+                if old.empty {
+                    parent.insert_before(new_el_ws, next_node.as_ref())
+                        .expect("Problem adding element to replace previously empty one");
+                } else {
+                    parent
+                        .replace_child(new_el_ws, &old_el_ws)
+                        .expect("Problem replacing element");
+                }
 
                 // Perform side-effects specified for mounting.
                 if let Some(mount_actions) = &mut new.hooks.did_mount {
-                    mount_actions(&new_el_ws)
+                    mount_actions(new_el_ws);
                 }
-
-                new.el_ws.replace(new_el_ws);
 
                 let mut new = new;
                 attach_listeners(&mut new, &mailbox);
                 // We've re-rendered this child and all children; we're done with this recursion.
-                return
+                return new.el_ws.as_ref();
             }
         // The fourth empty case, where old is empty and new isn't, is handled when iterating through children.
 
@@ -579,7 +565,7 @@ fn patch<Ms: Clone>(
     // Before running patch, assume we've removed all listeners from the old element.
     // Perform this attachment after we've verified we can patch this element, ie
     // it has the same tag - otherwise  we'd have to detach after the parent.remove_child step.
-    // Note that unlike the attach_listeners function, this only attaches for the currently
+    // Note that unlike the attach_listeners function, this only attaches for the current
     // element.
     for listener in &mut new.listeners {
         if listener.control_val.is_some() || listener.control_checked.is_some() {
@@ -593,10 +579,11 @@ fn patch<Ms: Clone>(
     let mut old_children_iter = old.children.into_iter();
     let mut new_children_iter = new.children.iter_mut();
 
+    let mut last_visited_node: Option<web_sys::Node> = None;
+
     // Not using .zip() here to make sure we don't miss any of the children when one array is
     // longer than the other.
-    let mut i_before_nolongerempty = 0;
-    for i in 0..num_children_in_both {
+    for _i in 0..num_children_in_both {
         let child_old = old_children_iter.next().unwrap();
         let child_new = new_children_iter.next().unwrap();
 
@@ -631,42 +618,21 @@ fn patch<Ms: Clone>(
 //            }
 //        }
 
-        // Don't let recursion handle replacing empty children with non-empty: The logic
-        // above in the function won't have a child web_sys El to replace, and
-        // won't know which order to insert it.
-        if child_old.empty && !child_new.empty {
-            let new_el_ws = new.el_ws.take().expect("Missing websys el");
-
-            match &old.children.get(i_before_nolongerempty) {
-                Some(older_brother) => {
-                    let ob_el_ws = older_brother.el_ws.take()
-                        .expect("Missing el_ws when adding element to previously empty one");
-
-                    ob_el_ws
-                        .dyn_ref::<Element>()
-                        .expect("Problem casting Node as Element")
-                        .after_with_node_1(&new_el_ws)
-                        .expect("Problem adding element to previously empty one");
-
-                    older_brother.el_ws.replace(ob_el_ws);
-                }
-                None => {
-                    old_el_ws.append_child(&new_el_ws)
-                        .expect("Problem adding element to previously empty one (No siblings)");
-                }
-            }
-
-            new.el_ws.replace(new_el_ws);
-
-        } else {
-            // Don't compare equality here; we do that at the top of this function
-            // in the recursion.
-            patch(document, child_old, child_new, &old_el_ws, &mailbox);
-            // We only consider non-empty elements to insert no-longer-empty ones; must have
-            // an web_sys El to insert after.
-            i_before_nolongerempty = i;
+        // Don't compare equality here; we do that at the top of this function
+        // in the recursion.
+        if let Some(new_el_ws) = patch(
+            document,
+            child_old,
+            child_new,
+            &old_el_ws,
+            match last_visited_node.as_ref() {
+                Some(node) => node.next_sibling(),
+                None => old_el_ws.first_child(),
+            },
+            &mailbox)
+        {
+            last_visited_node = Some(new_el_ws.clone());
         }
-
     }
 
     // Now one of the iterators is entirely consumed, and any items left in one iterator
@@ -741,6 +707,7 @@ fn patch<Ms: Clone>(
     }
 
     new.el_ws = Some(old_el_ws);
+    new.el_ws.as_ref()
 }
 
 /// Update app state directly, ie not from a Listener/event.
@@ -809,15 +776,16 @@ pub mod tests {
     use super::*;
 
     use crate as seed; // required for macros to work.
-    use crate::{class, div, li, prelude::*, span};
+    use crate::{class, prelude::*};
     use wasm_bindgen::JsCast;
+    use web_sys::Node;
 
     #[derive(Clone, Debug)]
     enum Msg {}
 
     fn make_vdom(doc: &Document, el: El<Msg>) -> El<Msg> {
         let mut vdom = el;
-        setup_els(doc, &mut vdom, 0, 0);
+        setup_els(doc, &mut vdom);
         vdom
     }
 
@@ -829,8 +797,16 @@ pub mod tests {
         new_vdom: El<Msg>,
     ) -> El<Msg> {
         let mut new_vdom = make_vdom(&doc, new_vdom);
-        patch(&doc, old_vdom, &mut new_vdom, parent, mailbox);
+        patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox);
         new_vdom
+    }
+
+    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = Node> {
+        (0..list.length()).map(move |i| list.item(i).unwrap())
+    }
+
+    fn iter_child_nodes(node: &Node) -> impl Iterator<Item = Node> {
+        iter_nodelist(node.child_nodes())
     }
 
     #[wasm_bindgen_test]
@@ -953,5 +929,87 @@ pub mod tests {
         assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
         let child3 = old_ws.child_nodes().item(2).unwrap().dyn_into::<Element>().unwrap();
         assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
+    }
+
+    /// Test that if the first child was a seed::empty() and it is changed to a non-empty El,
+    /// then the new element is inserted at the correct position.
+    #[wasm_bindgen_test]
+    fn empty_changed_in_front() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 0);
+
+        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div![seed::empty(), "b", "c"]);
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["b", "c"],
+        );
+
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["a", "b", "c"],
+        );
+
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["a", "b", "c"],
+        );
+    }
+
+    /// Test that if a middle child was a seed::empty() and it is changed to a non-empty El,
+    /// then the new element is inserted at the correct position.
+    #[wasm_bindgen_test]
+    fn empty_changed_in_the_middle() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = make_vdom(&doc, El::empty(seed::dom_types::Tag::Div));
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        assert_eq!(parent.children().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 0);
+
+        vdom = setup_and_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["a", "c"],
+        );
+
+        setup_and_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["a", "b", "c"],
+        );
+
+        assert_eq!(parent.children().length(), 1);
+        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["a", "b", "c"],
+        );
     }
 }

@@ -1,63 +1,78 @@
 //! This file exports helper macros for element creation, populated by a higher-level macro,
 //! and macros for creating the parts of elements. (attrs, style, events)
 
+/// Copied from https://github.com/rust-lang/rust/issues/35853.
+macro_rules! with_dollar_sign {
+    ($($body:tt)*) => {
+        macro_rules! __with_dollar_sign { $($body)* }
+        __with_dollar_sign!($);
+    }
+}
+
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
 /// In the matching mattern below, we match the name we want to use with the name under
 /// the seed::dom_types::Tag enum. Eg the div! macro uses seed::dom_types::Tag::Div.
-///
-///
+macro_rules! element {
+    // Create shortcut macros for any element; populate these functions in this module.
+    ($($Tag:ident => $Tag_camel:ident);+) => {
+        // This replaces $d with $ in the inner macro.
+        with_dollar_sign! {
+            ($d:tt) => {
+                $(
+                    #[macro_export]
+                    macro_rules! $Tag {
+                        ( $d($d part:expr),* $d(,)* ) => {
+                            {
+                                let mut el = El::empty(seed::dom_types::Tag::$Tag_camel);
+                                $d ( $d part.update(&mut el); )*
+                                el
+                            }
+                        };
+                    }
+                )+
+            }
+        }
+   }
+}
 
-//macro_rules! element {
-//    // Create shortcut macros for any element; populate these functions in this module.
-//    ($($seed::dom_types::Tag:ident => $seed::dom_types::Tag_camel:ident);+) => {
-//        $(
-//            #[macro_export]
-//            macro_rules! $seed::dom_types::Tag {
-//                ( $($part:expr),* $(,)* ) => {
-//                    {
-//                        let mut el = El::empty(seed::dom_types::Tag::$seed::dom_types::Tag_camel);
-//                        $ (
-//                             $part.update(&mut el);
-//                        )*
-//                        el
-//                    }
-//                };
-//            }
-//        )+
-//    }
-//}
+/// El must be exposed in the module where this is called for these to work.
+element! {
+    address => Address; article => Article; aside => Aside; footer => Footer;
+    header => Header; h1 => H1;
+    h2 => H2; h3 => H3; h4 => H4; h5 => H5; h6 => H6;
+    hgroup => Hgroup; main => Main; nav => Nav; section => Section;
 
-//
-//
-///// El must be exposed in the module where this is called for these to work.
-//element! {
-//    div => Div; span => Span;
-//    h1 => H1; h2 => H2; h3 => H3; h4 => H4; h5 => H5; h6 => H6; p => P;
-//    button => Button; img => Img
-//}
+    blockquote => BlockQuote;
+    dd => Dd; dir => Dir; div => Div; dl => Dl; dt => Dt; figcaption => FigCaption; figure => Figure;
+    hr => Hr; li => Li; ol => Ol; p => P; pre => Pre; ul => Ul;
 
-// todo: Currently rust doesn't allow nested macros to repeat in binding patterns
-// https://github.com/rust-lang/rust/issues/35853
+    a => A; abbr => Abbr;
+    b => B; bdi => Bdi; bdo => Bdo; br => Br; cite => Cite; code => Code; data => Data;
+    dfn => Dfn; em => Em; i => I; kbd => Kbd; mark => Mark; q => Q; rb => Rb;
+    rp => Rp; rt => Rt; rtc => Rtc; ruby => Ruby; s => S; samp => Samp; small => Small;
+    span => Span; strong => Strong; sub => Sub; sup => Sup; time => Time; tt => Tt;
+    u => U; var => Var; wbr => Wbr;
 
-// todo so we can't iterate both through macros to make, and arguments in the macro.
-// todo for now, use this workaround by populating a whole bunch of macros manually.
+    area => Area; audio => Audio; img => Img; map => Map; track => Track; video => Video;
 
-//
-//macro_rules! div {
-//    ( $($part:expr),* $(,)* ) => {
-//        {
-//            let mut el = El::empty(seed::dom_types::Tag::Div);
-//            let mut arg_count = 0;
-//            $ ( $part.update(&mut el); arg_count += 1;)*
-//            if arg_count > 5{
-//            // todo there are ways to sort this out, I think. Have update methods
-//            // todo accept/return a value; have them return an err type etc.
-//                crate::log(&"Element-creation macros can take no more than 5 arguments.");
-//            }
-//            el
-//        }
-//    };
-//}
+    applet => Applet; embed => Embed; iframe => Iframe;
+    noembed => NoEmbed; object => Object; param => Param; picture => Picture; source => Source;
+
+    canvas => Canvas; noscript => NoScript; Script => Script;
+
+    del => Del; ins => Ins;
+
+    caption => Caption; col => Col; colgroup => ColGroup; table => Table; tbody => Tbody;
+    td => Td; tfoot => Tfoot; th => Th; thead => Thead; tr => Tr;
+
+    button => Button; datalist => DataList; fieldset => FieldSet; form => Form; input => Input;
+    label => Label; legend => Legend; meter => Meter; optgroup => OptGroup; option => Option;
+    output => Output; progress => Progress; select => Select; textarea => TextArea;
+
+    details => Details; dialog => Dialog; menu => Menu; menuitem => MenuItem; summary => Summary;
+
+    content => Content; element => Element; shadow => Shadow; slot => Slot; template => Template
+}
 
 #[macro_export]
 macro_rules! custom {
@@ -70,889 +85,29 @@ macro_rules! custom {
     };
 }
 
-#[macro_export]
-macro_rules! address {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Address);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! article {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Article);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! aside {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Aside);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! footer {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Footer);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! header {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Header);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! h1 {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::H1);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! h2 {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::H2);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! h3 {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::H3);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! h4 {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::H4);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! h5 {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::H5);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! h6 {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::H6);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! hgroup {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Hgroup);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! main {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Main);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! nav {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Nav);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! section {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Section);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! blockquote {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Blockquote);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! dd {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Dd);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! dir {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Dir);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! div {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Div);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! dl {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Dl);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! dt {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Dt);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! figure {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Figure);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! figcaption {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::FigCaption);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! hr {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Hr);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! li {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Li);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! ol {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Ol);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! p {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::P);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! pre {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Pre);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! ul {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Ul);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! a {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::A);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! abbr {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Abbr);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! b {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::B);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! bdi {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Bdi);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! bdo {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Bdo);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! br {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Br);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! cite {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Cite);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! code {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Code);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! data {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Data);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! dfn {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Dfn);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! em {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Em);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! i {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::I);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! kbd {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Kbd);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! mark {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Mark);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! button {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Button);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! fieldset {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::FieldSet);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! form {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Form);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! input {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Input);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! label {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Label);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! legend {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Legend);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! meter {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Meter);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! optgroup {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::OptGroup);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! option {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Option);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! output {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Output);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! progress {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Progress);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! select {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Select);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! textarea {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::TextArea);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! span {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Span);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! strong {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Strong);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! sub {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Sub);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! sup {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Sup);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! img {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Img);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! canvas {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Canvas);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! noscript {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::NoScript);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! script {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Script);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! del {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Del);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! ins {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Ins);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! map {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Map);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! track {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Track);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! video {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Video);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! applet {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Applet);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! embed {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Embed);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! iframe {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Iframe);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-// --- SVG shape elements ---
-
-#[macro_export]
-macro_rules! line_ {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Line);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! rect {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Rect);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! circle {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Circle);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! ellipse {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Ellipse);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! polygon {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Polygon);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! polyline {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Polyline);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! mesh {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Mesh);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! path {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Path);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
+/// Similar to the element! macro above, but with a namespace for svg.
+macro_rules! element_svg {
+    // Create shortcut macros for any element; populate these functions in this module.
+    ($($Tag:ident => $Tag_camel:ident);+) => {
+        // This replaces $d with $ in the inner macro.
+        with_dollar_sign! {
+            ($d:tt) => {
+                $(
+                    #[macro_export]
+                    macro_rules! $Tag {
+                        ( $d($d part:expr),* $d(,)* ) => {
+                            {
+                                let mut el = El::empty_svg(seed::dom_types::Tag::$Tag_camel);
+                                $d ( $d part.update(&mut el); )*
+                                el
+                            }
+                        };
+                    }
+                )+
+            }
+        }
+   }
 }
-
-// --- SVG container elements --- //
 
 // TODO:
 // Create the following macros
@@ -962,143 +117,11 @@ macro_rules! path {
 // - symbol
 // - unknown
 
-#[macro_export]
-macro_rules! svg {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Svg);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! g {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::G);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! defs {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Defs);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! marker {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Marker);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! mask {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Mask);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-// TODO:
 // - add SVG animation elements
 // - add SVG filter primitive elements
 // - add SVG descriptive elements
 // - add SVG font elements
 // - add SVG paint server elements
-
-// --- SVG gradient elements --- //
-
-#[macro_export]
-macro_rules! linear_gradient {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::LinearGradient);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! radial_gradient {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::RadialGradient);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! mesh_gradient {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::MeshGradient);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! stop {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Stop);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-// --- SVG graphics elements --- //
-
-#[macro_export]
-macro_rules! image {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Image);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-// --- SVG graphics referencing elements --- /
-
-#[macro_export]
-macro_rules! r#use {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Use);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-// --- SVG text content elements --- //
-
-// TODO:
 // - altGlyph
 // - altGlyphDef
 // - altGlyphItem
@@ -1106,40 +129,6 @@ macro_rules! r#use {
 // - glyphRef
 // - textPath
 
-#[macro_export]
-macro_rules! text {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::Text);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! tref {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::TRef);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! tspan {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty_svg(seed::dom_types::Tag::TSpan);
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-// TODO:
 // Add the following SVG element macros:
 //  - clipPath
 //  - color-profile
@@ -1152,24 +141,38 @@ macro_rules! tspan {
 //  - style
 //  - view
 
-//// End element-creation macros.
+
+element_svg! {
+    // SVG shape elements
+    line_ => Line;
+    rect => Rect; circle => Circle; ellipse => Elipse; polygon => Polygon; polyline => Polyline;
+    mesh => Mesh; path => Path; defs => Defs; marker => Marker; mask => Mask;
+    // SVG container elements
+    svg => Svg; g => G;
+    // SVG gradient elements
+    linear_gradient => LinearGradient; radial_gradient => RadialGradient; mesh_gradient => MeshGradient;
+    stop => Stop;
+    // SVG gradphics elements
+    image => Image;
+    // SVG graphics referencing elements
+    r#use => Use;
+    // SVG text content elements
+    text => Text; tref => TRef; tspan => TSpan
+}
+
 
 /// Provide a shortcut for creating attributes.
 #[macro_export]
 macro_rules! attrs {
     { $($key:expr => $value:expr);* $(;)* } => {
         {
-//            let mut result = Attrs::empty();
             let mut vals = std::collections::HashMap::new();
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
                 vals.insert($key.into(), $value.to_string());
-//                vals.insert(String::from($key), $value.to_string());
-//                $key.update(&mut result);
             )*
             seed::dom_types::Attrs::new(vals)
-//            result
         }
      };
 }
