@@ -298,10 +298,8 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             effect_msg,
         } = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
 
-        let model = self.data.model.borrow();
-
         if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(&model);
+            let mut new_listeners = (window_events)(&self.data.model.borrow());
             setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
@@ -315,7 +313,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         if should_render == ShouldRender::Render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
-            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &model);
+            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
