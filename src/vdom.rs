@@ -33,6 +33,21 @@ impl<Ms> From<Ms> for Effect<Ms> {
     }
 }
 
+impl<Ms> Effect<Ms> {
+    /// Apply a function to the message. If the effect is a future, the map function
+    /// will be called after the future is finished running.
+    pub fn map<F, Ms2>(self, f: F) -> Effect<Ms2>
+    where
+        Ms: 'static,
+        F: FnOnce(Ms) -> Ms2 + 'static,
+    {
+        match self {
+            Effect::Msg(msg) => Effect::Msg(f(msg)),
+            Effect::FutureMsg(fut) => Effect::FutureMsg(Box::new(fut.map(f))),
+        }
+    }
+}
+
 pub struct Update<Ms> {
     should_render: ShouldRender,
     effect: Option<Effect<Ms>>,
@@ -68,6 +83,19 @@ impl<Ms> Update<Ms> {
     pub fn skip(mut self) -> Self {
         self.should_render = ShouldRender::Skip;
         self
+    }
+
+    /// Apply a function to the message produced by the update effect, if one is present.
+    /// If the effect is a future, the map function will be called after the future is
+    /// finished running.
+    pub fn map<F, Ms2>(self, f: F) -> Update<Ms2>
+    where
+        Ms: 'static,
+        F: FnOnce(Ms) -> Ms2 + 'static,
+    {
+        let Update { should_render, effect } = self;
+        let effect = effect.map(|effect| effect.map(f));
+        Update { should_render, effect }
     }
 }
 
