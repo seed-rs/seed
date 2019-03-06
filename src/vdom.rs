@@ -1,9 +1,12 @@
 use crate::{
     dom_types,
     dom_types::{El, Namespace},
+    fetch::spawn_local,
     routing, util, websys_bridge,
 };
+use futures::Future;
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
+use wasm_bindgen::JsValue;
 use wasm_bindgen::closure::Closure;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
@@ -19,15 +22,25 @@ impl Default for ShouldRender {
     }
 }
 
-#[derive(Debug)]
+pub enum Effect<Ms> {
+    Msg(Ms),
+    FutureMsg(Box<dyn Future<Item = Ms, Error = JsValue> + 'static>),
+}
+
+impl<Ms> From<Ms> for Effect<Ms> {
+    fn from(message: Ms) -> Self {
+        Effect::Msg(message)
+    }
+}
+
 pub struct Update<Ms> {
     should_render: ShouldRender,
-    effect_msg: Option<Ms>,
+    effect: Option<Effect<Ms>>,
 }
 
 impl<Ms> From<ShouldRender> for Update<Ms> {
     fn from(should_render: ShouldRender) -> Self {
-        Self { should_render, effect_msg: None }
+        Self { should_render, effect: None }
     }
 }
 
@@ -39,7 +52,16 @@ impl<Ms> Default for Update<Ms> {
 
 impl<Ms> Update<Ms> {
     pub fn with_msg(effect_msg: Ms) -> Self {
-        Self { effect_msg: Some(effect_msg), ..Default::default() }
+        Self { effect: Some(effect_msg.into()), ..Default::default() }
+    }
+
+    pub fn with_future<F>(future: F) -> Self
+    where F: Future<Item = Ms, Error = JsValue> + 'static
+    {
+        Self {
+            effect: Some(Effect::FutureMsg(Box::new(future))),
+            ..Default::default()
+        }
     }
 
     /// Modify this Update to skip rendering
@@ -295,7 +317,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         let Update {
             should_render,
-            effect_msg,
+            effect,
         } = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
 
         if let Some(window_events) = self.cfg.window_events {
@@ -339,8 +361,14 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
         }
 
-        if let Some(msg) = effect_msg {
-            self.update(msg)
+        if let Some(effect) = effect {
+            match effect {
+                Effect::Msg(msg) => self.update(msg),
+                Effect::FutureMsg(fut) => {
+                    let self2 = self.clone();
+                    spawn_local(fut.map(move |msg| self2.update(msg)));
+                }
+            }
         }
     }
 
