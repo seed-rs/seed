@@ -73,7 +73,7 @@ impl<Ms> Update<Ms> {
 
 
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
-type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
+type ViewFn<Ms, Mdl> = fn(&Mdl) -> El<Ms>;
 type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
@@ -252,7 +252,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         let window = util::window();
 
-        let mut topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
+        let mut topel_vdom = (self.cfg.view)(&self.data.model.borrow());
 
         // TODO: use window events
         if self.cfg.window_events.is_some() {
@@ -335,7 +335,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         if should_render == ShouldRender::Render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
-            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
+            let mut topel_new_vdom = (self.cfg.view)(&self.data.model.borrow());
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().

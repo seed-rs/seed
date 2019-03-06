@@ -63,7 +63,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output a single El.
-fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
