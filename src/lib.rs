@@ -91,8 +91,7 @@ pub mod prelude {
             will_unmount, At, El, Ev, Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-//        vdom::{Update, Update::Render, Update::Skip, Update::RenderThen},
-        vdom::{Update, Update::*},
+        vdom::{ShouldRender, ShouldRender::*, Update},
     };
     pub use std::collections::HashMap;
 
@@ -137,7 +136,7 @@ pub mod tests {
             match msg {
                 Msg::Increment => {
                     model.val += 1;
-                    Update::Render
+                    Render.into()
                 }
             }
         }
