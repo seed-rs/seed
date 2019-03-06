@@ -112,7 +112,7 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
 
 // View
 
-fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     div![
         div![
             format!(

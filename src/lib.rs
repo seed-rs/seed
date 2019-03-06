@@ -141,7 +141,7 @@ pub mod tests {
             }
         }
 
-        fn view(_state: seed::App<Msg, Model>, _model: &Model) -> El<Msg> {
+        fn view(_model: &Model) -> El<Msg> {
             div!["Hello world"]
         }
 
