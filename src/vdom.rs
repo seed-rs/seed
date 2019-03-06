@@ -7,26 +7,14 @@ use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::closure::Closure;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
-pub enum Update<Ms, Mdl> {
-    Render(Mdl),
-    Skip(Mdl),
-    RenderThen(Mdl, Ms)
+pub enum Update<Ms> {
+    Render,
+    Skip,
+    RenderThen(Ms),
 }
 
-impl<Ms, Mdl> Update<Ms, Mdl> {
-    pub fn model(self) -> Mdl {
-        use Update::*;
-        match self {
-            Render(model) => model,
-            Skip(model) => model,
-            RenderThen(model, _) => model,
-        }
-    }
-}
-// todo should this go here? do we need it?
 
-
-type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Ms, Mdl>;
+type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
 type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
@@ -62,8 +50,8 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct AppData<Ms: Clone + 'static, Mdl> {
-    // Model is in a RefCell<Option> here so we can replace it in self.update().
-    pub model: RefCell<Option<Mdl>>,
+    // Model is in a RefCell here so we can modify it in self.update().
+    pub model: RefCell<Mdl>,
     main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
@@ -185,7 +173,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
                 window_events,
             }),
             data: Rc::new(AppData {
-                model: RefCell::new(Some(model)),
+                model: RefCell::new(model),
                 // This is filled for the first time in run()
                 main_el_vdom: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
@@ -206,11 +194,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         let window = util::window();
 
-        let mut topel_vdom = {
-            let model = self.data.model.borrow();
-            let model = model.as_ref().expect("missing model");
-            (self.cfg.view)(self.clone(), model)
-        };
+        let mut topel_vdom = (self.cfg.view)(self.clone(), &self.data.model.borrow());
 
         // TODO: use window events
         if self.cfg.window_events.is_some() {
@@ -259,29 +243,15 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
     /// Do the actual self.cfg.update call. Updates self.data.model and returns (should_render, effect_msg)
     fn call_update(&self, message: Ms) -> (bool, Option<Ms>) {
-        // data.model is the old model; Remove model from self.data.model, then pass it to the
-        // update function created in the app, which outputs an updated model.
-        let model = self.data.model.borrow_mut().take().expect("missing model");
-        let updated_model_wrapped = (self.cfg.update)(message, model);
+        let update = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
 
-        let mut should_render = true;
-        let mut effect_msg = None;
-        let model = match updated_model_wrapped {
-            Update::Render(mdl) => mdl,
-            Update::Skip(mdl) => {
-                should_render = false;
-                mdl
-            },
-            Update::RenderThen(mdl, msg) => {
-                effect_msg = Some(msg);
-                mdl
-            }
-        };
+        match update {
+            Update::Render => (true, None),
 
-        // Store updated model back to self.data.model
-        self.data.model.borrow_mut().replace(model);
+            Update::Skip => (false, None),
 
-        (should_render, effect_msg)
+            Update::RenderThen(msg) => (true, Some(msg)),
+        }
     }
 
     /// This runs whenever the state is changed, ie the user-written update function is called.
@@ -303,10 +273,9 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         let (should_render, effect_msg) = self.call_update(message);
 
         let model = self.data.model.borrow();
-        let model = model.as_ref().expect("missing model");
 
         if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(model);
+            let mut new_listeners = (window_events)(&model);
             setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
@@ -320,7 +289,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         if should_render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
-            let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
+            let mut topel_new_vdom = (self.cfg.view)(self.clone(), &model);
 
             // We setup the vdom (which populates web_sys els through it, but don't
             // render them with attach_children; we try to do it cleverly via patch().
