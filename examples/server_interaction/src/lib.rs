@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use seed::{spawn_local, Method, Request};
+use seed::{Method, Request};
 use serde::{Deserialize, Serialize};
 
 use futures::Future;
@@ -35,7 +35,7 @@ struct Message {
     pub message: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 struct ServerResponse {
     pub success: bool,
 }
@@ -44,29 +44,16 @@ struct Model {
     data: Branch,
 }
 
-fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsValue> {
-    let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
+fn get_data() -> impl Future<Item = Msg, Error = JsValue> {
+   let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 
-    Request::new(url)
-        .method(Method::Get)
-        .fetch_json()
-        .map(move |json| {
-            state.update(Msg::Replace(json));
-        })
+   Request::new(url)
+       .method(Method::Get)
+       .fetch_json()
+       .map(Msg::Replace)
 }
 
-//fn get_data() -> impl Future<Item = (), Error = JsValue> {
-//    let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
-//
-//    Request::new(url)
-//        .method(Method::Get)
-//        .fetch_json()
-//        .map(move |json| {
-//            state.update(Msg::Replace(json));
-//        })
-//}
-
-fn send() -> impl Future<Item = (), Error = JsValue> {
+fn send() -> impl Future<Item = Msg, Error = JsValue> {
     let url = "https://infinitea.herokuapp.com/api/contact";
 
     let message = Message {
@@ -80,9 +67,7 @@ fn send() -> impl Future<Item = (), Error = JsValue> {
         .header("Content-Type", "application/json")
         .body_json(&message)
         .fetch_json()
-        .map(|result: ServerResponse| {
-            log!(format!("Response: {:?}", result));
-        })
+        .map(Msg::OnServerResponse)
 }
 
 // Setup a default here, for initialization later.
@@ -102,35 +87,32 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     Replace(Branch),
-    GetData(seed::App<Msg, Model>),
-//    GetData,
+    GetData,
     Send,
+    OnServerResponse(ServerResponse),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
+fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     match msg {
-        Msg::Replace(data) => Render(Model { data }),
-        // Msg::GetData is unused in this example, but could be used when
-        // updating state from an event.  // todo check this out
-//        Msg::GetData(state) => {
-//            spawn_local(get_data(state));
-//            Render(model)
-//        }
-        Msg::GetData(state) => {
-            spawn_local(get_data(state));
-            Render(model)
+        Msg::Replace(data) => {
+            model.data = data;
+            Render.into()
         }
 
-        Msg::Send => {
-            spawn_local(send());
-            Render(model)
+        Msg::GetData => Update::with_future(get_data()).skip(),
+
+        Msg::Send => Update::with_future(send()).skip(),
+
+        Msg::OnServerResponse(result) => {
+            log!(format!("Response: {:?}", result));
+            Skip.into()
         }
     }
 }
 
 // View
 
-fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
     div![
         div![
             format!(
@@ -155,6 +137,5 @@ pub fn render() {
         .finish()
         .run();
 
-    spawn_local(get_data(state));
-//    update();
+    state.update(Msg::GetData);
 }
