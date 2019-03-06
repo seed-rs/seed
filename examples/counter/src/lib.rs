@@ -35,15 +35,15 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     match msg {
         Msg::Increment => {
             model.count += 1;
-            Render
+            Render.into()
         }
         Msg::Decrement => {
             model.count -= 1;
-            Render
+            Render.into()
         }
         Msg::ChangeWWC(what_we_count) => {
             model.what_we_count = what_we_count;
-            Render
+            Render.into()
         }
     }
 }

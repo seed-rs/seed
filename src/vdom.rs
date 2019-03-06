@@ -7,10 +7,46 @@ use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::closure::Closure;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
-pub enum Update<Ms> {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum ShouldRender {
     Render,
     Skip,
-    RenderThen(Ms),
+}
+
+impl Default for ShouldRender {
+    fn default() -> Self {
+        ShouldRender::Render
+    }
+}
+
+#[derive(Debug)]
+pub struct Update<Ms> {
+    should_render: ShouldRender,
+    effect_msg: Option<Ms>,
+}
+
+impl<Ms> From<ShouldRender> for Update<Ms> {
+    fn from(should_render: ShouldRender) -> Self {
+        Self { should_render, effect_msg: None }
+    }
+}
+
+impl<Ms> Default for Update<Ms> {
+    fn default() -> Self {
+        Self::from(ShouldRender::Render)
+    }
+}
+
+impl<Ms> Update<Ms> {
+    pub fn with_msg(effect_msg: Ms) -> Self {
+        Self { effect_msg: Some(effect_msg), ..Default::default() }
+    }
+
+    /// Modify this Update to skip rendering
+    pub fn skip(mut self) -> Self {
+        self.should_render = ShouldRender::Skip;
+        self
+    }
 }
 
 
@@ -242,19 +278,6 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         self
     }
 
-    /// Do the actual self.cfg.update call. Updates self.data.model and returns (should_render, effect_msg)
-    fn call_update(&self, message: Ms) -> (bool, Option<Ms>) {
-        let update = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
-
-        match update {
-            Update::Render => (true, None),
-
-            Update::Skip => (false, None),
-
-            Update::RenderThen(msg) => (true, Some(msg)),
-        }
-    }
-
     /// This runs whenever the state is changed, ie the user-written update function is called.
     /// It updates the state, and any DOM elements affected by this change.
     /// todo this is where we need to compare against differences and only update nodes affected
@@ -271,7 +294,10 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             (l)(&message)
         }
 
-        let (should_render, effect_msg) = self.call_update(message);
+        let Update {
+            should_render,
+            effect_msg,
+        } = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
 
         let model = self.data.model.borrow();
 
@@ -287,7 +313,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             self.data.window_listeners.replace(new_listeners);
         }
 
-        if should_render {
+        if should_render == ShouldRender::Render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
             let mut topel_new_vdom = (self.cfg.view)(self.clone(), &model);
