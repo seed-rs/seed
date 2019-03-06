@@ -133,9 +133,12 @@ pub mod tests {
             Increment,
         }
 
-        fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
+        fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
             match msg {
-                Msg::Increment => Update::Render(Model { val: model.val + 1 }),
+                Msg::Increment => {
+                    model.val += 1;
+                    Update::Render
+                }
             }
         }
 
