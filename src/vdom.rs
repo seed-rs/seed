@@ -397,7 +397,9 @@ fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
 where
     Ms: Clone + 'static,
 {
-    el.el_ws = Some(websys_bridge::make_websys_el(el, document));
+    if el.el_ws.is_none() {
+        el.el_ws = Some(websys_bridge::make_websys_el(el, document));
+    }
 }
 
 /// Recursively sets up input listeners
