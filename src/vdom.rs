@@ -1003,4 +1003,24 @@ pub mod tests {
             &["a", "b", "c"],
         );
     }
+
+    /// Test that if the old_el passed to patch was itself an empty, it is correctly patched to a non-empty.
+    #[wasm_bindgen_test]
+    fn root_empty_changed() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = seed::empty();
+
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        assert_eq!(parent.children().length(), 1);
+        let el_ws = vdom.el_ws.as_ref().expect("el_ws missing");
+        assert!(el_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&el_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            &["a", "c"],
+        );
+    }
 }
