@@ -483,15 +483,13 @@ fn patch<'a, Ms: Clone>(
     // We make an assumption that most of the page is not dramatically changed
     // by each event, to optimize.
 
-    // Assume setup_vdom has been run on the new el, all listeners have been removed
-    // from the old el_ws, and the only the old el vdom's elements are still attached.
+    // Assume all listeners have been removed from the old el_ws (if any), and the
+    // old el vdom's elements are still attached.
 
     // take removes the interior value from the Option; otherwise we run into problems
     // about not being able to remove from borrowed content.
     // We remove it from the old el_vodom now, and at the end... add it to the new one.
     // We don't run attach_children() when patching, hence this approach.
-
-    let old_el_ws = old.el_ws.take()?;
 
     if old != *new {
 
@@ -504,6 +502,10 @@ fn patch<'a, Ms: Clone>(
         // TODO: forcing a rerender for differnet listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
         if new.empty && !old.empty {
+            let old_el_ws = old.el_ws.take().expect(
+                "old el_ws missing in call to unmount_actions",
+            );
+
             parent.remove_child(&old_el_ws)
                 .expect("Problem removing old we_el when updating to empty");
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
@@ -516,11 +518,15 @@ fn patch<'a, Ms: Clone>(
         }
             // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
             // Something about this element itself is different: patch it.
-//            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
-            else if old.tag != new.tag || old.namespace != new.namespace {
+           else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
                 // TODO: DRY here between this and later in func.
+
+                let old_el_ws = old.el_ws.take();
+
                 if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                    unmount_actions(&old_el_ws)
+                    unmount_actions(old_el_ws.as_ref().expect(
+                        "old el_ws missing in call to unmount_actions",
+                    ));
                 }
 
                 // todo: Perhaps some of this next segment should be moved to websys_bridge
@@ -534,7 +540,10 @@ fn patch<'a, Ms: Clone>(
                         .expect("Problem adding element to replace previously empty one");
                 } else {
                     parent
-                        .replace_child(new_el_ws, &old_el_ws)
+                        .replace_child(
+                            new_el_ws,
+                            &old_el_ws.expect("old el_ws missing in call to replace_child"),
+                        )
                         .expect("Problem replacing element");
                 }
 
@@ -547,12 +556,16 @@ fn patch<'a, Ms: Clone>(
                 attach_listeners(&mut new, &mailbox);
                 // We've re-rendered this child and all children; we're done with this recursion.
                 return new.el_ws.as_ref();
+            } else {
+                // Patch parts of the Element.
+                let old_el_ws = old.el_ws.as_ref().expect(
+                    "missing old el_ws when patching non-empty el",
+                ).clone();
+                websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
             }
-        // The fourth empty case, where old is empty and new isn't, is handled when iterating through children.
-
-        // Patch parts of the Element.
-        websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
     }
+
+    let old_el_ws = old.el_ws.take().unwrap();
 
     // Before running patch, assume we've removed all listeners from the old element.
     // Perform this attachment after we've verified we can patch this element, ie
