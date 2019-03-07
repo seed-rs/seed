@@ -552,8 +552,7 @@ fn patch<'a, Ms: Clone>(
                     mount_actions(new_el_ws);
                 }
 
-                let mut new = new;
-                attach_listeners(&mut new, &mailbox);
+                attach_listeners(new, &mailbox);
                 // We've re-rendered this child and all children; we're done with this recursion.
                 return new.el_ws.as_ref();
             } else {
