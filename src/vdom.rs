@@ -1,13 +1,13 @@
 use crate::{
     dom_types,
     dom_types::{El, Namespace},
-    fetch::spawn_local,
     routing, util, websys_bridge,
 };
-use futures::Future;
+use futures::{future, Future};
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::closure::Closure;
+use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -24,7 +24,7 @@ impl Default for ShouldRender {
 
 pub enum Effect<Ms> {
     Msg(Ms),
-    FutureMsg(Box<dyn Future<Item = Ms, Error = JsValue> + 'static>),
+    FutureMsg(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
 }
 
 impl<Ms> From<Ms> for Effect<Ms> {
@@ -39,11 +39,17 @@ impl<Ms> Effect<Ms> {
     pub fn map<F, Ms2>(self, f: F) -> Effect<Ms2>
     where
         Ms: 'static,
-        F: FnOnce(Ms) -> Ms2 + 'static,
+        Ms2: 'static,
+        F: Fn(Ms) -> Ms2 + 'static,
     {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::FutureMsg(fut) => Effect::FutureMsg(Box::new(fut.map(f))),
+            Effect::FutureMsg(fut) => Effect::FutureMsg(Box::new(
+                fut.then(move |res| {
+                    let res = res.map(&f).map_err(&f);
+                    future::result(res)
+                })
+            )),
         }
     }
 }
@@ -71,7 +77,7 @@ impl<Ms> Update<Ms> {
     }
 
     pub fn with_future<F>(future: F) -> Self
-    where F: Future<Item = Ms, Error = JsValue> + 'static
+    where F: Future<Item = Ms, Error = Ms> + 'static
     {
         Self {
             effect: Some(Effect::FutureMsg(Box::new(future))),
@@ -91,7 +97,8 @@ impl<Ms> Update<Ms> {
     pub fn map<F, Ms2>(self, f: F) -> Update<Ms2>
     where
         Ms: 'static,
-        F: FnOnce(Ms) -> Ms2 + 'static,
+        Ms2: 'static,
+        F: Fn(Ms) -> Ms2 + 'static,
     {
         let Update { should_render, effect } = self;
         let effect = effect.map(|effect| effect.map(f));
@@ -394,7 +401,12 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
                 Effect::Msg(msg) => self.update(msg),
                 Effect::FutureMsg(fut) => {
                     let self2 = self.clone();
-                    spawn_local(fut.map(move |msg| self2.update(msg)));
+                    future_to_promise(
+                        fut.then(move |res| {
+                            self2.update(res.unwrap_or_else(std::convert::identity));
+                            future::ok(JsValue::UNDEFINED)
+                        }),
+                    );
                 }
             }
         }

@@ -44,16 +44,17 @@ struct Model {
     data: Branch,
 }
 
-fn get_data() -> impl Future<Item = Msg, Error = JsValue> {
+fn get_data() -> impl Future<Item = Msg, Error = Msg> {
    let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 
    Request::new(url)
-       .method(Method::Get)
-       .fetch_json()
-       .map(Msg::Replace)
+        .method(Method::Get)
+        .fetch_json()
+        .map(Msg::Replace)
+        .map_err(Msg::OnFetchErr)
 }
 
-fn send() -> impl Future<Item = Msg, Error = JsValue> {
+fn send() -> impl Future<Item = Msg, Error = Msg> {
     let url = "https://infinitea.herokuapp.com/api/contact";
 
     let message = Message {
@@ -68,6 +69,7 @@ fn send() -> impl Future<Item = Msg, Error = JsValue> {
         .body_json(&message)
         .fetch_json()
         .map(Msg::OnServerResponse)
+        .map_err(Msg::OnFetchErr)
 }
 
 // Setup a default here, for initialization later.
@@ -90,6 +92,7 @@ enum Msg {
     GetData,
     Send,
     OnServerResponse(ServerResponse),
+    OnFetchErr(JsValue),
 }
 
 fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
@@ -105,6 +108,11 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
 
         Msg::OnServerResponse(result) => {
             log!(format!("Response: {:?}", result));
+            Skip.into()
+        }
+
+        Msg::OnFetchErr(err) => {
+            log!(format!("Fetch error: {:?}", err));
             Skip.into()
         }
     }
