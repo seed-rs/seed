@@ -102,9 +102,9 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
             Render.into()
         }
 
-        Msg::GetData => Update::with_future(get_data()).skip(),
+        Msg::GetData => Update::with_future_msg(get_data()).skip(),
 
-        Msg::Send => Update::with_future(send()).skip(),
+        Msg::Send => Update::with_future_msg(send()).skip(),
 
         Msg::OnServerResponse(result) => {
             log!(format!("Response: {:?}", result));

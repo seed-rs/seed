@@ -24,6 +24,7 @@ impl Default for ShouldRender {
 
 pub enum Effect<Ms> {
     Msg(Ms),
+    FutureNoMsg(Box<dyn Future<Item = (), Error = ()> + 'static>),
     FutureMsg(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
 }
 
@@ -44,6 +45,7 @@ impl<Ms> Effect<Ms> {
     {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
+            Effect::FutureNoMsg(fut) => Effect::FutureNoMsg(fut),
             Effect::FutureMsg(fut) => Effect::FutureMsg(Box::new(
                 fut.then(move |res| {
                     let res = res.map(&f).map_err(&f);
@@ -77,6 +79,15 @@ impl<Ms> Update<Ms> {
     }
 
     pub fn with_future<F>(future: F) -> Self
+    where F: Future<Item = (), Error = ()> + 'static
+    {
+        Self {
+            effect: Some(Effect::FutureNoMsg(Box::new(future))),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_future_msg<F>(future: F) -> Self
     where F: Future<Item = Ms, Error = Ms> + 'static
     {
         Self {
@@ -396,6 +407,9 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         if let Some(effect) = effect {
             match effect {
                 Effect::Msg(msg) => self.update(msg),
+                Effect::FutureNoMsg(fut) => {
+                    future_to_promise(fut.then(|_res| future::ok(JsValue::UNDEFINED)));
+                },
                 Effect::FutureMsg(fut) => {
                     let self2 = self.clone();
                     future_to_promise(
