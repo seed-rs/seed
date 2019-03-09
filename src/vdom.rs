@@ -3,30 +3,134 @@ use crate::{
     dom_types::{El, Namespace},
     routing, util, websys_bridge,
 };
+use futures::{future, Future};
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
 use wasm_bindgen::closure::Closure;
+use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
-pub enum Update<Ms, Mdl> {
-    Render(Mdl),
-    Skip(Mdl),
-    RenderThen(Mdl, Ms),
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum ShouldRender {
+    Render,
+    Skip,
 }
 
-impl<Ms, Mdl> Update<Ms, Mdl> {
-    pub fn model(self) -> Mdl {
-        use Update::*;
+impl Default for ShouldRender {
+    fn default() -> Self {
+        ShouldRender::Render
+    }
+}
+
+pub enum Effect<Ms> {
+    Msg(Ms),
+    FutureNoMsg(Box<dyn Future<Item = (), Error = ()> + 'static>),
+    FutureMsg(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
+}
+
+impl<Ms> From<Ms> for Effect<Ms> {
+    fn from(message: Ms) -> Self {
+        Effect::Msg(message)
+    }
+}
+
+impl<Ms> Effect<Ms> {
+    /// Apply a function to the message. If the effect is a future, the map function
+    /// will be called after the future is finished running.
+    pub fn map<F, Ms2>(self, f: F) -> Effect<Ms2>
+    where
+        Ms: 'static,
+        Ms2: 'static,
+        F: Fn(Ms) -> Ms2 + 'static,
+    {
         match self {
-            Render(model) => model,
-            Skip(model) => model,
-            RenderThen(model, _) => model,
+            Effect::Msg(msg) => Effect::Msg(f(msg)),
+            Effect::FutureNoMsg(fut) => Effect::FutureNoMsg(fut),
+            Effect::FutureMsg(fut) => Effect::FutureMsg(Box::new(fut.then(move |res| {
+                let res = res.map(&f).map_err(&f);
+                future::result(res)
+            }))),
         }
     }
 }
-// todo should this go here? do we need it?
 
-type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Ms, Mdl>;
-type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
+pub struct Update<Ms> {
+    should_render: ShouldRender,
+    effect: Option<Effect<Ms>>,
+}
+
+impl<Ms> From<ShouldRender> for Update<Ms> {
+    fn from(should_render: ShouldRender) -> Self {
+        Self {
+            should_render,
+            effect: None,
+        }
+    }
+}
+
+impl<Ms> Default for Update<Ms> {
+    fn default() -> Self {
+        Self::from(ShouldRender::Render)
+    }
+}
+
+impl<Ms> Update<Ms> {
+    pub fn with_msg(effect_msg: Ms) -> Self {
+        Self {
+            effect: Some(effect_msg.into()),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_future<F>(future: F) -> Self
+    where
+        F: Future<Item = (), Error = ()> + 'static,
+    {
+        Self {
+            effect: Some(Effect::FutureNoMsg(Box::new(future))),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_future_msg<F>(future: F) -> Self
+    where
+        F: Future<Item = Ms, Error = Ms> + 'static,
+    {
+        Self {
+            effect: Some(Effect::FutureMsg(Box::new(future))),
+            ..Default::default()
+        }
+    }
+
+    /// Modify this Update to skip rendering
+    pub fn skip(mut self) -> Self {
+        self.should_render = ShouldRender::Skip;
+        self
+    }
+
+    /// Apply a function to the message produced by the update effect, if one is present.
+    /// If the effect is a future, the map function will be called after the future is
+    /// finished running.
+    pub fn map<F, Ms2>(self, f: F) -> Update<Ms2>
+    where
+        Ms: 'static,
+        Ms2: 'static,
+        F: Fn(Ms) -> Ms2 + 'static,
+    {
+        let Update {
+            should_render,
+            effect,
+        } = self;
+        let effect = effect.map(|effect| effect.map(f));
+        Update {
+            should_render,
+            effect,
+        }
+    }
+}
+
+type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
+type ViewFn<Ms, Mdl> = fn(&Mdl) -> El<Ms>;
 type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
@@ -61,8 +165,8 @@ type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct AppData<Ms: Clone + 'static, Mdl> {
-    // Model is in a RefCell<Option> here so we can replace it in self.update().
-    pub model: RefCell<Option<Mdl>>,
+    // Model is in a RefCell here so we can modify it in self.update().
+    pub model: RefCell<Mdl>,
     main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
@@ -181,7 +285,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
                 window_events,
             }),
             data: Rc::new(AppData {
-                model: RefCell::new(Some(model)),
+                model: RefCell::new(model),
                 // This is filled for the first time in run()
                 main_el_vdom: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
@@ -202,11 +306,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         let window = util::window();
 
-        let mut topel_vdom = {
-            let model = self.data.model.borrow();
-            let model = model.as_ref().expect("missing model");
-            (self.cfg.view)(self.clone(), model)
-        };
+        let mut topel_vdom = (self.cfg.view)(&self.data.model.borrow());
 
         // TODO: use window events
         if self.cfg.window_events.is_some() {
@@ -249,33 +349,6 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         self
     }
 
-    /// Do the actual self.cfg.update call. Updates self.data.model and returns (should_render, effect_msg)
-    fn call_update(&self, message: Ms) -> (bool, Option<Ms>) {
-        // data.model is the old model; Remove model from self.data.model, then pass it to the
-        // update function created in the app, which outputs an updated model.
-        let model = self.data.model.borrow_mut().take().expect("missing model");
-        let updated_model_wrapped = (self.cfg.update)(message, model);
-
-        let mut should_render = true;
-        let mut effect_msg = None;
-        let model = match updated_model_wrapped {
-            Update::Render(mdl) => mdl,
-            Update::Skip(mdl) => {
-                should_render = false;
-                mdl
-            }
-            Update::RenderThen(mdl, msg) => {
-                effect_msg = Some(msg);
-                mdl
-            }
-        };
-
-        // Store updated model back to self.data.model
-        self.data.model.borrow_mut().replace(model);
-
-        (should_render, effect_msg)
-    }
-
     /// This runs whenever the state is changed, ie the user-written update function is called.
     /// It updates the state, and any DOM elements affected by this change.
     /// todo this is where we need to compare against differences and only update nodes affected
@@ -292,13 +365,13 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             (l)(&message)
         }
 
-        let (should_render, effect_msg) = self.call_update(message);
-
-        let model = self.data.model.borrow();
-        let model = model.as_ref().expect("missing model");
+        let Update {
+            should_render,
+            effect,
+        } = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
 
         if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(model);
+            let mut new_listeners = (window_events)(&self.data.model.borrow());
             setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
@@ -309,10 +382,10 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             self.data.window_listeners.replace(new_listeners);
         }
 
-        if should_render {
+        if should_render == ShouldRender::Render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
-            let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
+            let mut topel_new_vdom = (self.cfg.view)(&self.data.model.borrow());
 
             let mut old_vdom = self
                 .data
@@ -339,8 +412,20 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
         }
 
-        if let Some(msg) = effect_msg {
-            self.update(msg)
+        if let Some(effect) = effect {
+            match effect {
+                Effect::Msg(msg) => self.update(msg),
+                Effect::FutureNoMsg(fut) => {
+                    future_to_promise(fut.then(|_res| future::ok(JsValue::UNDEFINED)));
+                }
+                Effect::FutureMsg(fut) => {
+                    let self2 = self.clone();
+                    future_to_promise(fut.then(move |res| {
+                        self2.update(res.unwrap_or_else(std::convert::identity));
+                        future::ok(JsValue::UNDEFINED)
+                    }));
+                }
+            }
         }
     }
 
@@ -396,7 +481,9 @@ fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
 where
     Ms: Clone + 'static,
 {
-    el.el_ws = Some(websys_bridge::make_websys_el(el, document));
+    if el.el_ws.is_none() {
+        el.el_ws = Some(websys_bridge::make_websys_el(el, document));
+    }
 }
 
 /// Recursively sets up input listeners
@@ -482,15 +569,13 @@ fn patch<'a, Ms: Clone>(
     // We make an assumption that most of the page is not dramatically changed
     // by each event, to optimize.
 
-    // Assume setup_vdom has been run on the new el, all listeners have been removed
-    // from the old el_ws, and the only the old el vdom's elements are still attached.
+    // Assume all listeners have been removed from the old el_ws (if any), and the
+    // old el vdom's elements are still attached.
 
     // take removes the interior value from the Option; otherwise we run into problems
     // about not being able to remove from borrowed content.
     // We remove it from the old el_vodom now, and at the end... add it to the new one.
     // We don't run attach_children() when patching, hence this approach.
-
-    let old_el_ws = old.el_ws.take()?;
 
     if old != *new {
         // At this step, we already assume we have the right element - either
@@ -502,6 +587,11 @@ fn patch<'a, Ms: Clone>(
         // TODO: forcing a rerender for differnet listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
         if new.empty && !old.empty {
+            let old_el_ws = old
+                .el_ws
+                .take()
+                .expect("old el_ws missing in call to unmount_actions");
+
             parent
                 .remove_child(&old_el_ws)
                 .expect("Problem removing old we_el when updating to empty");
@@ -515,11 +605,17 @@ fn patch<'a, Ms: Clone>(
         }
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
-        //            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
-        else if old.tag != new.tag || old.namespace != new.namespace {
+        else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
             // TODO: DRY here between this and later in func.
+
+            let old_el_ws = old.el_ws.take();
+
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                unmount_actions(&old_el_ws)
+                unmount_actions(
+                    old_el_ws
+                        .as_ref()
+                        .expect("old el_ws missing in call to unmount_actions"),
+                );
             }
 
             // todo: Perhaps some of this next segment should be moved to websys_bridge
@@ -534,7 +630,10 @@ fn patch<'a, Ms: Clone>(
                     .expect("Problem adding element to replace previously empty one");
             } else {
                 parent
-                    .replace_child(new_el_ws, &old_el_ws)
+                    .replace_child(
+                        new_el_ws,
+                        &old_el_ws.expect("old el_ws missing in call to replace_child"),
+                    )
                     .expect("Problem replacing element");
             }
 
@@ -543,16 +642,21 @@ fn patch<'a, Ms: Clone>(
                 mount_actions(new_el_ws);
             }
 
-            let mut new = new;
-            attach_listeners(&mut new, &mailbox);
+            attach_listeners(new, &mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
             return new.el_ws.as_ref();
+        } else {
+            // Patch parts of the Element.
+            let old_el_ws = old
+                .el_ws
+                .as_ref()
+                .expect("missing old el_ws when patching non-empty el")
+                .clone();
+            websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
         }
-        // The fourth empty case, where old is empty and new isn't, is handled when iterating through children.
-
-        // Patch parts of the Element.
-        websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
     }
+
+    let old_el_ws = old.el_ws.take().unwrap();
 
     // Before running patch, assume we've removed all listeners from the old element.
     // Perform this attachment after we've verified we can patch this element, ie
@@ -1018,6 +1122,28 @@ pub mod tests {
                 .map(|node| node.text_content().unwrap())
                 .collect::<Vec<_>>(),
             &["a", "b", "c"],
+        );
+    }
+
+    /// Test that if the old_el passed to patch was itself an empty, it is correctly patched to a non-empty.
+    #[wasm_bindgen_test]
+    fn root_empty_changed() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = seed::empty();
+
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        assert_eq!(parent.children().length(), 1);
+        let el_ws = vdom.el_ws.as_ref().expect("el_ws missing");
+        assert!(el_ws.is_same_node(parent.first_child().as_ref()));
+        assert_eq!(
+            iter_child_nodes(&el_ws)
+                .map(|node| node.text_content().unwrap())
+                .collect::<Vec<_>>(),
+            &["a", "c"],
         );
     }
 }

@@ -34,27 +34,27 @@ enum Msg {
     EditChange(String),
 }
 
-fn update(msg: Msg, mut model: Model) -> Update<Msg, Model> {
+fn update(msg: Msg, mut model: &mut Model) -> Update<Msg> {
     match msg {
         Msg::Connected => {
             model.connected = true;
-            Render(model)
+            Render.into()
         }
         Msg::ServerMsg(msg) => {
             model.connected = true;
             model.msg_rx_cnt += 1;
             model.messages.push(msg.text);
-            Render(model)
+            Render.into()
         }
-        Msg::EditChange(input_text) => Render(Model {
-            input_text,
-            ..model
-        }),
-        Msg::Send(_) => Skip(model),
+        Msg::EditChange(input_text) => {
+            model.input_text = input_text;
+            Render.into()
+        }
+        Msg::Send(_) => Skip.into(),
         Msg::Sent => {
             model.input_text = "".into();
             model.msg_tx_cnt += 1;
-            Render(model)
+            Render.into()
         }
     }
 }
@@ -64,7 +64,7 @@ fn render_messages(msgs: &[String]) -> El<Msg> {
     div![msgs]
 }
 
-fn view(_: App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     div![
         h1!["seed websocket example"],
         if model.connected {

@@ -30,33 +30,15 @@ enum Msg {
     ChangeWWC(String),
 }
 
-/// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
+/// The sole source of updating the model
+fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     match msg {
-        Msg::Increment => Render(Model {
-            count: model.count + 1,
-            ..model
-        }),
-        Msg::Decrement => Render(Model {
-            count: model.count - 1,
-            ..model
-        }),
-        Msg::ChangeWWC(what_we_count) => Render(Model {
-            what_we_count,
-            ..model
-        }),
+        Msg::Increment => model.count += 1,
+        Msg::Decrement => model.count -= 1,
+        Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
     }
+    Render.into()
 }
-
-/// A mutable-style alternative:
-//fn update(msg: Msg, model: mut Model) -> ModelUpdate<Model> {
-//    match msg {
-//        Msg::Increment => model.count += 1,
-//        Msg::Decrement => model.count -= 1,
-//        Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
-//    }
-//    Render(model)
-//}
 
 // View
 
@@ -73,7 +55,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output a single El.
-fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 

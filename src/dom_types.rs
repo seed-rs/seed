@@ -239,7 +239,7 @@ impl<Ms> Listener<Ms> {
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
-        if let Some(_) = self.closure.replace(closure) {
+        if self.closure.replace(closure).is_some() {
             panic!("self.closure already set in attach");
         }
     }
@@ -308,7 +308,7 @@ impl<Ms> Listener<Ms> {
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
-        if let Some(_) = self.closure.replace(closure) {
+        if self.closure.replace(closure).is_some() {
             panic!("self.closure already set in attach_control");
         }
     }

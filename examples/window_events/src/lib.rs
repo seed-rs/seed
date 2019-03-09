@@ -28,21 +28,13 @@ enum Msg {
     KeyPressed(web_sys::KeyboardEvent),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
-    Render(match msg {
-        Msg::ToggleWatching => Model {
-            watching: !model.watching,
-            ..model
-        },
-        Msg::UpdateCoords(ev) => Model {
-            coords: (ev.screen_x(), ev.screen_y()),
-            ..model
-        },
-        Msg::KeyPressed(ev) => Model {
-            last_keycode: ev.key_code(),
-            ..model
-        },
-    })
+fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+    match msg {
+        Msg::ToggleWatching => model.watching = !model.watching,
+        Msg::UpdateCoords(ev) => model.coords = (ev.screen_x(), ev.screen_y()),
+        Msg::KeyPressed(ev) => model.last_keycode = ev.key_code(),
+    }
+    Render.into()
 }
 
 // View
@@ -66,7 +58,7 @@ fn misc_demo() -> El<Msg> {
     ]
 }
 
-fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     div![
         h2![model.coords_string()],
         h2![format!("Last key pressed: {}", model.last_keycode)],

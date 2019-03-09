@@ -14,15 +14,14 @@ struct Model {
     pub data: Data,
 }
 
-fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsValue> {
+fn get_data() -> impl Future<Item = Msg, Error = Msg> {
     let url = "http://localhost:8001/data";
 
     Request::new(url)
         .method(Method::Get)
         .fetch_json()
-        .map(move |json| {
-            state.update(Msg::Replace(json));
-        })
+        .map(Msg::Replace)
+        .map_err(Msg::OnFetchErr)
 }
 
 // Update
@@ -31,25 +30,32 @@ fn get_data(state: seed::App<Msg, Model>) -> impl Future<Item = (), Error = JsVa
 enum Msg {
     GetData(seed::App<Msg, Model>),
     Replace(Data),
+    OnFetchErr(JsValue),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
+fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     match msg {
-        Msg::GetData(state) => {
-            spawn_local(get_data(state));
-            Render(model)
+        Msg::Replace(data) => {
+            model.data = data;
+            Render.into()
         }
-        Msg::Replace(data) => Render(Model { data }),
+
+        Msg::GetData => Update::with_future_msg(get_data()).skip(),
+
+        Msg::OnFetchErr(err) => {
+            log!(format!("Fetch error: {:?}", err));
+            Skip.into()
+        }
     }
 }
 
 // View
 
-fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     div![
         h1![format!("Val: {} Text: {}", model.data.val, model.data.text)],
         button![
-            raw_ev("click", move |_| Msg::GetData(state.clone())),
+            raw_ev("click", move |_| Msg::GetData()),
             "Update data"
         ]
     ]

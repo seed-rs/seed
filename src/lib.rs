@@ -93,8 +93,7 @@ pub mod prelude {
             will_unmount, At, El, Ev, Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        //        vdom::{Update, Update::Render, Update::Skip, Update::RenderThen},
-        vdom::{Update, Update::*},
+        vdom::{ShouldRender, ShouldRender::*, Update},
     };
     pub use std::collections::HashMap;
 
@@ -135,13 +134,16 @@ pub mod tests {
             Increment,
         }
 
-        fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
+        fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
             match msg {
-                Msg::Increment => Update::Render(Model { val: model.val + 1 }),
+                Msg::Increment => {
+                    model.val += 1;
+                    Render.into()
+                }
             }
         }
 
-        fn view(_state: seed::App<Msg, Model>, _model: &Model) -> El<Msg> {
+        fn view(_model: &Model) -> El<Msg> {
             div!["Hello world"]
         }
 

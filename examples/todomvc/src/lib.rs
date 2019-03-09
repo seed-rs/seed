@@ -118,141 +118,94 @@ enum Msg {
     ChangeVisibility(Visible),
 }
 
-fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
-    // We take a verbose immutable-design/functional approach in this example.
-    // Alternatively, you could re-declare model as mutable at the top, and mutate
-    // what we need in each match leg. See the Update section of the guide for details.
+/// Called by update function. Split into separate function since we use it twice.
+fn edit_submit(posit: usize, model: &mut Model) {
+    if model.edit_text.is_empty() {
+        model.todos.remove(posit);
+    } else {
+        let mut todo = model.todos.remove(posit);
+        todo.editing = false;
+        todo.title = model.edit_text.clone();
+        model.todos.insert(posit, todo);
+        model.edit_text = model.edit_text.trim().to_string();
+    }
+}
+
+fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     model.sync_storage(); // Doing it here will miss the most recent update...
+    // todo has some bugs.
     match msg {
         Msg::ClearCompleted => {
-            let todos = model.todos.into_iter().filter(|t| !t.completed).collect();
-            Render(Model { todos, ..model })
+            model.todos = model
+                .todos
+                .clone()
+                .into_iter()
+                .filter(|t| !t.completed)
+                .collect();
         }
         Msg::Destroy(posit) => {
-            let todos = model
-                .todos
-                .into_iter()
-                .enumerate()
-                .filter(|(i, _)| i != &posit)
-                // We only used the enumerate to find the right todo; remove it.
-                .map(|(_, t)| t)
-                .collect();
-            Render(Model { todos, ..model })
+            model.todos.remove(posit);
         }
-        Msg::Toggle(posit) => {
-            let mut todos = model.todos;
-            let mut todo = todos.remove(posit);
-            todo.completed = !todo.completed;
-            todos.insert(posit, todo);
 
-            Render(Model { todos, ..model })
-        }
+        Msg::Toggle(posit) => model.todos[posit].completed = !model.todos[posit].completed,
+
         Msg::ToggleAll => {
-            // Mark all as completed, unless all are: mark all as not completed.
             let completed = model.active_count() != 0;
-            let todos = model
-                .todos
-                .into_iter()
-                .map(|t| Todo { completed, ..t })
-                .collect();
-            Render(Model { todos, ..model })
+            for todo in &mut model.todos {
+                todo.completed = completed;
+            }
         }
         Msg::NewTodo(ev) => {
             // Add a todo_, if the enter key is pressed.
             // We handle text input after processing a key press, hence the
             // raw event logic here.
             let code = seed::to_kbevent(&ev).key_code();
-            if code != ENTER_KEY {
-                return Render(model);
-            }
-            ev.prevent_default();
+            if code == ENTER_KEY {
+                ev.prevent_default();
 
-            let target = ev.target().unwrap();
-            let input_el = seed::to_input(&target);
-            let title = input_el.value().trim().to_string();
+                let target = ev.target().unwrap();
+                let input_el = seed::to_input(&target);
+                let title = input_el.value().trim().to_string();
 
-            if !title.is_empty() {
-                let mut todos = model.todos.clone();
-                todos.push(Todo {
-                    title,
-                    completed: false,
-                    editing: false,
-                });
-                input_el.set_value("");
-                Render(Model { todos, ..model })
-            } else {
-                Render(model)
+                if !title.is_empty() {
+                    model.todos.push(Todo {
+                        title,
+                        completed: false,
+                        editing: false,
+                    });
+                    input_el.set_value("");
+                }
             }
         }
-        Msg::EditEntry(entry_text) => Render(Model {
-            entry_text,
-            ..model
-        }),
+        Msg::EditEntry(entry_text) => model.entry_text = entry_text,
 
         Msg::EditItem(posit) => {
-            let mut todos: Vec<Todo> = model
-                .todos
-                .into_iter()
-                .map(|t| Todo {
-                    editing: false,
-                    ..t
-                })
-                .collect();
-
-            let mut todo = todos.remove(posit);
-            todo.editing = true;
-            todos.insert(posit, todo.clone());
-
-            Render(Model {
-                todos,
-                edit_text: todo.title,
-                ..model
-            })
-        }
-        Msg::EditSubmit(posit) => {
-            if model.edit_text.is_empty() {
-                update(Msg::Destroy(posit), model)
-            } else {
-                let mut todos = model.todos;
-                let mut todo = todos.remove(posit);
+            for todo in &mut model.todos {
                 todo.editing = false;
-                todo.title = model.edit_text.clone();
-                todos.insert(posit, todo);
-
-                Render(Model {
-                    todos,
-                    edit_text: model.edit_text.trim().to_string(),
-                    ..model
-                })
             }
+
+            let mut todo = model.todos.remove(posit);
+            todo.editing = true;
+            model.todos.insert(posit, todo.clone());
+            model.edit_text = todo.title;
         }
-        Msg::EditChange(edit_text) => Render(Model { edit_text, ..model }),
+        Msg::EditSubmit(posit) => edit_submit(posit, model),
+        Msg::EditChange(edit_text) => model.edit_text = edit_text,
         Msg::EditKeyDown(posit, code) => {
             if code == ESCAPE_KEY {
-                let todos = model
-                    .todos
-                    .clone()
-                    .into_iter()
-                    .map(|t| Todo {
-                        editing: false,
-                        ..t
-                    })
-                    .collect();
-                Render(Model {
-                    todos,
-                    edit_text: model.todos[posit].title.clone(),
-                    ..model
-                })
+                for todo in &mut model.todos {
+                    todo.editing = false;
+                }
+                model.edit_text = model.todos[posit].title.clone();
             } else if code == ENTER_KEY {
-                update(Msg::EditSubmit(posit), model)
-            } else {
-                Render(model)
+                edit_submit(posit, model)
             }
         }
-
-        Msg::ChangeVisibility(visible) => Render(Model { visible, ..model }),
+        Msg::ChangeVisibility(visible) => model.visible = visible,
     }
+    Render.into()
 }
+
 
 // View
 
@@ -334,7 +287,7 @@ fn footer(model: &Model) -> El<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
+fn view(model: &Model) -> El<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
