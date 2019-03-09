@@ -293,16 +293,14 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
 }
 
 fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
-    li![
-        a![
-            attrs!{
-                At::Class => if visible == highlighter {"selected"} else {""};
-                At::Href => "/".to_string() + &highlighter.to_string();
-            },
-            style! {"cursor" => "pointer"},
-            text
-        ]
-    ]
+    li![a![
+        attrs! {
+            At::Class => if visible == highlighter {"selected"} else {""};
+            At::Href => "/".to_string() + &highlighter.to_string();
+        },
+        style! {"cursor" => "pointer"},
+        text
+    ]]
 }
 
 fn footer(model: &Model) -> El<Msg> {
@@ -385,12 +383,12 @@ fn view(_state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
         } else {
             seed::empty()
         },
-        ]
+    ]
 }
 
 fn routes(url: &seed::Url) -> Msg {
     if url.path.is_empty() {
-        return Msg::ChangeVisibility(Visible::All)
+        return Msg::ChangeVisibility(Visible::All);
     }
 
     match url.path[0].as_ref() {

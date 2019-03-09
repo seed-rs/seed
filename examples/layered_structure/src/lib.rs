@@ -4,61 +4,33 @@
 extern crate seed;
 use seed::prelude::*;
 
-// Model
+enum TextBoxMessage {
 
-struct Model {
-    count: i32,
-    what_we_count: String,
 }
 
-// Setup a default here, for initialization later.
-impl Default for Model {
-    fn default() -> Self {
-        Self {
-            count: 0,
-            what_we_count: "click".into(),
-        }
-    }
+struct TextBoxModel {
+    current_value: String,
 }
 
-// Update
-
-#[derive(Clone)]
-enum Msg {
-    Increment,
-    Decrement,
-    ChangeWWC(String),
+fn update_textbox(msg: TextBoxMsg, &mut model: TextBoxModel) -> Update<TextBoxMsg, TextBoxModel> {
+    model.current_value += " More text";
+    Render(whatever)
 }
 
-/// The sole source of updating the model; returns a fresh one.
-fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
-    match msg {
-        Msg::Increment => Render(Model {
-            count: model.count + 1,
-            ..model
-        }),
-        Msg::Decrement => Render(Model {
-            count: model.count - 1,
-            ..model
-        }),
-        Msg::ChangeWWC(what_we_count) => Render(Model {
-            what_we_count,
-            ..model
-        }),
-    }
+struct AppModel {
+    text_box1: TextBoxModel,
+    text_box2: TextBoxModel,
 }
 
-/// A mutable-style alternative:
-//fn update(msg: Msg, model: mut Model) -> ModelUpdate<Model> {
-//    match msg {
-//        Msg::Increment => model.count += 1,
-//        Msg::Decrement => model.count -= 1,
-//        Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
-//    }
-//    Render(model)
-//}
+enum AppMsg {
+    TextBox1Msg(TextBoxMsg),
+    TextBox2Msg(TextBoxMsg),
+}
 
-// View
+fn update_app(msg: AppMsg, mut model: AppModel) -> Update<AppMsg, AppModel>
+{
+    ...
+}
 
 /// A simple component.
 fn success_level(clicks: i32) -> El<Msg> {

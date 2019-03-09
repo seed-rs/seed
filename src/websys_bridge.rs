@@ -168,10 +168,12 @@ pub fn make_websys_el<Ms: Clone>(
     el_ws.into()
 }
 
-
 /// Similar to attach_el_and_children, but assumes we've already attached the parent.
 pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
-    let el_ws = el_vdom.el_ws.take().expect("Missing websys el in attach children");
+    let el_ws = el_vdom
+        .el_ws
+        .take()
+        .expect("Missing websys el in attach children");
 
     for child in &mut el_vdom.children {
         attach_el_and_children(child, &el_ws)
@@ -179,7 +181,6 @@ pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
 
     el_vdom.el_ws.replace(el_ws);
 }
-
 
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
@@ -189,7 +190,9 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
     // This is how we call this function externally, ie not through recursion.
 
     // Don't render if we're dealing with an empty element.
-    if el_vdom.empty { return }
+    if el_vdom.empty {
+        return;
+    }
 
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
@@ -197,8 +200,10 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
 
     // todo: This can occur with raw html elements, but am unsur eof the cause.
     match parent.append_child(&el_ws) {
-        Ok(_) => {},
-        Err(_) => {crate::log("Minor problem with html element (append)");}
+        Ok(_) => {}
+        Err(_) => {
+            crate::log("Minor problem with html element (append)");
+        }
     }
 
     // appending the its children to the el_ws
@@ -226,11 +231,7 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms: Clone>(
-    old: &mut El<Ms>,
-    new: &mut El<Ms>,
-    old_el_ws: &web_sys::Node,
-) {
+pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut old.hooks.did_update {
         update_actions(old_el_ws)
@@ -251,20 +252,20 @@ pub fn patch_el_details<Ms: Clone>(
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
-
                 // todo get to the bottom of this
 
                 match old_el_ws.dyn_ref::<web_sys::Element>() {
-                    Some(el) => el.remove_attribute(name.as_str())
+                    Some(el) => el
+                        .remove_attribute(name.as_str())
                         .expect("Removing an attribute"),
-                    None => crate::log("Minor error on html element (setting attrs)")
+                    None => crate::log("Minor error on html element (setting attrs)"),
                 }
 
-//                old_el_ws
-//                    .dyn_ref::<web_sys::Element>()
-//                    .expect("Problem casting Node as Element while removing an attribute")
-//                    .remove_attribute(name.as_str())
-//                    .expect("Removing an attribute");
+                //                old_el_ws
+                //                    .dyn_ref::<web_sys::Element>()
+                //                    .expect("Problem casting Node as Element while removing an attribute")
+                //                    .remove_attribute(name.as_str())
+                //                    .expect("Removing an attribute");
             }
         }
     }
@@ -333,28 +334,31 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 /// and markdown strings. Includes children, recursively added.
 pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
     match node.node_type() {
-        1 => {  // Element node
-            let el_ws = node.dyn_ref::<web_sys::Element>()
+        1 => {
+            // Element node
+            let el_ws = node
+                .dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element");
 
             // Result of tag_name is all caps, but tag From<String> expects lower.
             // Probably is more pure to match by xlmns attribute instead.
             let mut result = match el_ws.tag_name().to_lowercase().as_ref() {
                 "svg" => El::empty_svg(el_ws.tag_name().to_lowercase().into()),
-                _ => El::empty(el_ws.tag_name().to_lowercase().into())
+                _ => El::empty(el_ws.tag_name().to_lowercase().into()),
             };
 
             // Populate attributes
             let mut attrs = dom_types::Attrs::empty();
-            el_ws.get_attribute_names().for_each(
-                &mut |attr_name, _, _| {
-                    let attr_name2 = attr_name.as_string()
+            el_ws
+                .get_attribute_names()
+                .for_each(&mut |attr_name, _, _| {
+                    let attr_name2 = attr_name
+                        .as_string()
                         .expect("problem converting attr to string");
                     if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
                         attrs.add(attr_name2.into(), &attr_val);
                     }
-                }
-            );
+                });
             result.attrs = attrs;
 
             if let Some(ns) = el_ws.namespace_uri() {
@@ -363,29 +367,30 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
 
             let children = el_ws.child_nodes();
             for i in 0..children.length() {
-                let child = children.get(i)
+                let child = children
+                    .get(i)
                     .expect("Can't find child in raw html element.");
 
                 if let Some(child_vdom) = el_from_ws(&child) {
                     result.children.push(child_vdom);
                 }
-
             }
             Some(result)
         }
-        3 => {  // Text node
-//            None
-//            match &node.text_content() {
-//                Some(t) => {
-//                    if t.chars().count() < 0{
-//                        None
-//                    } else {
-//                        None
-////                        Some(El::new_text(t))
-//                    }
-//                },
-//                None => None,
-//            }
+        3 => {
+            // Text node
+            //            None
+            //            match &node.text_content() {
+            //                Some(t) => {
+            //                    if t.chars().count() < 0{
+            //                        None
+            //                    } else {
+            //                        None
+            ////                        Some(El::new_text(t))
+            //                    }
+            //                },
+            //                None => None,
+            //            }
 
             Some(El::new_text(&node.text_content().expect("Can't find text")))
         }
@@ -394,7 +399,4 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
             None
         }
     }
-
-
-
 }

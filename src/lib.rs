@@ -4,9 +4,9 @@
 
 pub use crate::{
     fetch::{spawn_local, Method, Request},
-    routing::{push_route, push_path, Url},
+    routing::{push_path, push_route, Url},
     util::{document, window},
-    vdom::{App}, // todo remove App once new update system in place?
+    vdom::App, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -41,12 +41,14 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
 
 /// A convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
-pub fn log<S: ToString>(text: S) {  // ignore clippy about &S
+pub fn log<S: ToString>(text: S) {
+    // ignore clippy about &S
     web_sys::console::log_1(&text.to_string().into());
 }
 
 /// Similar to log, but for errors.
-pub fn error<S: ToString>(text: S) {  // ignore clippy about &S
+pub fn error<S: ToString>(text: S) {
+    // ignore clippy about &S
     web_sys::console::error_1(&text.to_string().into());
 }
 
@@ -91,7 +93,7 @@ pub mod prelude {
             will_unmount, At, El, Ev, Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-//        vdom::{Update, Update::Render, Update::Skip, Update::RenderThen},
+        //        vdom::{Update, Update::Render, Update::Skip, Update::RenderThen},
         vdom::{Update, Update::*},
     };
     pub use std::collections::HashMap;
@@ -114,7 +116,7 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
         use crate::{
-            dom_types::{El, UpdateEl, mouse_ev},
+            dom_types::{mouse_ev, El, UpdateEl},
             vdom::Update,
         };
 

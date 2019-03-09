@@ -91,7 +91,9 @@ impl Default for Model {
         Self {
             data: Branch {
                 name: "Loading...".into(),
-                commit: Commit { sha: "Loading...".into() },
+                commit: Commit {
+                    sha: "Loading...".into(),
+                },
             },
         }
     }
@@ -103,7 +105,7 @@ impl Default for Model {
 enum Msg {
     Replace(Branch),
     GetData(seed::App<Msg, Model>),
-//    GetData,
+    //    GetData,
     Send,
 }
 
@@ -112,10 +114,10 @@ fn update(msg: Msg, model: Model) -> Update<Msg, Model> {
         Msg::Replace(data) => Render(Model { data }),
         // Msg::GetData is unused in this example, but could be used when
         // updating state from an event.  // todo check this out
-//        Msg::GetData(state) => {
-//            spawn_local(get_data(state));
-//            Render(model)
-//        }
+        //        Msg::GetData(state) => {
+        //            spawn_local(get_data(state));
+        //            Render(model)
+        //        }
         Msg::GetData(state) => {
             spawn_local(get_data(state));
             Render(model)
@@ -137,9 +139,8 @@ fn view(state: seed::App<Msg, Model>, model: &Model) -> El<Msg> {
                 "Repo info: name: {}, sha: {}",
                 model.data.name, model.data.commit.sha
             ),
-
             // Another approach that would work for initial loading:
-//            did_mount(move |_| spawn_local(get_data(state.clone())))
+            //            did_mount(move |_| spawn_local(get_data(state.clone())))
         ],
         button![
             raw_ev(Ev::Click, move |_| Msg::Send),
@@ -156,5 +157,5 @@ pub fn render() {
         .run();
 
     spawn_local(get_data(state));
-//    update();
+    //    update();
 }

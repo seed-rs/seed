@@ -34,6 +34,29 @@ macro_rules! element {
         }
    }
 }
+/// Similar to the element! macro above, but with a namespace for svg.
+macro_rules! element_svg {
+    // Create shortcut macros for any element; populate these functions in this module.
+    ($($Tag:ident => $Tag_camel:ident);+) => {
+        // This replaces $d with $ in the inner macro.
+        with_dollar_sign! {
+            ($d:tt) => {
+                $(
+                    #[macro_export]
+                    macro_rules! $Tag {
+                        ( $d($d part:expr),* $d(,)* ) => {
+                            {
+                                let mut el = El::empty_svg(seed::dom_types::Tag::$Tag_camel);
+                                $d ( $d part.update(&mut el); )*
+                                el
+                            }
+                        };
+                    }
+                )+
+            }
+        }
+   }
+}
 
 /// El must be exposed in the module where this is called for these to work.
 element! {
@@ -74,43 +97,26 @@ element! {
     content => Content; element => Element; shadow => Shadow; slot => Slot; template => Template
 }
 
-#[macro_export]
-macro_rules! custom {
-    ( $($part:expr),* $(,)* ) => {
-        {
-            let mut el = El::empty(seed::dom_types::Tag::Custom("missingtagname".into()));
-            $ ( $part.update(&mut el); )*
-            el
-        }
-    };
-}
-
-/// Similar to the element! macro above, but with a namespace for svg.
-macro_rules! element_svg {
-    // Create shortcut macros for any element; populate these functions in this module.
-    ($($Tag:ident => $Tag_camel:ident);+) => {
-        // This replaces $d with $ in the inner macro.
-        with_dollar_sign! {
-            ($d:tt) => {
-                $(
-                    #[macro_export]
-                    macro_rules! $Tag {
-                        ( $d($d part:expr),* $d(,)* ) => {
-                            {
-                                let mut el = El::empty_svg(seed::dom_types::Tag::$Tag_camel);
-                                $d ( $d part.update(&mut el); )*
-                                el
-                            }
-                        };
-                    }
-                )+
-            }
-        }
-   }
+element_svg! {
+    // SVG shape elements
+    line_ => Line;
+    rect => Rect; circle => Circle; ellipse => Elipse; polygon => Polygon; polyline => Polyline;
+    mesh => Mesh; path => Path; defs => Defs; marker => Marker; mask => Mask;
+    // SVG container elements
+    svg => Svg; g => G;
+    // SVG gradient elements
+    linear_gradient => LinearGradient; radial_gradient => RadialGradient; mesh_gradient => MeshGradient;
+    stop => Stop;
+    // SVG gradphics elements
+    image => Image;
+    // SVG graphics referencing elements
+    r#use => Use;
+    // SVG text content elements
+    text => Text; tref => TRef; tspan => TSpan
 }
 
 // TODO:
-// Create the following macros
+// Create the following svg macros
 // - missing-glyph
 // - pattern
 // - switch
@@ -141,25 +147,16 @@ macro_rules! element_svg {
 //  - style
 //  - view
 
-
-element_svg! {
-    // SVG shape elements
-    line_ => Line;
-    rect => Rect; circle => Circle; ellipse => Elipse; polygon => Polygon; polyline => Polyline;
-    mesh => Mesh; path => Path; defs => Defs; marker => Marker; mask => Mask;
-    // SVG container elements
-    svg => Svg; g => G;
-    // SVG gradient elements
-    linear_gradient => LinearGradient; radial_gradient => RadialGradient; mesh_gradient => MeshGradient;
-    stop => Stop;
-    // SVG gradphics elements
-    image => Image;
-    // SVG graphics referencing elements
-    r#use => Use;
-    // SVG text content elements
-    text => Text; tref => TRef; tspan => TSpan
+#[macro_export]
+macro_rules! custom {
+    ( $($part:expr),* $(,)* ) => {
+        {
+            let mut el = El::empty(seed::dom_types::Tag::Custom("missingtagname".into()));
+            $ ( $part.update(&mut el); )*
+            el
+        }
+    };
 }
-
 
 /// Provide a shortcut for creating attributes.
 #[macro_export]

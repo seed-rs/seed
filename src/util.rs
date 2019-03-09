@@ -38,4 +38,3 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
         input.set_value(value);
     }
 }
-

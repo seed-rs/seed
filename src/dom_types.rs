@@ -1,12 +1,12 @@
 //! This module contains structs and enums that represent dom types, and their parts.
 //! These are the types used internally by our virtual dom.
 
+use super::{util, websys_bridge};
 use core::convert::AsRef;
 use pulldown_cmark;
 use std::{collections::HashMap, fmt};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
-use super::{util, websys_bridge};
 
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
@@ -52,9 +52,9 @@ impl From<String> for Namespace {
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 // Ignore clippy for these events re &T; let's keep the API clean
-    where
-        Ms: Clone + 'static,
-        T: ToString,
+where
+    Ms: Clone + 'static,
+    T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -182,59 +182,53 @@ impl<Ms> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-        where
-            T: AsRef<web_sys::EventTarget>,
+    where
+        T: AsRef<web_sys::EventTarget>,
     {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
         let trigger = self.trigger.clone();
         // This is the closure ran when a DOM element has an user defined callback
-        let closure =
-            Closure::wrap(
-                Box::new(move |event: web_sys::Event| {
-                    // Let the seed user handle the event
-                    let msg = handler(event.clone());
-                    mailbox.send(msg);
-                    // update the value field if needed
-                    // The update is needed when the event is of type input, the input field is
-                    // of type number, text or password and the DOM value field is different from
-                    // the default_value. Default value is the one set by the seed user when he sets the
-                    // value, setting the value in HTML only changes the default value, not
-                    // the actual value. To change the actual value it is necessary to call set_value
-                    if trigger == Ev::Input {
-                        let target = event.target().unwrap();
+        let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
+            // Let the seed user handle the event
+            let msg = handler(event.clone());
+            mailbox.send(msg);
+            // update the value field if needed
+            // The update is needed when the event is of type input, the input field is
+            // of type number, text or password and the DOM value field is different from
+            // the default_value. Default value is the one set by the seed user when he sets the
+            // value, setting the value in HTML only changes the default value, not
+            // the actual value. To change the actual value it is necessary to call set_value
+            if trigger == Ev::Input {
+                let target = event.target().unwrap();
 
-                        if let Some(input_el) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-                            let input_type = input_el.type_();
-                            // For number, text and password, might be useful for other inputs too
-                            // but breaks the file input for example, which cannot have its value
-                            // set by using the set_value function
-                            let should_trigger_rerender_with_set_value = {
-                                (input_type == "number"
-                                    || input_type == "text"
-                                    || input_type == "password")
-                            };
-                            if should_trigger_rerender_with_set_value {
-                                let value_set_by_seed_user = input_el.default_value();
-                                let actual_value = input_el.value();
-                                if value_set_by_seed_user != actual_value {
-                                    input_el.set_value(&value_set_by_seed_user);
-                                }
-                            }
+                if let Some(input_el) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+                    let input_type = input_el.type_();
+                    // For number, text and password, might be useful for other inputs too
+                    // but breaks the file input for example, which cannot have its value
+                    // set by using the set_value function
+                    let should_trigger_rerender_with_set_value = {
+                        (input_type == "number" || input_type == "text" || input_type == "password")
+                    };
+                    if should_trigger_rerender_with_set_value {
+                        let value_set_by_seed_user = input_el.default_value();
+                        let actual_value = input_el.value();
+                        if value_set_by_seed_user != actual_value {
+                            input_el.set_value(&value_set_by_seed_user);
                         }
-//                            else if let Some(select_el) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-//                            let value_set_by_seed_user = select_el.default_value();
-//                            let actual_value = select_el.value();
-//                            if value_set_by_seed_user != actual_value {
-//                                select_el.set_value(&value_set_by_seed_user);
-//                            }
-//                        }
-                        // todo do we need to handle textarea separately?
-                        // todo should just get attach_control (below) working
                     }
-                })
-                    as Box<FnMut(web_sys::Event) + 'static>,
-            );
+                }
+                //                            else if let Some(select_el) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
+                //                            let value_set_by_seed_user = select_el.default_value();
+                //                            let actual_value = select_el.value();
+                //                            if value_set_by_seed_user != actual_value {
+                //                                select_el.set_value(&value_set_by_seed_user);
+                //                            }
+                //                        }
+                // todo do we need to handle textarea separately?
+                // todo should just get attach_control (below) working
+            }
+        }) as Box<FnMut(web_sys::Event) + 'static>);
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(
@@ -250,32 +244,31 @@ impl<Ms> Listener<Ms> {
         }
     }
 
-
-//    /// This method is where the processing logic for events happens.
-//    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-//        where
-//            T: AsRef<web_sys::EventTarget>,
-//    {
-//        let mut handler = self.handler.take().expect("Can't find old handler");
-//
-//        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-//        let closure =
-//            Closure::wrap(
-//                Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
-//                    as Box<FnMut(web_sys::Event) + 'static>,
-//            );
-//
-//        (el_ws.as_ref() as &web_sys::EventTarget)
-//            .add_event_listener_with_callback(
-//                self.trigger.as_str(),
-//                closure.as_ref().unchecked_ref(),
-//            )
-//            .expect("problem adding listener to element");
-//
-//        // Store the closure so we can detach it later. Not detaching it when an element
-//        // is removed will trigger a panic.
-//        self.closure = Some(closure);
-//    }
+    //    /// This method is where the processing logic for events happens.
+    //    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
+    //        where
+    //            T: AsRef<web_sys::EventTarget>,
+    //    {
+    //        let mut handler = self.handler.take().expect("Can't find old handler");
+    //
+    //        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
+    //        let closure =
+    //            Closure::wrap(
+    //                Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
+    //                    as Box<FnMut(web_sys::Event) + 'static>,
+    //            );
+    //
+    //        (el_ws.as_ref() as &web_sys::EventTarget)
+    //            .add_event_listener_with_callback(
+    //                self.trigger.as_str(),
+    //                closure.as_ref().unchecked_ref(),
+    //            )
+    //            .expect("problem adding listener to element");
+    //
+    //        // Store the closure so we can detach it later. Not detaching it when an element
+    //        // is removed will trigger a panic.
+    //        self.closure = Some(closure);
+    //    }
 
     // todo: Note this func and the above commented-out code: This approach, of passing
     // todo control values from the model appears not to work, perhaps due to a clash between
@@ -285,8 +278,7 @@ impl<Ms> Listener<Ms> {
 
     /// todo: Would like this in the same fn as attach, but run into issues
     /// between el_ws as EventTarget, and as Node. Could possibly resolve using traits.
-    pub fn attach_control(&mut self, el_ws: &web_sys::Node)
-    {
+    pub fn attach_control(&mut self, el_ws: &web_sys::Node) {
         // Dummy vars outside the closure to avoid lifetime problems.
         let val2 = self.control_val.clone();
         let checked2 = self.control_checked;
@@ -298,14 +290,14 @@ impl<Ms> Listener<Ms> {
                 }
             }
             if let Some(checked) = checked2 {
-                let input_el = &el_ws2.dyn_ref::<web_sys::HtmlInputElement>()
+                let input_el = &el_ws2
+                    .dyn_ref::<web_sys::HtmlInputElement>()
                     .expect("Problem casting as checkbox");
                 if input_el.checked() != checked {
                     input_el.set_checked(checked);
                 }
             }
-        }) as Box<FnMut(web_sys::Event) + 'static>,
-        );
+        }) as Box<FnMut(web_sys::Event) + 'static>);
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(
@@ -322,8 +314,8 @@ impl<Ms> Listener<Ms> {
     }
 
     pub fn detach<T>(&mut self, el_ws: &T)
-        where
-            T: AsRef<web_sys::EventTarget>,
+    where
+        T: AsRef<web_sys::EventTarget>,
     {
         let closure = self.closure.take().expect("Can't find closure to detach");
 
@@ -681,7 +673,8 @@ impl Attrs {
     }
 
     /// Add multiple values for a single attribute. Useful for classes.
-    pub fn add_multiple(&mut self, key: At, items: Vec<&str>) { // Ignore clippy re &[&str]
+    pub fn add_multiple(&mut self, key: At, items: Vec<&str>) {
+        // Ignore clippy re &[&str]
         // We can't loop through self.add, single the value we need is a single,
         // concatonated string.
         self.add(key, &items.join(" "));
@@ -742,7 +735,7 @@ impl Style {
 
 impl ToString for Style {
     /// Output style as a string, as would be set in the DOM as the attribute value
-/// for 'style'. Eg: "display: flex; font-size: 1.5em"
+    /// for 'style'. Eg: "display: flex; font-size: 1.5em"
     fn to_string(&self) -> String {
         if self.vals.keys().len() > 0 {
             self.vals
@@ -1024,11 +1017,11 @@ make_tags! {
 #[derive(Copy, Clone, Debug)]
 pub enum Optimize {
     Key(u32), // Helps correctly match children, prevening unecessary rerenders
-    Static,  // unimplemented, and possibly unecessary
+    Static,   // unimplemented, and possibly unecessary
 }
 
 /// An component in our virtual DOM.
-#[derive(Debug)]  // todo: Custom debug implementation where children are on new lines and indented.
+#[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -1057,8 +1050,8 @@ pub struct El<Ms: 'static> {
 
     // Lifecycle hooks
     pub hooks: LifecycleHooks,
-    pub empty: bool,  // Indicates not to render anything.
-    optimizations: Vec<Optimize>
+    pub empty: bool, // Indicates not to render anything.
+    optimizations: Vec<Optimize>,
 }
 
 type HookFn = Box<FnMut(&web_sys::Node)>;
@@ -1147,7 +1140,8 @@ impl<Ms> El<Ms> {
         let mut result = Vec::new();
         let children = el_ws_wrapper.child_nodes();
         for i in 0..children.length() {
-            let child = children.get(i)
+            let child = children
+                .get(i)
                 .expect("Can't find child in raw html element.");
 
             if let Some(child_vdom) = websys_bridge::el_from_ws(&child) {
@@ -1181,7 +1175,7 @@ impl<Ms> El<Ms> {
     pub fn key(&self) -> Option<u32> {
         for o in &self.optimizations {
             if let Optimize::Key(key) = o {
-                return Some(*key)
+                return Some(*key);
             }
         }
         None
@@ -1223,12 +1217,14 @@ impl<Ms> El<Ms> {
 
     /// Call f(&mut el) for this El and each of its descendants
     pub fn walk_tree_mut<F>(&mut self, mut f: F)
-    where F: FnMut(&mut Self)
+    where
+        F: FnMut(&mut Self),
     {
         // This inner function is required to avoid recursive compilation errors having to do
         // with the generic trait bound on F.
         fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-        where F: FnMut(&mut El<Ms>)
+        where
+            F: FnMut(&mut El<Ms>),
         {
             f(el);
 
@@ -1266,13 +1262,13 @@ impl<Ms> PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
-        self.tag == other.tag &&
-            self.attrs == other.attrs &&
-            self.style == other.style &&
-            self.text == other.text &&
-            self.listeners == other.listeners &&
-            self.namespace == other.namespace &&
-            self.empty == other.empty
+        self.tag == other.tag
+            && self.attrs == other.attrs
+            && self.style == other.style
+            && self.text == other.text
+            && self.listeners == other.listeners
+            && self.namespace == other.namespace
+            && self.empty == other.empty
     }
 }
 
@@ -1324,10 +1320,10 @@ pub mod tests {
 
     //    wasm_bindgen_test_configure!(run_in_browser);
 
-//    #[derive(Clone)]
-//    enum Msg {
-//        Placeholder,
-//    }
+    //    #[derive(Clone)]
+    //    enum Msg {
+    //        Placeholder,
+    //    }
 
     // todo now that we use text nodes, same problem as nested
     //    #[wasm_bindgen_test]

@@ -10,7 +10,7 @@ use web_sys::{Document, Element, Event, EventTarget, Window};
 pub enum Update<Ms, Mdl> {
     Render(Mdl),
     Skip(Mdl),
-    RenderThen(Mdl, Ms)
+    RenderThen(Mdl, Ms),
 }
 
 impl<Ms, Mdl> Update<Ms, Mdl> {
@@ -24,7 +24,6 @@ impl<Ms, Mdl> Update<Ms, Mdl> {
     }
 }
 // todo should this go here? do we need it?
-
 
 type UpdateFn<Ms, Mdl> = fn(Ms, Mdl) -> Update<Ms, Mdl>;
 type ViewFn<Ms, Mdl> = fn(App<Ms, Mdl>, &Mdl) -> El<Ms>;
@@ -159,21 +158,18 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
         let window = util::window();
-        let document = window
-            .document()
-            .expect("Can't find the window's document");
+        let document = window.document().expect("Can't find the window's document");
 
         // We log an error instead of relying on panic/except due to the panic hook not yet
         // being active.
         let mount_point;
-        match document
-            .get_element_by_id(parent_div_id) {
+        match document.get_element_by_id(parent_div_id) {
             Some(mp) => mount_point = mp,
             None => {
                 let text = "Can't finding parent div id (defaults to \"app\", or can be set with the .mount() method)";
                 crate::error(text);
                 panic!(text);
-            },
+            }
         }
 
         Self {
@@ -241,19 +237,14 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes) = self.data.routes.borrow().clone() {  // ignore clippy re clone() on copy
-            routing::setup_popstate_listener(
-                &routing::initial(self.clone(), routes),
-                routes
-            );
+        if let Some(routes) = self.data.routes.borrow().clone() {
+            // ignore clippy re clone() on copy
+            routing::setup_popstate_listener(&routing::initial(self.clone(), routes), routes);
             routing::setup_link_listener(&self, routes);
-
         }
 
         // Allows panic messages to output to the browser console.error.
         panic::set_hook(Box::new(console_error_panic_hook::hook));
-
-
 
         self
     }
@@ -272,7 +263,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             Update::Skip(mdl) => {
                 should_render = false;
                 mdl
-            },
+            }
             Update::RenderThen(mdl, msg) => {
                 effect_msg = Some(msg);
                 mdl
@@ -323,7 +314,12 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // have associated web_sys elements.
             let mut topel_new_vdom = (self.cfg.view)(self.clone(), model);
 
-            let mut old_vdom = self.data.main_el_vdom.borrow_mut().take().expect("missing main_el_vdom");
+            let mut old_vdom = self
+                .data
+                .main_el_vdom
+                .borrow_mut()
+                .take()
+                .expect("missing main_el_vdom");
 
             // Detach all old listeners before patching. We'll re-add them as required during patching.
             // We'll get a runtime panic if any are left un-removed.
@@ -374,12 +370,15 @@ fn setup_input_listener<Ms>(el: &mut El<Ms>)
 where
     Ms: Clone + 'static,
 {
-    if el.tag == dom_types::Tag::Input || el.tag == dom_types::Tag::Select || el.tag == dom_types::Tag::TextArea {
+    if el.tag == dom_types::Tag::Input
+        || el.tag == dom_types::Tag::Select
+        || el.tag == dom_types::Tag::TextArea
+    {
         let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
             let checked_bool = match checked.as_ref() {
                 "true" => true,
                 "false" => false,
-                _ => panic!("checked must be true or false.")
+                _ => panic!("checked must be true or false."),
             };
             dom_types::Listener::new_control_check(checked_bool)
         } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
@@ -388,7 +387,7 @@ where
             // If Value is not specified, force the field to be blank.
             dom_types::Listener::new_control("".to_string())
         };
-        el.listeners.push(listener);  // Add to the El, so we can deattach later.
+        el.listeners.push(listener); // Add to the El, so we can deattach later.
     }
 }
 
@@ -494,7 +493,6 @@ fn patch<'a, Ms: Clone>(
     let old_el_ws = old.el_ws.take()?;
 
     if old != *new {
-
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
         // analyzing children
@@ -504,50 +502,52 @@ fn patch<'a, Ms: Clone>(
         // TODO: forcing a rerender for differnet listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
         if new.empty && !old.empty {
-            parent.remove_child(&old_el_ws)
+            parent
+                .remove_child(&old_el_ws)
                 .expect("Problem removing old we_el when updating to empty");
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 unmount_actions(&old_el_ws)
             }
             return None;
-            // If new and old are empty, we don't need to do anything.
+        // If new and old are empty, we don't need to do anything.
         } else if new.empty && old.empty {
             return None;
         }
-            // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
-            // Something about this element itself is different: patch it.
-//            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
-            else if old.tag != new.tag || old.namespace != new.namespace {
-                // TODO: DRY here between this and later in func.
-                if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                    unmount_actions(&old_el_ws)
-                }
-
-                // todo: Perhaps some of this next segment should be moved to websys_bridge
-                setup_websys_el_and_children(document, new);
-                websys_bridge::attach_children(new);
-
-                let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
-
-                if old.empty {
-                    parent.insert_before(new_el_ws, next_node.as_ref())
-                        .expect("Problem adding element to replace previously empty one");
-                } else {
-                    parent
-                        .replace_child(new_el_ws, &old_el_ws)
-                        .expect("Problem replacing element");
-                }
-
-                // Perform side-effects specified for mounting.
-                if let Some(mount_actions) = &mut new.hooks.did_mount {
-                    mount_actions(new_el_ws);
-                }
-
-                let mut new = new;
-                attach_listeners(&mut new, &mailbox);
-                // We've re-rendered this child and all children; we're done with this recursion.
-                return new.el_ws.as_ref();
+        // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
+        // Something about this element itself is different: patch it.
+        //            else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
+        else if old.tag != new.tag || old.namespace != new.namespace {
+            // TODO: DRY here between this and later in func.
+            if let Some(unmount_actions) = &mut old.hooks.will_unmount {
+                unmount_actions(&old_el_ws)
             }
+
+            // todo: Perhaps some of this next segment should be moved to websys_bridge
+            setup_websys_el_and_children(document, new);
+            websys_bridge::attach_children(new);
+
+            let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
+
+            if old.empty {
+                parent
+                    .insert_before(new_el_ws, next_node.as_ref())
+                    .expect("Problem adding element to replace previously empty one");
+            } else {
+                parent
+                    .replace_child(new_el_ws, &old_el_ws)
+                    .expect("Problem replacing element");
+            }
+
+            // Perform side-effects specified for mounting.
+            if let Some(mount_actions) = &mut new.hooks.did_mount {
+                mount_actions(new_el_ws);
+            }
+
+            let mut new = new;
+            attach_listeners(&mut new, &mailbox);
+            // We've re-rendered this child and all children; we're done with this recursion.
+            return new.el_ws.as_ref();
+        }
         // The fourth empty case, where old is empty and new isn't, is handled when iterating through children.
 
         // Patch parts of the Element.
@@ -582,33 +582,33 @@ fn patch<'a, Ms: Clone>(
         // If a key's specified, use it to match the child
         // There can be multiple optomizations, but assume one key. If there are multiple
         // keys, use the first (There should only be one, but no constraints atm).
-//        if let Some(key) = child_new.key() {
-//            let _matching = old.children.iter().filter(|c| c.key() == Some(key));
-//            // todo continue implementation: Patch and re-order.
-//        }
+        //        if let Some(key) = child_new.key() {
+        //            let _matching = old.children.iter().filter(|c| c.key() == Some(key));
+        //            // todo continue implementation: Patch and re-order.
+        //        }
 
         //                match old.children.get(i_new) {
-//            Some(child_old) => {
-//                // todo: This approach is still inefficient use of key, since it overwrites
-//                // todo non-matching keys, preventing them from being found later.
-//                if let Some(key) = child_new.key() {
-//                    if child_old.key() == Some(key) {
-//                        continue
-//                    }
-//                }
-//
-//                // Don't compare equality here; we do that at the top of this function
-//                // in the recursion.
-//                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
-//                old_children_patched.push(child_old.id.expect("Can't find child's id"));
-//            },
-//            None => {
-//                // We ran out of old children to patch; create new ones.
-//                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
-//                let mut child_new = child_new;
-//                attach_listeners(&mut child_new, &mailbox);
-//            }
-//        }
+        //            Some(child_old) => {
+        //                // todo: This approach is still inefficient use of key, since it overwrites
+        //                // todo non-matching keys, preventing them from being found later.
+        //                if let Some(key) = child_new.key() {
+        //                    if child_old.key() == Some(key) {
+        //                        continue
+        //                    }
+        //                }
+        //
+        //                // Don't compare equality here; we do that at the top of this function
+        //                // in the recursion.
+        //                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
+        //                old_children_patched.push(child_old.id.expect("Can't find child's id"));
+        //            },
+        //            None => {
+        //                // We ran out of old children to patch; create new ones.
+        //                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
+        //                let mut child_new = child_new;
+        //                attach_listeners(&mut child_new, &mailbox);
+        //            }
+        //        }
 
         // Don't compare equality here; we do that at the top of this function
         // in the recursion.
@@ -621,8 +621,8 @@ fn patch<'a, Ms: Clone>(
                 Some(node) => node.next_sibling(),
                 None => old_el_ws.first_child(),
             },
-            &mailbox)
-        {
+            &mailbox,
+        ) {
             last_visited_node = Some(new_el_ws.clone());
         }
     }
@@ -631,57 +631,54 @@ fn patch<'a, Ms: Clone>(
     // don't have any matching items in the other.
 
     while let Some(child_new) = new_children_iter.next() {
-
-
         // We ran out of old children to patch; create new ones.
         setup_websys_el_and_children(document, child_new);
         websys_bridge::attach_el_and_children(child_new, &old_el_ws);
         attach_listeners(child_new, &mailbox);
     }
 
-//    // Now pair up children as best we can.
-//    // If there are the same number of children, assume there's a 1-to-1 mapping,
-//    // where we will not add or remove any; but patch as needed.
-//    let avail_old_children = &mut old.children;
-//    let mut prev_child: Option<web_sys::Node> = None;
-//    let mut best_match;
-////    let mut t;
-//    for (i_new, child_new) in new.children.iter_mut().enumerate() {
-//        if avail_old_children.is_empty() {
-//            // One or more new children has been added, or much content has
-//            // changed, or we've made a mistake: Attach new children.
-//            websys_bridge::attach_els(child_new, &old_el_ws);
-//            let mut child_new = child_new;
-//            attach_listeners(&mut child_new, &mailbox);
-//
-//        } else {
-//            // We still have old children to pick a match from. If we pick
-//            // incorrectly, or there is no "good" match, we'll have some
-//            // patching and/or attaching (rendering) to do in subsequent recursions.
-//            let mut scores: Vec<(u32, f32)> = avail_old_children
-//                .iter()
-//                .enumerate()
-//                .map(|(i_old, c_old)| (c_old.id.unwrap(), match_score(c_old, i_old, child_new, i_new)))
-//                .collect();
-//
-//            // should put highest score at the end.
-//            scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
-//
-//            // Sorting children vice picking the best one makes this easier to handle
-//            // without irking the borrow checker, despite appearing less counter-intuitive,
-//            // due to the convenient pop method.
-//            avail_old_children.sort_by(|b, a| {
-//                scores
-//                    .iter()
-//                    .find(|s| s.0 == b.id.unwrap())
-//                    .unwrap()
-//                    .1
-//                    .partial_cmp(&scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1)
-//                    .unwrap()
-//            });
-//
-//            best_match = avail_old_children.pop().expect("Problem popping");
-
+    //    // Now pair up children as best we can.
+    //    // If there are the same number of children, assume there's a 1-to-1 mapping,
+    //    // where we will not add or remove any; but patch as needed.
+    //    let avail_old_children = &mut old.children;
+    //    let mut prev_child: Option<web_sys::Node> = None;
+    //    let mut best_match;
+    ////    let mut t;
+    //    for (i_new, child_new) in new.children.iter_mut().enumerate() {
+    //        if avail_old_children.is_empty() {
+    //            // One or more new children has been added, or much content has
+    //            // changed, or we've made a mistake: Attach new children.
+    //            websys_bridge::attach_els(child_new, &old_el_ws);
+    //            let mut child_new = child_new;
+    //            attach_listeners(&mut child_new, &mailbox);
+    //
+    //        } else {
+    //            // We still have old children to pick a match from. If we pick
+    //            // incorrectly, or there is no "good" match, we'll have some
+    //            // patching and/or attaching (rendering) to do in subsequent recursions.
+    //            let mut scores: Vec<(u32, f32)> = avail_old_children
+    //                .iter()
+    //                .enumerate()
+    //                .map(|(i_old, c_old)| (c_old.id.unwrap(), match_score(c_old, i_old, child_new, i_new)))
+    //                .collect();
+    //
+    //            // should put highest score at the end.
+    //            scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
+    //
+    //            // Sorting children vice picking the best one makes this easier to handle
+    //            // without irking the borrow checker, despite appearing less counter-intuitive,
+    //            // due to the convenient pop method.
+    //            avail_old_children.sort_by(|b, a| {
+    //                scores
+    //                    .iter()
+    //                    .find(|s| s.0 == b.id.unwrap())
+    //                    .unwrap()
+    //                    .1
+    //                    .partial_cmp(&scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1)
+    //                    .unwrap()
+    //            });
+    //
+    //            best_match = avail_old_children.pop().expect("Problem popping");
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
     while let Some(mut child) = old_children_iter.next() {
@@ -694,8 +691,10 @@ fn patch<'a, Ms: Clone>(
 
         // todo get to the bottom of this
         match old_el_ws.remove_child(&child_el_ws) {
-            Ok(_) => {},
-            Err(_) => {crate::log("Minor error patching html element. (remove)");}
+            Ok(_) => {}
+            Err(_) => {
+                crate::log("Minor error patching html element. (remove)");
+            }
         }
     }
 
@@ -710,7 +709,6 @@ fn patch<'a, Ms: Clone>(
 //    });
 //    mailbox.send(message);
 //}
-
 
 pub trait _Attrs: PartialEq + ToString {
     fn vals(self) -> HashMap<String, String>;
@@ -815,7 +813,10 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(old_ws.child_nodes().length(), 1);
-        assert_eq!(old_ws.first_child().unwrap().text_content().unwrap(), "text");
+        assert_eq!(
+            old_ws.first_child().unwrap().text_content().unwrap(),
+            "text"
+        );
 
         call_patch(
             &doc,
@@ -828,8 +829,24 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(old_ws.child_nodes().length(), 3);
-        assert_eq!(old_ws.child_nodes().item(0).unwrap().text_content().unwrap(), "text");
-        assert_eq!(old_ws.child_nodes().item(1).unwrap().text_content().unwrap(), "more text");
+        assert_eq!(
+            old_ws
+                .child_nodes()
+                .item(0)
+                .unwrap()
+                .text_content()
+                .unwrap(),
+            "text"
+        );
+        assert_eq!(
+            old_ws
+                .child_nodes()
+                .item(1)
+                .unwrap()
+                .text_content()
+                .unwrap(),
+            "more text"
+        );
         let child3 = old_ws.child_nodes().item(2).unwrap();
         assert_eq!(child3.node_name(), "LI");
         assert_eq!(child3.text_content().unwrap(), "even more text");
@@ -862,13 +879,7 @@ pub mod tests {
         let old_child1 = old_ws.child_nodes().item(0).unwrap();
 
         // Now test that patch function removes the last 2 nodes
-        call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div!["text"],
-        );
+        call_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
 
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
@@ -914,9 +925,19 @@ pub mod tests {
             ],
         );
 
-        let child1 = old_ws.child_nodes().item(0).unwrap().dyn_into::<Element>().unwrap();
+        let child1 = old_ws
+            .child_nodes()
+            .item(0)
+            .unwrap()
+            .dyn_into::<Element>()
+            .unwrap();
         assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
-        let child3 = old_ws.child_nodes().item(2).unwrap().dyn_into::<Element>().unwrap();
+        let child3 = old_ws
+            .child_nodes()
+            .item(2)
+            .unwrap()
+            .dyn_into::<Element>()
+            .unwrap();
         assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
     }
 
@@ -942,22 +963,20 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
-            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            iter_child_nodes(&old_ws)
+                .map(|node| node.text_content().unwrap())
+                .collect::<Vec<_>>(),
             &["b", "c"],
         );
 
-        call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div!["a", "b", "c"],
-        );
+        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"]);
 
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
-            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            iter_child_nodes(&old_ws)
+                .map(|node| node.text_content().unwrap())
+                .collect::<Vec<_>>(),
             &["a", "b", "c"],
         );
     }
@@ -984,22 +1003,20 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
-            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            iter_child_nodes(&old_ws)
+                .map(|node| node.text_content().unwrap())
+                .collect::<Vec<_>>(),
             &["a", "c"],
         );
 
-        call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div!["a", "b", "c"],
-        );
+        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"]);
 
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
-            iter_child_nodes(&old_ws).map(|node| node.text_content().unwrap()).collect::<Vec<_>>(),
+            iter_child_nodes(&old_ws)
+                .map(|node| node.text_content().unwrap())
+                .collect::<Vec<_>>(),
             &["a", "b", "c"],
         );
     }
