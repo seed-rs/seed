@@ -367,7 +367,10 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     /// We re-render the virtual DOM on every change, but (attempt to) only change
     /// the actual DOM, via web_sys, when we need.
     /// The model stored in inner is the old model; updated_model is a newly-calculated one.
-    pub fn update(&self, message: Ms) {
+    pub fn update_inner(
+        &self,
+        message: Ms,
+    ) -> Option<Box<dyn Future<Item = (), Error = ()> + 'static>> {
         for l in self.data.msg_listeners.borrow().iter() {
             (l)(&message)
         }
@@ -421,19 +424,31 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         if let Some(effect) = effect {
             match effect {
-                Effect::Msg(msg) => self.update(msg),
-                Effect::FutureNoMsg(fut) => {
-                    future_to_promise(fut.then(|_res| future::ok(JsValue::UNDEFINED)));
-                }
+                Effect::Msg(msg) => self.update_inner(msg),
+
+                Effect::FutureNoMsg(fut) => Some(fut),
+
                 Effect::FutureMsg(fut) => {
                     let self2 = self.clone();
-                    future_to_promise(fut.then(move |res| {
-                        self2.update(res.unwrap_or_else(std::convert::identity));
-                        future::ok(JsValue::UNDEFINED)
-                    }));
+                    Some(Box::new(fut.then(move |res| {
+                        // Collapse Ok(Msg) and Err(Msg) to a Msg.
+                        let msg = res.unwrap_or_else(std::convert::identity);
+                        // Get next Some(future)
+                        let fut2 = self2.update_inner(msg);
+                        // We need to return a future anyway, so if we don't have one,
+                        // return a trivial one
+                        fut2.unwrap_or_else(|| Box::new(future::ok(())))
+                    })))
                 }
             }
+        } else {
+            None
         }
+    }
+
+    pub fn update(&self, message: Ms) {
+        self.update_inner(message)
+            .map(|fut| future_to_promise(fut.then(|_res| future::ok(JsValue::UNDEFINED))));
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
