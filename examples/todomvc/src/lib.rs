@@ -133,6 +133,7 @@ fn edit_submit(posit: usize, model: &mut Model) {
 
 fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     model.sync_storage(); // Doing it here will miss the most recent update...
+
     // todo has some bugs.
     match msg {
         Msg::ClearCompleted => {
@@ -205,7 +206,6 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
     }
     Render.into()
 }
-
 
 // View
 

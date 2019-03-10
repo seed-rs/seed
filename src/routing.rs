@@ -51,7 +51,7 @@ impl From<String> for Url {
     // todo: Include hash and search.
     fn from(s: String) -> Self {
         let mut path: Vec<String> = s.split('/').map(|s2| s2.to_string()).collect();
-        path.remove(0);  // Remove a leading empty string.
+        path.remove(0); // Remove a leading empty string.
         Self {
             path,
             hash: None,
