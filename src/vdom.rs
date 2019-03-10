@@ -195,6 +195,25 @@ impl<Ms: Clone + 'static, Mdl: 'static> ::std::fmt::Debug for App<Ms, Mdl> {
     }
 }
 
+fn find_mount_point(id: &str) -> Element {
+    let window = util::window();
+    let document = window.document().expect("Can't find the window's document");
+
+    // We log an error instead of relying on panic/except due to the panic hook not yet
+    // being active.
+    document.get_element_by_id(id).unwrap_or_else(|| {
+        let text = format!(
+            concat!(
+                "Can't find parent div with id={:?} (defaults to \"app\", or can be set with the .mount() method)",
+            ),
+            id,
+        );
+
+        crate::error(&text);
+        panic!(text);
+    })
+}
+
 #[derive(Clone)]
 pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static> {
     model: Mdl,
@@ -228,7 +247,7 @@ impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
             self.model,
             self.update,
             self.view,
-            parent_div_id,
+            find_mount_point(parent_div_id),
             self.routes,
             self.window_events,
         )
@@ -257,24 +276,12 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Ms, Mdl>,
-        parent_div_id: &str,
+        mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
         let window = util::window();
         let document = window.document().expect("Can't find the window's document");
-
-        // We log an error instead of relying on panic/except due to the panic hook not yet
-        // being active.
-        let mount_point;
-        match document.get_element_by_id(parent_div_id) {
-            Some(mp) => mount_point = mp,
-            None => {
-                let text = "Can't finding parent div id (defaults to \"app\", or can be set with the .mount() method)";
-                crate::error(text);
-                panic!(text);
-            }
-        }
 
         Self {
             cfg: Rc::new(AppCfg {
