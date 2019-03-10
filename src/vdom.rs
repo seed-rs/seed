@@ -1168,4 +1168,41 @@ pub mod tests {
             &["a", "c"],
         );
     }
+
+    /// Tests an update() function that repeatedly uses a future with a Msg to modify the model
+    #[wasm_bindgen_test(async)]
+    fn update_promises() -> impl Future<Item = (), Error = JsValue> {
+        struct Model(u32);
+
+        #[derive(Clone)]
+        struct Msg;
+
+        fn update(_: Msg, model: &mut Model) -> Update<Msg> {
+            model.0 += 1;
+
+            if model.0 < 100 {
+                Update::with_future_msg(future::ok(Msg)).skip()
+            } else {
+                Skip.into()
+            }
+        }
+
+        fn view(_: &Model) -> El<Msg> {
+            div!["test"]
+        }
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let app = App::new(Model(0), update, view, parent, None, None).run();
+
+        let app2 = app.clone();
+        app.update_inner(Msg)
+            .unwrap()
+            .map_err(|_: ()| JsValue::UNDEFINED)
+            .and_then(move |_| {
+                assert_eq!(app2.data.model.borrow_mut().0, 100);
+                Ok(())
+            })
+    }
 }
