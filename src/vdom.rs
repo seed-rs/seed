@@ -627,7 +627,11 @@ fn patch<'a, Ms: Clone>(
         }
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
-        else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
+        else if old.tag != new.tag
+            || old.namespace != new.namespace
+            || old.empty != new.empty
+            || old.text.is_some() != new.text.is_some()
+        {
             // TODO: DRY here between this and later in func.
 
             let old_el_ws = old.el_ws.take();
