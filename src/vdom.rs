@@ -1169,6 +1169,19 @@ pub mod tests {
         );
     }
 
+    /// Test that an empty->empty transition is handled correctly.
+    #[wasm_bindgen_test]
+    fn root_empty_to_empty() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let old = seed::empty();
+        call_patch(&doc, &parent, &mailbox, old, seed::empty());
+        assert_eq!(parent.children().length(), 0);
+    }
+
     /// Tests an update() function that repeatedly uses a future with a Msg to modify the model
     #[wasm_bindgen_test(async)]
     fn update_promises() -> impl Future<Item = (), Error = JsValue> {
