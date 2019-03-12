@@ -895,7 +895,7 @@ pub mod tests {
     use crate as seed; // required for macros to work.
     use crate::{class, prelude::*};
     use wasm_bindgen::JsCast;
-    use web_sys::Node;
+    use web_sys::{Node, Text};
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -1167,6 +1167,56 @@ pub mod tests {
                 .collect::<Vec<_>>(),
             &["a", "c"],
         );
+    }
+
+    /// Test that a text Node is correctly patched to an Element and vice versa
+    #[wasm_bindgen_test]
+    fn text_to_element_to_text() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = seed::empty();
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"));
+        assert_eq!(parent.child_nodes().length(), 1);
+        let text = parent
+            .first_child()
+            .unwrap()
+            .dyn_ref::<Text>()
+            .expect("not a Text node")
+            .clone();
+        assert_eq!(text.text_content().unwrap(), "abc");
+
+        // change to a span (that contains a text node and styling).
+        // span was specifically chosen here because text Els are saved with the span tag.
+        // (or at least they were when the test was written.)
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            span![style!["color" => "red"], "def"],
+        );
+        assert_eq!(parent.child_nodes().length(), 1);
+        let element = parent
+            .first_child()
+            .unwrap()
+            .dyn_ref::<Element>()
+            .expect("not an Element node")
+            .clone();
+        assert_eq!(&element.tag_name().to_lowercase(), "span");
+
+        // change back to a text node
+        call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"));
+        assert_eq!(parent.child_nodes().length(), 1);
+        let text = parent
+            .first_child()
+            .unwrap()
+            .dyn_ref::<Text>()
+            .expect("not a Text node")
+            .clone();
+        assert_eq!(text.text_content().unwrap(), "abc");
     }
 
     /// Tests an update() function that repeatedly uses a future with a Msg to modify the model
