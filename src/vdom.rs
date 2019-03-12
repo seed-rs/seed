@@ -108,6 +108,12 @@ impl<Ms> Update<Ms> {
         self
     }
 
+    /// Force rendering for this Update. Cancels `skip()`.
+    pub fn render(mut self) -> Self {
+        self.should_render = ShouldRender::Render;
+        self
+    }
+
     /// Apply a function to the message produced by the update effect, if one is present.
     /// If the effect is a future, the map function will be called after the future is
     /// finished running.
