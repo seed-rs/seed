@@ -678,6 +678,10 @@ fn patch<'a, Ms: Clone>(
         }
     }
 
+    if old.empty && new.empty {
+        return None;
+    }
+
     let old_el_ws = old.el_ws.take().unwrap();
 
     // Before running patch, assume we've removed all listeners from the old element.
