@@ -682,6 +682,10 @@ fn patch<'a, Ms: Clone>(
         }
     }
 
+    if old.empty && new.empty {
+        return None;
+    }
+
     let old_el_ws = old.el_ws.take().unwrap();
 
     // Before running patch, assume we've removed all listeners from the old element.
@@ -1171,6 +1175,19 @@ pub mod tests {
                 .collect::<Vec<_>>(),
             &["a", "c"],
         );
+    }
+
+    /// Test that an empty->empty transition is handled correctly.
+    #[wasm_bindgen_test]
+    fn root_empty_to_empty() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let old = seed::empty();
+        call_patch(&doc, &parent, &mailbox, old, seed::empty());
+        assert_eq!(parent.children().length(), 0);
     }
 
     /// Test that a text Node is correctly patched to an Element and vice versa
