@@ -633,7 +633,11 @@ fn patch<'a, Ms: Clone>(
         }
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
-        else if old.tag != new.tag || old.namespace != new.namespace || old.empty != new.empty {
+        else if old.tag != new.tag
+            || old.namespace != new.namespace
+            || old.empty != new.empty
+            || old.text.is_some() != new.text.is_some()
+        {
             // TODO: DRY here between this and later in func.
 
             let old_el_ws = old.el_ws.take();
@@ -682,6 +686,10 @@ fn patch<'a, Ms: Clone>(
                 .clone();
             websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
         }
+    }
+
+    if old.empty && new.empty {
+        return None;
     }
 
     let old_el_ws = old.el_ws.take().unwrap();
@@ -901,7 +909,7 @@ pub mod tests {
     use crate as seed; // required for macros to work.
     use crate::{class, prelude::*};
     use wasm_bindgen::JsCast;
-    use web_sys::Node;
+    use web_sys::{Node, Text};
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -1175,23 +1183,86 @@ pub mod tests {
         );
     }
 
-    /// Test that the lifecycle hooks are called correctly.
+    /// Test that an empty->empty transition is handled correctly.
     #[wasm_bindgen_test]
-    fn lifecycle_hooks() {
-        use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+    fn root_empty_to_empty() {
+        let mailbox = Mailbox::new(|_msg: Msg| {});
 
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let old = seed::empty();
+        call_patch(&doc, &parent, &mailbox, old, seed::empty());
+        assert_eq!(parent.children().length(), 0);
+    }
+
+    /// Test that a text Node is correctly patched to an Element and vice versa
+    #[wasm_bindgen_test]
+    fn text_to_element_to_text() {
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = seed::empty();
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"));
+        assert_eq!(parent.child_nodes().length(), 1);
+        let text = parent
+            .first_child()
+            .unwrap()
+            .dyn_ref::<Text>()
+            .expect("not a Text node")
+            .clone();
+        assert_eq!(text.text_content().unwrap(), "abc");
 
-        let node_ref: Rc<RefCell<Option<Node>>> = Default::default();
+        // change to a span (that contains a text node and styling).
+        // span was specifically chosen here because text Els are saved with the span tag.
+        // (or at least they were when the test was written.)
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            span![style!["color" => "red"], "def"],
+        );
+        assert_eq!(parent.child_nodes().length(), 1);
+        let element = parent
+            .first_child()
+            .unwrap()
+            .dyn_ref::<Element>()
+            .expect("not an Element node")
+            .clone();
+        assert_eq!(&element.tag_name().to_lowercase(), "span");
+
+        // change back to a text node
+        call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"));
+        assert_eq!(parent.child_nodes().length(), 1);
+        let text = parent
+            .first_child()
+            .unwrap()
+            .dyn_ref::<Text>()
+            .expect("not a Text node")
+            .clone();
+        assert_eq!(text.text_content().unwrap(), "abc");
+    }
+  
+  /// Test that the lifecycle hooks are called correctly.
+    #[wasm_bindgen_test]
+    fn lifecycle_hooks() {
+        use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+
+         let mailbox = Mailbox::new(|_msg: Msg| {});
+
+         let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+         let mut vdom = seed::empty();
+
+         let node_ref: Rc<RefCell<Option<Node>>> = Default::default();
         let mount_op_counter: Rc<AtomicUsize> = Default::default();
         let update_counter: Rc<AtomicUsize> = Default::default();
 
-        // A real view() function would recreate these closures on each call.
+         // A real view() function would recreate these closures on each call.
         // We create the closures once and then clone them, which is hopefully close enough.
         let did_mount_func = {
             let node_ref = node_ref.clone();
@@ -1227,7 +1298,7 @@ pub mod tests {
             }
         };
 
-        vdom = call_patch(
+         vdom = call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -1255,7 +1326,7 @@ pub mod tests {
             .unwrap()
             .is_same_node(Some(&first_child)));
 
-        // now modify the element, see if did_update gets called.
+         // now modify the element, see if did_update gets called.
         vdom = call_patch(
             &doc,
             &parent,
@@ -1283,7 +1354,7 @@ pub mod tests {
             "did_update wasn't called and should have been"
         );
 
-        // and now unmount the element to see if will_unmount gets called.
+         // and now unmount the element to see if will_unmount gets called.
         call_patch(&doc, &parent, &mailbox, vdom, seed::empty());
         assert!(node_ref.borrow().is_none(), "will_unmount wasn't called");
     }

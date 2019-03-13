@@ -109,6 +109,17 @@ pub fn mouse_ev<Ms, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
+/// See keyboard_ev
+pub fn pointer_ev<Ms, T: ToString>(
+    trigger: T,
+    mut handler: impl FnMut(web_sys::PointerEvent) -> Ms + 'static,
+) -> Listener<Ms> {
+    let closure = move |event: web_sys::Event| {
+        handler(event.dyn_ref::<web_sys::PointerEvent>().unwrap().clone())
+    };
+    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
+}
+
 ///// Update app state directly, ie not from a Listener/event.
 //pub fn update<Ms>() -> Listener<Ms> {
 //    let closure = move |event: web_sys::Event| handler(event);
@@ -814,7 +825,7 @@ macro_rules! make_events {
     }
 }
 
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Evs
+/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
 make_events! {
     Cached => "cached", Error => "error", Abort => "abort", Load => "load", BeforeUnload => "beforeunload",
     Unload => "unload", Online => "online", Offline => "offline", Focus => "focus", Blur => "blur",
@@ -835,6 +846,11 @@ make_events! {
     MouseMove => "mousemove", MouseOver => "mouseover", MouseOut => "mouseout", MouseUp => "mouseup",
     PointerLockChange => "pointerlockchange", PointerLockError => "pointerlockerror", Select => "select",
     Wheel => "wheel",
+
+    PointerOver => "pointerover", PointerEnter => "pointerenter",
+    PointerDown => "pointerdown", PointerMove => "pointermove", PointerUp => "pointerup",
+    PointerCancel => "pointercancel", PointerOut => "pointerout", PointerLeave => "pointerleave",
+    GotPointerCapture => "gotpointercapture", LostPointerCapture => "lostpointercapture",
 
     Drag => "drag", DragEnd => "dragend", DragEnter => "dragenter", DragStart => "dragstart", DragLeave => "dragleave",
     DragOver => "dragover", Drop => "drop",
