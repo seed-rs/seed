@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use seed::{spawn_local, Method, Request};
+use seed::{Method, Request};
 
 use futures::Future;
 
@@ -28,7 +28,7 @@ fn get_data() -> impl Future<Item = Msg, Error = Msg> {
 
 #[derive(Clone)]
 enum Msg {
-    GetData(seed::App<Msg, Model>),
+    GetData,
     Replace(Data),
     OnFetchErr(JsValue),
 }
@@ -55,7 +55,7 @@ fn view(model: &Model) -> El<Msg> {
     div![
         h1![format!("Val: {} Text: {}", model.data.val, model.data.text)],
         button![
-            raw_ev("click", move |_| Msg::GetData()),
+            raw_ev("click", move |_| Msg::GetData),
             "Update data"
         ]
     ]

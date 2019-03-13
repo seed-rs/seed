@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.0
+- `update` function now takes a mutable ref of the model. (Breaking)
+- `Update` (update's return type) is now a struct. (Breaking)
+- Async, etc events are now handled through messages, instead of passing `App`
+through the view func. (breaking)
+- Fixed some bugs with empty elements
+- Internal code cleanup
+- Added commented-out release command to example build files
+- Added more tests
+
 ## v0.2.10
 - Routing can be triggered by clicking any element containing a `Href` attribute
 with value as a relative link
