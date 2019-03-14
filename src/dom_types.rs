@@ -155,11 +155,6 @@ impl<Ms> fmt::Debug for Listener<Ms> {
     }
 }
 
-impl <Ms> Listener<Ms> 
-{
-
-}
-
 impl<Ms> Listener<Ms> {
     pub fn new(trigger: &str, handler: Option<EventHandler<Ms>>) -> Self {
         Self {
