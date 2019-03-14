@@ -155,6 +155,11 @@ impl<Ms> fmt::Debug for Listener<Ms> {
     }
 }
 
+impl <Ms> Listener<Ms> 
+{
+
+}
+
 impl<Ms> Listener<Ms> {
     pub fn new(trigger: &str, handler: Option<EventHandler<Ms>>) -> Self {
         Self {
@@ -165,6 +170,21 @@ impl<Ms> Listener<Ms> {
             closure: None,
             control_val: None,
             control_checked: None,
+        }
+    }
+
+    fn convert_ms<OtherMs: Into<Ms> + 'static>(other: Listener<OtherMs>) -> Listener<Ms> {
+        Listener {
+            trigger: other.trigger,
+            handler: other.handler.map(|mut eh| {
+                Box::new(move |event| {
+                    let m = (*eh)(event);
+                    m.into()
+                }) as EventHandler<Ms>
+            }),
+            closure: other.closure,
+            control_val: other.control_val,
+            control_checked: other.control_checked
         }
     }
 
@@ -1118,6 +1138,33 @@ impl<Ms> El<Ms> {
             hooks: LifecycleHooks::default(),
             empty: false,
             optimizations: Vec::new(),
+        }
+    }
+
+    /// Converts an element with another message type into an element that can be returned by the
+    /// view function.
+    /// 
+    /// This allows the use of third party components to integrate with your application without
+    /// having to know about your Msg type beforehand. 
+    /// All that is required is that you implement `From<OtherMsg> for Msg` and hand off their
+    /// `OtherMsg` and section of state to their `update()` function (or equivalent) within your `update()` function.
+    ///
+    /// # Note
+    /// There is an overhead to calling this versus keeping all messages under one type.
+    /// The deeper the nested structure of children, the more time this will take to run.
+    pub fn convert_message<OtherMs: Into<Ms>>(other: El<OtherMs>) -> El<Ms> {
+        El {
+            tag: other.tag,
+            attrs: other.attrs,
+            style: other.style,
+            listeners: other.listeners.into_iter().map(Listener::convert_ms).collect(),
+            text: other.text,
+            children: other.children.into_iter().map(Self::convert_message).collect(),
+            el_ws: other.el_ws,
+            namespace: other.namespace,
+            hooks: other.hooks,
+            empty: other.empty,
+            optimizations: other.optimizations,
         }
     }
 
