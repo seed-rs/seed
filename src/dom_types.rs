@@ -840,7 +840,7 @@ make_events! {
     FullScreenChange => "fullscreenchange", FullScreenError => "fullscreenerror", Resize => "resize",
     Scroll => "scroll", Cut => "cut", Copy => "copy", Paste => "paste",
 
-    KeyDown => "keydown",
+    KeyDown => "keydown", KeyUp => "keyup",
     KeyPress => "keypress", AuxClick => "auxclick", Click => "click", ContextMenu => "contextmenu", DblClick => "dblclick",
     MouseDown => "mousedown", MouseEnter => "mouseenter", MouseLeave => "mouseleave",
     MouseMove => "mousemove", MouseOver => "mouseover", MouseOut => "mouseout", MouseUp => "mouseup",
