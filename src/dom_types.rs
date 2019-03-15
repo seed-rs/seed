@@ -346,7 +346,7 @@ impl<Ms> Listener<Ms> {
 
 impl <Ms: 'static> Listener<Ms> {
     /// Converts the message type of the listener.
-    fn convert_ms<OtherMs, F>(self, f: F) -> Listener<OtherMs>
+    fn map_message<OtherMs, F>(self, f: F) -> Listener<OtherMs>
     where
         F: Fn(Ms) -> OtherMs + 'static
     {
@@ -1139,16 +1139,15 @@ impl<Ms> El<Ms> {
         }
     }
 
-    /// Converts an element to have another message type so that it can be returned by the
-    /// view function.
+    /// Maps an element's message to have another message.
     /// 
-    /// This allows the use of third party components to integrate with your application without
+    /// This allows third party components to integrate with your application without
     /// having to know about your Msg type beforehand. 
     ///
     /// # Note
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
-    pub fn convert_message<OtherMs, F>(self, f: F) -> El<OtherMs>
+    pub fn map_message<OtherMs, F>(self, f: F) -> El<OtherMs>
     where
         F: Fn(Ms) -> OtherMs + Copy + 'static
     {
@@ -1156,9 +1155,9 @@ impl<Ms> El<Ms> {
             tag: self.tag,
             attrs: self.attrs,
             style: self.style,
-            listeners: self.listeners.into_iter().map(|l| Listener::convert_ms(l, f)).collect(),
+            listeners: self.listeners.into_iter().map(|l| l.map_message(f)).collect(),
             text: self.text,
-            children: self.children.into_iter().map(|c| c.convert_message(f)).collect(),
+            children: self.children.into_iter().map(|c| c.map_message(f)).collect(),
             el_ws: self.el_ws,
             namespace: self.namespace,
             hooks: self.hooks,
