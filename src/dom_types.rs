@@ -1333,7 +1333,8 @@ pub mod tests {
 
     use crate as seed; // required for macros to work.
     use crate::vdom;
-    use wasm_bindgen::JsCast;
+    use std::collections::HashSet;
+    use wasm_bindgen::{JsCast, JsValue};
     use web_sys::{Element, Node};
 
     #[derive(Clone, Debug)]
@@ -1355,17 +1356,40 @@ pub mod tests {
         el.el_ws.unwrap()
     }
 
+    /// Assumes Node is an Element
+    fn get_node_html(node: &Node) -> String {
+        node.dyn_ref::<Element>().unwrap().outer_html()
+    }
+
+    /// Assumes Node is an Element
+    fn get_node_attrs(node: &Node) -> HashMap<String, String> {
+        let element = node.dyn_ref::<Element>().unwrap();
+        element
+            .get_attribute_names()
+            .values()
+            .into_iter()
+            .map(|item_res| {
+                item_res.map(|item| {
+                    let name = item.as_string().unwrap();
+                    let value = element.get_attribute(&name).unwrap();
+                    (name, value)
+                })
+            })
+            .collect::<Result<HashMap<String, String>, JsValue>>()
+            .unwrap()
+    }
+
     #[wasm_bindgen_test]
-    pub fn single() {
+    pub fn single_div() {
         let expected = "<div>test</div>";
 
         let node = el_to_websys(div!["test"]);
 
-        assert_eq!(expected, node.dyn_ref::<Element>().unwrap().outer_html());
+        assert_eq!(expected, get_node_html(&node));
     }
 
     #[wasm_bindgen_test]
-    pub fn nested() {
+    pub fn nested_divs() {
         let expected = "<section><div><div><h1>huge success</h1></div><p>\
                         I'm making a note here</p></div><span>This is a triumph</span></section>";
 
@@ -1374,11 +1398,11 @@ pub mod tests {
             span!["This is a triumph"]
         ]);
 
-        assert_eq!(expected, node.dyn_ref::<Element>().unwrap().outer_html());
+        assert_eq!(expected, get_node_html(&node));
     }
 
     #[wasm_bindgen_test]
-    pub fn attrs() {
+    pub fn attrs_work() {
         let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
         let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
 
@@ -1387,7 +1411,90 @@ pub mod tests {
             "ok"
         ]);
 
-        let actual_html = node.dyn_ref::<web_sys::Element>().unwrap().outer_html();
+        let actual_html = get_node_html(&node);
         assert!(expected == actual_html || expected2 == actual_html);
+    }
+
+    /// Tests that multiple attribute sections with unconflicting attributes are handled correctly
+    #[wasm_bindgen_test]
+    pub fn merge_different_attrs() {
+        let node = el_to_websys(a![
+            id!["my_id"],
+            style!["background-color" => "red"],
+            class!["my_class1"],
+            attrs![
+                At::Href => "#my_ref";
+            ],
+            attrs![
+                At::Name => "whatever";
+            ],
+        ]);
+
+        let mut expected = HashMap::new();
+        expected.insert("id".to_string(), "my_id".to_string());
+        expected.insert("style".to_string(), "background-color:red".to_string());
+        expected.insert("class".to_string(), "my_class1".to_string());
+        expected.insert("href".to_string(), "#my_ref".to_string());
+        expected.insert("name".to_string(), "whatever".to_string());
+        assert_eq!(expected, get_node_attrs(&node));
+    }
+
+    // TODO:
+    /*
+    /// Tests that multiple class attributes are handled correctly
+    #[wasm_bindgen_test]
+    pub fn merge_classes() {
+        let node = el_to_websys(a![
+            class!["my_class1", "my_class2"],
+            class!["my_class3"],
+            attrs![
+                At::Class => "my_class4 my_class5";
+            ]
+        ]);
+
+        let mut expected = HashMap::new();
+        expected.insert(
+            "class".to_string(),
+            "my_class1 my_class2 my_class3 my_class4 my_class5".to_string(),
+        );
+        assert_eq!(expected, get_node_attrs(&node));
+    }
+    */
+
+    /// Tests that multiple style sections are handled correctly
+    #[wasm_bindgen_test]
+    pub fn merge_styles() {
+        let node = el_to_websys(a![
+            style!["border-top" => "1px"; "border-bottom" => "red"],
+            style!["background-color" => "blue"],
+        ]);
+
+        let attrs = get_node_attrs(&node);
+        let actual_styles = attrs["style"]
+            .split(";")
+            .map(|x| x.to_string())
+            .collect::<HashSet<String>>();
+
+        let mut expected = HashSet::new();
+        expected.insert("border-top:1px".to_string());
+        expected.insert("border-bottom:red".to_string());
+        expected.insert("background-color:blue".to_string());
+        assert_eq!(expected, actual_styles);
+    }
+
+    /// Tests that multiple id attributes are handled correctly (the last ID should override the
+    /// previous values)
+    #[wasm_bindgen_test]
+    pub fn merge_id() {
+        let node = el_to_websys(a![
+            id!["my_id1"],
+            attrs![
+                At::Id => "my_id2";
+            ]
+        ]);
+
+        let mut expected = HashMap::new();
+        expected.insert("id".to_string(), "my_id2".to_string());
+        assert_eq!(expected, get_node_attrs(&node));
     }
 }
