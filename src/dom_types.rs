@@ -356,25 +356,25 @@ pub trait UpdateEl<T> {
 
 impl<Ms> UpdateEl<El<Ms>> for Attrs {
     fn update(self, el: &mut El<Ms>) {
-        el.attrs = self;
+        el.attrs.merge(self);
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for &Attrs {
     fn update(self, el: &mut El<Ms>) {
-        el.attrs = self.clone();
+        el.attrs.merge(self.clone());
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
-        el.style = self;
+        el.style.merge(self);
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for &Style {
     fn update(self, el: &mut El<Ms>) {
-        el.style = self.clone();
+        el.style.merge(self.clone());
     }
 }
 
@@ -692,12 +692,8 @@ impl Attrs {
     }
 
     /// Combine with another Attrs; if there's a conflict, use the other one.
-    pub fn merge(&self, other: &Self) -> Self {
-        let mut result = self.clone();
-        for (key, val) in &other.vals {
-            result.vals.insert(key.clone(), val.clone());
-        }
-        result
+    pub fn merge(&mut self, other: Self) {
+        self.vals.extend(other.vals.into_iter());
     }
 }
 
@@ -735,12 +731,8 @@ impl Style {
     }
 
     /// Combine with another Style; if there's a conflict, use the other one.
-    pub fn merge(&self, other: &Self) -> Self {
-        let mut result = self.clone();
-        for (key, val) in &other.vals {
-            result.vals.insert(key.clone(), val.clone());
-        }
-        result
+    pub fn merge(&mut self, other: Self) {
+        self.vals.extend(other.vals.into_iter());
     }
 }
 
