@@ -1326,73 +1326,68 @@ pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUn
 
 #[cfg(test)]
 pub mod tests {
-    // use crate as seed;
-    // required for macros to work.
-    //    use crate::prelude::*;
-    // use super::*;
-    // use crate::{attrs, div, h1, p, section, span};
-    //use wasm_bindgen_test::*;  // todo suddenly error about undec type/mod
-    //use wasm_bindgen_test::wasm_bindgen_test_configure;
+    use wasm_bindgen_test::*;
+    wasm_bindgen_test_configure!(run_in_browser);
 
-    //    wasm_bindgen_test_configure!(run_in_browser);
+    use super::*;
 
-    //    #[derive(Clone)]
-    //    enum Msg {
-    //        Placeholder,
-    //    }
+    use crate as seed; // required for macros to work.
+    use crate::vdom;
+    use wasm_bindgen::JsCast;
+    use web_sys::{Element, Node};
 
-    // todo now that we use text nodes, same problem as nested
-    //    #[wasm_bindgen_test]
-    //    pub fn single() {
-    //        let expected = "<div>test</div>";
-    //
-    //        let mut el: El<Msg> = div!["test"];
-    //        crate::vdom::setup_els(&crate::util::document(), &mut el);
-    //        assert_eq!(expected, el.el_ws.unwrap()
-    //            .dyn_ref::<web_sys::Element>().unwrap()
-    //            .outer_html());
-    //    }
+    #[derive(Clone, Debug)]
+    enum Msg {}
 
-    // todo children are not showing up not sure why.
-    //    #[wasm_bindgen_test]
-    //    pub fn nested() {
-    //        let expected = "<section><div><div><h1>huge success</h1></div><p>\
-    //        I'm making a note here</p></div><span>This is a triumph</span></section>";
-    //
-    //        let mut el: El<Msg> = section![
-    //            div![
-    //                div![
-    //                    h1![ "huge success" ]
-    //                ],
-    //                p![ "I'm making a note here" ]
-    //            ],
-    //            span![ "This is a triumph" ]
-    //        ];
-    //
-    //        crate::vdom::setup_els(&crate::util::document(), &mut el);
-    ////        assert_eq!(expected, el.el_ws.unwrap().first_element_child().unwrap().outer_html());
-    //        assert_eq!(expected, el.el_ws.unwrap().outer_html());
-    //    }
+    fn el_to_websys(mut el: El<Msg>) -> Node {
+        let document = crate::util::document();
+        let parent = document.create_element("div").unwrap();
 
-    // todo now that we use text nodes, same problem as nested
-    //    #[wasm_bindgen_test]
-    //    pub fn attrs() {
-    //        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
-    //        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
-    //
-    //        let mut el: El<Msg> = section![
-    //            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
-    //            "ok"
-    //        ];
-    //
-    //        crate::vdom::setup_els(&crate::util::document(), &mut el);
-    //        assert!(
-    //            expected == el.clone().el_ws.unwrap()
-    //                .dyn_ref::<web_sys::Element>().unwrap()
-    //                .outer_html()
-    //                || expected2 == el.el_ws.unwrap()
-    //                .dyn_ref::<web_sys::Element>().unwrap()
-    //                .outer_html()
-    //        );
-    //    }
+        vdom::patch(
+            &document,
+            seed::empty(),
+            &mut el,
+            &parent,
+            None,
+            &vdom::Mailbox::new(|_: Msg| {}),
+        );
+
+        el.el_ws.unwrap()
+    }
+
+    #[wasm_bindgen_test]
+    pub fn single() {
+        let expected = "<div>test</div>";
+
+        let node = el_to_websys(div!["test"]);
+
+        assert_eq!(expected, node.dyn_ref::<Element>().unwrap().outer_html());
+    }
+
+    #[wasm_bindgen_test]
+    pub fn nested() {
+        let expected = "<section><div><div><h1>huge success</h1></div><p>\
+                        I'm making a note here</p></div><span>This is a triumph</span></section>";
+
+        let node = el_to_websys(section![
+            div![div![h1!["huge success"]], p!["I'm making a note here"]],
+            span!["This is a triumph"]
+        ]);
+
+        assert_eq!(expected, node.dyn_ref::<Element>().unwrap().outer_html());
+    }
+
+    #[wasm_bindgen_test]
+    pub fn attrs() {
+        let expected = "<section src=\"https://seed-rs.org\" class=\"biochemistry\">ok</section>";
+        let expected2 = "<section class=\"biochemistry\" src=\"https://seed-rs.org\">ok</section>";
+
+        let node = el_to_websys(section![
+            attrs! {"class" => "biochemistry"; "src" => "https://seed-rs.org"},
+            "ok"
+        ]);
+
+        let actual_html = node.dyn_ref::<web_sys::Element>().unwrap().outer_html();
+        assert!(expected == actual_html || expected2 == actual_html);
+    }
 }
