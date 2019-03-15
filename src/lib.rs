@@ -11,11 +11,12 @@ pub use crate::{
 };
 use wasm_bindgen::{closure::Closure, JsCast};
 
+#[macro_use]
+pub mod shortcuts;
+
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;
-#[macro_use]
-pub mod shortcuts;
 pub mod storage;
 mod util;
 mod vdom;
