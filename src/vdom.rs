@@ -583,7 +583,7 @@ fn setup_window_listeners<Ms: Clone>(
     }
 }
 
-fn patch<'a, Ms: Clone>(
+pub(crate) fn patch<'a, Ms: Clone>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
