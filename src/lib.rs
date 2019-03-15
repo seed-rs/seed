@@ -11,11 +11,12 @@ pub use crate::{
 };
 use wasm_bindgen::{closure::Closure, JsCast};
 
+#[macro_use]
+pub mod shortcuts;
+
 pub mod dom_types;
 pub mod fetch;
 pub mod routing;
-#[macro_use]
-pub mod shortcuts;
 pub mod storage;
 mod util;
 mod vdom;
@@ -89,7 +90,7 @@ pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
 pub mod prelude {
     pub use crate::{
         dom_types::{
-            did_mount, did_update, input_ev, keyboard_ev, mouse_ev, raw_ev, simple_ev,
+            did_mount, did_update, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
             will_unmount, At, El, Ev, Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
