@@ -137,7 +137,7 @@ impl<Ms> Update<Ms> {
 
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
 type ViewFn<Ms, Mdl> = fn(&Mdl) -> El<Ms>;
-type RoutesFn<Ms> = fn(&crate::routing::Url) -> Ms;
+type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
 
@@ -346,12 +346,20 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         self.data.main_el_vdom.replace(Some(topel_vdom));
 
         let self_for_closure = self.clone();
+        let self_for_closure2 = self.clone();
+        let self_for_closure3 = self.clone();
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes) = self.clone().data.routes.borrow().clone() {
+        if let Some(routes) = self.data.routes.borrow().clone() {
             routing::initial(|msg| self.update(msg), routes);
-            routing::setup_popstate_listener(&self, routes);
-            routing::setup_link_listener(move |msg| self_for_closure.update(msg), routes);
+            routing::setup_popstate_listener(
+                move |msg| self_for_closure.update(msg),
+                move |closure| {
+                    self_for_closure2.data.popstate_closure.replace(Some(closure));
+                },
+                routes
+            );
+            routing::setup_link_listener(move |msg| self_for_closure3.update(msg), routes);
         }
 
         // Allows panic messages to output to the browser console.error.

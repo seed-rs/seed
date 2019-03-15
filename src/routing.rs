@@ -1,7 +1,21 @@
+//! This module is decoupled / independent.
+
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
-use crate::{util, App};
+
+/// Repeated here from seed::util, to make this module standalone.
+mod util {
+    /// Convenience function to avoid repeating expect logic.
+    pub fn window() -> web_sys::Window {
+        web_sys::window().expect("Can't find the global Window")
+    }
+
+    /// Convenience function to access the web_sys DOM document.
+    pub fn document() -> web_sys::Document {
+        window().document().expect("Can't find document")
+    }
+}
 
 /// Contains all information used in pushing and handling routes.
 /// Based on React-Reason's router:
@@ -86,9 +100,8 @@ fn get_search() -> String {
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(&Url) -> Ms)
-where
-    Ms: Clone + 'static,
-    //    Mdl: 'static,
+    where
+        Ms: Clone + 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -182,36 +195,14 @@ pub fn push_path<T: ToString>(path: Vec<T>) {
     push_route(Url::new(path));
 }
 
-pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms)
-// todo: Make this use an update fn instead of app to. Current limfac: Replace popstate listener.
-//pub fn setup_popstate_listener<Ms + 'static>(update: impl Fn(Ms) + 'static, routes: fn(&Url) -> Ms)
-where
-    Ms: Clone,
+/// Add a listener that handles routing for navigation events like forward and back.
+pub fn setup_popstate_listener<Ms>(
+    update: impl Fn(Ms) + 'static,
+    update_ps_listener: impl Fn(Closure<FnMut(web_sys::Event)>) + 'static,
+    routes: fn(&Url) -> Ms)
+    where
+        Ms: Clone + 'static,
 {
-    // We can't reuse the app later to store the popstate once moved into the closure.
-    let app_for_closure = app.clone();
-    //
-    //    let closure = util::make_closure(
-    //        move |ev: web_sys::Event| {
-    //        let ev = ev
-    //            .dyn_ref::<web_sys::PopStateEvent>()
-    //            .expect("Problem casting as Popstate event");
-    //
-    //        let url: Url = match ev.state().as_string() {
-    //            Some(state_str) => {
-    //                serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
-    //            }
-    //            // This might happen if we go back to a page before we started routing. (?)
-    //            None => {
-    //                let empty: Vec<String> = Vec::new();
-    //                Url::new(empty)
-    //            }
-    //        };
-    //
-    //        app_for_closure.update(routes(&url));
-    //        }
-    //    );
-
     let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
         let ev = ev
             .dyn_ref::<web_sys::PopStateEvent>()
@@ -228,22 +219,24 @@ where
             }
         };
 
-        app_for_closure.update(routes(&url));
+        update(routes(&url));
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
     (util::window().as_ref() as &web_sys::EventTarget)
         .add_event_listener_with_callback("popstate", closure.as_ref().unchecked_ref())
         .expect("Problem adding popstate listener");
 
-    app.data.popstate_closure.replace(Some(closure));
+    update_ps_listener(closure);
 }
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refreshfor internal links, and route internally.  Run this on load.
-pub fn setup_link_listener<Ms: Clone + 'static>(
+pub fn setup_link_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     routes: fn(&Url) -> Ms,
-) {
+) where
+    Ms: Clone + 'static
+{
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         if let Some(et) = event.target() {
             if let Some(el) = et.dyn_ref::<web_sys::Element>() {
@@ -262,7 +255,7 @@ pub fn setup_link_listener<Ms: Clone + 'static>(
                             return;
                         }
                         event.prevent_default(); // Prevent page refresh
-                                                 // Route internally based on href's value
+                        // Route internally based on href's value
                         let url = href.into();
                         update(routes(&url));
                         push_route(url);
