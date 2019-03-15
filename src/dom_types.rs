@@ -155,6 +155,9 @@ impl<Ms> fmt::Debug for Listener<Ms> {
     }
 }
 
+
+
+
 impl<Ms> Listener<Ms> {
     pub fn new(trigger: &str, handler: Option<EventHandler<Ms>>) -> Self {
         Self {
@@ -168,20 +171,7 @@ impl<Ms> Listener<Ms> {
         }
     }
 
-    fn convert_ms<OtherMs: Into<Ms> + 'static>(other: Listener<OtherMs>) -> Listener<Ms> {
-        Listener {
-            trigger: other.trigger,
-            handler: other.handler.map(|mut eh| {
-                Box::new(move |event| {
-                    let m = (*eh)(event);
-                    m.into()
-                }) as EventHandler<Ms>
-            }),
-            closure: other.closure,
-            control_val: other.control_val,
-            control_checked: other.control_checked
-        }
-    }
+
 
     /// Set up a listener that keeps the field's value in sync with the specific value,
     /// from the model
@@ -351,6 +341,27 @@ impl<Ms> Listener<Ms> {
                 closure.as_ref().unchecked_ref(),
             )
             .expect("problem removing listener from element");
+    }
+}
+
+impl <Ms: 'static> Listener<Ms> {
+    /// Converts the message type of the listener.
+    fn convert_ms<OtherMs, F>(self, f: F) -> Listener<OtherMs>
+    where
+        F: Fn(Ms) -> OtherMs + 'static
+    {
+        Listener {
+            trigger: self.trigger,
+            handler: self.handler.map(|mut eh| {
+                Box::new(move |event| {
+                    let m = (*eh)(event);
+                    (f)(m)
+                }) as EventHandler<OtherMs>
+            }),
+            closure: self.closure,
+            control_val: self.control_val,
+            control_checked: self.control_checked
+        }
     }
 }
 
@@ -1128,30 +1139,31 @@ impl<Ms> El<Ms> {
         }
     }
 
-    /// Converts an element with another message type into an element that can be returned by the
+    /// Converts an element to have another message type so that it can be returned by the
     /// view function.
     /// 
     /// This allows the use of third party components to integrate with your application without
     /// having to know about your Msg type beforehand. 
-    /// All that is required is that you implement `From<OtherMsg> for Msg` and hand off their
-    /// `OtherMsg` and section of state to their `update()` function (or equivalent) within your `update()` function.
     ///
     /// # Note
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
-    pub fn convert_message<OtherMs: Into<Ms>>(other: El<OtherMs>) -> El<Ms> {
+    pub fn convert_message<OtherMs, F>(self, f: F) -> El<OtherMs>
+    where
+        F: Fn(Ms) -> OtherMs + Copy + 'static
+    {
         El {
-            tag: other.tag,
-            attrs: other.attrs,
-            style: other.style,
-            listeners: other.listeners.into_iter().map(Listener::convert_ms).collect(),
-            text: other.text,
-            children: other.children.into_iter().map(Self::convert_message).collect(),
-            el_ws: other.el_ws,
-            namespace: other.namespace,
-            hooks: other.hooks,
-            empty: other.empty,
-            optimizations: other.optimizations,
+            tag: self.tag,
+            attrs: self.attrs,
+            style: self.style,
+            listeners: self.listeners.into_iter().map(|l| Listener::convert_ms(l, f)).collect(),
+            text: self.text,
+            children: self.children.into_iter().map(|c| c.convert_message(f)).collect(),
+            el_ws: self.el_ws,
+            namespace: self.namespace,
+            hooks: self.hooks,
+            empty: self.empty,
+            optimizations: self.optimizations,
         }
     }
 
