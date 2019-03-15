@@ -313,10 +313,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     /// an initial render.
     pub fn run(self) -> Self {
         // Our initial render. Can't initialize in new due to mailbox() requiring self.
-        // TODO: maybe have view take an update instead of whole app?
         // TODO: There's a lot of DRY between here and update.
-        //    let mut topel_vdom = (app.data.view)(app.clone(), model.clone());
-
         let window = util::window();
 
         let mut topel_vdom = (self.cfg.view)(&self.data.model.borrow());
@@ -348,12 +345,13 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         self.data.main_el_vdom.replace(Some(topel_vdom));
 
+        let self_for_closure = self.clone();
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes) = self.data.routes.borrow().clone() {
-            // ignore clippy re clone() on copy
-            routing::setup_popstate_listener(&routing::initial(self.clone(), routes), routes);
-            routing::setup_link_listener(&self, routes);
+        if let Some(routes) = self.clone().data.routes.borrow().clone() {
+            routing::initial(|msg| self.update(msg), routes);
+            routing::setup_popstate_listener(&self, routes);
+            routing::setup_link_listener(move |msg| self_for_closure.update(msg), routes);
         }
 
         // Allows panic messages to output to the browser console.error.
@@ -1245,24 +1243,24 @@ pub mod tests {
             .clone();
         assert_eq!(text.text_content().unwrap(), "abc");
     }
-  
-  /// Test that the lifecycle hooks are called correctly.
+
+    /// Test that the lifecycle hooks are called correctly.
     #[wasm_bindgen_test]
     fn lifecycle_hooks() {
         use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
-         let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Msg| {});
 
-         let doc = util::document();
+        let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-         let mut vdom = seed::empty();
+        let mut vdom = seed::empty();
 
-         let node_ref: Rc<RefCell<Option<Node>>> = Default::default();
+        let node_ref: Rc<RefCell<Option<Node>>> = Default::default();
         let mount_op_counter: Rc<AtomicUsize> = Default::default();
         let update_counter: Rc<AtomicUsize> = Default::default();
 
-         // A real view() function would recreate these closures on each call.
+        // A real view() function would recreate these closures on each call.
         // We create the closures once and then clone them, which is hopefully close enough.
         let did_mount_func = {
             let node_ref = node_ref.clone();
@@ -1298,7 +1296,7 @@ pub mod tests {
             }
         };
 
-         vdom = call_patch(
+        vdom = call_patch(
             &doc,
             &parent,
             &mailbox,
@@ -1326,7 +1324,7 @@ pub mod tests {
             .unwrap()
             .is_same_node(Some(&first_child)));
 
-         // now modify the element, see if did_update gets called.
+        // now modify the element, see if did_update gets called.
         vdom = call_patch(
             &doc,
             &parent,
@@ -1354,7 +1352,7 @@ pub mod tests {
             "did_update wasn't called and should have been"
         );
 
-         // and now unmount the element to see if will_unmount gets called.
+        // and now unmount the element to see if will_unmount gets called.
         call_patch(&doc, &parent, &mailbox, vdom, seed::empty());
         assert!(node_ref.borrow().is_none(), "will_unmount wasn't called");
     }

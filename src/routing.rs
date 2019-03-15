@@ -70,7 +70,6 @@ fn get_path() -> String {
     path[1..path.len()].to_string() // Remove leading /
 }
 
-// todo DRY
 fn get_hash() -> String {
     let hash = util::window().location().hash().expect("Can't find hash");
     hash.to_string().replace("#", "")
@@ -86,10 +85,10 @@ fn get_search() -> String {
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
-pub fn initial<Ms, Mdl>(app: App<Ms, Mdl>, routes: fn(&Url) -> Ms) -> App<Ms, Mdl>
+pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(&Url) -> Ms)
 where
     Ms: Clone + 'static,
-    Mdl: 'static,
+    //    Mdl: 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -114,8 +113,7 @@ where
         title: None,
     };
 
-    app.update(routes(&url));
-    app
+    update(routes(&url));
 }
 
 fn remove_first(s: &str) -> Option<&str> {
@@ -185,11 +183,35 @@ pub fn push_path<T: ToString>(path: Vec<T>) {
 }
 
 pub fn setup_popstate_listener<Ms, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms)
+// todo: Make this use an update fn instead of app to. Current limfac: Replace popstate listener.
+//pub fn setup_popstate_listener<Ms + 'static>(update: impl Fn(Ms) + 'static, routes: fn(&Url) -> Ms)
 where
     Ms: Clone,
 {
     // We can't reuse the app later to store the popstate once moved into the closure.
     let app_for_closure = app.clone();
+    //
+    //    let closure = util::make_closure(
+    //        move |ev: web_sys::Event| {
+    //        let ev = ev
+    //            .dyn_ref::<web_sys::PopStateEvent>()
+    //            .expect("Problem casting as Popstate event");
+    //
+    //        let url: Url = match ev.state().as_string() {
+    //            Some(state_str) => {
+    //                serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
+    //            }
+    //            // This might happen if we go back to a page before we started routing. (?)
+    //            None => {
+    //                let empty: Vec<String> = Vec::new();
+    //                Url::new(empty)
+    //            }
+    //        };
+    //
+    //        app_for_closure.update(routes(&url));
+    //        }
+    //    );
+
     let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
         let ev = ev
             .dyn_ref::<web_sys::PopStateEvent>()
@@ -218,9 +240,10 @@ where
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refreshfor internal links, and route internally.  Run this on load.
-pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) -> Ms) {
-    // todo DRY with setup_popstate listener.
-    let app_for_closure = app.clone();
+pub fn setup_link_listener<Ms: Clone + 'static>(
+    update: impl Fn(Ms) + 'static,
+    routes: fn(&Url) -> Ms,
+) {
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         if let Some(et) = event.target() {
             if let Some(el) = et.dyn_ref::<web_sys::Element>() {
@@ -229,7 +252,7 @@ pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) 
                 if tag == "Base" || tag == "Link" {
                     return;
                 }
-                // todo use anchor element/property??
+                // todo use anchor element/property?
                 if let Some(href) = el.get_attribute("href") {
                     if let Some(first) = href.chars().next() {
                         // The first character being / indicates a rel link, which is what
@@ -241,7 +264,7 @@ pub fn setup_link_listener<Ms: Clone, Mdl>(app: &App<Ms, Mdl>, routes: fn(&Url) 
                         event.prevent_default(); // Prevent page refresh
                                                  // Route internally based on href's value
                         let url = href.into();
-                        app_for_closure.update(routes(&url));
+                        update(routes(&url));
                         push_route(url);
                     }
                 }

@@ -1,3 +1,4 @@
+//use wasm_bindgen::{closure::{Closure, WasmClosure}, JsCast};
 use wasm_bindgen::JsCast;
 use web_sys;
 
@@ -38,3 +39,12 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
         input.set_value(value);
     }
 }
+
+// todo: Unable to get this convenience function working
+///// Prevent repetition when wrapping closures.
+////pub fn make_closure(inner: impl FnMut(web_sys::Event)) -> Box<FnMut(web_sys::Event) + 'static> {
+//pub fn make_closure<T>(inner: T) -> Closure<Box<T>>
+//    where T: WasmClosure {
+////    Closure::wrap(Box::new(inner)) as Box<FnMut(web_sys::Event) + 'static>
+//    Closure::wrap(Box::new(inner))
+//}
