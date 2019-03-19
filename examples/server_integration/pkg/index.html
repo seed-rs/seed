@@ -8,7 +8,7 @@
 <body>
 <section id="app"></section>
 
-<script src='/pkg/package.js'></script>
+<script src='/package.js'></script>
 
 <script>
     // the `wasm_bindgen` global is set to the exports of the Rust module
@@ -19,7 +19,7 @@
     }
     // here we tell bindgen the path to the wasm file so it can run
     // initialization and return to us a promise when it's done
-    wasm_bindgen('/pkg/package_bg.wasm')
+    wasm_bindgen('/package_bg.wasm')
         .then(run)
         .catch(console.error);
 </script>
