@@ -16,7 +16,7 @@ fn data_api() -> String {
 
 fn main() {
     rocket::ignite()
-        .mount("/", StaticFiles::from("./frontend"))
+        .mount("/", StaticFiles::from("./pkg"))
         .mount("/", routes![data_api])
         .launch();
 }
