@@ -221,18 +221,29 @@ fn find_mount_point(id: &str) -> Element {
 }
 
 #[derive(Clone)]
+enum Parent {
+    Id(&'static str),
+    El(Element),
+}
+
+#[derive(Clone)]
 pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Ms, Mdl>,
-    parent_div_id: Option<&'static str>,
+    parent: Option<Parent>,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
 impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
     pub fn mount(mut self, id: &'static str) -> Self {
-        self.parent_div_id = Some(id);
+        self.parent = Some(Parent::Id(id));
+        self
+    }
+
+    pub fn mount_el(mut self, el: Element) -> Self {
+        self.parent = Some(Parent::El(el));
         self
     }
 
@@ -247,13 +258,16 @@ impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
     }
 
     pub fn finish(self) -> App<Ms, Mdl> {
-        let parent_div_id = self.parent_div_id.unwrap_or("app");
+        let parent = match self.parent.unwrap_or(Parent::Id("app")) {
+            Parent::Id(parent_div_id) => find_mount_point(parent_div_id),
+            Parent::El(el) => el,
+        };
 
         App::new(
             self.model,
             self.update,
             self.view,
-            find_mount_point(parent_div_id),
+            parent,
             self.routes,
             self.window_events,
         )
@@ -272,7 +286,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             model,
             update,
             view,
-            parent_div_id: None,
+            parent: None,
             routes: None,
             window_events: None,
         }
