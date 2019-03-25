@@ -1,7 +1,7 @@
 //! This file exports helper macros for element creation, populated by a higher-level macro,
 //! and macros for creating the parts of elements. (attrs, style, events)
 
-/// Copied from https://github.com/rust-lang/rust/issues/35853.
+/// Copied from [https://github.com/rust-lang/rust/issues/35853][https://github.com/rust-lang/rust/issues/35853]
 macro_rules! with_dollar_sign {
     ($($body:tt)*) => {
         macro_rules! __with_dollar_sign { $($body)* }
