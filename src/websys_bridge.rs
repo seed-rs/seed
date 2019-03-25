@@ -304,21 +304,21 @@ pub fn to_input(target: &web_sys::EventTarget) -> &web_sys::HtmlInputElement {
         .expect("Unable to cast as an input element")
 }
 
-/// See to_input
+/// See [to_input](fn.to_input)
 pub fn to_textarea(target: &web_sys::EventTarget) -> &web_sys::HtmlTextAreaElement {
     target
         .dyn_ref::<web_sys::HtmlTextAreaElement>()
         .expect("Unable to cast as a textarea element")
 }
 
-/// See to_input
+/// See [to_input](fn.to_input)
 pub fn to_select(target: &web_sys::EventTarget) -> &web_sys::HtmlSelectElement {
     target
         .dyn_ref::<web_sys::HtmlSelectElement>()
         .expect("Unable to cast as a select element")
 }
 
-/// See to_input
+/// See [to_input](fn.to_input)
 pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
     target
         .dyn_ref::<web_sys::HtmlElement>()

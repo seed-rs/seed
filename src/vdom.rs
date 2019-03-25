@@ -10,6 +10,7 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
+/// Determines if an update should cause the VDom to rerender or not.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ShouldRender {
     Render,

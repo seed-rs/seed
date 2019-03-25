@@ -58,7 +58,8 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     callback.forget();
 }
 
-/// See set_interval
+/// See [set_interval](fn.set_interval.html)
+///
 ///
 /// # References
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Wemb/API/WindowOrWorkerGlobalScope/setTimeout)
