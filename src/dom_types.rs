@@ -52,9 +52,9 @@ impl From<String> for Namespace {
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 // Ignore clippy for these events re &T; let's keep the API clean
-    where
-        Ms: Clone + 'static,
-        T: ToString,
+where
+    Ms: Clone + 'static,
+    T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -155,9 +155,6 @@ impl<Ms> fmt::Debug for Listener<Ms> {
     }
 }
 
-
-
-
 impl<Ms> Listener<Ms> {
     pub fn new(trigger: &str, handler: Option<EventHandler<Ms>>) -> Self {
         Self {
@@ -170,8 +167,6 @@ impl<Ms> Listener<Ms> {
             control_checked: None,
         }
     }
-
-
 
     /// Set up a listener that keeps the field's value in sync with the specific value,
     /// from the model
@@ -198,8 +193,8 @@ impl<Ms> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-        where
-            T: AsRef<web_sys::EventTarget>,
+    where
+        T: AsRef<web_sys::EventTarget>,
     {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
@@ -330,8 +325,8 @@ impl<Ms> Listener<Ms> {
     }
 
     pub fn detach<T>(&mut self, el_ws: &T)
-        where
-            T: AsRef<web_sys::EventTarget>,
+    where
+        T: AsRef<web_sys::EventTarget>,
     {
         let closure = self.closure.take().expect("Can't find closure to detach");
 
@@ -344,11 +339,11 @@ impl<Ms> Listener<Ms> {
     }
 }
 
-impl <Ms: 'static> Listener<Ms> {
+impl<Ms: 'static> Listener<Ms> {
     /// Converts the message type of the listener.
     fn map_message<OtherMs, F>(self, f: F) -> Listener<OtherMs>
-        where
-            F: Fn(Ms) -> OtherMs + 'static
+    where
+        F: Fn(Ms) -> OtherMs + 'static,
     {
         Listener {
             trigger: self.trigger,
@@ -360,7 +355,7 @@ impl <Ms: 'static> Listener<Ms> {
             }),
             closure: self.closure,
             control_val: self.control_val,
-            control_checked: self.control_checked
+            control_checked: self.control_checked,
         }
     }
 }
@@ -1096,7 +1091,7 @@ pub struct LifecycleHooks<Ms> {
     pub will_unmount: Option<WillUnmount<Ms>>,
 }
 
-impl <Ms>LifecycleHooks<Ms> {
+impl<Ms> LifecycleHooks<Ms> {
     fn new() -> Self {
         Self {
             did_mount: None,
@@ -1113,7 +1108,7 @@ fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
     }
 }
 
-impl <Ms>fmt::Debug for LifecycleHooks<Ms> {
+impl<Ms> fmt::Debug for LifecycleHooks<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -1149,28 +1144,36 @@ impl<Ms> El<Ms> {
     }
 
     /// Maps an element's message to have another message.
-    /// 
+    ///
     /// This allows third party components to integrate with your application without
-    /// having to know about your Msg type beforehand. 
+    /// having to know about your Msg type beforehand.
     ///
     /// # Note
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
     pub fn map_message<OtherMs, F>(self, f: F) -> El<OtherMs>
-        where
-            F: Fn(Ms) -> OtherMs + Copy + 'static
+    where
+        F: Fn(Ms) -> OtherMs + Copy + 'static,
     {
         El {
             tag: self.tag,
             attrs: self.attrs,
             style: self.style,
-            listeners: self.listeners.into_iter().map(|l| l.map_message(f)).collect(),
+            listeners: self
+                .listeners
+                .into_iter()
+                .map(|l| l.map_message(f))
+                .collect(),
             text: self.text,
-            children: self.children.into_iter().map(|c| c.map_message(f)).collect(),
+            children: self
+                .children
+                .into_iter()
+                .map(|c| c.map_message(f))
+                .collect(),
             el_ws: self.el_ws,
             namespace: self.namespace,
             hooks: LifecycleHooks::new(),
-//            hooks: self.hooks,  // todo fix
+            //            hooks: self.hooks,  // todo fix
             empty: self.empty,
             optimizations: self.optimizations,
         }
@@ -1288,14 +1291,14 @@ impl<Ms> El<Ms> {
 
     /// Call f(&mut el) for this El and each of its descendants
     pub fn walk_tree_mut<F>(&mut self, mut f: F)
-        where
-            F: FnMut(&mut Self),
+    where
+        F: FnMut(&mut Self),
     {
         // This inner function is required to avoid recursive compilation errors having to do
         // with the generic trait bound on F.
         fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-            where
-                F: FnMut(&mut El<Ms>),
+        where
+            F: FnMut(&mut El<Ms>),
         {
             f(el);
 
@@ -1414,7 +1417,7 @@ pub mod tests {
     use super::*;
 
     use crate as seed; // required for macros to work.
-use crate::vdom;
+    use crate::vdom;
     use std::collections::HashSet;
     use wasm_bindgen::{JsCast, JsValue};
     use web_sys::{Element, Node};

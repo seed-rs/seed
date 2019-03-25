@@ -5,7 +5,7 @@
 pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_path, push_route, Url},
-    util::{document, window, log, error},
+    util::{document, error, log, window},
     vdom::App, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
@@ -39,7 +39,6 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
     el.empty = true;
     el
 }
-
 
 /// A high-level wrapper for web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0:
 /// https://rustwasm.github.io/wasm-bindgen/examples/closures.html

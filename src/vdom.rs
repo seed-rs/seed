@@ -1,8 +1,7 @@
-
 use crate::{
-dom_types,
-dom_types::{El, Namespace},
-routing, util, websys_bridge,
+    dom_types,
+    dom_types::{El, Namespace},
+    routing, util, websys_bridge,
 };
 use futures::{future, Future};
 use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
@@ -39,10 +38,10 @@ impl<Ms> Effect<Ms> {
     /// Apply a function to the message. If the effect is a future, the map function
     /// will be called after the future is finished running.
     pub fn map<F, Ms2>(self, f: F) -> Effect<Ms2>
-        where
-            Ms: 'static,
-            Ms2: 'static,
-            F: Fn(Ms) -> Ms2 + 'static,
+    where
+        Ms: 'static,
+        Ms2: 'static,
+        F: Fn(Ms) -> Ms2 + 'static,
     {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
@@ -84,8 +83,8 @@ impl<Ms> Update<Ms> {
     }
 
     pub fn with_future<F>(future: F) -> Self
-        where
-            F: Future<Item = (), Error = ()> + 'static,
+    where
+        F: Future<Item = (), Error = ()> + 'static,
     {
         Self {
             effect: Some(Effect::FutureNoMsg(Box::new(future))),
@@ -94,8 +93,8 @@ impl<Ms> Update<Ms> {
     }
 
     pub fn with_future_msg<F>(future: F) -> Self
-        where
-            F: Future<Item = Ms, Error = Ms> + 'static,
+    where
+        F: Future<Item = Ms, Error = Ms> + 'static,
     {
         Self {
             effect: Some(Effect::FutureMsg(Box::new(future))),
@@ -119,10 +118,10 @@ impl<Ms> Update<Ms> {
     /// If the effect is a future, the map function will be called after the future is
     /// finished running.
     pub fn map<F, Ms2>(self, f: F) -> Update<Ms2>
-        where
-            Ms: 'static,
-            Ms2: 'static,
-            F: Fn(Ms) -> Ms2 + 'static,
+    where
+        Ms: 'static,
+        Ms2: 'static,
+        F: Fn(Ms) -> Ms2 + 'static,
     {
         let Update {
             should_render,
@@ -370,9 +369,12 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             routing::setup_popstate_listener(
                 move |msg| self_for_closure.update(msg),
                 move |closure| {
-                    self_for_closure2.data.popstate_closure.replace(Some(closure));
+                    self_for_closure2
+                        .data
+                        .popstate_closure
+                        .replace(Some(closure));
                 },
-                routes
+                routes,
             );
             routing::setup_link_listener(move |msg| self_for_closure3.update(msg), routes);
         }
@@ -480,8 +482,8 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
-        where
-            F: Fn(&Ms) + 'static,
+    where
+        F: Fn(&Ms) + 'static,
     {
         self.data
             .msg_listeners
@@ -502,34 +504,34 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
 fn setup_input_listener<Ms>(el: &mut El<Ms>)
-    where
-        Ms: Clone + 'static,
+where
+    Ms: Clone + 'static,
 {
     if el.tag == dom_types::Tag::Input
         || el.tag == dom_types::Tag::Select
         || el.tag == dom_types::Tag::TextArea
-        {
-            let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
-                let checked_bool = match checked.as_ref() {
-                    "true" => true,
-                    "false" => false,
-                    _ => panic!("checked must be true or false."),
-                };
-                dom_types::Listener::new_control_check(checked_bool)
-            } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
-                dom_types::Listener::new_control(control_val.to_string())
-            } else {
-                // If Value is not specified, force the field to be blank.
-                dom_types::Listener::new_control("".to_string())
+    {
+        let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
+            let checked_bool = match checked.as_ref() {
+                "true" => true,
+                "false" => false,
+                _ => panic!("checked must be true or false."),
             };
-            el.listeners.push(listener); // Add to the El, so we can deattach later.
-        }
+            dom_types::Listener::new_control_check(checked_bool)
+        } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
+            dom_types::Listener::new_control(control_val.to_string())
+        } else {
+            // If Value is not specified, force the field to be blank.
+            dom_types::Listener::new_control("".to_string())
+        };
+        el.listeners.push(listener); // Add to the El, so we can deattach later.
+    }
 }
 
 // Create the web_sys element; add it to the working tree; store it in its corresponding vdom El.
 fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
-    where
-        Ms: Clone + 'static,
+where
+    Ms: Clone + 'static,
 {
     if el.el_ws.is_none() {
         el.el_ws = Some(websys_bridge::make_websys_el(el, document));
@@ -538,16 +540,16 @@ fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
 
 /// Recursively sets up input listeners
 fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-    where
-        Ms: Clone + 'static,
+where
+    Ms: Clone + 'static,
 {
     el_vdom.walk_tree_mut(setup_input_listener);
 }
 
 /// Recursively sets up web_sys elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
-    where
-        Ms: Clone + 'static,
+where
+    Ms: Clone + 'static,
 {
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
@@ -650,76 +652,76 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl>(
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 (unmount_actions.actions)(&old_el_ws);
                 if let Some(message) = unmount_actions.message.clone() {
-//                    app.update(message);
+                    //                    app.update(message);
                 }
             }
 
             return None;
-            // If new and old are empty, we don't need to do anything.
+        // If new and old are empty, we don't need to do anything.
         } else if new.empty && old.empty {
             return None;
         }
-            // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
-            // Something about this element itself is different: patch it.
-            else if old.tag != new.tag
-                || old.namespace != new.namespace
-                || old.empty != new.empty
-                || old.text.is_some() != new.text.is_some()
-                {
-                    // TODO: DRY here between this and later in func.
+        // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
+        // Something about this element itself is different: patch it.
+        else if old.tag != new.tag
+            || old.namespace != new.namespace
+            || old.empty != new.empty
+            || old.text.is_some() != new.text.is_some()
+        {
+            // TODO: DRY here between this and later in func.
 
-                    let old_el_ws = old.el_ws.take();
+            let old_el_ws = old.el_ws.take();
 
-                    if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                        (unmount_actions.actions)(
-                            old_el_ws
-                                .as_ref()
-                                .expect("old el_ws missing in call to unmount_actions"),
-                        );
-                        if let Some(message) = unmount_actions.message.clone() {
-//                            app.update(message);
-                        }
-                    }
-
-                    // todo: Perhaps some of this next segment should be moved to websys_bridge
-                    setup_websys_el_and_children(document, new);
-                    websys_bridge::attach_children(new, app);
-
-                    let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
-
-                    if old.empty {
-                        parent
-                            .insert_before(new_el_ws, next_node.as_ref())
-                            .expect("Problem adding element to replace previously empty one");
-                    } else {
-                        parent
-                            .replace_child(
-                                new_el_ws,
-                                &old_el_ws.expect("old el_ws missing in call to replace_child"),
-                            )
-                            .expect("Problem replacing element");
-                    }
-
-                    // Perform side-effects specified for mounting.
-                    if let Some(mount_actions) = &mut new.hooks.did_mount {
-                        (mount_actions.actions)(new_el_ws);
-                        if let Some(message) = mount_actions.message.clone() {
-//                            app.update_inner(message);
-                        }
-                    }
-
-                    attach_listeners(new, &mailbox);
-                    // We've re-rendered this child and all children; we're done with this recursion.
-                    return new.el_ws.as_ref();
-                } else {
-                // Patch parts of the Element.
-                let old_el_ws = old
-                    .el_ws
-                    .as_ref()
-                    .expect("missing old el_ws when patching non-empty el")
-                    .clone();
-                websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
+            if let Some(unmount_actions) = &mut old.hooks.will_unmount {
+                (unmount_actions.actions)(
+                    old_el_ws
+                        .as_ref()
+                        .expect("old el_ws missing in call to unmount_actions"),
+                );
+                if let Some(message) = unmount_actions.message.clone() {
+                    //                            app.update(message);
+                }
             }
+
+            // todo: Perhaps some of this next segment should be moved to websys_bridge
+            setup_websys_el_and_children(document, new);
+            websys_bridge::attach_children(new, app);
+
+            let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
+
+            if old.empty {
+                parent
+                    .insert_before(new_el_ws, next_node.as_ref())
+                    .expect("Problem adding element to replace previously empty one");
+            } else {
+                parent
+                    .replace_child(
+                        new_el_ws,
+                        &old_el_ws.expect("old el_ws missing in call to replace_child"),
+                    )
+                    .expect("Problem replacing element");
+            }
+
+            // Perform side-effects specified for mounting.
+            if let Some(mount_actions) = &mut new.hooks.did_mount {
+                (mount_actions.actions)(new_el_ws);
+                if let Some(message) = mount_actions.message.clone() {
+                    //                            app.update_inner(message);
+                }
+            }
+
+            attach_listeners(new, &mailbox);
+            // We've re-rendered this child and all children; we're done with this recursion.
+            return new.el_ws.as_ref();
+        } else {
+            // Patch parts of the Element.
+            let old_el_ws = old
+                .el_ws
+                .as_ref()
+                .expect("missing old el_ws when patching non-empty el")
+                .clone();
+            websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
+        }
     }
 
     if old.empty && new.empty {
@@ -747,9 +749,8 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl>(
 
     let mut last_visited_node: Option<web_sys::Node> = None;
 
-
     if let Some(update_actions) = &mut new.hooks.did_update {
-        (update_actions.actions)(&old_el_ws)  // todo
+        (update_actions.actions)(&old_el_ws) // todo
     }
 
     // Not using .zip() here to make sure we don't miss any of the children when one array is
@@ -801,7 +802,7 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl>(
                 None => old_el_ws.first_child(),
             },
             &mailbox,
-            app
+            app,
         ) {
             last_visited_node = Some(new_el_ws.clone());
         }
@@ -939,7 +940,7 @@ pub mod tests {
     use super::*;
 
     use crate as seed; // required for macros to work.
-use crate::{class, prelude::*};
+    use crate::{class, prelude::*};
     use wasm_bindgen::JsCast;
     use web_sys::{Node, Text};
 

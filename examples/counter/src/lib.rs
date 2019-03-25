@@ -85,7 +85,7 @@ fn view(model: &Model) -> El<Msg> {
                 h2![
                     style! {"padding" => 50},
                     "Nice!",
-//                    did_mount(|_| log!("This shows when clicks reach 10")).update2(Msg::ChangeWWC("Did mount".into())),
+                    //                    did_mount(|_| log!("This shows when clicks reach 10")).update2(Msg::ChangeWWC("Did mount".into())),
                     did_mount(|_| log!("This shows when clicks reach 10")),
                     will_unmount(|_| log!("This shows when clicks drop below 10")),
                 ]

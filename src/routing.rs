@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
-
 /// Repeated here from seed::util, to make this module standalone.
 mod util {
     /// Convenience function to avoid repeating expect logic.
@@ -113,8 +112,8 @@ fn get_search() -> String {
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(&Url) -> Ms)
-    where
-        Ms: Clone + 'static,
+where
+    Ms: Clone + 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -195,19 +194,20 @@ pub fn push_route<U: Into<Url>>(url3: U) {
     let location = util::window().location();
 
     if let Some(hash) = url.hash {
-        location
-            .set_hash(&hash)
-            .expect("Problem setting hash");
+        location.set_hash(&hash).expect("Problem setting hash");
     }
 
     if let Some(search) = url.search {
         location
-            .set_search(& search)
+            .set_search(&search)
             .expect("Problem setting search");
     }
 }
 
-#[deprecated(since = "0.3.1", note = "push_route now accepts a Vec<&str>; use that intstead.")]
+#[deprecated(
+    since = "0.3.1",
+    note = "push_route now accepts a Vec<&str>; use that intstead."
+)]
 pub fn push_path<T: ToString>(path: Vec<T>) {
     push_route(Url::new(path));
 }
@@ -216,9 +216,9 @@ pub fn push_path<T: ToString>(path: Vec<T>) {
 pub fn setup_popstate_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     update_ps_listener: impl Fn(Closure<FnMut(web_sys::Event)>) + 'static,
-    routes: fn(&Url) -> Ms)
-    where
-        Ms: Clone + 'static,
+    routes: fn(&Url) -> Ms,
+) where
+    Ms: Clone + 'static,
 {
     let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
         let ev = ev
@@ -248,11 +248,9 @@ pub fn setup_popstate_listener<Ms>(
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
-pub fn setup_link_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
-    routes: fn(&Url) -> Ms,
-) where
-    Ms: Clone + 'static
+pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(&Url) -> Ms)
+where
+    Ms: Clone + 'static,
 {
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         if let Some(et) = event.target() {
@@ -272,7 +270,7 @@ pub fn setup_link_listener<Ms>(
                             return;
                         }
                         event.prevent_default(); // Prevent page refresh
-                        // Route internally based on href's value
+                                                 // Route internally based on href's value
                         let url = href.into();
                         update(routes(&url));
                         push_route(url);

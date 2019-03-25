@@ -186,7 +186,11 @@ pub fn attach_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, app: &App<Ms, Mdl>)
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, parent: &web_sys::Node, app: &App<Ms, Mdl>) {
+pub fn attach_el_and_children<Ms: Clone, Mdl>(
+    el_vdom: &mut El<Ms>,
+    parent: &web_sys::Node,
+    app: &App<Ms, Mdl>,
+) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
@@ -217,7 +221,7 @@ pub fn attach_el_and_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, parent: &web
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
         (mount_actions.actions)(&el_ws);
         if let Some(message) = mount_actions.message.clone() {
-//            app.update(message);
+            //            app.update(message);
         }
     }
 
@@ -238,7 +242,7 @@ pub fn _remove_children(el: &web_sys::Node) {
 pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut new.hooks.did_update {
-        (update_actions.actions)(old_el_ws)  // todo
+        (update_actions.actions)(old_el_ws) // todo
     }
 
     if old.attrs != new.attrs {
