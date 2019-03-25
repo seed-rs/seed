@@ -124,9 +124,11 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 
 /// Create and return a web_sys Element from our virtual-dom El. The web_sys
 /// Element is a close analog to JS/DOM elements.
-/// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
-/// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
-/// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
+///
+/// # References
+/// * [web_sys Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
+/// * See also: [web_sys Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 pub fn make_websys_el<Ms: Clone>(
     el_vdom: &mut El<Ms>,
     document: &web_sys::Document,
