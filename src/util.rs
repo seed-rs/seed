@@ -48,3 +48,16 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
 ////    Closure::wrap(Box::new(inner)) as Box<FnMut(web_sys::Event) + 'static>
 //    Closure::wrap(Box::new(inner))
 //}
+
+/// A convenience function for logging to the web browser's console.  See also
+/// the log! macro, which is more flexible.
+pub fn log<S: ToString>(text: S) {
+    // ignore clippy about &S
+    web_sys::console::log_1(&text.to_string().into());
+}
+
+/// Similar to log, but for errors.
+pub fn error<S: ToString>(text: S) {
+    // ignore clippy about &S
+    web_sys::console::error_1(&text.to_string().into());
+}

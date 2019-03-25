@@ -4,6 +4,7 @@ import http.server
 import os
 import socketserver
 import urllib
+import sys
 
 PORT = 8000
 
@@ -26,7 +27,15 @@ handler.extensions_map.update({
 })
 
 socketserver.TCPServer.allow_reuse_address = True
-with socketserver.TCPServer(("", PORT), handler) as httpd:
+print("Serving at port", PORT)
+print("View at: http://localhost:{}/".format(PORT))
+# The context manager protocol is support only since python 3.6 and higher.
+if (3 <= sys.version_info[0]) and (6 <= sys.version_info[1]):
+    with socketserver.TCPServer(("", PORT), handler) as httpd:
+        httpd.allow_reuse_address = True
+        httpd.serve_forever()
+else:
+    httpd = socketserver.TCPServer(("", PORT), handler)
     httpd.allow_reuse_address = True
-    print("Serving at port", PORT)
     httpd.serve_forever()
+    httpd.serve_close()

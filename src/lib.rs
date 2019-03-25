@@ -5,7 +5,7 @@
 pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_path, push_route, Url},
-    util::{document, window},
+    util::{document, window, log, error},
     vdom::App, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
@@ -40,18 +40,6 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
     el
 }
 
-/// A convenience function for logging to the web browser's console.  See also
-/// the log! macro, which is more flexible.
-pub fn log<S: ToString>(text: S) {
-    // ignore clippy about &S
-    web_sys::console::log_1(&text.to_string().into());
-}
-
-/// Similar to log, but for errors.
-pub fn error<S: ToString>(text: S) {
-    // ignore clippy about &S
-    web_sys::console::error_1(&text.to_string().into());
-}
 
 /// A high-level wrapper for web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0:
 /// https://rustwasm.github.io/wasm-bindgen/examples/closures.html

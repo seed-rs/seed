@@ -3,6 +3,7 @@ use wasm_bindgen::JsCast;
 
 use crate::dom_types;
 use crate::dom_types::El;
+use crate::vdom::App;
 
 /// Reduces DRY
 /// todo can't find a suitable trait for this. Seems like set_autofocus is
@@ -169,14 +170,14 @@ pub fn make_websys_el<Ms: Clone>(
 }
 
 /// Similar to attach_el_and_children, but assumes we've already attached the parent.
-pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
+pub fn attach_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, app: &App<Ms, Mdl>) {
     let el_ws = el_vdom
         .el_ws
         .take()
         .expect("Missing websys el in attach children");
 
     for child in &mut el_vdom.children {
-        attach_el_and_children(child, &el_ws)
+        attach_el_and_children(child, &el_ws, app)
     }
 
     el_vdom.el_ws.replace(el_ws);
@@ -185,7 +186,7 @@ pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
+pub fn attach_el_and_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, parent: &web_sys::Node, app: &App<Ms, Mdl>) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
@@ -209,15 +210,18 @@ pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys:
     // appending the its children to the el_ws
     for child in &mut el_vdom.children {
         // Raise the active level once per recursion.
-        attach_el_and_children(child, &el_ws)
+        attach_el_and_children(child, &el_ws, app)
     }
 
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
-        mount_actions(&el_ws)
+        (mount_actions.actions)(&el_ws);
+        if let Some(message) = mount_actions.message.clone() {
+//            app.update(message);
+        }
     }
 
-    // Replace the web_sys el... Indiana-Jones-style.
+    // Replace the web_sys el
     el_vdom.el_ws.replace(el_ws);
 }
 
@@ -233,8 +237,8 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
     // Perform side-effects specified for updating
-    if let Some(update_actions) = &mut old.hooks.did_update {
-        update_actions(old_el_ws)
+    if let Some(update_actions) = &mut new.hooks.did_update {
+        (update_actions.actions)(old_el_ws)  // todo
     }
 
     if old.attrs != new.attrs {

@@ -390,21 +390,21 @@ impl<Ms> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for DidMount {
+impl<Ms> UpdateEl<El<Ms>> for DidMount<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.hooks.did_mount = Some(self.actions)
+        el.hooks.did_mount = Some(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for DidUpdate {
+impl<Ms> UpdateEl<El<Ms>> for DidUpdate<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.hooks.did_update = Some(self.actions)
+        el.hooks.did_update = Some(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for WillUnmount {
+impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.hooks.will_unmount = Some(self.actions)
+        el.hooks.will_unmount = Some(self)
     }
 }
 
@@ -1057,18 +1057,27 @@ pub struct El<Ms: 'static> {
     // ancestors: Vec<u32>  // ids of parent, grandparent etc.
 
     // Lifecycle hooks
-    pub hooks: LifecycleHooks,
+    pub hooks: LifecycleHooks<Ms>,
     pub empty: bool, // Indicates not to render anything.
     optimizations: Vec<Optimize>,
 }
 
 type HookFn = Box<FnMut(&web_sys::Node)>;
 
-#[derive(Default)]
-pub struct LifecycleHooks {
-    pub did_mount: Option<HookFn>,
-    pub did_update: Option<HookFn>,
-    pub will_unmount: Option<HookFn>,
+pub struct LifecycleHooks<Ms> {
+    pub did_mount: Option<DidMount<Ms>>,
+    pub did_update: Option<DidUpdate<Ms>>,
+    pub will_unmount: Option<WillUnmount<Ms>>,
+}
+
+impl <Ms>LifecycleHooks<Ms> {
+    fn new() -> Self {
+        Self {
+            did_mount: None,
+            did_update: None,
+            will_unmount: None,
+        }
+    }
 }
 
 fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
@@ -1078,7 +1087,7 @@ fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
     }
 }
 
-impl fmt::Debug for LifecycleHooks {
+impl <Ms>fmt::Debug for LifecycleHooks<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -1107,7 +1116,7 @@ impl<Ms> El<Ms> {
 
             // static: false,
             // static_to_parent: false,
-            hooks: LifecycleHooks::default(),
+            hooks: LifecycleHooks::new(),
             empty: false,
             optimizations: Vec::new(),
         }
@@ -1259,7 +1268,7 @@ impl<Ms> Clone for El<Ms> {
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
-            hooks: LifecycleHooks::default(),
+            hooks: LifecycleHooks::new(),
             empty: self.empty,
             optimizations: self.optimizations.clone(),
         }
@@ -1280,39 +1289,66 @@ impl<Ms> PartialEq for El<Ms> {
     }
 }
 
-pub struct DidMount {
-    actions: Box<FnMut(&web_sys::Node)>,
+pub struct DidMount<Ms> {
+    pub actions: Box<FnMut(&web_sys::Node)>,
+    pub message: Option<Ms>,
 }
 
-pub struct DidUpdate {
-    actions: Box<FnMut(&web_sys::Node)>,
+impl<Ms> DidMount<Ms> {
+    pub fn update2(mut self, message: Ms) -> Self {
+        self.message = Some(message);
+        self
+    }
 }
 
-pub struct WillUnmount {
-    actions: Box<FnMut(&web_sys::Node)>,
+pub struct DidUpdate<Ms> {
+    pub actions: Box<FnMut(&web_sys::Node)>,
+    pub message: Option<Ms>,
 }
 
-/// Aconstructor for DidMount, to be used in the API
-pub fn did_mount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidMount {
+impl<Ms> DidUpdate<Ms> {
+    pub fn update2(mut self, message: Ms) -> Self {
+        self.message = Some(message);
+        self
+    }
+}
+
+pub struct WillUnmount<Ms> {
+    pub actions: Box<FnMut(&web_sys::Node)>,
+    pub message: Option<Ms>,
+}
+
+impl<Ms> WillUnmount<Ms> {
+    pub fn update2(mut self, message: Ms) -> Self {
+        self.message = Some(message);
+        self
+    }
+}
+
+/// A constructor for DidMount, to be used in the API
+pub fn did_mount<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidMount<Ms> {
     let closure = move |el: &web_sys::Node| actions(el);
     DidMount {
         actions: Box::new(closure),
+        message: None,
     }
 }
 
 /// A constructor for DidUpdate, to be used in the API
-pub fn did_update(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidUpdate {
+pub fn did_update<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidUpdate<Ms> {
     let closure = move |el: &web_sys::Node| actions(el);
     DidUpdate {
         actions: Box::new(closure),
+        message: None,
     }
 }
 
 /// A constructor for WillUnmount, to be used in the API
-pub fn will_unmount(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUnmount {
+pub fn will_unmount<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUnmount<Ms> {
     let closure = move |el: &web_sys::Node| actions(el);
     WillUnmount {
         actions: Box::new(closure),
+        message: None,
     }
 }
 
@@ -1343,6 +1379,7 @@ pub mod tests {
             &parent,
             None,
             &vdom::Mailbox::new(|_: Msg| {}),
+            // todo fix this; add app, or revert WIP lifecycle hook work.
         );
 
         el.el_ws.unwrap()

@@ -75,6 +75,19 @@ impl From<String> for Url {
     }
 }
 
+impl From<Vec<String>> for Url {
+    fn from(path: Vec<String>) -> Self {
+        Url::new(path)
+    }
+}
+
+// todo: Do we need both from Vec<&str> and Vec<String> ?
+impl From<Vec<&str>> for Url {
+    fn from(path: Vec<&str>) -> Self {
+        Url::new(path)
+    }
+}
+
 /// Get the current url path, without a prepended /
 fn get_path() -> String {
     let path = util::window()
@@ -133,6 +146,7 @@ fn remove_first(s: &str) -> Option<&str> {
     s.chars().next().map(|c| &s[c.len_utf8()..])
 }
 
+/// Remove prepended / from all items in the Url's path.
 fn clean_url(mut url: Url) -> Url {
     let mut cleaned_path = vec![];
     for part in &url.path {
@@ -151,7 +165,8 @@ fn clean_url(mut url: Url) -> Url {
 
 /// Add a new route using history's push_state method.
 ///https://developer.mozilla.org/en-US/docs/Web/API/History_API
-pub fn push_route(mut url: Url) {
+pub fn push_route<U: Into<Url>>(url3: U) {
+    let mut url = url3.into();
     // Purge leading / from each part, if it exists, eg passed by user.
     url = clean_url(url);
 
@@ -180,17 +195,19 @@ pub fn push_route(mut url: Url) {
     let location = util::window().location();
 
     if let Some(hash) = url.hash {
-        location.set_hash(&hash).expect("Problem setting hash");
+        location
+            .set_hash(&hash)
+            .expect("Problem setting hash");
     }
 
     if let Some(search) = url.search {
         location
-            .set_search(&search)
+            .set_search(& search)
             .expect("Problem setting search");
     }
 }
 
-/// A convenience function, for use when only a path is required.
+#[deprecated(since = "0.3.1", note = "push_route now accepts a Vec<&str>; use that intstead.")]
 pub fn push_path<T: ToString>(path: Vec<T>) {
     push_route(Url::new(path));
 }
@@ -230,7 +247,7 @@ pub fn setup_popstate_listener<Ms>(
 }
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
-/// so we can prevent page refreshfor internal links, and route internally.  Run this on load.
+/// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 pub fn setup_link_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     routes: fn(&Url) -> Ms,
