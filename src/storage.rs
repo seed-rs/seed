@@ -1,10 +1,9 @@
 //! Allows use of the Web Storage API / local storage.
-//! MDN docs:
-//! https://developer.mozilla.org/en-US/docs/Web/API/Storage
-//! web-sys docs:
-//! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html
-//! Example syntax:
-//! https://github.com/rustwasm/wasm-bindgen/blob/master/examples/todomvc/src/store.rs
+//!
+//! # References
+//! * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/Storage)
+//! * [web-sys docs](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Storage.html)
+//! * [Example syntax](https://github.com/rustwasm/wasm-bindgen/blob/master/examples/todomvc/src/store.rs)
 
 extern crate serde;
 extern crate serde_json;

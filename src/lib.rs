@@ -41,9 +41,11 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
 }
 
 /// A high-level wrapper for web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0:
-/// https://rustwasm.github.io/wasm-bindgen/examples/closures.html
-/// https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Window.html
-/// https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval
+///
+/// # References
+/// * [WASM bindgen closures](https://rustwasm.github.io/wasm-bindgen/examples/closures.html)
+/// * [web_sys Window](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Window.html)
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval)
 pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
     let window = web_sys::window().expect("Can't find window");
@@ -56,8 +58,11 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     callback.forget();
 }
 
-/// See set_interval
-/// https://developer.mozilla.org/en-US/docs/Wemb/API/WindowOrWorkerGlobalScope/setTimeout
+/// See [set_interval](fn.set_interval.html)
+///
+///
+/// # References
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Wemb/API/WindowOrWorkerGlobalScope/setTimeout)
 pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
     let window = web_sys::window().expect("Can't find window");

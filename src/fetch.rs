@@ -1,9 +1,10 @@
 //! High-level interface for web_sys HTTP requests.
-//! https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-//! See https://rustwasm.github.io/wasm-bindgen/reference/js-promises-and-rust-futures.html
-//! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Request.html
-//! https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/
-//! https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html
+//! # References
+//! * [WASM bindgen fetch](https://rustwasm.github.io/wasm-bindgen/examples/fetch.html)
+//! * [JS Promises and Rust Futures](https://rustwasm.github.io/wasm-bindgen/reference/js-promises-and-rust-futures.html)
+//! * [web_sys Request](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Request.html)
+//! * [WASM bindgen Futures](https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/)
+//! * [web_sys Response](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html)
 
 use futures::{Future, Poll};
 use wasm_bindgen::JsValue;
@@ -17,7 +18,10 @@ use serde_json;
 
 // todo once this is polished, publish as a standalone crate.
 
-/// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+/// HTTP Method types
+///
+/// # References
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 #[derive(Debug, Clone, Copy)]
 pub enum Method {
     Get,

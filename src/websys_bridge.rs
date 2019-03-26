@@ -124,9 +124,11 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 
 /// Create and return a web_sys Element from our virtual-dom El. The web_sys
 /// Element is a close analog to JS/DOM elements.
-/// web-sys reference: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html
-/// Mozilla reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element\
-/// See also: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html
+///
+/// # References
+/// * [web_sys Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
+/// * See also: [web_sys Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 pub fn make_websys_el<Ms: Clone>(
     el_vdom: &mut El<Ms>,
     document: &web_sys::Document,
@@ -302,21 +304,21 @@ pub fn to_input(target: &web_sys::EventTarget) -> &web_sys::HtmlInputElement {
         .expect("Unable to cast as an input element")
 }
 
-/// See to_input
+/// See [to_input](fn.to_input.html)
 pub fn to_textarea(target: &web_sys::EventTarget) -> &web_sys::HtmlTextAreaElement {
     target
         .dyn_ref::<web_sys::HtmlTextAreaElement>()
         .expect("Unable to cast as a textarea element")
 }
 
-/// See to_input
+/// See [to_input](fn.to_input.html)
 pub fn to_select(target: &web_sys::EventTarget) -> &web_sys::HtmlSelectElement {
     target
         .dyn_ref::<web_sys::HtmlSelectElement>()
         .expect("Unable to cast as a select element")
 }
 
-/// See to_input
+/// See [to_input](fn.to_input.html)
 pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
     target
         .dyn_ref::<web_sys::HtmlElement>()

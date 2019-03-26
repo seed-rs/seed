@@ -17,8 +17,7 @@ mod util {
 }
 
 /// Contains all information used in pushing and handling routes.
-/// Based on React-Reason's router:
-/// https://github.com/reasonml/reason-react/blob/master/docs/router.md
+/// Based on [React-Reason's router](https://github.com/reasonml/reason-react/blob/master/docs/router.md).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Url {
     pub path: Vec<String>,
@@ -29,7 +28,9 @@ pub struct Url {
 
 impl Url {
     /// Helper that ignores hash, search and title, and converts path to Strings.
-    /// https://developer.mozilla.org/en-US/docs/Web/API/History_API
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
     pub fn new<T: ToString>(path: Vec<T>) -> Self {
         let result = Self {
             path: path.into_iter().map(|p| p.to_string()).collect(),
@@ -41,14 +42,18 @@ impl Url {
     }
 
     /// Builder-pattern method for defining hash.
-    /// https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/hash
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/hash)
     pub fn hash(mut self, hash: &str) -> Self {
         self.hash = Some(hash.into());
         self
     }
 
     /// Builder-pattern method for defining search.
-    /// https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/search
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/search)
     pub fn search(mut self, search: &str) -> Self {
         self.search = Some(search.into());
         self
@@ -163,7 +168,9 @@ fn clean_url(mut url: Url) -> Url {
 }
 
 /// Add a new route using history's push_state method.
-///https://developer.mozilla.org/en-US/docs/Web/API/History_API
+///
+/// # Refenences
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
 pub fn push_route<U: Into<Url>>(url3: U) {
     let mut url = url3.into();
     // Purge leading / from each part, if it exists, eg passed by user.
