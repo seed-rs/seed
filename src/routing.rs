@@ -22,8 +22,8 @@ mod util {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Url {
     pub path: Vec<String>,
-    pub hash: Option<String>,
     pub search: Option<String>,
+    pub hash: Option<String>,
     pub title: Option<String>,
 }
 
@@ -182,26 +182,20 @@ pub fn push_route<U: Into<Url>>(url3: U) {
 
     // Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
-    let path = String::from("/") + &url.path.join("/");
+    let mut path = String::from("/") + &url.path.join("/");
+    if let Some(search) = url.search {
+        path += "? + search";
+    }
+
+    if let Some(hash) = url.hash {
+        path += "#" + &hash;
+    }
 
     util::window()
         .history()
         .expect("Can't find history")
         .push_state_with_url(&data, &title, Some(&path))
         .expect("Problem pushing state");
-
-    // Must set hash and search after push_state, or the url will be overwritten.
-    let location = util::window().location();
-
-    if let Some(hash) = url.hash {
-        location.set_hash(&hash).expect("Problem setting hash");
-    }
-
-    if let Some(search) = url.search {
-        location
-            .set_search(&search)
-            .expect("Problem setting search");
-    }
 }
 
 #[deprecated(

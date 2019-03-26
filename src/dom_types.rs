@@ -516,7 +516,7 @@ macro_rules! make_attrs {
     }
 }
 
-/// Comprehensive list: https://www.w3schools.com/tags/ref_attributes.asp
+// Comprehensive list: https://www.w3schools.com/tags/ref_attributes.asp
 make_attrs! {
     // Missing data-*
     Accept => "accept", AcceptCharset => "accept-charset", AccessKey => "accesskey", Action => "action",
@@ -628,8 +628,8 @@ macro_rules! make_styles {
 }
 
 // todo finish and implement this.
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference
-/// Most common: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Properties_Reference
+// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference
+// Most common: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Properties_Reference
 make_styles! {
    AdditiveSymbols => "additive-symbols", AlignContent => "align-content", AlignItems => "align-items",
    AlignSelf => "align-self", All => "all", Angle => "angle", Animation => "animation", AnimationDelay => "animation-delay",
@@ -838,7 +838,7 @@ macro_rules! make_events {
     }
 }
 
-/// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
+// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
 make_events! {
     Cached => "cached", Error => "error", Abort => "abort", Load => "load", BeforeUnload => "beforeunload",
     Unload => "unload", Online => "online", Offline => "offline", Focus => "focus", Blur => "blur",
@@ -881,9 +881,9 @@ make_events! {
     Input => "input"
 }
 
-/// Populate tags using a macro, to reduce code repetition.
-/// The tag enum primarily exists to ensure only valid elements are allowed.
-/// We leave out non-body tags like html, meta, title, and body.
+// Populate tags using a macro, to reduce code repetition.
+// The tag enum primarily exists to ensure only valid elements are allowed.
+// We leave out non-body tags like html, meta, title, and body.
 macro_rules! make_tags {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($tag_camel:ident => $tag:expr),+ } => {
@@ -924,10 +924,10 @@ macro_rules! make_tags {
     }
 }
 
-/// Comprehensive lists:
-/// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-/// - https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-/// Grouped here by category on Mozilla's pages, linked above.
+// Comprehensive lists:
+// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+// - https://developer.mozilla.org/en-US/docs/Web/SVG/Element
+// Grouped here by category on Mozilla's pages, linked above.
 make_tags! {
     Address => "address", Article => "article", Aside => "aside", Footer => "footer",
     Header => "header", H1 => "h1",
