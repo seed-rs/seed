@@ -191,11 +191,11 @@ pub fn push_route<U: Into<Url>>(url3: U) {
     // the existing path. Not doing so will add the path to the existing one.
     let mut path = String::from("/") + &url.path.join("/");
     if let Some(search) = url.search {
-        path += "?" + search;
+        path = path + "?" + &search;
     }
 
     if let Some(hash) = url.hash {
-        path += "#" + &hash;
+        path = path + "#" + &hash;
     }
 
     util::window()
