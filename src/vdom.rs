@@ -376,16 +376,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         // TODO: There's a lot of DRY between here and update.
         let window = util::window();
 
-//        let mut topel_vdom = (self.cfg.view)(&self.data.model.borrow());
-        let mut view_els = (self.cfg.view)(&self.data.model.borrow());
-
-
-//        // todo temp testing code
-//        let view_els = match self.cfg.view {
-//            // Left is if the user fn passes El, right is if passes Vec<El>
-//            Left(view) => vec![(view)(&self.data.model.borrow())],
-//            Right(view) => (view)(&self.data.model.borrow()),
-//        };
+        let view_els = (self.cfg.view)(&self.data.model.borrow());
 
         // todo add these directly to the mount point.
         let mut topel_vdom = El::empty(dom_types::Tag::Div);
@@ -484,15 +475,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
 
-
-//            let mut topel_new_vdom = (self.cfg.view)(&self.data.model.borrow());
-            let mut view_els = (self.cfg.view)(&self.data.model.borrow());
-
-//            let view_els = match self.cfg.view {
-                // Left is if the user fn passes El, right is if passes Vec<El>
-//                Left(view) => vec![(view)(&self.data.model.borrow())],
-//                Right(view) => (view)(&self.data.model.borrow()),
-//            };
+            let view_els = (self.cfg.view)(&self.data.model.borrow());
 
             // todo add these directly to the mount point.
             let mut topel_new_vdom = El::empty(dom_types::Tag::Div);

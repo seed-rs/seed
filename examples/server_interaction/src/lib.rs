@@ -122,8 +122,8 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
 
 // View
 
-fn view(model: &Model) -> El<Msg> {
-    div![
+fn view(model: &Model) -> Vec<El<Msg>> {
+    vec![
         div![format!(
             "Repo info: name: {}, sha: {}",
             model.data.name, model.data.commit.sha

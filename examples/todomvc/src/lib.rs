@@ -287,7 +287,7 @@ fn footer(model: &Model) -> El<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn view(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> Vec<El<Msg>> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
@@ -315,7 +315,7 @@ fn view(model: &Model) -> El<Msg> {
         seed::empty()
     };
 
-    div![
+    vec![
         header![
             class!["header"],
             h1!["todos"],

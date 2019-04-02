@@ -51,8 +51,8 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
 
 // View
 
-fn view(model: &Model) -> El<Msg> {
-    div![
+fn view(model: &Model) -> Vec<El<Msg>> {
+    vec![
         h1![format!("Val: {} Text: {}", model.data.val, model.data.text)],
         button![
             raw_ev("click", move |_| Msg::GetData),

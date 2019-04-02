@@ -58,8 +58,8 @@ fn misc_demo() -> El<Msg> {
     ]
 }
 
-fn view(model: &Model) -> El<Msg> {
-    div![
+fn view(model: &Model) -> Vec<El<Msg>> {
+    vec![
         h2![model.coords_string()],
         h2![format!("Last key pressed: {}", model.last_keycode)],
         button![

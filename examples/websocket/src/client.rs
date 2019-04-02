@@ -64,8 +64,8 @@ fn render_messages(msgs: &[String]) -> El<Msg> {
     div![msgs]
 }
 
-fn view(model: &Model) -> El<Msg> {
-    div![
+fn view(model: &Model) -> Vec<El<Msg>> {
+    vec![
         h1!["seed websocket example"],
         if model.connected {
             div![
