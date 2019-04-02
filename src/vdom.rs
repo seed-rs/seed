@@ -9,6 +9,7 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, Event, EventTarget, Window};
+//use either::{Left, Right, Either};
 
 /// Determines if an update should cause the VDom to rerender or not.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -136,8 +137,52 @@ impl<Ms> Update<Ms> {
     }
 }
 
+//
+//trait ViewReturn2<T, Ms> {
+//    fn convert(r: T) -> Vec<El<Ms>>;
+//}
+//
+//impl<T, Ms> ViewReturn2<T, Ms> for El<Ms> {
+//    fn convert(el: El<Ms>) -> Vec<El<Ms>> {
+//        vec![el]
+//    }
+//}
+//
+//impl<T, Ms> ViewReturn2<T, Ms> for Vec<El<Ms>> {
+//    fn convert(els: Vec<El<Ms>>) -> Vec<El<Ms>> {
+//        els
+//    }
+//}
+//
+///// Thin wrapper; impl From for Vec<El<Ms>> appears not to work directly.
+//struct ViewReturn<Ms: 'static> {
+//    els: Vec<El<Ms>>
+//}
+//
+
+
+//pub struct View<Ms: 'static> {
+//    els: Either<El<Ms>, Vec<El<Ms>>>
+//}
+//
+//impl<Ms> From<El<Ms>> for View<Ms> {
+//    fn from(el: El<Ms>) -> Self {
+//        Self { els: Left(el) }
+//    }
+//}
+//
+//impl<Ms> From<Vec<El<Ms>>> for View<Ms> {
+//    fn from(els: Vec<El<Ms>>) -> Self {
+//        Self { els: Right(els) }
+//    }
+//}
+
+
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
-type ViewFn<Ms, Mdl> = fn(&Mdl) -> El<Ms>;
+//type ViewFn<Ms, Mdl> = Either<fn(&Mdl) -> El<Ms>, fn(&Mdl) -> Vec<El<Ms>>>;
+type ViewFn<Ms, Mdl> = fn(&Mdl) -> Vec<El<Ms>>;
+//type ViewFn<Ms, Mdl> = fn(&Mdl) -> Into<ViewReturn<Ms>>;
+//type ViewFn<T, Ms, Mdl> = fn(&Mdl) -> ViewReturn2<Ms>;
 type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
@@ -331,7 +376,20 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         // TODO: There's a lot of DRY between here and update.
         let window = util::window();
 
-        let mut topel_vdom = (self.cfg.view)(&self.data.model.borrow());
+//        let mut topel_vdom = (self.cfg.view)(&self.data.model.borrow());
+        let mut view_els = (self.cfg.view)(&self.data.model.borrow());
+
+
+//        // todo temp testing code
+//        let view_els = match self.cfg.view {
+//            // Left is if the user fn passes El, right is if passes Vec<El>
+//            Left(view) => vec![(view)(&self.data.model.borrow())],
+//            Right(view) => (view)(&self.data.model.borrow()),
+//        };
+
+        // todo add these directly to the mount point.
+        let mut topel_vdom = El::empty(dom_types::Tag::Div);
+        topel_vdom.children = view_els;
 
         // TODO: use window events
         if self.cfg.window_events.is_some() {
@@ -425,7 +483,20 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         if should_render == ShouldRender::Render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
-            let mut topel_new_vdom = (self.cfg.view)(&self.data.model.borrow());
+
+
+//            let mut topel_new_vdom = (self.cfg.view)(&self.data.model.borrow());
+            let mut view_els = (self.cfg.view)(&self.data.model.borrow());
+
+//            let view_els = match self.cfg.view {
+                // Left is if the user fn passes El, right is if passes Vec<El>
+//                Left(view) => vec![(view)(&self.data.model.borrow())],
+//                Right(view) => (view)(&self.data.model.borrow()),
+//            };
+
+            // todo add these directly to the mount point.
+            let mut topel_new_vdom = El::empty(dom_types::Tag::Div);
+            topel_new_vdom.children = view_els;
 
             let mut old_vdom = self
                 .data
