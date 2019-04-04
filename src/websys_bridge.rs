@@ -107,8 +107,8 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
                 .expect("Problem casting Node as Element while setting an attribute")
                 .set_attribute(at, val)
                 .expect("Problem setting an atrribute."),
-            3 => crate::log("Trying to set attr on text node. Bug?"),
-            _ => crate::log("Found non el/text node."),
+            3 => crate::error("Trying to set attr on text node. Bug?"),
+            _ => crate::error("Found non el/text node."),
         }
     }
 }
@@ -254,21 +254,32 @@ pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws
                     // The value's different
                     if old_val != new_val {
                         set_attr_shim(&old_el_ws, key, new_val);
+
+                        // We handle value in the vdom using attributes, but the DOM needs
+                        // to use set_value.
+                        if key == &dom_types::At::Value {
+                            if let Some(input) = old_el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
+                                input.set_value(&new_val);
+                            }
+                            if let Some(input) = old_el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+                                input.set_value(&new_val);
+                            }
+                        }
                     }
-                }
+                },
                 None => set_attr_shim(&old_el_ws, key, new_val),
             }
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
-                // todo get to the bottom of this
 
+                // todo get to the bottom of this
                 match old_el_ws.dyn_ref::<web_sys::Element>() {
                     Some(el) => el
                         .remove_attribute(name.as_str())
                         .expect("Removing an attribute"),
-                    None => crate::log("Minor error on html element (setting attrs)"),
+                    None => crate::error("Minor error on html element (setting attrs)"),
                 }
 
                 //                old_el_ws
@@ -388,20 +399,6 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
             Some(result)
         }
         3 => {
-            // Text node
-            //            None
-            //            match &node.text_content() {
-            //                Some(t) => {
-            //                    if t.chars().count() < 0{
-            //                        None
-            //                    } else {
-            //                        None
-            ////                        Some(El::new_text(t))
-            //                    }
-            //                },
-            //                None => None,
-            //            }
-
             Some(El::new_text(&node.text_content().expect("Can't find text")))
         }
         _ => {

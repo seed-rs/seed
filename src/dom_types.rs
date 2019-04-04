@@ -138,7 +138,6 @@ pub struct Listener<Ms> {
     // are not assoicated with a message.
     pub control_val: Option<String>,
     pub control_checked: Option<bool>,
-    //    pub control: bool,
 }
 
 impl<Ms> fmt::Debug for Listener<Ms> {

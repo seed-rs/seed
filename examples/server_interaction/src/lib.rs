@@ -131,7 +131,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
         button![
             raw_ev(Ev::Click, move |_| Msg::Send),
             "Send an urgent message"
-        ]
+        ],
     ]
 }
 

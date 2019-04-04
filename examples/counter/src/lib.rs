@@ -66,42 +66,40 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             "text-align" => "center"
     };
 
-    vec![
+    vec![div![
+        outer_style,
+        h1!["The Grand Total"],
         div![
-            outer_style,
-            h1!["The Grand Total"],
-            div![
-                style! {
-                    // Example of conditional logic in a style.
-                    "color" => if model.count > 4 {"purple"} else {"gray"};
-                    // When passing numerical values to style!, "px" is implied.
-                    "border" => "2px solid #004422"; "padding" => 20
-                },
-                // We can use normal Rust code and comments in the view.
-                h3![text, did_update(|_| log!("This shows when we increment"))],
-                button![simple_ev(Ev::Click, Msg::Increment), "+"],
-                button![simple_ev(Ev::Click, Msg::Decrement), "-"],
-                // Optionally-displaying an element, and lifecycle hooks
-                if model.count >= 10 {
-                    h2![
-                        style! {"padding" => 50},
-                        "Nice!",
-                        //                    did_mount(|_| log!("This shows when clicks reach 10")).update2(Msg::ChangeWWC("Did mount".into())),
-                        did_mount(|_| log!("This shows when clicks reach 10")),
-                        will_unmount(|_| log!("This shows when clicks drop below 10")),
-                    ]
-                } else {
-                    seed::empty()
-                },
-            ],
-            success_level(model.count), // Incorporating a separate component
-            h3!["What precisely is it we're counting?"],
-            input![
-                attrs! {At::Value => model.what_we_count},
-                input_ev(Ev::Input, Msg::ChangeWWC)
-            ],
-        ]
-    ]
+            style! {
+                // Example of conditional logic in a style.
+                "color" => if model.count > 4 {"purple"} else {"gray"};
+                // When passing numerical values to style!, "px" is implied.
+                "border" => "2px solid #004422"; "padding" => 20
+            },
+            // We can use normal Rust code and comments in the view.
+            h3![text, did_update(|_| log!("This shows when we increment"))],
+            button![simple_ev(Ev::Click, Msg::Increment), "+"],
+            button![simple_ev(Ev::Click, Msg::Decrement), "-"],
+            // Optionally-displaying an element, and lifecycle hooks
+            if model.count >= 10 {
+                h2![
+                    style! {"padding" => 50},
+                    "Nice!",
+                    //                    did_mount(|_| log!("This shows when clicks reach 10")).update2(Msg::ChangeWWC("Did mount".into())),
+                    did_mount(|_| log!("This shows when clicks reach 10")),
+                    will_unmount(|_| log!("This shows when clicks drop below 10")),
+                ]
+            } else {
+                seed::empty()
+            },
+        ],
+        success_level(model.count), // Incorporating a separate component
+        h3!["What precisely is it we're counting?"],
+        input![
+            attrs! {At::Value => model.what_we_count},
+            input_ev(Ev::Input, Msg::ChangeWWC)
+        ],
+    ]]
 }
 
 #[wasm_bindgen]

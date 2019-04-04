@@ -100,7 +100,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             },
             p![format!("{} messages received", model.msg_rx_cnt)],
             p![format!("{} messages sent", model.msg_tx_cnt)]
-        ]
+        ],
     ]
 }
 

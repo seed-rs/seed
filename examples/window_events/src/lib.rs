@@ -70,7 +70,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
                 "Start watching"
             }
         ],
-        misc_demo()
+        misc_demo(),
     ]
 }
 
