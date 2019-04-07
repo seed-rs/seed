@@ -1,4 +1,6 @@
-//use wasm_bindgen::{closure::{Closure, WasmClosure}, JsCast};
+//! Provide a wrapper for commonly-used, but verbose web_sys features.
+//! This module is decoupled / independent.
+
 use wasm_bindgen::JsCast;
 use web_sys;
 
@@ -12,9 +14,14 @@ pub fn document() -> web_sys::Document {
     window().document().expect("Can't find document")
 }
 
+/// Convenience function to access the web_sys history.
+pub fn history() -> web_sys::History {
+    window().history().expect("Can't find history")
+}
+
 /// Simplify getting the value of input elements; required due to the need to cast
-/// from general nodes/elements to HTML__Elements.
-pub fn input_value(target: &web_sys::EventTarget) -> String {
+/// from general nodes/elements to HTML_Elements.
+pub fn get_value(target: &web_sys::EventTarget) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         return input.value();
     }
@@ -27,7 +34,7 @@ pub fn input_value(target: &web_sys::EventTarget) -> String {
     "".into()
 }
 
-/// todo more DRY that could be addressed by Traits. ?
+/// Similar to get_value.
 pub fn set_value(target: &web_sys::EventTarget, value: &str) {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         input.set_value(value);
@@ -49,7 +56,7 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
 //    Closure::wrap(Box::new(inner))
 //}
 
-/// A convenience function for logging to the web browser's console.  See also
+/// Convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
 pub fn log<S: ToString>(text: S) {
     // ignore clippy about &S

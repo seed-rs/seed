@@ -9,7 +9,6 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, Event, EventTarget, Window};
-//use either::{Left, Right, Either};
 
 /// Determines if an update should cause the VDom to rerender or not.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -137,52 +136,8 @@ impl<Ms> Update<Ms> {
     }
 }
 
-//
-//trait ViewReturn2<T, Ms> {
-//    fn convert(r: T) -> Vec<El<Ms>>;
-//}
-//
-//impl<T, Ms> ViewReturn2<T, Ms> for El<Ms> {
-//    fn convert(el: El<Ms>) -> Vec<El<Ms>> {
-//        vec![el]
-//    }
-//}
-//
-//impl<T, Ms> ViewReturn2<T, Ms> for Vec<El<Ms>> {
-//    fn convert(els: Vec<El<Ms>>) -> Vec<El<Ms>> {
-//        els
-//    }
-//}
-//
-///// Thin wrapper; impl From for Vec<El<Ms>> appears not to work directly.
-//struct ViewReturn<Ms: 'static> {
-//    els: Vec<El<Ms>>
-//}
-//
-
-
-//pub struct View<Ms: 'static> {
-//    els: Either<El<Ms>, Vec<El<Ms>>>
-//}
-//
-//impl<Ms> From<El<Ms>> for View<Ms> {
-//    fn from(el: El<Ms>) -> Self {
-//        Self { els: Left(el) }
-//    }
-//}
-//
-//impl<Ms> From<Vec<El<Ms>>> for View<Ms> {
-//    fn from(els: Vec<El<Ms>>) -> Self {
-//        Self { els: Right(els) }
-//    }
-//}
-
-
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
-//type ViewFn<Ms, Mdl> = Either<fn(&Mdl) -> El<Ms>, fn(&Mdl) -> Vec<El<Ms>>>;
 type ViewFn<Ms, Mdl> = fn(&Mdl) -> Vec<El<Ms>>;
-//type ViewFn<Ms, Mdl> = fn(&Mdl) -> Into<ViewReturn<Ms>>;
-//type ViewFn<T, Ms, Mdl> = fn(&Mdl) -> ViewReturn2<Ms>;
 type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
@@ -272,6 +227,7 @@ enum Parent {
     El(Element),
 }
 
+/// Used to create and store initial app configuration, ie items passed by the app creator
 #[derive(Clone)]
 pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static> {
     model: Mdl,
@@ -379,7 +335,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         let view_els = (self.cfg.view)(&self.data.model.borrow());
 
         // todo add these directly to the mount point.
-        let mut topel_vdom = El::empty(dom_types::Tag::Div);
+        let mut topel_vdom = El::empty(dom_types::Tag::Section);
         topel_vdom.children = view_els;
 
         // TODO: use window events
@@ -404,8 +360,11 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
         attach_listeners(&mut topel_vdom, &self.mailbox());
 
-        // Attach all children: This is where our initial render occurs.
+        // Attach all top-level elements to the mount point: This is where our initial render occurs.
         websys_bridge::attach_el_and_children(&mut topel_vdom, &self.cfg.mount_point, &self);
+        //        for top_child in &mut topel_vdom.children {
+        //            websys_bridge::attach_el_and_children(top_child, &self.cfg.mount_point, &self)
+        //        }
 
         self.data.main_el_vdom.replace(Some(topel_vdom));
 
@@ -478,8 +437,10 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             let view_els = (self.cfg.view)(&self.data.model.borrow());
 
             // todo add these directly to the mount point.
-            let mut topel_new_vdom = El::empty(dom_types::Tag::Div);
+            let mut topel_new_vdom = El::empty(dom_types::Tag::Section);
             topel_new_vdom.children = view_els;
+
+            //            self.data.main_el_vdom.children = view_els;
 
             let mut old_vdom = self
                 .data
@@ -497,6 +458,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
                 old_vdom,
                 &mut topel_new_vdom,
                 &self.cfg.mount_point,
+                //                &self.cfg.document,
                 None,
                 &self.mailbox(),
                 &self.clone(),
@@ -814,37 +776,6 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl>(
         let child_old = old_children_iter.next().unwrap();
         let child_new = new_children_iter.next().unwrap();
 
-        // If a key's specified, use it to match the child
-        // There can be multiple optomizations, but assume one key. If there are multiple
-        // keys, use the first (There should only be one, but no constraints atm).
-        //        if let Some(key) = child_new.key() {
-        //            let _matching = old.children.iter().filter(|c| c.key() == Some(key));
-        //            // todo continue implementation: Patch and re-order.
-        //        }
-
-        //                match old.children.get(i_new) {
-        //            Some(child_old) => {
-        //                // todo: This approach is still inefficient use of key, since it overwrites
-        //                // todo non-matching keys, preventing them from being found later.
-        //                if let Some(key) = child_new.key() {
-        //                    if child_old.key() == Some(key) {
-        //                        continue
-        //                    }
-        //                }
-        //
-        //                // Don't compare equality here; we do that at the top of this function
-        //                // in the recursion.
-        //                patch(document, &mut child_old.clone(), child_new, &old_el_ws, &mailbox);
-        //                old_children_patched.push(child_old.id.expect("Can't find child's id"));
-        //            },
-        //            None => {
-        //                // We ran out of old children to patch; create new ones.
-        //                websys_bridge::attach_el_and_children(child_new, &old_el_ws);
-        //                let mut child_new = child_new;
-        //                attach_listeners(&mut child_new, &mailbox);
-        //            }
-        //        }
-
         // Don't compare equality here; we do that at the top of this function
         // in the recursion.
         if let Some(new_el_ws) = patch(
@@ -925,7 +856,7 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl>(
             (unmount_actions.actions)(&child_el_ws);
         }
 
-        // todo get to the bottom of this
+        // todo get to the bottom of this: Ie why we need this code sometimes when using raw html elements.
         match old_el_ws.remove_child(&child_el_ws) {
             Ok(_) => {}
             Err(_) => {

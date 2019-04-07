@@ -16,11 +16,11 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dev-dependencies]
-wasm-bindgen-test = "^0.2.38" # NOTE: keep in sync with wasm-bindgen version
+wasm-bindgen-test = "^0.2.40" # NOTE: keep in sync with wasm-bindgen version
 
 [dependencies]
 # NOTE: keep in sync with wasm-bindgen-test version
-wasm-bindgen = {version = "^0.2.38", features = ["serde-serialize"]}
+wasm-bindgen = {version = "^0.2.40", features = ["serde-serialize"]}
 js-sys = "0.3.6"
 console_error_panic_hook = "^0.1.5"
 serde = { version = "^1.0.85", features = ['derive'] }

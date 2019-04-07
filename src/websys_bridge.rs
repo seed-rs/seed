@@ -254,26 +254,19 @@ pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws
                     // The value's different
                     if old_val != new_val {
                         set_attr_shim(&old_el_ws, key, new_val);
-
-                        // We handle value in the vdom using attributes, but the DOM needs
-                        // to use set_value.
-                        if key == &dom_types::At::Value {
-                            if let Some(input) = old_el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
-                                input.set_value(&new_val);
-                            }
-                            if let Some(input) = old_el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-                                input.set_value(&new_val);
-                            }
-                        }
                     }
-                },
+                }
                 None => set_attr_shim(&old_el_ws, key, new_val),
+            }
+            // We handle value in the vdom using attributes, but the DOM needs
+            // to use set_value.
+            if key == &dom_types::At::Value {
+                crate::util::set_value(old_el_ws, &new_val);
             }
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
             if new.attrs.vals.get(name).is_none() {
-
                 // todo get to the bottom of this
                 match old_el_ws.dyn_ref::<web_sys::Element>() {
                     Some(el) => el
@@ -398,9 +391,7 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
             }
             Some(result)
         }
-        3 => {
-            Some(El::new_text(&node.text_content().expect("Can't find text")))
-        }
+        3 => Some(El::new_text(&node.text_content().expect("Can't find text"))),
         _ => {
             crate::log("Unexpected node type found from raw html");
             None

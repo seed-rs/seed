@@ -3,7 +3,8 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
-/// Repeated here from seed::util, to make this module standalone.
+/// Repeated here from seed::util, to make this module standalone.  Once we have a Gloo module
+/// that handles this, use it.
 mod util {
     /// Convenience function to avoid repeating expect logic.
     pub fn window() -> web_sys::Window {
@@ -13,6 +14,11 @@ mod util {
     /// Convenience function to access the web_sys DOM document.
     pub fn document() -> web_sys::Document {
         window().document().expect("Can't find document")
+    }
+
+    /// Convenience function to access web_sys history
+    pub fn history() -> web_sys::History {
+        window().history().expect("Can't find history")
     }
 }
 
@@ -198,9 +204,7 @@ pub fn push_route<U: Into<Url>>(url3: U) {
         path = path + "#" + &hash;
     }
 
-    util::window()
-        .history()
-        .expect("Can't find history")
+    util::history()
         .push_state_with_url(&data, &title, Some(&path))
         .expect("Problem pushing state");
 }

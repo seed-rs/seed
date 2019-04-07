@@ -5,7 +5,7 @@
 pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_path, push_route, Url},
-    util::{document, error, log, window},
+    util::{document, error, history, log, window},
     vdom::App, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
@@ -48,8 +48,7 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval)
 pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
-    let window = web_sys::window().expect("Can't find window");
-    window
+    util::window()
         .set_interval_with_callback_and_timeout_and_arguments_0(
             callback.as_ref().unchecked_ref(),
             timeout,
@@ -65,8 +64,7 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Wemb/API/WindowOrWorkerGlobalScope/setTimeout)
 pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
-    let window = web_sys::window().expect("Can't find window");
-    window
+    util::window()
         .set_timeout_with_callback_and_timeout_and_arguments_0(
             callback.as_ref().unchecked_ref(),
             timeout,

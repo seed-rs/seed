@@ -312,7 +312,8 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             ul![class!["todo-list"], todo_els]
         ]
     } else {
-        seed::empty()
+        //        seed::empty()
+        span![]
     };
 
     vec![
@@ -334,7 +335,8 @@ fn view(model: &Model) -> Vec<El<Msg>> {
         if model.active_count() > 0 || model.completed_count() > 0 {
             footer(&model)
         } else {
-            seed::empty()
+            //            seed::empty()
+            span![]
         },
     ]
 }

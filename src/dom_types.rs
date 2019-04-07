@@ -68,7 +68,7 @@ pub fn input_ev<Ms, T: ToString>(
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
         if let Some(target) = event.target() {
-            return handler(util::input_value(&target));
+            return handler(util::get_value(&target));
         }
         handler(String::new())
     };
@@ -295,7 +295,7 @@ impl<Ms> Listener<Ms> {
         let el_ws2 = el_ws.clone();
         let closure = Closure::wrap(Box::new(move |_| {
             if let Some(val) = val2.clone() {
-                if util::input_value(&el_ws2) != val {
+                if util::get_value(&el_ws2) != val {
                     util::set_value(&el_ws2, &val);
                 }
             }
