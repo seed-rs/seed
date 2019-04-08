@@ -5,23 +5,6 @@ use crate::dom_types;
 use crate::dom_types::El;
 use crate::vdom::App;
 
-/// Reduces DRY
-/// todo can't find a suitable trait for this. Seems like set_autofocus is
-/// implemented individually for each of these el types.
-//fn autofocus_helper<E: JsCast>(el: E) {
-//    match val {
-//        "true" => {
-//            el.set_autofocus(true);
-//            set_special = true;
-//        },
-//        "false" => {
-//            el.set_autofocus(false);
-//            set_special = true;
-//        },
-//        _ => ()
-//    }
-//}
-
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     let mut set_special = false;

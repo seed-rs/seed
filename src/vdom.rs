@@ -179,6 +179,7 @@ pub struct AppData<Ms: Clone + 'static, Mdl> {
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
     msg_listeners: RefCell<MsgListeners<Ms>>,
+    //    mount_pt: RefCell<web_sys::Element>
 }
 
 pub struct AppCfg<Ms: Clone + 'static, Mdl: 'static> {
@@ -325,48 +326,41 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
         }
     }
 
+    pub fn setup_window_listeners(&self) {
+        if let Some(window_events) = self.cfg.window_events {
+            let mut new_listeners = (window_events)(&self.data.model.borrow());
+            setup_window_listeners(
+                &util::window(),
+                &mut self.data.window_listeners.borrow_mut(),
+                &mut new_listeners,
+                &self.mailbox(),
+            );
+            self.data.window_listeners.replace(new_listeners);
+        }
+    }
+
     /// App initialization: Collect its fundamental components, setup, and perform
     /// an initial render.
     pub fn run(self) -> Self {
         // Our initial render. Can't initialize in new due to mailbox() requiring self.
-        // TODO: There's a lot of DRY between here and update.
-        let window = util::window();
+        // "new" name is for consistency with update_inner.
 
-        let view_els = (self.cfg.view)(&self.data.model.borrow());
+        let mut new = El::empty(dom_types::Tag::Section);
+        new.children = (self.cfg.view)(&self.data.model.borrow());
 
-        // todo add these directly to the mount point.
-        let mut topel_vdom = El::empty(dom_types::Tag::Section);
-        topel_vdom.children = view_els;
+        self.setup_window_listeners();
 
-        // TODO: use window events
-        if self.cfg.window_events.is_some() {
-            setup_window_listeners(
-                &util::window(),
-                &mut Vec::new(),
-                // TODO:
-                // Fix this. Bug where if we try to add initial listeners,
-                // we get many runtime panics. Workaround is to wait until
-                // app.update, which means an event must be triggered
-                // prior to window listeners working.
-                &mut Vec::new(),
-                // &mut (window_events)(model),
-                &self.mailbox(),
-            );
-        }
+        setup_input_listeners(&mut new);
+        setup_websys_el_and_children(&util::document(), &mut new);
 
-        let document = window.document().expect("Problem getting document");
-        setup_input_listeners(&mut topel_vdom);
-        setup_websys_el_and_children(&document, &mut topel_vdom);
-
-        attach_listeners(&mut topel_vdom, &self.mailbox());
+        attach_listeners(&mut new, &self.mailbox());
 
         // Attach all top-level elements to the mount point: This is where our initial render occurs.
-        websys_bridge::attach_el_and_children(&mut topel_vdom, &self.cfg.mount_point, &self);
-        //        for top_child in &mut topel_vdom.children {
-        //            websys_bridge::attach_el_and_children(top_child, &self.cfg.mount_point, &self)
-        //        }
+        for top_child in &mut new.children {
+            websys_bridge::attach_el_and_children(top_child, &self.cfg.mount_point, &self)
+        }
 
-        self.data.main_el_vdom.replace(Some(topel_vdom));
+        self.data.main_el_vdom.replace(Some(new));
 
         let self_for_closure = self.clone();
         let self_for_closure2 = self.clone();
@@ -418,31 +412,15 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             effect,
         } = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
 
-        if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(&self.data.model.borrow());
-            setup_window_listeners(
-                &util::window(),
-                &mut self.data.window_listeners.borrow_mut(),
-                //                &mut Vec::new(),
-                &mut new_listeners,
-                &self.mailbox(),
-            );
-            self.data.window_listeners.replace(new_listeners);
-        }
+        self.setup_window_listeners();
 
         if should_render == ShouldRender::Render {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
+            let mut new = El::empty(dom_types::Tag::Section);
+            new.children = (self.cfg.view)(&self.data.model.borrow());;
 
-            let view_els = (self.cfg.view)(&self.data.model.borrow());
-
-            // todo add these directly to the mount point.
-            let mut topel_new_vdom = El::empty(dom_types::Tag::Section);
-            topel_new_vdom.children = view_els;
-
-            //            self.data.main_el_vdom.children = view_els;
-
-            let mut old_vdom = self
+            let mut old = self
                 .data
                 .main_el_vdom
                 .borrow_mut()
@@ -451,22 +429,41 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
 
             // Detach all old listeners before patching. We'll re-add them as required during patching.
             // We'll get a runtime panic if any are left un-removed.
-            detach_listeners(&mut old_vdom);
+            detach_listeners(&mut old);
 
-            patch(
-                &self.cfg.document,
-                old_vdom,
-                &mut topel_new_vdom,
-                &self.cfg.mount_point,
-                //                &self.cfg.document,
-                None,
-                &self.mailbox(),
-                &self.clone(),
-            );
+            // todo copied from children loop in patch fn (DRY)
+            let num_children_in_both = old.children.len().min(new.children.len());
+            let mut old_children_iter = old.children.into_iter();
+            let mut new_children_iter = new.children.iter_mut();
+
+            let mut last_visited_node: Option<web_sys::Node> = None;
+            //
+            //            if let Some(update_actions) = &mut placeholder_topel.hooks.did_update {
+            //                (update_actions.actions)(&old_el_ws) // todo put in / back
+            //            }
+
+            for _i in 0..num_children_in_both {
+                let child_old = old_children_iter.next().unwrap();
+                let child_new = new_children_iter.next().unwrap();
+
+                patch(
+                    &self.cfg.document,
+                    child_old,
+                    child_new,
+                    &self.cfg.mount_point,
+                    //                    match last_visited_node.as_ref() {
+                    //                        Some(node) => node.next_sibling(),
+                    //                        None => old_el_ws.first_child(),
+                    //                    },
+                    None, // todo make it the next item in new?
+                    &self.mailbox(),
+                    &self.clone(),
+                );
+            }
 
             // Now that we've re-rendered, replace our stored El with the new one;
             // it will be used as the old El next time.
-            self.data.main_el_vdom.borrow_mut().replace(topel_new_vdom);
+            self.data.main_el_vdom.borrow_mut().replace(new);
         }
 
         if let Some(effect) = effect {

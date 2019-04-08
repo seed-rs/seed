@@ -145,7 +145,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 }
 
 /// The top-level component we pass to the virtual dom.
-fn view(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> Vec<El<Msg>> {
     let plural = if model.count == 1 {""} else {"s"};
 
     // Attrs, Style, Events, and children may be defined separately.
@@ -155,27 +155,29 @@ fn view(model: &Model) -> El<Msg> {
             "text-align" => "center"
     };
 
-     div![ outer_style,
-        h1![ "The Grand Total" ],
-        div![
-            style!{
-                // Example of conditional logic in a style.
-                "color" => if model.count > 4 {"purple"} else {"gray"};
-                // When passing numerical values to style!, "px" is implied.
-                "border" => "2px solid #004422"; "padding" => 20
-            },
-            // We can use normal Rust code and comments in the view.
-            h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-            button![ simple_ev(Ev::Click, Msg::Increment), "+" ],
-            button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
-
-            // Optionally-displaying an element
-            if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
-        ],
-        success_level(model.count),  // Incorporating a separate component
-
-        h3![ "What precisely is it we're counting?" ],
-        input![ attrs!{At::Value => model.what_we_count}, input_ev(Ev::Input, Msg::ChangeWWC) ]
+    vec![
+        div![ outer_style,
+            h1![ "The Grand Total" ],
+            div![
+                style!{
+                    // Example of conditional logic in a style.
+                    "color" => if model.count > 4 {"purple"} else {"gray"};
+                    // When passing numerical values to style!, "px" is implied.
+                    "border" => "2px solid #004422"; "padding" => 20
+                },
+                // We can use normal Rust code and comments in the view.
+                h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
+                button![ simple_ev(Ev::Click, Msg::Increment), "+" ],
+                button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
+    
+                // Optionally-displaying an element
+                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+            ],
+            success_level(model.count),  // Incorporating a separate component
+    
+            h3![ "What precisely is it we're counting?" ],
+            input![ attrs!{At::Value => model.what_we_count}, input_ev(Ev::Input, Msg::ChangeWWC) ]
+        ]
     ]
 }
 

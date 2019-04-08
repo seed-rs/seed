@@ -134,8 +134,8 @@ pub mod tests {
             }
         }
 
-        fn view(_model: &Model) -> El<Msg> {
-            div!["Hello world"]
+        fn view(_model: &Model) -> Vec<El<Msg>> {
+            vec![div!["Hello world"]]
         }
 
         fn window_events(_model: &Model) -> Vec<seed::dom_types::Listener<Msg>> {
