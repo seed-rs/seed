@@ -2,7 +2,7 @@
 use wasm_bindgen::JsCast;
 
 use crate::dom_types;
-use crate::dom_types::El;
+use crate::dom_types::{El, ElContainer};
 use crate::vdom::App;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
@@ -155,7 +155,7 @@ pub fn make_websys_el<Ms: Clone>(
 }
 
 /// Similar to attach_el_and_children, but assumes we've already attached the parent.
-pub fn attach_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, app: &App<Ms, Mdl>) {
+pub fn attach_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(el_vdom: &mut El<Ms>, app: &App<Ms, Mdl, ElC>) {
     let el_ws = el_vdom
         .el_ws
         .take()
@@ -171,10 +171,10 @@ pub fn attach_children<Ms: Clone, Mdl>(el_vdom: &mut El<Ms>, app: &App<Ms, Mdl>)
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms: Clone, Mdl>(
+pub fn attach_el_and_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     parent: &web_sys::Node,
-    app: &App<Ms, Mdl>,
+    app: &App<Ms, Mdl, ElC>,
 ) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.

@@ -1048,6 +1048,20 @@ pub enum Optimize {
     Static,   // unimplemented, and possibly unecessary
 }
 
+pub trait ElContainer<Ms> {
+    fn els(self) -> Vec<El<Ms>>;
+}
+impl<Ms> ElContainer<Ms> for El<Ms> {
+    fn els(self) -> Vec<El<Ms>> {
+        vec![self]
+    }
+}
+impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
+    fn els(self) -> Vec<El<Ms>> {
+        self
+    }
+}
+
 /// An component in our virtual DOM.
 #[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {

@@ -54,8 +54,8 @@ fn success_level(clicks: i32) -> El<Msg> {
 }
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
-/// only argument, and output a single El.
-fn view(model: &Model) -> Vec<El<Msg>> {
+/// only argument, and output has to implement trait ElContainer.
+fn view(model: &Model) -> impl ElContainer<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
@@ -66,7 +66,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             "text-align" => "center"
     };
 
-    vec![div![
+    div![
         outer_style,
         h1!["The Grand Total"],
         div![
@@ -99,7 +99,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             attrs! {At::Value => model.what_we_count},
             input_ev(Ev::Input, Msg::ChangeWWC)
         ],
-    ]]
+    ]
 }
 
 #[wasm_bindgen]
