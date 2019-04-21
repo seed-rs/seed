@@ -1,16 +1,20 @@
 # Changelog
 
+## v0.3.2
+- Top level view functions can now return `Vec<El<Ms>>`, `El<Ms>`, or something else implementing
+the new ElContainer trait
+
 ## v0.3.1
-- `Top level view functions now return `Vec<El<Ms>>` instead of `El<Ms>`, mounted directly to
+- Top level view functions now return `Vec<El<Ms>>` instead of `El<Ms>`, mounted directly to
  the mount point. (Breaking)
-- `push_route()` can now accept a `Vec<&str>`, depreciating `push_path()`.
+- `push_route()` can now accept a `Vec<&str>`, depreciating `push_path()`
 - Fixed a bug where window events couldn't be enabled on initialization
 
 ## v0.3.0
 - `update` function now takes a mutable ref of the model. (Breaking)
 - `Update` (update's return type) is now a struct. (Breaking)
 - Async, etc events are now handled through messages, instead of passing `App`
-through the view func. (breaking)
+through the view func. (Breaking)
 - Fixed some bugs with empty elements
 - Internal code cleanup
 - Added commented-out release command to example build files
@@ -44,9 +48,9 @@ them in a single span.
 
 ## v0.2.5
 - Attributes and Events now can use `At` and `Ev` enums
-- Routing overhauled; modelled after react-reason. Cleaner syntax, and more flexible.
+- Routing overhauled; modelled after react-reason. Cleaner syntax, and more flexible
 - Input, Textarea, and Select elements are now "controlled" - they always
-stay in sync with the model.
+stay in sync with the model
 - index.html file updated in examples and quickstart to use relative paths,
 which fixes landing-page routing
 
@@ -57,7 +61,7 @@ which fixes landing-page routing
 - Routing refactored; now works dynamically
 - Update function now returns an enum that returns Render or Skip,
 to allow conditional rendering (Breaking)
-- Elements can now store more than 1 text node.
+- Elements can now store more than 1 text node
 
 ## V0.2.3
 - Fixed a bug where initially-empty text won't update

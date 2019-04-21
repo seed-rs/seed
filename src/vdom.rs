@@ -197,7 +197,9 @@ pub struct App<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
+impl<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug
+    for App<Ms, Mdl, ElC>
+{
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }

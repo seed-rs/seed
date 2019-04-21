@@ -155,7 +155,10 @@ pub fn make_websys_el<Ms: Clone>(
 }
 
 /// Similar to attach_el_and_children, but assumes we've already attached the parent.
-pub fn attach_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(el_vdom: &mut El<Ms>, app: &App<Ms, Mdl, ElC>) {
+pub fn attach_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
+    el_vdom: &mut El<Ms>,
+    app: &App<Ms, Mdl, ElC>,
+) {
     let el_ws = el_vdom
         .el_ws
         .take()

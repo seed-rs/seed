@@ -145,7 +145,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 }
 
 /// The top-level component we pass to the virtual dom.
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
     // Attrs, Style, Events, and children may be defined separately.
@@ -155,29 +155,27 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             "text-align" => "center"
     };
 
-    vec![
-        div![ outer_style,
-            h1![ "The Grand Total" ],
-            div![
-                style!{
-                    // Example of conditional logic in a style.
-                    "color" => if model.count > 4 {"purple"} else {"gray"};
-                    // When passing numerical values to style!, "px" is implied.
-                    "border" => "2px solid #004422"; "padding" => 20
-                },
-                // We can use normal Rust code and comments in the view.
-                h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
-                button![ simple_ev(Ev::Click, Msg::Increment), "+" ],
-                button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
-    
-                // Optionally-displaying an element
-                if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
-            ],
-            success_level(model.count),  // Incorporating a separate component
-    
-            h3![ "What precisely is it we're counting?" ],
-            input![ attrs!{At::Value => model.what_we_count}, input_ev(Ev::Input, Msg::ChangeWWC) ]
-        ]
+    div![ outer_style,
+        h1![ "The Grand Total" ],
+        div![
+            style!{
+                // Example of conditional logic in a style.
+                "color" => if model.count > 4 {"purple"} else {"gray"};
+                // When passing numerical values to style!, "px" is implied.
+                "border" => "2px solid #004422"; "padding" => 20
+            },
+            // We can use normal Rust code and comments in the view.
+            h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
+            button![ simple_ev(Ev::Click, Msg::Increment), "+" ],
+            button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
+
+            // Optionally-displaying an element
+            if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+        ],
+        success_level(model.count),  // Incorporating a separate component
+
+        h3![ "What precisely is it we're counting?" ],
+        input![ attrs!{At::Value => model.what_we_count}, input_ev(Ev::Input, Msg::ChangeWWC) ]
     ]
 }
 
@@ -213,6 +211,9 @@ open Powershell as an administrator, and enter this command: `Set-ExecutionPolic
 For development, you can view your app using a shimmed Python dev server, as described above.
 (Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
 from the quickstart repo, and run `python serve.py`).
+
+For a more robust quickstart repo, check out Martin Kavik's [seed-quickstart-webpack repo]
+(https://github.com/MartinKavik/seed-quickstart-webpack).
 
 In the future, the build script and commands above may be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
 You may use it now if you wish, but may run into issues running the examples, enabling no-modules mode,

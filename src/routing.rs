@@ -177,8 +177,8 @@ fn clean_url(mut url: Url) -> Url {
 ///
 /// # Refenences
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
-pub fn push_route<U: Into<Url>>(url3: U) {
-    let mut url = url3.into();
+pub fn push_route<U: Into<Url>>(url: U) {
+    let mut url = url.into();
     // Purge leading / from each part, if it exists, eg passed by user.
     url = clean_url(url);
 
