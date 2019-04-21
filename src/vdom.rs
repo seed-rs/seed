@@ -1,6 +1,6 @@
 use crate::{
     dom_types,
-    dom_types::{El, Namespace},
+    dom_types::{El, ElContainer, Namespace},
     routing, util, websys_bridge,
 };
 use futures::{future, Future};
@@ -137,7 +137,7 @@ impl<Ms> Update<Ms> {
 }
 
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
-type ViewFn<Ms, Mdl> = fn(&Mdl) -> Vec<El<Ms>>;
+type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
 type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
@@ -182,22 +182,22 @@ pub struct AppData<Ms: Clone + 'static, Mdl> {
     //    mount_pt: RefCell<web_sys::Element>
 }
 
-pub struct AppCfg<Ms: Clone + 'static, Mdl: 'static> {
+pub struct AppCfg<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     document: web_sys::Document,
     mount_point: web_sys::Element,
     pub update: UpdateFn<Ms, Mdl>,
-    view: ViewFn<Ms, Mdl>,
+    view: ViewFn<Mdl, ElC>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms: Clone + 'static, Mdl: 'static> {
+pub struct App<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     /// Stateless app configuration
-    pub cfg: Rc<AppCfg<Ms, Mdl>>,
+    pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: Clone + 'static, Mdl: 'static> ::std::fmt::Debug for App<Ms, Mdl> {
+impl<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -230,16 +230,16 @@ enum Parent {
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
 #[derive(Clone)]
-pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static> {
+pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
-    view: ViewFn<Ms, Mdl>,
+    view: ViewFn<Mdl, ElC>,
     parent: Option<Parent>,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
+impl<Ms: Clone, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
     pub fn mount(mut self, id: &'static str) -> Self {
         self.parent = Some(Parent::Id(id));
         self
@@ -260,7 +260,7 @@ impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
         self
     }
 
-    pub fn finish(self) -> App<Ms, Mdl> {
+    pub fn finish(self) -> App<Ms, Mdl, ElC> {
         let parent = match self.parent.unwrap_or(Parent::Id("app")) {
             Parent::Id(parent_div_id) => find_mount_point(parent_div_id),
             Parent::El(el) => el,
@@ -279,12 +279,12 @@ impl<Ms: Clone, Mdl> AppBuilder<Ms, Mdl> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms: Clone, Mdl> App<Ms, Mdl> {
+impl<Ms: Clone, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     pub fn build(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
-        view: ViewFn<Ms, Mdl>,
-    ) -> AppBuilder<Ms, Mdl> {
+        view: ViewFn<Mdl, ElC>,
+    ) -> AppBuilder<Ms, Mdl, ElC> {
         AppBuilder {
             model,
             update,
@@ -298,7 +298,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     fn new(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
-        view: ViewFn<Ms, Mdl>,
+        view: ViewFn<Mdl, ElC>,
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
@@ -344,9 +344,8 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
     pub fn run(self) -> Self {
         // Our initial render. Can't initialize in new due to mailbox() requiring self.
         // "new" name is for consistency with update_inner.
-
         let mut new = El::empty(dom_types::Tag::Section);
-        new.children = (self.cfg.view)(&self.data.model.borrow());
+        new.children = (self.cfg.view)(&self.data.model.borrow()).els();
 
         self.setup_window_listeners();
 
@@ -418,7 +417,7 @@ impl<Ms: Clone, Mdl> App<Ms, Mdl> {
             // Create a new vdom: The top element, and all its children. Does not yet
             // have associated web_sys elements.
             let mut new = El::empty(dom_types::Tag::Section);
-            new.children = (self.cfg.view)(&self.data.model.borrow());;
+            new.children = (self.cfg.view)(&self.data.model.borrow()).els();
 
             let mut old = self
                 .data
@@ -568,7 +567,7 @@ where
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
 
-impl<Ms: Clone, Mdl> Clone for App<Ms, Mdl> {
+impl<Ms: Clone, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
     fn clone(&self) -> Self {
         App {
             cfg: Rc::clone(&self.cfg),
@@ -621,14 +620,14 @@ fn setup_window_listeners<Ms: Clone>(
     }
 }
 
-pub(crate) fn patch<'a, Ms: Clone, Mdl>(
+pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl>,
+    app: &App<Ms, Mdl, ElC>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
