@@ -224,7 +224,7 @@ navigate to that folder in a terminal,
 run the build script for your system (`build.sh` or `build.ps1`), then start a dev server
  as described above. Note that if you copy an example to a separate folder, you'll need
 to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
-`seed = { path = "../../"` with `seed = "^0.3.0"`, and in the build script, remove the leading `../../` on the second
+`seed = { path = "../../"` with `seed = "^0.3.1"`, and in the build script, remove the leading `../../` on the second
 line.
 
 

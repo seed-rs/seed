@@ -1,0 +1,78 @@
+[env]
+# all workspace members can use this Makefile
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = "true"
+
+# ---- BUILD & CREATE WASMS ----
+[tasks.build]
+description = "Build only Seed without examples"
+workspace = false
+command = "cargo"
+args = ["build"]
+
+[tasks.build_examples]
+description = "Build only examples"
+workspace = false
+command = "cargo"
+args = ["make", "build_example"]
+
+[tasks.create_wasms]
+description = "Build examples with wasm-pack"
+workspace = false
+command = "cargo"
+args = ["make", "create_wasm"]
+
+[tasks.all]
+description = "Build all - Seed + examples and create wasms"
+workspace = false
+dependencies = ["build", "build_examples", "create_wasms"]
+
+# ---- START EXAMPLES ----
+
+[tasks.e_counter]
+extend = "serve"
+args = ["./examples/counter"]
+
+# need special start?
+[tasks.e_server_integration]
+extend = "serve"
+args = ["./examples/server_integration"]
+
+[tasks.e_server_interaction]
+extend = "serve"
+args = ["./examples/server_interaction"]
+
+[tasks.e_todomvc]
+extend = "serve"
+args = ["./examples/todomvc"]
+
+# need special start?
+[tasks.e_websocket]
+extend = "serve"
+args = ["./examples/websocket"]
+
+[tasks.e_window_events]
+extend = "serve"
+args = ["./examples/window_events"]
+
+[tasks.serve]
+description = "Start server for given example"
+install_crate = { crate_name = "https", binary = "http", test_arg = "--help" }
+workspace = false
+command = "http"
+args = ["./examples/[change_in_child_task]"]
+
+# ---- PRIVATE TASKS - run only inside another task ----
+# private atribute is ignored (bug?)
+
+[tasks.build_example]
+description = "Build example"
+private = true
+command = "cargo"
+args = ["build"]
+
+[tasks.create_wasm]
+description = "Build example with wasm-pack"
+private = true
+install_crate = "wasm-pack"
+command = "wasm-pack"
+args = ["build", "--target", "no-modules", "--out-name", "package"]
