@@ -1,20 +1,18 @@
-/target
-*.rs.bk
-Cargo.lock
 
-# Pycharm
-*.iws
-workspace.xml
+# --- Files ---
+**/*.ts
+**/*.js
+**.wasm
+**/*.rs.bk
+**/*.log
 
-*.wasm
-# Allow JS in example folders
-# wasm-bindgen won't automatically create this directory.
-# **/pkg/*
-**/.wasm
-**.d.ts
-**.ts
-**.js
-**/node_modules/
-**/target/
-**.log
+# --- Dependencies and Build artifacts ---
+**/node_modules
+**/target
+**/pkg/*
+
+# --- IDE metadata ---
+**/.idea
+**/.vscode
+
 
