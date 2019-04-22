@@ -1,14 +1,3 @@
-# Seed
-
-**A Rust framework for creating web apps**
-
-[![Build Status](https://travis-ci.org/David-OConnor/seed.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
-[![](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
-[![](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
-[![API Documentation on docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
-
-The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
-
 # Quickstart
 
 ## Setup
@@ -18,19 +7,13 @@ You'll need a recent version of Rust: `rustup update`
 
 The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
-And wasm-bindgen: `cargo install wasm-bindgen-cli`
+And Cargo make: `cargo install cargo-make`
 
-If you run into errors while installing `wasm-bindgen-cli`, you may need to install C++
-build tools. On linux, run `sudo apt install build-essential`. On Windows, download and install
-[Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
-include the C++ workload.
 
 ## The theoretical minimum
 To start, clone [The quickstart repo](https://github.com/David-OConnor/seed-quickstart),
-run `build.sh` or `build.ps1` in a terminal, then start a dev server that supports WASM.
-For example, with [Python](https://www.python.org/downloads/) installed, run `python serve.py`.
-(Linux users may need to run `python3 serve.py`.)
-Once you change your package name, you'll need to tweak the build script, as described below.
+run `cargo make all` in a terminal to build the app, and `cargo make serve` to start a dev server
+on `127.0.0.0:8000`.
 
 
 ## A little deeper
@@ -190,42 +173,14 @@ pub fn render() {
 For a truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/David-OConnor/seed-quickstart/blob/master/src/lib.rs)
 
 ## Building and running
-To build your app, create a `pkg` subdirectory, and run the following two commands:
-```
-cargo build --target wasm32-unknown-unknown
-```
-and 
-```
-wasm-bindgen target/wasm32-unknown-unknown/debug/appname.wasm --no modules --out-dir ./pkg --out-name package
-```
-where `appname` is replaced with your app's name. This compiles your code in the target
-folder, and populates the pkg folder with your WASM module, a Typescript definitions file,
-and a JS file used to link your module from HTML.
-
-You may wish to create a build script with these two lines. (`build.sh` for Linux; `build.ps1` for Windows).
-The quickstart repo includes these, but you'll still need to do the rename. You can then use
-`./build.sh` or `.\build.ps1` If you run into permission errors on `build.sh`, try this command
-to allow executing the file:`chmod +x build.sh`. If you run into persmission errors on `build.ps1`,
-open Powershell as an administrator, and enter this command: `Set-ExecutionPolicy RemoteSigned`.
-
-For development, you can view your app using a shimmed Python dev server, as described above.
-(Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
-from the quickstart repo, and run `python serve.py`).
+To build your app run `cargo make all`, and to host on a dev server, run `cargo make serve`.
 
 For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/MartinKavik/seed-quickstart-webpack).
 
-In the future, the build script and commands above may be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
-You may use it now if you wish, but may run into issues running the examples, enabling no-modules mode,
-and syntax-highlighting in the compile logs.
-
 ## Running included examples
 To run an example located in the [examples folder](https://github.com/David-OConnor/seed/tree/master/examples),
-navigate to that folder in a terminal, 
-run the build script for your system (`build.sh` or `build.ps1`), then start a dev server
- as described above. Note that if you copy an example to a separate folder, you'll need
-to edit its `Cargo.toml` to point to the package on [crates.io](https://crates.io) instead of locally: Ie replace
-`seed = { path = "../../"` with `seed = "^0.3.1"`, and in the build script, remove the leading `../../` on the second
-line.
+run `cargo make e_examplename`, where you replace `examplename` with the example name. Eg: 
+`cargo make e_counter`.
 
 
 # About
