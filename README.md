@@ -212,8 +212,7 @@ For development, you can view your app using a shimmed Python dev server, as des
 (Set up [this mime-type shim](https://github.com/David-OConnor/seed-quickstart/blob/master/serve.py)
 from the quickstart repo, and run `python serve.py`).
 
-For a more robust quickstart repo, check out Martin Kavik's [seed-quickstart-webpack repo]
-(https://github.com/MartinKavik/seed-quickstart-webpack).
+For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/MartinKavik/seed-quickstart-webpack).
 
 In the future, the build script and commands above may be replaced by [wasm-pack](https://github.com/rustwasm/wasm-pack).
 You may use it now if you wish, but may run into issues running the examples, enabling no-modules mode,
