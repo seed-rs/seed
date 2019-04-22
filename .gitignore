@@ -1,7 +1,6 @@
 
 # --- Files ---
 **/*.ts
-**/*.js
 **.wasm
 **/*.rs.bk
 **/*.log
@@ -14,5 +13,3 @@
 # --- IDE metadata ---
 **/.idea
 **/.vscode
-
-
