@@ -1,79 +1,120 @@
-[env]
-# all workspace members can use this Makefile
-CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = "true"
-PORT = "8000"
-
-# ---- BUILD & CREATE WASMS ----
+# ---- BUILD ----
 [tasks.build]
-description = "Build only Seed without examples"
+description = "Build only Seed"
+clear = true
 workspace = false
 command = "cargo"
 args = ["build"]
-
-[tasks.build_examples]
-description = "Build only examples"
-workspace = false
-command = "cargo"
-args = ["make", "build_example"]
-
-[tasks.create_wasms]
-description = "Build examples with wasm-pack"
-workspace = false
-command = "cargo"
-args = ["make", "create_wasm"]
 
 [tasks.all]
-description = "Build all - Seed + examples and create wasms"
+description = "Build Seed and examples"
 workspace = false
-dependencies = ["build", "build_examples", "create_wasms"]
+dependencies = ["build", "build_examples"]
 
-# ---- START EXAMPLES ----
-
-[tasks.e_counter]
-extend = "serve"
-args = ["./examples/counter", "--port", "${PORT}"]
-
-# need special start?
-[tasks.e_server_integration]
-extend = "serve"
-args = ["./examples/server_integration", "--port", "${PORT}"]
-
-[tasks.e_server_interaction]
-extend = "serve"
-args = ["./examples/server_interaction", "--port", "${PORT}"]
-
-[tasks.e_todomvc]
-extend = "serve"
-args = ["./examples/todomvc", "--port", "${PORT}"]
-
-# need special start?
-[tasks.e_websocket]
-extend = "serve"
-args = ["./examples/websocket", "--port", "${PORT}"]
-
-[tasks.e_window_events]
-extend = "serve"
-args = ["./examples/window_events", "--port", "${PORT}"]
-
-# ---- PRIVATE TASKS - run only inside another task ----
-# private atribute is ignored (bug?)
-
-[tasks.serve]
-description = "Start server for given example"
-install_crate = { crate_name = "microserver", binary = "microserver", test_arg = "-h" }
+[tasks.one]
+description = "Build Seed and chosen example. Ex: 'cargo make one counter'"
 workspace = false
-command = "microserver"
-args = ["./examples/[change_in_child_task]", "--port", "${PORT}"]
-
-[tasks.build_example]
-description = "Build example"
-private = true
 command = "cargo"
-args = ["build"]
+args = ["make", "--cwd", "./examples/${@}", "build"]
+dependencies = ["build"]
 
-[tasks.create_wasm]
-description = "Build example with wasm-pack"
-private = true
-install_crate = "wasm-pack"
+# ---- TEST ----
+
+[tasks.test]
+description = "Run Seed's tests. Ex: 'cargo make test firefox'. Test envs: [chrome, firefox, safari]"
+clear = true
+workspace = false
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = ["test", "--${@}"]
+
+[tasks.test_h]
+description = "Run headless Seed's tests. Ex: 'cargo make test_h firefox'. Test envs: [chrome, firefox, safari]"
+extend = "test"
+args = ["test", "--headless", "--${@}"]
+
+# ---- START ----
+
+[tasks.start]
+description = "Start chosen example. Ex: 'cargo make start counter'"
+workspace = false
+command = "cargo"
+args = ["make", "--cwd", "./examples/${@}", "start"]
+
+[tasks.start_server]
+description = "Start server of chosen example (only a few have one). Ex: 'cargo make start_server websocket'"
+workspace = false
+command = "cargo"
+args = ["make", "--cwd", "./examples/${@}", "start_server"]
+
+# ---- DEFAULT TASKS FOR EXAMPLES ----
+# These tasks should be run only from the example root
+# and example's Makefile.toml should override all tasks in dependencies.
+
+[tasks.default_build]
+description = "Build with wasm-pack"
+workspace = false
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
 command = "wasm-pack"
 args = ["build", "--target", "no-modules", "--out-name", "package"]
+
+[tasks.default_start]
+description = "Build and start microserver"
+workspace = false
+install_crate = { crate_name = "microserver", binary = "microserver", test_arg = "-h" }
+command = "microserver"
+args = ["--port", "8000"]
+dependencies = ["build"]
+
+# ---- HELPERS -----
+
+[tasks.build_examples]
+description = "Build examples"
+workspace = false
+command = "cargo"
+args = ["make", "for_each", "build"]
+
+[tasks.for_each]
+description = "Run chosen task for each example in its root. Ex: 'cargo make for_each build'"
+workspace = false
+script_runner = "@rust"
+script = [
+    '''
+    //! ```cargo
+    //! [dependencies]
+    //! glob = "*"
+    //! ```
+    extern crate glob;
+
+    use std::process::{Command, exit, Stdio};
+    use std::io::{self, Write};
+    use std::env;
+    use glob::glob;
+
+    fn main() {
+        let args: Vec<String> = env::args().collect();
+        // args[0] is a script name, args[1] is the given task
+        if args.len() != 2 {
+            eprintln!("Wrong number of arguments! Correct example: 'cargo make for_each build'");
+            exit(1);
+        }
+        let task = &args[1];
+
+        for entry in glob("examples/*/Makefile.toml").unwrap() {
+            if let Ok(path) = entry {
+                let example_root = path.parent().unwrap().to_str().unwrap();
+                run_task_in_example_root(example_root, task);
+            }
+        }
+    }
+
+    fn run_task_in_example_root(example_root: &str, task: &str) {
+        Command::new("cargo")
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .args(&["make", "--cwd", example_root, task])
+            .output()
+            .unwrap();
+    }
+    '''
+]

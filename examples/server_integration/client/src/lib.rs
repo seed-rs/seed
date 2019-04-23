@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate seed;
+
 use seed::prelude::*;
 use seed::{Method, Request};
-
 use futures::Future;
 
 use shared::Data;
@@ -14,10 +14,8 @@ struct Model {
     pub data: Data,
 }
 
-fn get_data() -> impl Future<Item = Msg, Error = Msg> {
-    let url = "http://localhost:8001/data";
-
-    Request::new(url)
+fn get_data() -> impl Future<Item=Msg, Error=Msg> {
+    Request::new("/data")
         .method(Method::Get)
         .fetch_json()
         .map(Msg::Replace)
@@ -62,7 +60,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
 }
 
 #[wasm_bindgen]
-pub fn render() {
+pub fn start() {
     seed::App::build(Model::default(), update, view)
         .finish()
         .run();

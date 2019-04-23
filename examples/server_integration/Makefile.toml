@@ -1,0 +1,30 @@
+
+# ---- BUILD ----
+
+[tasks.build]
+description = "Build client and server"
+clear = true
+workspace = false
+dependencies = ["build_client", "build_server"]
+
+[tasks.build_client]
+description = "Build client"
+workspace = false
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = ["build", "client", "--target", "no-modules", "--out-name", "package"]
+
+[tasks.build_server]
+description = "Build server"
+workspace = false
+command = "cargo"
+args = ["build", "--package", "server"]
+
+# ---- START ----
+
+[tasks.start]
+description = "Build and start Actix server with client on port 8000"
+workspace = false
+command = "cargo"
+args = ["run", "--package", "server"]
+dependencies = ["build"]

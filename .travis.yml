@@ -1,19 +1,44 @@
 language: rust
+
 rust:
-  - nightly
+  - stable
+#  - nightly   # is it necessary?
+
 os:
-  - linux
+#  - windows   # firefox problem
   - osx
-# Travis doesn't seem to handle Windows tests correctly. Triggers failures with
-# no reason listed, despite passing on local machine.
-#  - windows
+  - linux
+
+# https://levans.fr/rust_travis_cache.html
+cache:
+  directories:
+    - $HOME/.cargo
+
+before_cache:
+  - rm -rf $HOME/.cargo/registry
+
 addons:
   firefox: latest
-cache: cargo
-before_script:
-  - rustup target add wasm32-unknown-unknown
-  - cargo install wasm-bindgen-cli --vers 0.2.33 || true
-  - cargo install wasm-pack --vers 0.6.0 || true
+  chrome: stable
+
+env:
+  global:
+    - RUST_BACKTRACE=1
+
+matrix:
+  allow_failures:
+    - rust: nightly
+
 script:
-  - cargo build --tests --target wasm32-unknown-unknown
-  - wasm-pack test --headless --firefox
+  - cargo install --force cargo-make # remove --force in the future (https://github.com/rust-lang/cargo/pull/6798)
+  - cargo make all
+  - cargo make test_h firefox
+  - cargo make test_h chrome
+
+# TODO: make it faster ; useful link
+# https://www.reddit.com/r/rust/comments/9zpyww/idea_a_local_cache_of_compiled_dependencies_in/
+# https://doc.rust-lang.org/cargo/reference/environment-variables.html - CARGO_TARGET_DIR
+# https://github.com/holmgr/cargo-sweep
+# https://github.com/matthiaskrgr/cargo-cache
+# https://github.com/mozilla/sccache
+# https://github.com/alexcrichton/cargo-vendor

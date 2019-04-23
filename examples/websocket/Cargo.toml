@@ -13,21 +13,24 @@ name = "server"
 path = "src/server.rs"
 
 [dependencies]
-futures = "*"
-js-sys = "*"
-seed = { path = "../../" }
-serde = "1"
-serde_derive = "1"
-serde_json = "1"
-wasm-bindgen = "*"
+# common
+serde = "^1.0.90"
+serde_derive = "^1.0.90"
+serde_json = "^1.0.39"
 
-pretty_env_logger = { version = "*", optional = true }
-warp = { version = "*", optional = true }
+# server
+ws = { version = "0.8.0", optional = true }
 
+#client
+seed = { path = "../../", optional = true }
+wasm-bindgen = { version = "^0.2.42", optional = true }
 [dependencies.web-sys]
-version = "*"
-features = ["WebSocket", "MessageEvent", "BinaryType"]
+version = "^0.3.19"
+features = ["WebSocket", "MessageEvent"]
+optional = true
 
 [features]
-default = ["server"]
-server = ["warp", "pretty_env_logger"]
+default = []
+client = ["seed", "wasm-bindgen", "web-sys"]
+server = ["ws"]
+
