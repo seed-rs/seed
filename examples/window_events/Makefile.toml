@@ -1,0 +1,11 @@
+extend = "../../Makefile.toml"
+
+# ---- BUILD ----
+
+[tasks.build]
+alias = "default_build"
+
+# ---- START ----
+
+[tasks.start]
+alias = "default_start"

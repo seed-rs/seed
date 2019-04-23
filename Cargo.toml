@@ -74,19 +74,16 @@ features = [
 [workspace]
 members = [
     "examples/counter",
-    # "examples/homepage",   homepage isn't Rust project
-    # "examples/mathjax",   mathjax isn't Rust project
-    # "examples/server_integration"    EXCLUDED
+    # "examples/homepage",   # isn't Rust project
+    # "examples/mathjax",   # isn't Rust project
+    # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
     "examples/todomvc",
-    # "examples/websocket",    EXCLUDED
+    "examples/websocket",
     "examples/window_events",
-
 ]
 
 exclude = [
-    # We experience compile-target incompatibility if including in a workspace.
+    # it has own workspace
     "examples/server_integration",
-    # Can't build it (?)
-    "examples/websocket",
 ]

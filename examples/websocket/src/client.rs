@@ -1,5 +1,3 @@
-//! A simple example demonstrating the usage of seed with WebSockets.
-
 #[macro_use]
 extern crate seed;
 #[macro_use]
@@ -7,14 +5,11 @@ extern crate serde_derive;
 
 use seed::{prelude::*, App};
 use wasm_bindgen::JsCast;
-use web_sys::{
-    console::{log_1, log_2},
-    BinaryType, MessageEvent, WebSocket,
-};
+use web_sys::{MessageEvent, WebSocket};
 
 mod json;
 
-const WS_URL: &str = "ws://127.0.0.1:3030/ws";
+const WS_URL: &str = "ws://127.0.0.1:9000/ws";
 
 #[derive(Clone, Default)]
 struct Model {
@@ -104,43 +99,29 @@ fn view(model: &Model) -> Vec<El<Msg>> {
     ]
 }
 
-fn open_ws(state: App<Msg, Model>) {
+#[wasm_bindgen]
+pub fn start() {
+    log!("Start the websocket client app");
+    let app = App::build(Model::default(), update, view).finish().run();
+
     let ws = WebSocket::new(WS_URL).unwrap();
-    ws.set_binary_type(BinaryType::Arraybuffer);
+    register_handlers(&ws, app.clone());
+    register_message_listener(ws, app)
+}
 
-    let s = state.clone();
-    let on_open = Closure::wrap(Box::new(move |_| {
-        log!("WebSocket connection is open now");
-        s.update(Msg::Connected);
-    }) as Box<FnMut(JsValue)>);
+fn register_handlers<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
+    where ElC: ElContainer<Msg> + 'static
+{
+    register_handler_on_open(&ws, app.clone());
+    register_handler_on_message(&ws, app);
+    register_handler_on_close(&ws);
+    register_handler_on_error(&ws);
+}
 
-    let on_close = Closure::wrap(Box::new(|_| {
-        log!("WebSocket connection was closed");
-    }) as Box<FnMut(JsValue)>);
-
-    let s = state.clone();
-    let on_message = Closure::wrap(Box::new(move |ev: MessageEvent| {
-        log_1(&"Client received a message".into());
-        let txt = ev.data().as_string().unwrap();
-        let json: json::ServerMsg = serde_json::from_str(&txt).unwrap();
-        log_2(&"text message:".into(), &txt.into());
-        s.update(Msg::ServerMsg(json));
-    }) as Box<FnMut(MessageEvent)>);
-
-    let on_error = Closure::wrap(Box::new(|_| {
-        log_1(&"err".into());
-    }) as Box<FnMut(JsValue)>);
-
-    ws.set_onopen(Some(on_open.as_ref().unchecked_ref()));
-    on_open.forget();
-    ws.set_onclose(Some(on_close.as_ref().unchecked_ref()));
-    on_close.forget();
-    ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
-    on_message.forget();
-    ws.set_onerror(Some(on_error.as_ref().unchecked_ref()));
-    on_error.forget();
-    let app = state.clone();
-    state.add_message_listener(move |msg| match msg {
+fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: App<Msg, Model, ElC>)
+    where ElC: ElContainer<Msg> + 'static
+{
+    app.clone().add_message_listener(move |msg| match msg {
         Msg::Send(msg) => {
             let s = serde_json::to_string(msg).unwrap();
             ws.send_with_str(&s).unwrap();
@@ -150,9 +131,49 @@ fn open_ws(state: App<Msg, Model>) {
     });
 }
 
-#[wasm_bindgen]
-pub fn start() {
-    log!("start the websocket client app");
-    let app = App::build(Model::default(), update, view).finish().run();
-    open_ws(app);
+// ------ HANDLERS -------
+
+fn register_handler_on_open<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
+    where ElC: ElContainer<Msg> + 'static
+{
+    let on_open = Closure::wrap(Box::new(move |_| {
+        log!("WebSocket connection is open now");
+        app.update(Msg::Connected);
+    }) as Box<FnMut(JsValue)>);
+
+    ws.set_onopen(Some(on_open.as_ref().unchecked_ref()));
+    on_open.forget();
+}
+
+fn register_handler_on_close(ws: &web_sys::WebSocket) {
+    let on_close = Closure::wrap(Box::new(|_| {
+        log!("WebSocket connection was closed");
+    }) as Box<FnMut(JsValue)>);
+
+    ws.set_onclose(Some(on_close.as_ref().unchecked_ref()));
+    on_close.forget();
+}
+
+fn register_handler_on_message<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
+    where ElC: ElContainer<Msg> + 'static
+{
+    let on_message = Closure::wrap(Box::new(move |ev: MessageEvent| {
+        log!("Client received a message");
+        let txt = ev.data().as_string().unwrap();
+        let json: json::ServerMsg = serde_json::from_str(&txt).unwrap();
+        log!("- text message: ", &txt);
+        app.update(Msg::ServerMsg(json));
+    }) as Box<FnMut(MessageEvent)>);
+
+    ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
+    on_message.forget();
+}
+
+fn register_handler_on_error(ws: &web_sys::WebSocket) {
+    let on_error = Closure::wrap(Box::new(|_| {
+        log!("Error");
+    }) as Box<FnMut(JsValue)>);
+
+    ws.set_onerror(Some(on_error.as_ref().unchecked_ref()));
+    on_error.forget();
 }

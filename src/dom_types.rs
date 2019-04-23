@@ -1437,10 +1437,23 @@ pub mod tests {
 
     #[derive(Clone, Debug)]
     enum Msg {}
+    struct Model {}
+
+    fn create_app() -> seed::App<Msg, Model, El<Msg>> {
+        seed::App::build(
+            Model {},
+            |_, _|{ vdom::Update::default() },
+            |_|{ seed::empty() },
+        )
+            // mount to the element that exists even in the default test html
+            .mount_el(util::body().into())
+            .finish()
+    }
 
     fn el_to_websys(mut el: El<Msg>) -> Node {
         let document = crate::util::document();
         let parent = document.create_element("div").unwrap();
+        let app = create_app();
 
         vdom::patch(
             &document,
@@ -1449,7 +1462,7 @@ pub mod tests {
             &parent,
             None,
             &vdom::Mailbox::new(|_: Msg| {}),
-            // todo fix this; add app, or revert WIP lifecycle hook work.
+            &app,
         );
 
         el.el_ws.unwrap()

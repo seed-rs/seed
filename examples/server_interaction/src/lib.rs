@@ -3,10 +3,10 @@
 
 #[macro_use]
 extern crate seed;
+
 use seed::prelude::*;
 use seed::{Method, Request};
 use serde::{Deserialize, Serialize};
-
 use futures::Future;
 
 // Model
@@ -44,7 +44,7 @@ struct Model {
     data: Branch,
 }
 
-fn get_data() -> impl Future<Item = Msg, Error = Msg> {
+fn get_data() -> impl Future<Item=Msg, Error=Msg> {
     let url = "https://api.github.com/repos/david-oconnor/seed/branches/master";
 
     Request::new(url)
@@ -54,7 +54,7 @@ fn get_data() -> impl Future<Item = Msg, Error = Msg> {
         .map_err(Msg::OnFetchErr)
 }
 
-fn send() -> impl Future<Item = Msg, Error = Msg> {
+fn send() -> impl Future<Item=Msg, Error=Msg> {
     let url = "https://infinitea.herokuapp.com/api/contact";
 
     let message = Message {

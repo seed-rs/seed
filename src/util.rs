@@ -14,6 +14,11 @@ pub fn document() -> web_sys::Document {
     window().document().expect("Can't find document")
 }
 
+/// Convenience function to access the web_sys DOM body.
+pub fn body() -> web_sys::HtmlElement {
+    document().body().expect("Can't find body")
+}
+
 /// Convenience function to access the web_sys history.
 pub fn history() -> web_sys::History {
     window().history().expect("Can't find history")

@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/David-OConnor/seed.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
+[![Built with cargo-make](https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg)](https://sagiegurari.github.io/cargo-make)
+
 # Quickstart
 
 ## Setup
@@ -7,7 +10,7 @@ You'll need a recent version of Rust: `rustup update`
 
 The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
-And Cargo make: `cargo install cargo-make`
+And Cargo make: `cargo install --force cargo-make`
 
 
 ## The theoretical minimum
@@ -179,9 +182,12 @@ For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webp
 
 ## Running included examples
 To run an example located in the [examples folder](https://github.com/David-OConnor/seed/tree/master/examples),
-run `cargo make e_examplename`, where you replace `examplename` with the example name. Eg: 
-`cargo make e_counter`.
+run `cargo make start example_name`, where you replace `example_name` with the example name. Eg: 
+`cargo make start counter`.
 
+Some examples also require to run API server in another terminal window - `cargo make start_server example_name`.
+
+When server(s) are running, open [127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 # About
 

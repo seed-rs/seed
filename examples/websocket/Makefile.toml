@@ -1,0 +1,39 @@
+extend = "../../Makefile.toml"
+
+# ---- BUILD----
+
+[tasks.build]
+description = "Build client and server"
+clear = true
+dependencies = ["build_client", "build_server"]
+
+[tasks.build_client]
+description = "Build client"
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = [
+    "build",
+    "--target", "no-modules",
+    "--out-name", "package",
+    "--",
+    "--features", "client"
+]
+
+[tasks.build_server]
+description = "Build server"
+command = "cargo"
+args = ["build", "--bin", "server", "--features", "server"]
+
+# ---- START ----
+
+[tasks.start]
+alias = "default_start"
+dependencies = ["build_client"]
+
+[tasks.start_server]
+description = "Run websocket server on port 9000"
+workspace = false
+command = "cargo"
+args = ["run", "--bin", "server", "--features", "server"]
+dependencies = ["build_server"]
+
