@@ -11,7 +11,8 @@ And Cargo make: `cargo install cargo-make`
 
 
 ## The theoretical minimum
-To start, clone [The quickstart repo](https://github.com/David-OConnor/seed-quickstart),
+To start, clone [The quickstart repo](https://github.com/David-OConnor/seed-quickstart): 
+`git clone https://github.com/david-oconnor/seed-quickstart.git`,
 run `cargo make all` in a terminal to build the app, and `cargo make serve` to start a dev server
 on `127.0.0.0:8000`.
 

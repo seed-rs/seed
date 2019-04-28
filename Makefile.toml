@@ -9,6 +9,12 @@ workspace = false
 command = "cargo"
 args = ["build"]
 
+[tasks.build_release]
+description = "Build only Seed without examples, with the --release flag"
+workspace = false
+command = "cargo"
+args = ["build", "--release"]
+
 [tasks.build_examples]
 description = "Build only examples"
 workspace = false
@@ -25,6 +31,11 @@ args = ["make", "create_wasm"]
 description = "Build all - Seed + examples and create wasms"
 workspace = false
 dependencies = ["build", "build_examples", "create_wasms"]
+
+[tasks.all_release]
+description = "Build all - Seed + examples and create wasms, with the --release flag"
+workspace = false
+dependencies = ["build_release", "build_examples", "create_wasms"]
 
 # ---- START EXAMPLES ----
 
