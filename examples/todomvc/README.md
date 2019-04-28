@@ -38,26 +38,28 @@ _If you have other helpful links to share, or find any of the links above no lon
 
 ## Running
 
-This framework requires you to first install [Rust](https://www.rust-lang.org/tools/install).
+#### Prerequisites
 
-You'll need a recent version of Rust: `rustup update`
+- This framework requires you to first install [Rust](https://www.rust-lang.org/tools/install).
+- You'll need a recent version of Rust: `rustup update`
+- The wasm32 target: `rustup target add wasm32-unknown-unknown`
+- And cargo-make: `cargo install --force cargo-make`
 
-The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
 
-And wasm-bindgen: `cargo install wasm-bindgen-cli`
-
-If you run into errors while installing `wasm-bindgen-cli`, you may need to install C++
-build tools. On linux, run `sudo apt install build-essential`. On Windows, download and install
-[Visual Studio 2017](https://visualstudio.microsoft.com/downloads/); when asked in the installer,
-include the C++ workload.
-
-Build using one of the two following commands:
-
-    build.sh
-or
-
-    build.ps1
+#### Build & Run
+```bash
+cargo make start
+```
     
-Open index.html in a web browser, or with a dev server, eg
+Open [127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
-    python serve.py
+---
+
+### [How to make this example standalone]
+- **`Makefile.toml`** 
+    - Replace tasks with aliases with their parents.
+    - Remove root Makefile import.
+- **`Cargo.toml`**
+    - replace Seed path with version number
+- This file
+    - Remove this chapter

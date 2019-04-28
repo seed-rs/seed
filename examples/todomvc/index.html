@@ -1,35 +1,38 @@
 <!DOCTYPE html>
 <html lang="en" data-framework="rust">
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
     <title>Seed • TodoMVC</title>
-    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/public/index.css" />
 
-</head>
-<body>
-<section id="app" class="todoapp"></section>
+    <!-- Because of Edge, see https://github.com/samthor/fast-text-encoding -->
+    <script type="text/javascript" src="/public/text-polyfill.min.js"></script>
+  </head>
+  <body>
+    <section id="app" class="todoapp"></section>
 
-<footer class="info">
-    <p>Double-click to edit a todo</p>
-    <p>Created by <a href="http://github.com/David-OConnor/">David O'Connor</a></p>
-    <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
-</footer>
+    <footer class="info">
+      <p>Double-click to edit a todo</p>
+      <p>
+        Created by <a href="http://github.com/David-OConnor/">David O'Connor</a>
+      </p>
+      <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+    </footer>
 
-<script src='/pkg/package.js'></script>
+    <script src="/pkg/package.js"></script>
 
-<script>
-    // the `wasm_bindgen` global is set to the exports of the Rust module
-    const { render } = wasm_bindgen;
-    // we'll defer our execution until the wasm is ready to go
-    function run() {
+    <script>
+      // the `wasm_bindgen` global is set to the exports of the Rust module
+      const { render } = wasm_bindgen;
+      // we'll defer our execution until the wasm is ready to go
+      function run() {
         render();
-    }
-    // here we tell bindgen the path to the wasm file so it can run
-    // initialization and return to us a promise when it's done
-    wasm_bindgen('/pkg/package_bg.wasm')
+      }
+      // here we tell bindgen the path to the wasm file so it can run
+      // initialization and return to us a promise when it's done
+      wasm_bindgen("/pkg/package_bg.wasm")
         .then(run)
         .catch(console.error);
-</script>
-
-</body>
+    </script>
+  </body>
 </html>

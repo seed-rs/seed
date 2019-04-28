@@ -764,9 +764,12 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
 
     let mut last_visited_node: Option<web_sys::Node> = None;
 
-    if let Some(update_actions) = &mut new.hooks.did_update {
-        (update_actions.actions)(&old_el_ws) // todo
-    }
+    // TODO: Lines below commented out, because they were breaking `lifecycle_hooks` test
+    //       - did_update was called 2x instead of 1x after 2nd call_patch
+    //
+    //  if let Some(update_actions) = &mut new.hooks.did_update {
+    //      (update_actions.actions)(&old_el_ws) // todo
+    //  }
 
     // Not using .zip() here to make sure we don't miss any of the children when one array is
     // longer than the other.
@@ -930,6 +933,18 @@ pub mod tests {
 
     #[derive(Clone, Debug)]
     enum Msg {}
+    struct Model {}
+
+    fn create_app() -> App<Msg, Model, El<Msg>> {
+        App::build(
+            Model {},
+            |_, _|{ Update::default() },
+            |_|{ seed::empty() },
+        )
+            // mount to the element that exists even in the default test html
+            .mount_el(util::body().into())
+            .finish()
+    }
 
     fn call_patch(
         doc: &Document,
@@ -937,9 +952,9 @@ pub mod tests {
         mailbox: &Mailbox<Msg>,
         old_vdom: El<Msg>,
         mut new_vdom: El<Msg>,
+        app: &App<Msg, Model, El<Msg>>,
     ) -> El<Msg> {
-        // todo fix this by adding app, or removing the requirement for it.
-        patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox);
+        patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox, &app);
         new_vdom
     }
 
@@ -953,6 +968,7 @@ pub mod tests {
 
     #[wasm_bindgen_test]
     fn el_added() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
@@ -967,7 +983,7 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(old_ws.child_nodes().length(), 1);
@@ -982,6 +998,7 @@ pub mod tests {
             &mailbox,
             vdom,
             div!["text", "more text", vec![li!["even more text"]]],
+            &app
         );
 
         assert_eq!(parent.children().length(), 1);
@@ -1012,6 +1029,7 @@ pub mod tests {
 
     #[wasm_bindgen_test]
     fn el_removed() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
@@ -1030,6 +1048,7 @@ pub mod tests {
             &mailbox,
             vdom,
             div!["text", "more text", vec![li!["even more text"]]],
+            &app
         );
 
         assert_eq!(parent.children().length(), 1);
@@ -1037,7 +1056,7 @@ pub mod tests {
         let old_child1 = old_ws.child_nodes().item(0).unwrap();
 
         // Now test that patch function removes the last 2 nodes
-        call_patch(&doc, &parent, &mailbox, vdom, div!["text"]);
+        call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
 
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
@@ -1047,6 +1066,7 @@ pub mod tests {
 
     #[wasm_bindgen_test]
     fn el_changed() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
@@ -1065,6 +1085,7 @@ pub mod tests {
             &mailbox,
             vdom,
             div![span!["hello"], ", ", span!["world"]],
+            &app
         );
 
         assert_eq!(parent.child_nodes().length(), 1);
@@ -1081,6 +1102,7 @@ pub mod tests {
                 ", ",
                 span![class!["second"], "world"],
             ],
+            &app
         );
 
         let child1 = old_ws
@@ -1103,6 +1125,7 @@ pub mod tests {
     /// then the new element is inserted at the correct position.
     #[wasm_bindgen_test]
     fn empty_changed_in_front() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
@@ -1117,7 +1140,7 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div![seed::empty(), "b", "c"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div![seed::empty(), "b", "c"], &app);
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
@@ -1127,7 +1150,7 @@ pub mod tests {
             &["b", "c"],
         );
 
-        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"]);
+        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"], &app);
 
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
@@ -1143,6 +1166,7 @@ pub mod tests {
     /// then the new element is inserted at the correct position.
     #[wasm_bindgen_test]
     fn empty_changed_in_the_middle() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
@@ -1157,7 +1181,7 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"], &app);
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
@@ -1167,7 +1191,7 @@ pub mod tests {
             &["a", "c"],
         );
 
-        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"]);
+        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"], &app);
 
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
@@ -1182,6 +1206,7 @@ pub mod tests {
     /// Test that if the old_el passed to patch was itself an empty, it is correctly patched to a non-empty.
     #[wasm_bindgen_test]
     fn root_empty_changed() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
@@ -1189,7 +1214,7 @@ pub mod tests {
 
         let mut vdom = seed::empty();
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"]);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"], &app);
         assert_eq!(parent.children().length(), 1);
         let el_ws = vdom.el_ws.as_ref().expect("el_ws missing");
         assert!(el_ws.is_same_node(parent.first_child().as_ref()));
@@ -1204,26 +1229,28 @@ pub mod tests {
     /// Test that an empty->empty transition is handled correctly.
     #[wasm_bindgen_test]
     fn root_empty_to_empty() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
         let old = seed::empty();
-        call_patch(&doc, &parent, &mailbox, old, seed::empty());
+        call_patch(&doc, &parent, &mailbox, old, seed::empty(), &app);
         assert_eq!(parent.children().length(), 0);
     }
 
     /// Test that a text Node is correctly patched to an Element and vice versa
     #[wasm_bindgen_test]
     fn text_to_element_to_text() {
+        let app = create_app();
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = seed::empty();
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"));
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"), &app);
         assert_eq!(parent.child_nodes().length(), 1);
         let text = parent
             .first_child()
@@ -1241,7 +1268,7 @@ pub mod tests {
             &parent,
             &mailbox,
             vdom,
-            span![style!["color" => "red"], "def"],
+            span![style!["color" => "red"], "def"], &app,
         );
         assert_eq!(parent.child_nodes().length(), 1);
         let element = parent
@@ -1253,7 +1280,7 @@ pub mod tests {
         assert_eq!(&element.tag_name().to_lowercase(), "span");
 
         // change back to a text node
-        call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"));
+        call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"), &app);
         assert_eq!(parent.child_nodes().length(), 1);
         let text = parent
             .first_child()
@@ -1267,6 +1294,7 @@ pub mod tests {
     /// Test that the lifecycle hooks are called correctly.
     #[wasm_bindgen_test]
     fn lifecycle_hooks() {
+        let app = create_app();
         use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
         let mailbox = Mailbox::new(|_msg: Msg| {});
@@ -1327,6 +1355,7 @@ pub mod tests {
                 did_update(did_update_func.clone()),
                 will_unmount(will_unmount_func.clone()),
             ],
+            &app
         );
         assert!(
             node_ref.borrow().is_some(),
@@ -1357,6 +1386,7 @@ pub mod tests {
                 did_update(did_update_func.clone()),
                 will_unmount(will_unmount_func.clone()),
             ],
+            &app
         );
         assert!(
             node_ref
@@ -1373,7 +1403,7 @@ pub mod tests {
         );
 
         // and now unmount the element to see if will_unmount gets called.
-        call_patch(&doc, &parent, &mailbox, vdom, seed::empty());
+        call_patch(&doc, &parent, &mailbox, vdom, seed::empty(), &app);
         assert!(node_ref.borrow().is_none(), "will_unmount wasn't called");
     }
 

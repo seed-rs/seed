@@ -1,19 +1,27 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <title>seed websocket example</title>
+
+    <!-- Because of Edge, see https://github.com/samthor/fast-text-encoding -->
+    <script type="text/javascript" src="/public/text-polyfill.min.js"></script>
   </head>
   <body>
     <section id="app"></section>
-    <script src='/pkg/websocket.js'></script>
+    <script src="/pkg/package.js"></script>
     <script>
-        const { start } = wasm_bindgen;
-        function run() { start(); }
-        wasm_bindgen('/pkg/websocket_bg.wasm')
-          .then(run)
-          .catch(console.error);
+      const { start } = wasm_bindgen;
+      function run() {
+        start();
+      }
+      wasm_bindgen("/pkg/package_bg.wasm")
+        .then(run)
+        .catch(console.error);
     </script>
   </body>
 </html>

@@ -1,12 +1,6 @@
-[package]
-name = "backend"
-version = "0.1.0"
-authors = ["Your Name <email@address.com>"]
-edition = "2018"
+[workspace]
 
-[dependencies]
-rocket = "^0.4.0"
-rocket_contrib = "^0.4.0"
-serde_json = "^1.0.33"
-
-shared = { path = "shared" }
+members = [
+    "client",
+    "server",
+]
