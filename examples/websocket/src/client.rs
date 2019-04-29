@@ -20,7 +20,9 @@ struct Model {
     messages: Vec<String>,
 }
 
-#[derive(Clone)]
+// `Serialize` is required by `seed::update(..)`
+// `Deserialize` is required by `trigger_update_handler`
+#[derive(Clone, Serialize, Deserialize)]
 enum Msg {
     Connected,
     ServerMsg(json::ServerMsg),
@@ -101,19 +103,21 @@ fn view(model: &Model) -> Vec<El<Msg>> {
 
 #[wasm_bindgen]
 pub fn start() {
-    log!("Start the websocket client app");
-    let app = App::build(Model::default(), update, view).finish().run();
+    let app = App::build(Model::default(), update, view)
+        // `trigger_update_handler` is necessary,
+        // because we want to process `seed::update(..)` calls.
+        .window_events(|_| vec![trigger_update_handler()])
+        .finish()
+        .run();
 
     let ws = WebSocket::new(WS_URL).unwrap();
-    register_handlers(&ws, app.clone());
+    register_handlers(&ws);
     register_message_listener(ws, app)
 }
 
-fn register_handlers<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
-    where ElC: ElContainer<Msg> + 'static
-{
-    register_handler_on_open(&ws, app.clone());
-    register_handler_on_message(&ws, app);
+fn register_handlers(ws: &web_sys::WebSocket) {
+    register_handler_on_open(&ws);
+    register_handler_on_message(&ws);
     register_handler_on_close(&ws);
     register_handler_on_error(&ws);
 }
@@ -121,11 +125,11 @@ fn register_handlers<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
 fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: App<Msg, Model, ElC>)
     where ElC: ElContainer<Msg> + 'static
 {
-    app.clone().add_message_listener(move |msg| match msg {
+    app.add_message_listener(move |msg| match msg {
         Msg::Send(msg) => {
             let s = serde_json::to_string(msg).unwrap();
             ws.send_with_str(&s).unwrap();
-            app.update(Msg::Sent);
+            seed::update(Msg::Sent);
         }
         _ => {}
     });
@@ -133,12 +137,10 @@ fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: App<Msg, Model, E
 
 // ------ HANDLERS -------
 
-fn register_handler_on_open<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
-    where ElC: ElContainer<Msg> + 'static
-{
+fn register_handler_on_open(ws: &web_sys::WebSocket) {
     let on_open = Closure::wrap(Box::new(move |_| {
         log!("WebSocket connection is open now");
-        app.update(Msg::Connected);
+        seed::update(Msg::Connected);
     }) as Box<FnMut(JsValue)>);
 
     ws.set_onopen(Some(on_open.as_ref().unchecked_ref()));
@@ -154,15 +156,13 @@ fn register_handler_on_close(ws: &web_sys::WebSocket) {
     on_close.forget();
 }
 
-fn register_handler_on_message<ElC>(ws: &web_sys::WebSocket, app: App<Msg, Model, ElC>)
-    where ElC: ElContainer<Msg> + 'static
-{
+fn register_handler_on_message(ws: &web_sys::WebSocket) {
     let on_message = Closure::wrap(Box::new(move |ev: MessageEvent| {
         log!("Client received a message");
         let txt = ev.data().as_string().unwrap();
         let json: json::ServerMsg = serde_json::from_str(&txt).unwrap();
         log!("- text message: ", &txt);
-        app.update(Msg::ServerMsg(json));
+        seed::update(Msg::ServerMsg(json));
     }) as Box<FnMut(MessageEvent)>);
 
     ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));

@@ -36,6 +36,8 @@ version = "^0.3.19"
 features = [
     "AbortController",
     "AbortSignal",
+    "CustomEvent",
+    "CustomEventInit",
     "Document",
     "Element",
     "Event",
@@ -79,6 +81,7 @@ members = [
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
     "examples/todomvc",
+    "examples/update_from_js",
     "examples/websocket",
     "examples/window_events",
 ]
