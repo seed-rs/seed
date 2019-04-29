@@ -3,6 +3,7 @@
 
 use wasm_bindgen::JsCast;
 use web_sys;
+use crate::dom_types;
 
 /// Convenience function to avoid repeating expect logic.
 pub fn window() -> web_sys::Window {
@@ -72,4 +73,26 @@ pub fn log<S: ToString>(text: S) {
 pub fn error<S: ToString>(text: S) {
     // ignore clippy about &S
     web_sys::console::error_1(&text.to_string().into());
+}
+
+/// Trigger update function.
+/// It requires Msg to be (De)serializable
+/// and to register `trigger_update_handler` in `window_events`.
+pub fn update<Ms>(msg: Ms) 
+    where Ms: Clone + 'static + serde::Serialize
+{
+    let msg_as_js_value = wasm_bindgen::JsValue::from_serde(&msg)
+        .expect("Error: TriggerUpdate - can't serialize given msg!");
+
+    let mut custom_event_config = web_sys::CustomEventInit::new();
+    custom_event_config.detail(&msg_as_js_value);
+
+    let event = web_sys::CustomEvent::new_with_event_init_dict(
+        dom_types::UPDATE_TRIGGER_EVENT_ID,
+        &custom_event_config,
+    )
+        .expect("Error: TriggerUpdate - create event failed!");
+
+    window().dispatch_event(&event)
+        .expect("Error: TriggerUpdate - dispatch)event failed!");
 }

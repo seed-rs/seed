@@ -7,6 +7,9 @@ use pulldown_cmark;
 use std::{collections::HashMap, fmt};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
+use serde::de::DeserializeOwned;
+
+pub const UPDATE_TRIGGER_EVENT_ID: &str = "triggerupdate";
 
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
@@ -52,9 +55,9 @@ impl From<String> for Namespace {
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 // Ignore clippy for these events re &T; let's keep the API clean
-where
-    Ms: Clone + 'static,
-    T: ToString,
+    where
+        Ms: Clone + 'static,
+        T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -84,6 +87,17 @@ pub fn raw_ev<Ms, T: ToString>(
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| handler(event);
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
+}
+
+/// Create an event that passes a web_sys::CustomEvent, allowing easy access
+/// to detail() and then trigger update
+pub fn trigger_update_ev<Ms>(
+    mut handler: impl FnMut(web_sys::CustomEvent) -> Ms + 'static,
+) -> Listener<Ms> {
+    let closure = move |event: web_sys::Event| {
+        handler(event.dyn_ref::<web_sys::CustomEvent>().unwrap().clone())
+    };
+    Listener::new(UPDATE_TRIGGER_EVENT_ID, Some(Box::new(closure)))
 }
 
 /// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
@@ -125,6 +139,14 @@ pub fn pointer_ev<Ms, T: ToString>(
 //    let closure = move |event: web_sys::Event| handler(event);
 //    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 //}
+
+/// Trigger update function from outside of App
+pub fn trigger_update_handler<Ms: DeserializeOwned>() -> Listener<Ms> {
+    trigger_update_ev(|ev| {
+        ev.detail().into_serde()
+            .expect("trigger_update_handler: Deserialization failed!")
+    })
+}
 
 type EventHandler<Ms> = Box<FnMut(web_sys::Event) -> Ms>;
 
@@ -192,8 +214,8 @@ impl<Ms> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-    where
-        T: AsRef<web_sys::EventTarget>,
+        where
+            T: AsRef<web_sys::EventTarget>,
     {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
@@ -324,8 +346,8 @@ impl<Ms> Listener<Ms> {
     }
 
     pub fn detach<T>(&mut self, el_ws: &T)
-    where
-        T: AsRef<web_sys::EventTarget>,
+        where
+            T: AsRef<web_sys::EventTarget>,
     {
         let closure = self.closure.take().expect("Can't find closure to detach");
 
@@ -341,8 +363,8 @@ impl<Ms> Listener<Ms> {
 impl<Ms: 'static> Listener<Ms> {
     /// Converts the message type of the listener.
     fn map_message<OtherMs, F>(self, f: F) -> Listener<OtherMs>
-    where
-        F: Fn(Ms) -> OtherMs + 'static,
+        where
+            F: Fn(Ms) -> OtherMs + 'static,
     {
         Listener {
             trigger: self.trigger,
@@ -869,7 +891,7 @@ make_events! {
 
     AudioProcess => "audioprocess", CanPlay => "canplay", CanPlayThrough => "canplaythrough", Complete => "complete",
     DurationChange => "durationchange", Emptied => "emptied", Ended => "ended", LoadedData => "loadeddata",
-    LoadedMetaData => "loadedmetadata", Pause => "pause", Play => "play", Playing => "playing", RateChagne => "ratechange",
+    LoadedMetaData => "loadedmetadata", Pause => "pause", Play => "play", Playing => "playing", RateChange => "ratechange",
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
     VolumeChange => "volumechange",
 
@@ -877,7 +899,9 @@ make_events! {
 
     Change => "change",
 
-    Input => "input"
+    Input => "input",
+
+    TriggerUpdate => "triggerupdate"
 }
 
 // Populate tags using a macro, to reduce code repetition.
@@ -1044,18 +1068,21 @@ make_tags! {
 /// WIP that marks elements in ways to improve diffing and rendering efficiency.
 #[derive(Copy, Clone, Debug)]
 pub enum Optimize {
-    Key(u32), // Helps correctly match children, prevening unecessary rerenders
+    Key(u32),
+    // Helps correctly match children, prevening unecessary rerenders
     Static,   // unimplemented, and possibly unecessary
 }
 
 pub trait ElContainer<Ms> {
     fn els(self) -> Vec<El<Ms>>;
 }
+
 impl<Ms> ElContainer<Ms> for El<Ms> {
     fn els(self) -> Vec<El<Ms>> {
         vec![self]
     }
 }
+
 impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
     fn els(self) -> Vec<El<Ms>> {
         self
@@ -1092,7 +1119,8 @@ pub struct El<Ms: 'static> {
 
     // Lifecycle hooks
     pub hooks: LifecycleHooks<Ms>,
-    pub empty: bool, // Indicates not to render anything.
+    pub empty: bool,
+    // Indicates not to render anything.
     optimizations: Vec<Optimize>,
 }
 
@@ -1165,8 +1193,8 @@ impl<Ms> El<Ms> {
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
     pub fn map_message<OtherMs, F>(self, f: F) -> El<OtherMs>
-    where
-        F: Fn(Ms) -> OtherMs + Copy + 'static,
+        where
+            F: Fn(Ms) -> OtherMs + Copy + 'static,
     {
         El {
             tag: self.tag,
@@ -1304,14 +1332,14 @@ impl<Ms> El<Ms> {
 
     /// Call f(&mut el) for this El and each of its descendants
     pub fn walk_tree_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut Self),
+        where
+            F: FnMut(&mut Self),
     {
         // This inner function is required to avoid recursive compilation errors having to do
         // with the generic trait bound on F.
         fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-        where
-            F: FnMut(&mut El<Ms>),
+            where
+                F: FnMut(&mut El<Ms>),
         {
             f(el);
 
@@ -1429,7 +1457,8 @@ pub mod tests {
 
     use super::*;
 
-    use crate as seed; // required for macros to work.
+    use crate as seed;
+    // required for macros to work.
     use crate::vdom;
     use std::collections::HashSet;
     use wasm_bindgen::{JsCast, JsValue};
@@ -1437,13 +1466,14 @@ pub mod tests {
 
     #[derive(Clone, Debug)]
     enum Msg {}
+
     struct Model {}
 
     fn create_app() -> seed::App<Msg, Model, El<Msg>> {
         seed::App::build(
             Model {},
-            |_, _|{ vdom::Update::default() },
-            |_|{ seed::empty() },
+            |_, _| { vdom::Update::default() },
+            |_| { seed::empty() },
         )
             // mount to the element that exists even in the default test html
             .mount_el(util::body().into())
