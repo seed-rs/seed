@@ -1,4 +1,5 @@
 # ---- BUILD ----
+
 [tasks.build]
 description = "Build only Seed"
 clear = true
@@ -6,10 +7,20 @@ workspace = false
 command = "cargo"
 args = ["build"]
 
+[tasks.build_release]
+extend = "build"
+description = "Build only Seed in relase mode"
+args = ["build", "--release"]
+
 [tasks.all]
 description = "Build Seed and examples"
 workspace = false
 dependencies = ["build", "build_examples"]
+
+[tasks.all_release]
+extend = "all"
+description = "Build Seed and examples in release mode"
+dependencies = ["build_release", "build_examples_release"]
 
 [tasks.one]
 description = "Build Seed and chosen example. Ex: 'cargo make one counter'"
@@ -17,6 +28,12 @@ workspace = false
 command = "cargo"
 args = ["make", "--cwd", "./examples/${@}", "build"]
 dependencies = ["build"]
+
+[tasks.one_release]
+extend = "one"
+description = "Build Seed and chosen example in release mode. Ex: 'cargo make one counter'"
+args = ["make", "--cwd", "./examples/${@}", "build_release"]
+dependencies = ["build_release"]
 
 # ---- TEST ----
 
@@ -28,10 +45,20 @@ install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V
 command = "wasm-pack"
 args = ["test", "--${@}"]
 
+[tasks.test_release]
+extend = "test"
+description = "Run Seed's tests in release mode. Ex: 'cargo make test firefox'. Test envs: [chrome, firefox, safari]"
+args = ["test", "--${@}", "--release"]
+
 [tasks.test_h]
 description = "Run headless Seed's tests. Ex: 'cargo make test_h firefox'. Test envs: [chrome, firefox, safari]"
 extend = "test"
 args = ["test", "--headless", "--${@}"]
+
+[tasks.test_h_release]
+extend = "test_h"
+description = "Run headless Seed's tests in release mode. Ex: 'cargo make test_h firefox'. Test envs: [chrome, firefox, safari]"
+args = ["test", "--headless", "--${@}", "--release"]
 
 # ---- START ----
 
@@ -41,11 +68,21 @@ workspace = false
 command = "cargo"
 args = ["make", "--cwd", "./examples/${@}", "start"]
 
+[tasks.start_release]
+extend = "start"
+description = "Start chosen example in release mode. Ex: 'cargo make start counter'"
+args = ["make", "--cwd", "./examples/${@}", "start_release"]
+
 [tasks.start_server]
 description = "Start server of chosen example (only a few have one). Ex: 'cargo make start_server websocket'"
 workspace = false
 command = "cargo"
 args = ["make", "--cwd", "./examples/${@}", "start_server"]
+
+[tasks.start_server_release]
+extend = "start_server"
+description = "Start server of chosen example (only a few have one) in release mode. Ex: 'cargo make start_server websocket'"
+args = ["make", "--cwd", "./examples/${@}", "start_server_release"]
 
 # ---- DEFAULT TASKS FOR EXAMPLES ----
 # These tasks should be run only from the example root
@@ -56,7 +93,12 @@ description = "Build with wasm-pack"
 workspace = false
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
 command = "wasm-pack"
-args = ["build", "--target", "no-modules", "--out-name", "package"]
+args = ["build", "--target", "no-modules", "--out-name", "package", "--dev"]
+
+[tasks.default_build_release]
+extend = "default_build"
+description = "Build with wasm-pack in release mode"
+args = ["build", "--target", "no-modules", "--out-name", "package", "--release"]
 
 [tasks.default_start]
 description = "Build and start microserver"
@@ -66,6 +108,11 @@ command = "microserver"
 args = ["--port", "8000"]
 dependencies = ["build"]
 
+[tasks.default_start_release]
+extend = "default_start"
+description = "Build and start microserver in release mode"
+dependencies = ["build_release"]
+
 # ---- HELPERS -----
 
 [tasks.build_examples]
@@ -73,6 +120,11 @@ description = "Build examples"
 workspace = false
 command = "cargo"
 args = ["make", "for_each", "build"]
+
+[tasks.build_examples_release]
+extend = "build_examples"
+description = "Build examples in release mode"
+args = ["make", "for_each", "build_release"]
 
 [tasks.for_each]
 description = "Run chosen task for each example in its root. Ex: 'cargo make for_each build'"
@@ -87,7 +139,6 @@ script = [
     extern crate glob;
 
     use std::process::{Command, exit, Stdio};
-    use std::io::{self, Write};
     use std::env;
     use glob::glob;
 

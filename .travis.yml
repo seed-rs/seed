@@ -35,7 +35,7 @@ script:
   - cargo make test_h firefox
   - cargo make test_h chrome
 
-# TODO: make it faster ; useful link
+# TODO: make it faster ; useful links:
 # https://www.reddit.com/r/rust/comments/9zpyww/idea_a_local_cache_of_compiled_dependencies_in/
 # https://doc.rust-lang.org/cargo/reference/environment-variables.html - CARGO_TARGET_DIR
 # https://github.com/holmgr/cargo-sweep

@@ -7,6 +7,11 @@ description = "Build client and server"
 clear = true
 dependencies = ["build_client", "build_server"]
 
+[tasks.build_release]
+extend = "build"
+description = "Build client and server in release mode"
+dependencies = ["build_client_release", "build_server_release"]
+
 [tasks.build_client]
 description = "Build client"
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
@@ -15,6 +20,19 @@ args = [
     "build",
     "--target", "no-modules",
     "--out-name", "package",
+    "--dev",
+    "--",
+    "--features", "client"
+]
+
+[tasks.build_client_release]
+extend = "build_client"
+description = "Build client in release mode"
+args = [
+    "build",
+    "--target", "no-modules",
+    "--out-name", "package",
+    "--release",
     "--",
     "--features", "client"
 ]
@@ -24,11 +42,20 @@ description = "Build server"
 command = "cargo"
 args = ["build", "--bin", "server", "--features", "server"]
 
+[tasks.build_server_release]
+extend = "build_server"
+description = "Build server in release mode"
+args = ["build", "--bin", "server", "--features", "server", "--release"]
+
 # ---- START ----
 
 [tasks.start]
 alias = "default_start"
 dependencies = ["build_client"]
+
+[tasks.start_release]
+alias = "default_start_release"
+dependencies = ["build_client_release"]
 
 [tasks.start_server]
 description = "Run websocket server on port 9000"
@@ -36,4 +63,10 @@ workspace = false
 command = "cargo"
 args = ["run", "--bin", "server", "--features", "server"]
 dependencies = ["build_server"]
+
+[tasks.start_server_release]
+extend = "start_server"
+description = "Run websocket server on port 9000 in release mode"
+args = ["run", "--bin", "server", "--features", "server", "--release"]
+dependencies = ["build_server_release"]
 
