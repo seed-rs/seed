@@ -7,18 +7,33 @@ clear = true
 workspace = false
 dependencies = ["build_client", "build_server"]
 
+[tasks.build_release]
+extend = "build"
+description = "Build client and server in release mode"
+dependencies = ["build_client_release", "build_server_release"]
+
 [tasks.build_client]
 description = "Build client"
 workspace = false
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
 command = "wasm-pack"
-args = ["build", "client", "--target", "no-modules", "--out-name", "package"]
+args = ["build", "client", "--target", "no-modules", "--out-name", "package", "--dev"]
+
+[tasks.build_client_release]
+extend = "build_client"
+description = "Build client in release mode"
+args = ["build", "client", "--target", "no-modules", "--out-name", "package", "--release"]
 
 [tasks.build_server]
 description = "Build server"
 workspace = false
 command = "cargo"
 args = ["build", "--package", "server"]
+
+[tasks.build_server_release]
+extend = "build_server"
+description = "Build server in release mode"
+args = ["build", "--package", "server", "--release"]
 
 # ---- START ----
 
@@ -28,3 +43,9 @@ workspace = false
 command = "cargo"
 args = ["run", "--package", "server"]
 dependencies = ["build"]
+
+[tasks.start_release]
+extend = "start"
+description = "Build and start Actix server with client on port 8000 in release mode"
+args = ["run", "--package", "server", "--release"]
+dependencies = ["build_release"]
