@@ -112,7 +112,7 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 /// * [web_sys Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [web_sys Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub fn make_websys_el<Ms: Clone>(
+pub fn make_websys_el<Ms>(
     el_vdom: &mut El<Ms>,
     document: &web_sys::Document,
 ) -> web_sys::Node {
@@ -155,7 +155,7 @@ pub fn make_websys_el<Ms: Clone>(
 }
 
 /// Similar to attach_el_and_children, but assumes we've already attached the parent.
-pub fn attach_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
+pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     app: &App<Ms, Mdl, ElC>,
 ) {
@@ -174,7 +174,7 @@ pub fn attach_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
+pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     parent: &web_sys::Node,
     app: &App<Ms, Mdl, ElC>,
@@ -208,9 +208,9 @@ pub fn attach_el_and_children<Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
         (mount_actions.actions)(&el_ws);
-        if let Some(message) = mount_actions.message.clone() {
+//        if let Some(message) = mount_actions.message.clone() {
             //            app.update(message);
-        }
+//        }
     }
 
     // Replace the web_sys el
@@ -227,7 +227,7 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
+pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut new.hooks.did_update {
         (update_actions.actions)(old_el_ws) // todo

@@ -171,7 +171,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct AppData<Ms: Clone + 'static, Mdl> {
+pub struct AppData<Ms: 'static, Mdl> {
     // Model is in a RefCell here so we can modify it in self.update().
     pub model: RefCell<Mdl>,
     main_el_vdom: RefCell<Option<El<Ms>>>,
@@ -182,7 +182,7 @@ pub struct AppData<Ms: Clone + 'static, Mdl> {
     //    mount_pt: RefCell<web_sys::Element>
 }
 
-pub struct AppCfg<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct AppCfg<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     document: web_sys::Document,
     mount_point: web_sys::Element,
     pub update: UpdateFn<Ms, Mdl>,
@@ -190,14 +190,14 @@ pub struct AppCfg<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct App<Ms:'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug
+impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug
     for App<Ms, Mdl, ElC>
 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -232,7 +232,7 @@ enum Parent {
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
 #[derive(Clone)]
-pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Mdl, ElC>,
@@ -241,7 +241,7 @@ pub struct AppBuilder<Ms: Clone + 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms: Clone, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
     pub fn mount(mut self, id: &'static str) -> Self {
         self.parent = Some(Parent::Id(id));
         self
@@ -281,7 +281,7 @@ impl<Ms: Clone, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms: Clone, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     pub fn build(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
@@ -520,7 +520,7 @@ impl<Ms: Clone, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 /// Handle controlled inputs: Ie force sync with the model.
 fn setup_input_listener<Ms>(el: &mut El<Ms>)
 where
-    Ms: Clone + 'static,
+    Ms: 'static,
 {
     if el.tag == dom_types::Tag::Input
         || el.tag == dom_types::Tag::Select
@@ -546,7 +546,7 @@ where
 // Create the web_sys element; add it to the working tree; store it in its corresponding vdom El.
 fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
 where
-    Ms: Clone + 'static,
+    Ms: 'static,
 {
     if el.el_ws.is_none() {
         el.el_ws = Some(websys_bridge::make_websys_el(el, document));
@@ -556,7 +556,7 @@ where
 /// Recursively sets up input listeners
 fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
 where
-    Ms: Clone + 'static,
+    Ms:'static,
 {
     el_vdom.walk_tree_mut(setup_input_listener);
 }
@@ -564,12 +564,12 @@ where
 /// Recursively sets up web_sys elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
 where
-    Ms: Clone + 'static,
+    Ms:'static,
 {
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
 
-impl<Ms: Clone, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
     fn clone(&self) -> Self {
         App {
             cfg: Rc::clone(&self.cfg),
@@ -579,7 +579,7 @@ impl<Ms: Clone, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
 }
 
 /// Recursively attach all event-listeners. Run this after creating fresh elements.
-fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
+fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
     el.walk_tree_mut(|el| {
         if let Some(el_ws) = el.el_ws.as_ref() {
             for listener in &mut el.listeners {
@@ -595,7 +595,7 @@ fn attach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>
 }
 
 /// Recursively detach event-listeners. Run this before patching.
-fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
+fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>) {
     el.walk_tree_mut(|el| {
         if let Some(el_ws) = el.el_ws.as_ref() {
             for listener in &mut el.listeners {
@@ -607,7 +607,7 @@ fn detach_listeners<Ms: Clone>(el: &mut dom_types::El<Ms>) {
 
 /// We reattach all listeners, as with normal Els, since we have no
 /// way of diffing them.
-fn setup_window_listeners<Ms: Clone>(
+fn setup_window_listeners<Ms>(
     window: &Window,
     old: &mut Vec<dom_types::Listener<Ms>>,
     new: &mut Vec<dom_types::Listener<Ms>>,
@@ -622,7 +622,7 @@ fn setup_window_listeners<Ms: Clone>(
     }
 }
 
-pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
+pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
@@ -666,9 +666,9 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
 
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 (unmount_actions.actions)(&old_el_ws);
-                if let Some(message) = unmount_actions.message.clone() {
+//                if let Some(message) = unmount_actions.message.clone() {
                     //                    app.update(message);
-                }
+//                }
             }
 
             return None;
@@ -693,9 +693,9 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
                         .as_ref()
                         .expect("old el_ws missing in call to unmount_actions"),
                 );
-                if let Some(message) = unmount_actions.message.clone() {
+//                if let Some(message) = unmount_actions.message.clone() {
                     //                            app.update(message);
-                }
+//                }
             }
 
             // todo: Perhaps some of this next segment should be moved to websys_bridge
@@ -720,9 +720,9 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: ElContainer<Ms>>(
             // Perform side-effects specified for mounting.
             if let Some(mount_actions) = &mut new.hooks.did_mount {
                 (mount_actions.actions)(new_el_ws);
-                if let Some(message) = mount_actions.message.clone() {
+//                if let Some(message) = mount_actions.message.clone() {
                     //                            app.update_inner(message);
-                }
+//                }
             }
 
             attach_listeners(new, &mailbox);
@@ -1430,7 +1430,7 @@ pub mod tests {
     fn update_promises() -> impl Future<Item = (), Error = JsValue> {
         struct Model(u32);
 
-        #[derive(Clone)]
+//        #[derive(Clone)]
         struct Msg;
 
         fn update(_: Msg, model: &mut Model) -> Update<Msg> {

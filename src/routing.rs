@@ -124,7 +124,7 @@ fn get_search() -> String {
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(&Url) -> Ms)
 where
-    Ms: Clone + 'static,
+    Ms: 'static,
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
@@ -223,7 +223,7 @@ pub fn setup_popstate_listener<Ms>(
     update_ps_listener: impl Fn(Closure<FnMut(web_sys::Event)>) + 'static,
     routes: fn(&Url) -> Ms,
 ) where
-    Ms: Clone + 'static,
+    Ms: 'static,
 {
     let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
         let ev = ev
@@ -255,7 +255,7 @@ pub fn setup_popstate_listener<Ms>(
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(&Url) -> Ms)
 where
-    Ms: Clone + 'static,
+    Ms: 'static,
 {
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         if let Some(et) = event.target() {

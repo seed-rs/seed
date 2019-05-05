@@ -91,7 +91,7 @@ pub fn raw_ev<Ms, T: ToString>(
 
 /// Create an event that passes a web_sys::CustomEvent, allowing easy access
 /// to detail() and then trigger update
-pub fn trigger_update_ev<Ms>(
+pub fn trigger_update_ev<Ms: Clone>(
     mut handler: impl FnMut(web_sys::CustomEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
@@ -102,7 +102,7 @@ pub fn trigger_update_ev<Ms>(
 
 /// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
 /// to items like key_code() and key().
-pub fn keyboard_ev<Ms, T: ToString>(
+pub fn keyboard_ev<Ms: Clone, T: ToString>(
     trigger: T,
     mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -113,7 +113,7 @@ pub fn keyboard_ev<Ms, T: ToString>(
 }
 
 /// See keyboard_ev
-pub fn mouse_ev<Ms, T: ToString>(
+pub fn mouse_ev<Ms: Clone, T: ToString>(
     trigger: T,
     mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -141,7 +141,7 @@ pub fn pointer_ev<Ms, T: ToString>(
 //}
 
 /// Trigger update function from outside of App
-pub fn trigger_update_handler<Ms: DeserializeOwned>() -> Listener<Ms> {
+pub fn trigger_update_handler<Ms: Clone + DeserializeOwned>() -> Listener<Ms> {
     trigger_update_ev(|ev| {
         ev.detail()
             .into_serde()
@@ -1465,7 +1465,7 @@ pub mod tests {
     use wasm_bindgen::{JsCast, JsValue};
     use web_sys::{Element, Node};
 
-    #[derive(Clone, Debug)]
+    #[derive(Debug)]
     enum Msg {}
 
     struct Model {}

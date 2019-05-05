@@ -23,7 +23,7 @@ impl Default for Model {
 
 // Update
 
-//#[derive(Clone)]
+#[derive(Clone)]
 enum Msg {
     Increment,
     Decrement,
