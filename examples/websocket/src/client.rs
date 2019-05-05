@@ -123,7 +123,8 @@ fn register_handlers(ws: &web_sys::WebSocket) {
 }
 
 fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: App<Msg, Model, ElC>)
-    where ElC: ElContainer<Msg> + 'static
+where
+    ElC: ElContainer<Msg> + 'static,
 {
     app.add_message_listener(move |msg| match msg {
         Msg::Send(msg) => {

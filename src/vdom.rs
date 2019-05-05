@@ -936,11 +936,7 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> App<Msg, Model, El<Msg>> {
-        App::build(
-            Model {},
-            |_, _|{ Update::default() },
-            |_|{ seed::empty() },
-        )
+        App::build(Model {}, |_, _| Update::default(), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount_el(util::body().into())
             .finish()
@@ -998,7 +994,7 @@ pub mod tests {
             &mailbox,
             vdom,
             div!["text", "more text", vec![li!["even more text"]]],
-            &app
+            &app,
         );
 
         assert_eq!(parent.children().length(), 1);
@@ -1048,7 +1044,7 @@ pub mod tests {
             &mailbox,
             vdom,
             div!["text", "more text", vec![li!["even more text"]]],
-            &app
+            &app,
         );
 
         assert_eq!(parent.children().length(), 1);
@@ -1085,7 +1081,7 @@ pub mod tests {
             &mailbox,
             vdom,
             div![span!["hello"], ", ", span!["world"]],
-            &app
+            &app,
         );
 
         assert_eq!(parent.child_nodes().length(), 1);
@@ -1102,7 +1098,7 @@ pub mod tests {
                 ", ",
                 span![class!["second"], "world"],
             ],
-            &app
+            &app,
         );
 
         let child1 = old_ws
@@ -1140,7 +1136,14 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div![seed::empty(), "b", "c"], &app);
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![seed::empty(), "b", "c"],
+            &app,
+        );
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
@@ -1181,7 +1184,14 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         assert_eq!(old_ws.child_nodes().length(), 0);
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"], &app);
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["a", seed::empty(), "c"],
+            &app,
+        );
         assert_eq!(parent.children().length(), 1);
         assert!(old_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
@@ -1214,7 +1224,14 @@ pub mod tests {
 
         let mut vdom = seed::empty();
 
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["a", seed::empty(), "c"], &app);
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div!["a", seed::empty(), "c"],
+            &app,
+        );
         assert_eq!(parent.children().length(), 1);
         let el_ws = vdom.el_ws.as_ref().expect("el_ws missing");
         assert!(el_ws.is_same_node(parent.first_child().as_ref()));
@@ -1268,7 +1285,8 @@ pub mod tests {
             &parent,
             &mailbox,
             vdom,
-            span![style!["color" => "red"], "def"], &app,
+            span![style!["color" => "red"], "def"],
+            &app,
         );
         assert_eq!(parent.child_nodes().length(), 1);
         let element = parent
@@ -1355,7 +1373,7 @@ pub mod tests {
                 did_update(did_update_func.clone()),
                 will_unmount(will_unmount_func.clone()),
             ],
-            &app
+            &app,
         );
         assert!(
             node_ref.borrow().is_some(),
@@ -1386,7 +1404,7 @@ pub mod tests {
                 did_update(did_update_func.clone()),
                 will_unmount(will_unmount_func.clone()),
             ],
-            &app
+            &app,
         );
         assert!(
             node_ref

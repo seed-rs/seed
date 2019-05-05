@@ -5,7 +5,7 @@
 pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_path, push_route, Url},
-    util::{document, error, history, log, window, body, update},
+    util::{body, document, error, history, log, update, window},
     vdom::App, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
@@ -81,8 +81,8 @@ pub mod prelude {
     pub use crate::{
         dom_types::{
             did_mount, did_update, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
-            will_unmount, At, El, ElContainer, Ev, Optimize::Key, Tag, UpdateEl,
-            trigger_update_handler
+            trigger_update_handler, will_unmount, At, El, ElContainer, Ev, Optimize::Key, Tag,
+            UpdateEl,
         },
         shortcuts::*, // appears not to work.
         vdom::{ShouldRender, ShouldRender::*, Update},

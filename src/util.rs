@@ -1,9 +1,9 @@
 //! Provide a wrapper for commonly-used, but verbose web_sys features.
 //! This module is decoupled / independent.
 
+use crate::dom_types;
 use wasm_bindgen::JsCast;
 use web_sys;
-use crate::dom_types;
 
 /// Convenience function to avoid repeating expect logic.
 pub fn window() -> web_sys::Window {
@@ -78,8 +78,9 @@ pub fn error<S: ToString>(text: S) {
 /// Trigger update function.
 /// It requires Msg to be (De)serializable
 /// and to register `trigger_update_handler` in `window_events`.
-pub fn update<Ms>(msg: Ms) 
-    where Ms: Clone + 'static + serde::Serialize
+pub fn update<Ms>(msg: Ms)
+where
+    Ms: Clone + 'static + serde::Serialize,
 {
     let msg_as_js_value = wasm_bindgen::JsValue::from_serde(&msg)
         .expect("Error: TriggerUpdate - can't serialize given msg!");
@@ -91,8 +92,9 @@ pub fn update<Ms>(msg: Ms)
         dom_types::UPDATE_TRIGGER_EVENT_ID,
         &custom_event_config,
     )
-        .expect("Error: TriggerUpdate - create event failed!");
+    .expect("Error: TriggerUpdate - create event failed!");
 
-    window().dispatch_event(&event)
+    window()
+        .dispatch_event(&event)
         .expect("Error: TriggerUpdate - dispatch)event failed!");
 }
