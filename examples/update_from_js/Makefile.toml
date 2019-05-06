@@ -5,7 +5,13 @@ extend = "../../Makefile.toml"
 [tasks.build]
 alias = "default_build"
 
+[tasks.build_release]
+alias = "default_build_release"
+
 # ---- START ----
 
 [tasks.start]
 alias = "default_start"
+
+[tasks.start_release]
+alias = "default_start_release"
