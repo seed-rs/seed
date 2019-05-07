@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.3.3
+- Added `seed::update` function, which allows custom events, and updates from JS.
+
 ## v0.3.2
 - Top level view functions can now return `Vec<El<Ms>>`, `El<Ms>`, or something else implementing
 the new ElContainer trait
