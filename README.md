@@ -8,6 +8,8 @@
   <img src="/seed_branding/seed_logo.svg" width="256" title="Seed logo">
 </p>
 
+The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
+
 # Quickstart
 
 ## Setup
