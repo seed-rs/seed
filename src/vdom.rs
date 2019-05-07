@@ -190,16 +190,14 @@ pub struct AppCfg<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms:'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct App<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug
-    for App<Ms, Mdl, ElC>
-{
+impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -556,7 +554,7 @@ where
 /// Recursively sets up input listeners
 fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
 where
-    Ms:'static,
+    Ms: 'static,
 {
     el_vdom.walk_tree_mut(setup_input_listener);
 }
@@ -564,7 +562,7 @@ where
 /// Recursively sets up web_sys elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
 where
-    Ms:'static,
+    Ms: 'static,
 {
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
@@ -666,9 +664,9 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 (unmount_actions.actions)(&old_el_ws);
-//                if let Some(message) = unmount_actions.message.clone() {
-                    //                    app.update(message);
-//                }
+                //                if let Some(message) = unmount_actions.message.clone() {
+                //                    app.update(message);
+                //                }
             }
 
             return None;
@@ -693,9 +691,9 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                         .as_ref()
                         .expect("old el_ws missing in call to unmount_actions"),
                 );
-//                if let Some(message) = unmount_actions.message.clone() {
-                    //                            app.update(message);
-//                }
+                //                if let Some(message) = unmount_actions.message.clone() {
+                //                            app.update(message);
+                //                }
             }
 
             // todo: Perhaps some of this next segment should be moved to websys_bridge
@@ -720,9 +718,9 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             // Perform side-effects specified for mounting.
             if let Some(mount_actions) = &mut new.hooks.did_mount {
                 (mount_actions.actions)(new_el_ws);
-//                if let Some(message) = mount_actions.message.clone() {
-                    //                            app.update_inner(message);
-//                }
+                //                if let Some(message) = mount_actions.message.clone() {
+                //                            app.update_inner(message);
+                //                }
             }
 
             attach_listeners(new, &mailbox);
@@ -1430,7 +1428,7 @@ pub mod tests {
     fn update_promises() -> impl Future<Item = (), Error = JsValue> {
         struct Model(u32);
 
-//        #[derive(Clone)]
+        //        #[derive(Clone)]
         struct Msg;
 
         fn update(_: Msg, model: &mut Model) -> Update<Msg> {

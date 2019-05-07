@@ -80,6 +80,7 @@ members = [
     # "examples/mathjax",   # isn't Rust project
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
+    "examples/server_interaction_detailed",
     "examples/todomvc",
     "examples/update_from_js",
     "examples/websocket",

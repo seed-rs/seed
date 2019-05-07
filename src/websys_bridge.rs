@@ -112,10 +112,7 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 /// * [web_sys Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [web_sys Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub fn make_websys_el<Ms>(
-    el_vdom: &mut El<Ms>,
-    document: &web_sys::Document,
-) -> web_sys::Node {
+pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
     // A simple text node.
     if let Some(text) = &el_vdom.text {
         return document.create_text_node(&text).into();
@@ -208,9 +205,9 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
         (mount_actions.actions)(&el_ws);
-//        if let Some(message) = mount_actions.message.clone() {
-            //            app.update(message);
-//        }
+        //        if let Some(message) = mount_actions.message.clone() {
+        //            app.update(message);
+        //        }
     }
 
     // Replace the web_sys el
