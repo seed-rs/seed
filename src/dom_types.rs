@@ -734,9 +734,28 @@ impl Attrs {
         self.add(key, &items.join(" "));
     }
 
-    /// Combine with another Attrs; if there's a conflict, use the other one.
+    /// Combine with another Attrs
     pub fn merge(&mut self, other: Self) {
-        self.vals.extend(other.vals.into_iter());
+        for (other_key, other_value) in other.vals.into_iter() {
+            match self.vals.get_mut(&other_key) {
+                Some(original_value) => {
+                    Self::merge_attribute_values(&other_key, original_value, other_value);
+                }
+                None => {
+                    self.vals.insert(other_key, other_value);
+                }
+            }
+        }
+    }
+
+    fn merge_attribute_values(key: &At, original_value: &mut String, other_value: String) {
+        match key {
+            At::Class => {
+                original_value.push(' ');
+                original_value.push_str(&other_value);
+            }
+            _ => *original_value = other_value,
+        }
     }
 }
 
@@ -1578,8 +1597,6 @@ pub mod tests {
         assert_eq!(expected, get_node_attrs(&node));
     }
 
-    // TODO:
-    /*
     /// Tests that multiple class attributes are handled correctly
     #[wasm_bindgen_test]
     pub fn merge_classes() {
@@ -1598,7 +1615,6 @@ pub mod tests {
         );
         assert_eq!(expected, get_node_attrs(&node));
     }
-    */
 
     /// Tests that multiple style sections are handled correctly
     #[wasm_bindgen_test]
