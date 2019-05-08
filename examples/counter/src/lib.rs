@@ -53,6 +53,12 @@ fn success_level(clicks: i32) -> El<Msg> {
     p![descrip]
 }
 
+
+#[derive(Debug)]
+struct Test {
+    val: String
+}
+
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output has to implement trait ElContainer.
 fn view(model: &Model) -> El<Msg> {

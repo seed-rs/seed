@@ -303,6 +303,36 @@ macro_rules! log {
      };
 }
 
+/// Similar to log!
+#[macro_export]
+macro_rules! error {
+    { $($expr:expr),* $(,)* } => {
+        {
+            let mut text = String::new();
+            $(
+                text += &$expr.to_string();
+                text += " ";
+            )*
+            web_sys::console::error_1(&text.into());
+        }
+     };
+}
+
+/// Similar to log!
+#[macro_export]
+macro_rules! debug {
+    { $($expr:expr),* $(,)* } => {
+        {
+            let mut text = String::new();
+            $(
+                text += &format!("{:?}", $expr);
+                text += " ";
+            )*
+            web_sys::console::log_1(&text.into());
+        }
+     };
+}
+
 /// A HashMap literal, where the keys and valsmust implement ToString.
 #[macro_export]
 macro_rules! hashmap_string {

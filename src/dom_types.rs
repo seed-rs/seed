@@ -1125,7 +1125,7 @@ pub struct El<Ms: 'static> {
     optimizations: Vec<Optimize>,
 }
 
-type HookFn = Box<FnMut(&web_sys::Node)>;
+type _HookFn = Box<FnMut(&web_sys::Node)>;  // todo
 
 pub struct LifecycleHooks<Ms> {
     pub did_mount: Option<DidMount<Ms>>,

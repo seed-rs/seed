@@ -3,6 +3,7 @@
 
 use crate::dom_types;
 use wasm_bindgen::JsCast;
+use std::fmt;
 use web_sys;
 
 /// Convenience function to avoid repeating expect logic.
@@ -73,6 +74,11 @@ pub fn log<S: ToString>(text: S) {
 pub fn error<S: ToString>(text: S) {
     // ignore clippy about &S
     web_sys::console::error_1(&text.to_string().into());
+}
+
+/// Similar to log, but for items that implement Debug, instead of ToString.
+pub fn debug<D: fmt::Debug>(text: D) {
+    web_sys::console::log_1(&format!("{:?}", &text).into());
 }
 
 /// Trigger update function.

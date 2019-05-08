@@ -209,14 +209,6 @@ pub fn push_route<U: Into<Url>>(url: U) {
         .expect("Problem pushing state");
 }
 
-#[deprecated(
-    since = "0.3.1",
-    note = "push_route now accepts a Vec<&str>; use that intstead."
-)]
-pub fn push_path<T: ToString>(path: Vec<T>) {
-    push_route(Url::new(path));
-}
-
 /// Add a listener that handles routing for navigation events like forward and back.
 pub fn setup_popstate_listener<Ms>(
     update: impl Fn(Ms) + 'static,

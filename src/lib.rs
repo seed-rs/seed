@@ -4,8 +4,8 @@
 
 pub use crate::{
     fetch::{spawn_local, Method, Request},
-    routing::{push_path, push_route, Url},
-    util::{body, document, error, history, log, update, window},
+    routing::{push_route, Url},
+    util::{body, document, history, log, error, debug, update, window},
     vdom::App, // todo remove App once new update system in place?
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };

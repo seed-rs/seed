@@ -435,7 +435,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             let mut old_children_iter = old.children.into_iter();
             let mut new_children_iter = new.children.iter_mut();
 
-            let mut last_visited_node: Option<web_sys::Node> = None;
+//            let mut last_visited_node: Option<web_sys::Node> = None;
             //
             //            if let Some(update_actions) = &mut placeholder_topel.hooks.did_update {
             //                (update_actions.actions)(&old_el_ws) // todo put in / back
