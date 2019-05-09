@@ -214,29 +214,37 @@ impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<
     }
 }
 
-fn find_mount_point(id: &str) -> Element {
-    let window = util::window();
-    let document = window.document().expect("Can't find the window's document");
-
-    // We log an error instead of relying on panic/except due to the panic hook not yet
-    // being active.
-    document.get_element_by_id(id).unwrap_or_else(|| {
-        let text = format!(
-            concat!(
-                "Can't find parent div with id={:?} (defaults to \"app\", or can be set with the .mount() method)",
-            ),
-            id,
-        );
-
-        crate::error(&text);
-        panic!(text);
-    })
+pub trait MountPoint {
+    fn element(self) -> Element;
 }
 
-#[derive(Clone)]
-enum Parent {
-    Id(&'static str),
-    El(Element),
+impl MountPoint for &str {
+    fn element(self) -> Element {
+        // We log an error instead of relying on panic/except due to the panic hook not yet
+        // being active.
+        util::document().get_element_by_id(self).unwrap_or_else(|| {
+            let text = format!(
+                concat!(
+                    "Can't find parent div with id={:?} (defaults to \"app\", or can be set with the .mount() method)",
+                ),
+                self,
+            );
+            crate::error(&text);
+            panic!(text);
+        })
+    }
+}
+
+impl MountPoint for Element {
+    fn element(self) -> Element {
+        self
+    }
+}
+
+impl MountPoint for web_sys::HtmlElement {
+    fn element(self) -> Element {
+        self.into()
+    }
 }
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
@@ -245,19 +253,20 @@ pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Mdl, ElC>,
-    parent: Option<Parent>,
+    mount_point: Option<Element>,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
 impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
-    pub fn mount(mut self, id: &'static str) -> Self {
-        self.parent = Some(Parent::Id(id));
+    pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
+        self.mount_point = Some(mount_point.element());
         self
     }
 
+    #[deprecated(since = "0.3.3", note = "please use `mount` instead")]
     pub fn mount_el(mut self, el: Element) -> Self {
-        self.parent = Some(Parent::El(el));
+        self.mount_point = Some(el);
         self
     }
 
@@ -271,17 +280,15 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
         self
     }
 
-    pub fn finish(self) -> App<Ms, Mdl, ElC> {
-        let parent = match self.parent.unwrap_or(Parent::Id("app")) {
-            Parent::Id(parent_div_id) => find_mount_point(parent_div_id),
-            Parent::El(el) => el,
-        };
-
+    pub fn finish(mut self) -> App<Ms, Mdl, ElC> {
+        if self.mount_point.is_none() {
+            self = self.mount("app")
+        }
         App::new(
             self.model,
             self.update,
             self.view,
-            parent,
+            self.mount_point.unwrap(),
             self.routes,
             self.window_events,
         )
@@ -300,7 +307,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             model,
             update,
             view,
-            parent: None,
+            mount_point: None,
             routes: None,
             window_events: None,
         }
@@ -949,7 +956,7 @@ pub mod tests {
     fn create_app() -> App<Msg, Model, El<Msg>> {
         App::build(Model {}, |_, _| Update::default(), |_| seed::empty())
             // mount to the element that exists even in the default test html
-            .mount_el(util::body().into())
+            .mount(util::body())
             .finish()
     }
 

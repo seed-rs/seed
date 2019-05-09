@@ -54,9 +54,9 @@ impl From<String> for Namespace {
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
-where
-    Ms: Clone + 'static,
-    T: ToString,
+    where
+        Ms: Clone + 'static,
+        T: ToString,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -214,8 +214,8 @@ impl<Ms> Listener<Ms> {
 
     /// This method is where the processing logic for events happens.
     pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-    where
-        T: AsRef<web_sys::EventTarget>,
+        where
+            T: AsRef<web_sys::EventTarget>,
     {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
@@ -346,8 +346,8 @@ impl<Ms> Listener<Ms> {
     }
 
     pub fn detach<T>(&mut self, el_ws: &T)
-    where
-        T: AsRef<web_sys::EventTarget>,
+        where
+            T: AsRef<web_sys::EventTarget>,
     {
         let closure = self.closure.take().expect("Can't find closure to detach");
 
@@ -363,8 +363,8 @@ impl<Ms> Listener<Ms> {
 impl<Ms: 'static> Listener<Ms> {
     /// Converts the message type of the listener.
     fn map_message<OtherMs, F>(self, f: F) -> Listener<OtherMs>
-    where
-        F: Fn(Ms) -> OtherMs + 'static,
+        where
+            F: Fn(Ms) -> OtherMs + 'static,
     {
         Listener {
             trigger: self.trigger,
@@ -733,9 +733,28 @@ impl Attrs {
         self.add(key, &items.join(" "));
     }
 
-    /// Combine with another Attrs; if there's a conflict, use the other one.
+    /// Combine with another Attrs
     pub fn merge(&mut self, other: Self) {
-        self.vals.extend(other.vals.into_iter());
+        for (other_key, other_value) in other.vals.into_iter() {
+            match self.vals.get_mut(&other_key) {
+                Some(original_value) => {
+                    Self::merge_attribute_values(&other_key, original_value, other_value);
+                }
+                None => {
+                    self.vals.insert(other_key, other_value);
+                }
+            }
+        }
+    }
+
+    fn merge_attribute_values(key: &At, original_value: &mut String, other_value: String) {
+        match key {
+            At::Class => {
+                original_value.push(' ');
+                original_value.push_str(&other_value);
+            }
+            _ => *original_value = other_value,
+        }
     }
 }
 
@@ -1193,8 +1212,8 @@ impl<Ms> El<Ms> {
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
     pub fn map_message<OtherMs, F>(self, f: F) -> El<OtherMs>
-    where
-        F: Fn(Ms) -> OtherMs + Copy + 'static,
+        where
+            F: Fn(Ms) -> OtherMs + Copy + 'static,
     {
         El {
             tag: self.tag,
@@ -1332,14 +1351,14 @@ impl<Ms> El<Ms> {
 
     /// Call f(&mut el) for this El and each of its descendants
     pub fn walk_tree_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut Self),
+        where
+            F: FnMut(&mut Self),
     {
         // This inner function is required to avoid recursive compilation errors having to do
         // with the generic trait bound on F.
         fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-        where
-            F: FnMut(&mut El<Ms>),
+            where
+                F: FnMut(&mut El<Ms>),
         {
             f(el);
 
@@ -1472,7 +1491,7 @@ pub mod tests {
     fn create_app() -> seed::App<Msg, Model, El<Msg>> {
         seed::App::build(Model {}, |_, _| vdom::Update::default(), |_| seed::empty())
             // mount to the element that exists even in the default test html
-            .mount_el(util::body().into())
+            .mount(util::body())
             .finish()
     }
 
@@ -1577,7 +1596,6 @@ pub mod tests {
         assert_eq!(expected, get_node_attrs(&node));
     }
 
-    // TODO:
     /// Tests that multiple class attributes are handled correctly
     #[wasm_bindgen_test]
     pub fn merge_classes() {
