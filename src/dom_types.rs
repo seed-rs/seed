@@ -1144,7 +1144,7 @@ pub struct El<Ms: 'static> {
     optimizations: Vec<Optimize>,
 }
 
-type _HookFn = Box<FnMut(&web_sys::Node)>;  // todo
+type _HookFn = Box<FnMut(&web_sys::Node)>; // todo
 
 pub struct LifecycleHooks<Ms> {
     pub did_mount: Option<DidMount<Ms>>,
@@ -1492,7 +1492,7 @@ pub mod tests {
     fn create_app() -> seed::App<Msg, Model, El<Msg>> {
         seed::App::build(Model {}, |_, _| vdom::Update::default(), |_| seed::empty())
             // mount to the element that exists even in the default test html
-            .mount_el(util::body().into())
+            .mount(util::body())
             .finish()
     }
 
