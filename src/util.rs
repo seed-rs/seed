@@ -2,8 +2,9 @@
 //! This module is decoupled / independent.
 
 use crate::dom_types;
-use wasm_bindgen::JsCast;
 use std::fmt;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::closure::Closure;
 use web_sys;
 
 /// Convenience function to avoid repeating expect logic.
@@ -13,17 +14,26 @@ pub fn window() -> web_sys::Window {
 
 /// Convenience function to access the web_sys DOM document.
 pub fn document() -> web_sys::Document {
-    window().document().expect("Can't find document")
+    window()
+        .document()
+        .expect("Can't find the window's document")
 }
 
 /// Convenience function to access the web_sys DOM body.
 pub fn body() -> web_sys::HtmlElement {
-    document().body().expect("Can't find body")
+    document().body().expect("Can't find the document's body")
 }
 
 /// Convenience function to access the web_sys history.
 pub fn history() -> web_sys::History {
     window().history().expect("Can't find history")
+}
+
+/// Request the animation frame.
+pub fn request_animation_frame(f: &Closure<FnMut()>) {
+    window()
+        .request_animation_frame(f.as_ref().unchecked_ref())
+        .expect("Problem requesting animation frame");
 }
 
 /// Simplify getting the value of input elements; required due to the need to cast
@@ -63,22 +73,18 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
 //    Closure::wrap(Box::new(inner))
 //}
 
-/// Convenience function for logging to the web browser's console.  See also
-/// the log! macro, which is more flexible.
-pub fn log<S: ToString>(text: S) {
-    // ignore clippy about &S
-    web_sys::console::log_1(&text.to_string().into());
-}
+
+
 
 /// Similar to log, but for errors.
-pub fn error<S: ToString>(text: S) {
-    // ignore clippy about &S
-    web_sys::console::error_1(&text.to_string().into());
+pub fn log<D: fmt::Debug>(text: D) {
+    web_sys::console::error_1(&format!("{:#?}", &text).into());
 }
 
-/// Similar to log, but for items that implement Debug, instead of ToString.
-pub fn debug<D: fmt::Debug>(text: D) {
-    web_sys::console::log_1(&format!("{:?}", &text).into());
+/// Convenience function for logging to the web browser's console.  See also
+/// the log! macro, which is more flexible.
+pub fn error<D: fmt::Debug>(text: D) {
+    web_sys::console::log_1(&format!("{:#?}", &text).into());
 }
 
 /// Trigger update function.

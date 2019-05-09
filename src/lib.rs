@@ -5,8 +5,8 @@
 pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_route, Url},
-    util::{body, document, history, log, error, debug, update, window},
-    vdom::App, // todo remove App once new update system in place?
+    util::{body, document, error, history, log, update, window},
+    vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -85,7 +85,7 @@ pub mod prelude {
             UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{ShouldRender, ShouldRender::*, Update},
+        vdom::{ShouldRender, ShouldRender::*, Update, Updater},
     };
     pub use std::collections::HashMap;
 

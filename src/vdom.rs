@@ -23,6 +23,17 @@ impl Default for ShouldRender {
     }
 }
 
+pub trait Updater<Ms> {
+    //    fn should_render(self) -> ShouldRender;
+    fn update(self) -> Update<Ms>;
+}
+
+//impl<Ms> Updater<Ms> for ShouldRender {
+//    fn update(self) {
+//        Update::from(self)
+//    }
+//}
+
 pub enum Effect<Ms> {
     Msg(Ms),
     FutureNoMsg(Box<dyn Future<Item = (), Error = ()> + 'static>),
@@ -366,7 +377,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         let self_for_closure3 = self.clone();
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes) = self.data.routes.borrow().clone() {
+        if let Some(routes) = *self.data.routes.borrow() {
             routing::initial(|msg| self.update(msg), routes);
             routing::setup_popstate_listener(
                 move |msg| self_for_closure.update(msg),
@@ -435,7 +446,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             let mut old_children_iter = old.children.into_iter();
             let mut new_children_iter = new.children.iter_mut();
 
-//            let mut last_visited_node: Option<web_sys::Node> = None;
+            //            let mut last_visited_node: Option<web_sys::Node> = None;
             //
             //            if let Some(update_actions) = &mut placeholder_topel.hooks.did_update {
             //                (update_actions.actions)(&old_el_ws) // todo put in / back
@@ -796,7 +807,8 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     // Now one of the iterators is entirely consumed, and any items left in one iterator
     // don't have any matching items in the other.
 
-    while let Some(child_new) = new_children_iter.next() {
+    //    while let Some(child_new) = new_children_iter.next() {
+    for child_new in new_children_iter {
         // We ran out of old children to patch; create new ones.
         setup_websys_el_and_children(document, child_new);
         websys_bridge::attach_el_and_children(child_new, &old_el_ws, app);
@@ -847,7 +859,8 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     //            best_match = avail_old_children.pop().expect("Problem popping");
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-    while let Some(mut child) = old_children_iter.next() {
+    //    while let Some(mut child) = old_children_iter.next() {
+    for mut child in old_children_iter {
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // TODO: DRY here between this and earlier in func

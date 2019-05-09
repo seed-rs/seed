@@ -1,7 +1,9 @@
 # Changelog
 
 ## v0.3.4
-- Removed decricated `routing::push_path` function
+- `.mount()` now accepts elements. Deprecated `.mount_el()`
+- The `log` function and macro now support items which implement `Debug`
+- Removed decricated `routing::push_path` function (breaking)
 
 ## v0.3.3
 - Added `seed::update` function, which allows custom events, and updates from JS

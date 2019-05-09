@@ -191,7 +191,7 @@ For a truly minimimal example, see [lib.rs in the quickstart repo](https://githu
 
 ## Building and running
 
-To build your app run `cargo make all`, and to host on a dev server, run `cargo make serve`.
+To build your app, run `cargo make all`, and to host on a dev server, run `cargo make serve`.
 
 For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/MartinKavik/seed-quickstart-webpack).
 

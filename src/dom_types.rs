@@ -54,7 +54,6 @@ impl From<String> for Namespace {
 /// Create an event that passes no data, other than it occured. Foregoes using a closure,
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
-// Ignore clippy for these events re &T; let's keep the API clean
 where
     Ms: Clone + 'static,
     T: ToString,
@@ -1125,7 +1124,7 @@ pub struct El<Ms: 'static> {
     optimizations: Vec<Optimize>,
 }
 
-type _HookFn = Box<FnMut(&web_sys::Node)>;  // todo
+type _HookFn = Box<FnMut(&web_sys::Node)>; // todo
 
 pub struct LifecycleHooks<Ms> {
     pub did_mount: Option<DidMount<Ms>>,
@@ -1579,7 +1578,6 @@ pub mod tests {
     }
 
     // TODO:
-    /*
     /// Tests that multiple class attributes are handled correctly
     #[wasm_bindgen_test]
     pub fn merge_classes() {
@@ -1598,7 +1596,6 @@ pub mod tests {
         );
         assert_eq!(expected, get_node_attrs(&node));
     }
-    */
 
     /// Tests that multiple style sections are handled correctly
     #[wasm_bindgen_test]

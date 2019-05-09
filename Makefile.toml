@@ -60,6 +60,14 @@ extend = "test_h"
 description = "Run headless Seed's tests in release mode. Ex: 'cargo make test_h firefox'. Test envs: [chrome, firefox, safari]"
 args = ["test", "--headless", "--${@}", "--release"]
 
+[tasks.test_one]
+description = "Run a single test. Ex 'cargo make test_one my_test'"
+clear = true
+workspace = false
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = ["test", "--firefox", "--headless", "--", "--lib", "${@}"]
+
 # ---- START ----
 
 [tasks.start]
