@@ -3,7 +3,7 @@ use wasm_bindgen::JsCast;
 
 use crate::dom_types;
 use crate::dom_types::{El, ElContainer};
-use crate::vdom::{App, Updater};
+use crate::vdom::{App};
 
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
@@ -152,9 +152,9 @@ pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) ->
 }
 
 /// Similar to attach_el_and_children, but assumes we've already attached the parent.
-pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
+pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
-    app: &App<Ms, Mdl, ElC, Up>,
+    app: &App<Ms, Mdl, ElC>,
 ) {
     let el_ws = el_vdom
         .el_ws
@@ -171,10 +171,10 @@ pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
+pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     parent: &web_sys::Node,
-    app: &App<Ms, Mdl, ElC, Up>,
+    app: &App<Ms, Mdl, ElC>,
 ) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.

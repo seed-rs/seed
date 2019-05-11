@@ -1,59 +1,24 @@
 use crate::{
     dom_types,
     dom_types::{El, ElContainer, Namespace},
-    routing, util, websys_bridge,
+    routing, util, websys_bridge, next_tick,
 };
-use futures::{future, Future};
-use std::{cell::RefCell, collections::HashMap, panic, rc::Rc};
+use futures::Future;
+use std::{
+    cell::RefCell,
+    collections::{HashMap, vec_deque::VecDeque},
+    panic,
+    rc::Rc,
+};
 use wasm_bindgen::closure::Closure;
-use wasm_bindgen::JsValue;
-use wasm_bindgen_futures::future_to_promise;
+use wasm_bindgen_futures::spawn_local;
 use web_sys::{Document, Element, Event, EventTarget, Window};
-
-/// Determines if an update should cause the VDom to rerender or not.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ShouldRender {
-    Render,
-    Skip,
-}
-
-impl Default for ShouldRender {
-    fn default() -> Self {
-        ShouldRender::Render
-    }
-}
-
-/// Allows the app's update function to implicitly return render, or return other things like
-/// Skip, or effects as required.
-pub trait Updater<Ms> {
-    fn update(self) -> Update<Ms>;
-}
-
-impl<Ms> Updater<Ms> for ShouldRender {
-    fn update(self) -> Update<Ms> {
-        Update::from(self)
-    }
-}
-
-impl<Ms> Updater<Ms> for Update<Ms> {
-    fn update(self) -> Update<Ms> {
-        self
-    }
-}
-
-impl<Ms> Updater<Ms> for () {
-    fn update(self) -> Update<Ms> {
-        Update {
-            should_render: ShouldRender::Render,
-            effect: None,
-        }
-    }
-}
+use next_tick::NextTick;
+use enclose::enclose;
 
 pub enum Effect<Ms> {
     Msg(Ms),
-    FutureNoMsg(Box<dyn Future<Item = (), Error = ()> + 'static>),
-    FutureMsg(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
+    Cmd(Box<dyn Future<Item=Ms, Error=Ms> + 'static>),
 }
 
 impl<Ms> From<Ms> for Effect<Ms> {
@@ -62,108 +27,69 @@ impl<Ms> From<Ms> for Effect<Ms> {
     }
 }
 
-impl<Ms> Effect<Ms> {
-    /// Apply a function to the message. If the effect is a future, the map function
-    /// will be called after the future is finished running.
-    pub fn map<F, Ms2>(self, f: F) -> Effect<Ms2>
-        where
-            Ms: 'static,
-            Ms2: 'static,
-            F: Fn(Ms) -> Ms2 + 'static,
-    {
-        match self {
-            Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::FutureNoMsg(fut) => Effect::FutureNoMsg(fut),
-            Effect::FutureMsg(fut) => Effect::FutureMsg(Box::new(fut.then(move |res| {
-                let res = res.map(&f).map_err(&f);
-                future::result(res)
-            }))),
-        }
-    }
+/// Determines if an update should cause the VDom to rerender or not.
+pub enum ShouldRender {
+    Render,
+    Skip,
 }
 
-pub struct Update<Ms> {
+pub struct Orders<Ms> {
     should_render: ShouldRender,
-    effect: Option<Effect<Ms>>,
+    effects: VecDeque<Effect<Ms>>,
 }
 
-impl<Ms> From<ShouldRender> for Update<Ms> {
-    fn from(should_render: ShouldRender) -> Self {
-        Self {
-            should_render,
-            effect: None,
-        }
-    }
-}
-
-impl<Ms> Default for Update<Ms> {
+impl<Ms> Default for Orders<Ms> {
     fn default() -> Self {
-        Self::from(ShouldRender::Render)
+        Self {
+            should_render: ShouldRender::Render,
+            effects: VecDeque::new(),
+        }
     }
 }
 
-impl<Ms> Update<Ms> {
-    pub fn with_msg(effect_msg: Ms) -> Self {
-        Self {
-            effect: Some(effect_msg.into()),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_future<F>(future: F) -> Self
-        where
-            F: Future<Item = (), Error = ()> + 'static,
-    {
-        Self {
-            effect: Some(Effect::FutureNoMsg(Box::new(future))),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_future_msg<F>(future: F) -> Self
-        where
-            F: Future<Item = Ms, Error = Ms> + 'static,
-    {
-        Self {
-            effect: Some(Effect::FutureMsg(Box::new(future))),
-            ..Default::default()
-        }
-    }
-
-    /// Modify this Update to skip rendering
-    pub fn skip(mut self) -> Self {
-        self.should_render = ShouldRender::Skip;
-        self
-    }
-
-    /// Force rendering for this Update. Cancels `skip()`.
-    pub fn render(mut self) -> Self {
+impl<Ms> Orders<Ms> {
+    /// Rerender web page after model update. It's the default behaviour.
+    pub fn render(&mut self) -> &mut Self {
         self.should_render = ShouldRender::Render;
         self
     }
 
-    /// Apply a function to the message produced by the update effect, if one is present.
-    /// If the effect is a future, the map function will be called after the future is
-    /// finished running.
-    pub fn map<F, Ms2>(self, f: F) -> Update<Ms2>
+    /// Don't rerender web page after model update.
+    pub fn skip(&mut self) -> &mut Self {
+        self.should_render = ShouldRender::Skip;
+        self
+    }
+
+    /// Call function `update` with the given `msg` after model update.
+    /// You can call this function more times - messages will be sent in the same order.
+    pub fn send_msg(&mut self, msg: Ms) -> &mut Self {
+        self.effects.push_back(msg.into());
+        self
+    }
+
+    /// Schedule given future `cmd` to be executed after model update.
+    /// You can call this function more times - futures will be scheduled in the same order.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn write_emoticon_after_delay() -> impl Future<Item=Msg, Error=Msg> {
+    ///    TimeoutFuture::new(2_000)
+    ///        .map(|_| Msg::WriteEmoticon)
+    ///        .map_err(|_| Msg::TimeoutError)
+    ///}
+    ///orders.perform_cmd(write_emoticon_after_delay());
+    /// ```
+    pub fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
         where
-            Ms: 'static,
-            Ms2: 'static,
-            F: Fn(Ms) -> Ms2 + 'static,
+            C: Future<Item=Ms, Error=Ms> + 'static,
     {
-        let Update {
-            should_render,
-            effect,
-        } = self;
-        let effect = effect.map(|effect| effect.map(f));
-        Update {
-            should_render,
-            effect,
-        }
+        self.effects.push_back(Effect::Cmd(Box::new(cmd)));
+        self
     }
 }
 
-type UpdateFn<Ms, Mdl, Up> = fn(Ms, &mut Mdl) -> Up;
+type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl, &mut Orders<Ms>);
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
 type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
@@ -209,35 +135,33 @@ pub struct AppData<Ms: 'static, Mdl> {
     //    mount_pt: RefCell<web_sys::Element>
 }
 
-pub struct AppCfg<Ms, Mdl, ElC, Up>
+pub struct AppCfg<Ms, Mdl, ElC>
     where
         Ms: 'static,
         Mdl: 'static,
         ElC: ElContainer<Ms>,
-        Up: Updater<Ms>,
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
-    pub update: UpdateFn<Ms, Mdl, Up>,
+    pub update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Mdl, ElC>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms, Mdl, ElC, Up>
+pub struct App<Ms, Mdl, ElC>
     where
         Ms: 'static,
         Mdl: 'static,
         ElC: ElContainer<Ms>,
-        Up: Updater<Ms>,
 {
     /// Stateless app configuration
-    pub cfg: Rc<AppCfg<Ms, Mdl, ElC, Up>>,
+    pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> ::std::fmt::Debug
-for App<Ms, Mdl, ElC, Up>
+impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug
+for App<Ms, Mdl, ElC>
 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
@@ -279,18 +203,33 @@ impl MountPoint for web_sys::HtmlElement {
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
 #[derive(Clone)]
-pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> {
+pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     model: Mdl,
-    update: UpdateFn<Ms, Mdl, Up>,
+    update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Mdl, ElC>,
     mount_point: Option<Element>,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static>
-AppBuilder<Ms, Mdl, ElC, Up>
-{
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
+    /// Choose the element where the application will be mounted.
+    /// The default one is the element with `id` = "app".
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// // argument is `&str`
+    /// mount("another_id")
+    ///
+    /// // argument is `HTMLElement`
+    /// // NOTE: Be careful with mounting into body,
+    /// // it can cause hard-to-debug bugs when there are other scripts in the body.
+    /// mount(seed::body())
+    ///
+    /// // argument is `Element`
+    /// mount(seed::body().querySelector("section").unwrap().unwrap())
+    /// ```
     pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
         self.mount_point = Some(mount_point.element());
         self
@@ -312,7 +251,7 @@ AppBuilder<Ms, Mdl, ElC, Up>
         self
     }
 
-    pub fn finish(mut self) -> App<Ms, Mdl, ElC, Up> {
+    pub fn finish(mut self) -> App<Ms, Mdl, ElC> {
         if self.mount_point.is_none() {
             self = self.mount("app")
         }
@@ -329,12 +268,12 @@ AppBuilder<Ms, Mdl, ElC, Up>
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms, Mdl, ElC, Up> {
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     pub fn build(
         model: Mdl,
-        update: UpdateFn<Ms, Mdl, Up>,
+        update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Mdl, ElC>,
-    ) -> AppBuilder<Ms, Mdl, ElC, Up> {
+    ) -> AppBuilder<Ms, Mdl, ElC> {
         AppBuilder {
             model,
             update,
@@ -347,7 +286,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
 
     fn new(
         model: Mdl,
-        update: UpdateFn<Ms, Mdl, Up>,
+        update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Mdl, ElC>,
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
@@ -393,7 +332,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
     /// an initial render.
     pub fn run(self) -> Self {
         // Our initial render. Can't initialize in new due to mailbox() requiring self.
-        // "new" name is for consistency with update_inner.
+        // "new" name is for consistency with `update` function.
         let mut new = El::empty(dom_types::Tag::Section);
         new.children = (self.cfg.view)(&self.data.model.borrow()).els();
 
@@ -411,24 +350,18 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
 
         self.data.main_el_vdom.replace(Some(new));
 
-        let self_for_closure = self.clone();
-        let self_for_closure2 = self.clone();
-        let self_for_closure3 = self.clone();
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
         if let Some(routes) = *self.data.routes.borrow() {
             routing::initial(|msg| self.update(msg), routes);
             routing::setup_popstate_listener(
-                move |msg| self_for_closure.update(msg),
-                move |closure| {
-                    self_for_closure2
-                        .data
-                        .popstate_closure
-                        .replace(Some(closure));
-                },
+                enclose!((self => s) move |msg| s.update(msg)),
+                enclose!((self => s) move |closure| {
+                    s.data.popstate_closure.replace(Some(closure));
+                }),
                 routes,
             );
-            routing::setup_link_listener(move |msg| self_for_closure3.update(msg), routes);
+            routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
         }
 
         // Allows panic messages to output to the browser console.error.
@@ -448,100 +381,101 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
     /// We re-render the virtual DOM on every change, but (attempt to) only change
     /// the actual DOM, via web_sys, when we need.
     /// The model stored in inner is the old model; updated_model is a newly-calculated one.
-    pub fn update_inner(
-        &self,
-        message: Ms,
-    ) -> Option<Box<dyn Future<Item = (), Error = ()> + 'static>> {
+    pub fn update(&self, message: Ms) {
+        let mut msg_and_cmd_queue: VecDeque<Effect<Ms>> = VecDeque::new();
+        msg_and_cmd_queue.push_front(message.into());
+
+        while let Some(effect) = msg_and_cmd_queue.pop_front() {
+            match effect {
+                Effect::Msg(msg) => {
+                    let mut new_effects = self.process_queue_message(msg);
+                    msg_and_cmd_queue.append(&mut new_effects);
+                }
+                Effect::Cmd(cmd) => self.process_queue_cmd(cmd)
+            }
+        }
+    }
+
+    fn process_queue_message(&self, message: Ms) -> VecDeque<Effect<Ms>> {
         for l in self.data.msg_listeners.borrow().iter() {
             (l)(&message)
         }
 
-        let Update {
-            should_render,
-            effect,
-        } = ((self.cfg.update)(message, &mut self.data.model.borrow_mut())).update();
+        let mut orders = Orders::default();
+        (self.cfg.update)(message, &mut self.data.model.borrow_mut(), &mut orders);
 
         self.setup_window_listeners();
 
-        if should_render == ShouldRender::Render {
-            // Create a new vdom: The top element, and all its children. Does not yet
-            // have associated web_sys elements.
-            let mut new = El::empty(dom_types::Tag::Section);
-            new.children = (self.cfg.view)(&self.data.model.borrow()).els();
-
-            let mut old = self
-                .data
-                .main_el_vdom
-                .borrow_mut()
-                .take()
-                .expect("missing main_el_vdom");
-
-            // Detach all old listeners before patching. We'll re-add them as required during patching.
-            // We'll get a runtime panic if any are left un-removed.
-            detach_listeners(&mut old);
-
-            // todo copied from children loop in patch fn (DRY)
-            let num_children_in_both = old.children.len().min(new.children.len());
-            let mut old_children_iter = old.children.into_iter();
-            let mut new_children_iter = new.children.iter_mut();
-
-            //            let mut last_visited_node: Option<web_sys::Node> = None;
-            //
-            //            if let Some(update_actions) = &mut placeholder_topel.hooks.did_update {
-            //                (update_actions.actions)(&old_el_ws) // todo put in / back
-            //            }
-
-            for _i in 0..num_children_in_both {
-                let child_old = old_children_iter.next().unwrap();
-                let child_new = new_children_iter.next().unwrap();
-
-                patch(
-                    &self.cfg.document,
-                    child_old,
-                    child_new,
-                    &self.cfg.mount_point,
-                    //                    match last_visited_node.as_ref() {
-                    //                        Some(node) => node.next_sibling(),
-                    //                        None => old_el_ws.first_child(),
-                    //                    },
-                    None, // todo make it the next item in new?
-                    &self.mailbox(),
-                    &self.clone(),
-                );
-            }
-
-            // Now that we've re-rendered, replace our stored El with the new one;
-            // it will be used as the old El next time.
-            self.data.main_el_vdom.borrow_mut().replace(new);
+        if let ShouldRender::Render = orders.should_render {
+            self.rerender_vdom();
         }
-
-        if let Some(effect) = effect {
-            match effect {
-                Effect::Msg(msg) => self.update_inner(msg),
-
-                Effect::FutureNoMsg(fut) => Some(fut),
-
-                Effect::FutureMsg(fut) => {
-                    let self2 = self.clone();
-                    Some(Box::new(fut.then(move |res| {
-                        // Collapse Ok(Msg) and Err(Msg) to a Msg.
-                        let msg = res.unwrap_or_else(std::convert::identity);
-                        // Get next Some(future)
-                        let fut2 = self2.update_inner(msg);
-                        // We need to return a future anyway, so if we don't have one,
-                        // return a trivial one
-                        fut2.unwrap_or_else(|| Box::new(future::ok(())))
-                    })))
-                }
-            }
-        } else {
-            None
-        }
+        orders.effects
     }
 
-    pub fn update(&self, message: Ms) {
-        self.update_inner(message)
-            .map(|fut| future_to_promise(fut.then(|_res| future::ok(JsValue::UNDEFINED))));
+    fn process_queue_cmd(&self, cmd: Box<dyn Future<Item=Ms, Error=Ms>>) {
+        let lazy_schedule_cmd = enclose!((self => s) move |_| {
+            // schedule future (cmd) to be executed
+            spawn_local(cmd.then(move |res| {
+                let msg_returned_from_effect = res.unwrap_or_else(|err_msg| err_msg);
+                // recursive call which can blow the call stack
+                s.update(msg_returned_from_effect);
+                Ok(())
+            }))
+        });
+        // we need to clear the call stack by NextTick so we don't exceed it's capacity
+        spawn_local(NextTick::new().map(lazy_schedule_cmd));
+    }
+
+    fn rerender_vdom(&self) {
+        // Create a new vdom: The top element, and all its children. Does not yet
+        // have associated web_sys elements.
+        let mut new = El::empty(dom_types::Tag::Section);
+        new.children = (self.cfg.view)(&self.data.model.borrow()).els();
+
+        let mut old = self
+            .data
+            .main_el_vdom
+            .borrow_mut()
+            .take()
+            .expect("missing main_el_vdom");
+
+        // Detach all old listeners before patching. We'll re-add them as required during patching.
+        // We'll get a runtime panic if any are left un-removed.
+        detach_listeners(&mut old);
+
+        // todo copied from children loop in patch fn (DRY)
+        let num_children_in_both = old.children.len().min(new.children.len());
+        let mut old_children_iter = old.children.into_iter();
+        let mut new_children_iter = new.children.iter_mut();
+
+        //            let mut last_visited_node: Option<web_sys::Node> = None;
+        //
+        //            if let Some(update_actions) = &mut placeholder_topel.hooks.did_update {
+        //                (update_actions.actions)(&old_el_ws) // todo put in / back
+        //            }
+
+        for _i in 0..num_children_in_both {
+            let child_old = old_children_iter.next().unwrap();
+            let child_new = new_children_iter.next().unwrap();
+
+            patch(
+                &self.cfg.document,
+                child_old,
+                child_new,
+                &self.cfg.mount_point,
+                //                    match last_visited_node.as_ref() {
+                //                        Some(node) => node.next_sibling(),
+                //                        None => old_el_ws.first_child(),
+                //                    },
+                None, // todo make it the next item in new?
+                &self.mailbox(),
+                &self.clone(),
+            );
+        }
+
+        // Now that we've re-rendered, replace our stored El with the new one;
+        // it will be used as the old El next time.
+        self.data.main_el_vdom.borrow_mut().replace(new);
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
@@ -555,10 +489,9 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
-        let cloned = self.clone();
-        Mailbox::new(move |message| {
-            cloned.update(message);
-        })
+        Mailbox::new(enclose!((self => s) move |message| {
+            s.update(message);
+        }))
     }
 }
 
@@ -617,7 +550,7 @@ fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>> Clone for App<Ms, Mdl, ElC, Up> {
+impl<Ms, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
     fn clone(&self) -> Self {
         App {
             cfg: Rc::clone(&self.cfg),
@@ -670,14 +603,14 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
+pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC, Up>,
+    app: &App<Ms, Mdl, ElC>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...
@@ -769,7 +702,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
             if let Some(mount_actions) = &mut new.hooks.did_mount {
                 (mount_actions.actions)(new_el_ws);
                 //                if let Some(message) = mount_actions.message.clone() {
-                //                            app.update_inner(message);
+                //                            app.update(message);
                 //                }
             }
 
@@ -937,7 +870,8 @@ pub trait _Listener<Ms>: Sized {
 /// Assumes dependency on web_sys.
 // TODO:: Do we need <Ms> ?
 pub trait _DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
-    type Tg: PartialEq + ToString; // TODO: tostring
+    // TODO: tostring
+    type Tg: PartialEq + ToString;
     type At: _Attrs;
     type St: _Style;
     type Ls: _Listener<Ms>;
@@ -976,17 +910,20 @@ pub mod tests {
 
     use super::*;
 
-    use crate as seed; // required for macros to work.
-use crate::{class, prelude::*};
+    use crate as seed;
+    // required for macros to work.
+    use crate::{class, prelude::*};
     use wasm_bindgen::JsCast;
     use web_sys::{Node, Text};
+    use futures::future;
 
     #[derive(Clone, Debug)]
     enum Msg {}
+
     struct Model {}
 
     fn create_app() -> App<Msg, Model, El<Msg>> {
-        App::build(Model {}, |_, _| Update::default(), |_| seed::empty())
+        App::build(Model {}, |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()
@@ -1004,11 +941,11 @@ use crate::{class, prelude::*};
         new_vdom
     }
 
-    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = Node> {
+    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item=Node> {
         (0..list.length()).map(move |i| list.item(i).unwrap())
     }
 
-    fn iter_child_nodes(node: &Node) -> impl Iterator<Item = Node> {
+    fn iter_child_nodes(node: &Node) -> impl Iterator<Item=Node> {
         iter_nodelist(node.child_nodes())
     }
 
@@ -1475,40 +1412,84 @@ use crate::{class, prelude::*};
         assert!(node_ref.borrow().is_none(), "will_unmount wasn't called");
     }
 
-    /// Tests an update() function that repeatedly uses a future with a Msg to modify the model
+    /// Tests an update() function that repeatedly sends messages or performs commands.
     #[wasm_bindgen_test(async)]
-    fn update_promises() -> impl Future<Item = (), Error = JsValue> {
-        struct Model(u32);
+    fn update_promises() -> impl Future<Item=(), Error=JsValue> {
+        // ARRANGE
 
-        //        #[derive(Clone)]
-        struct Msg;
+        // when we call `test_value_sender.send(..)`, future `test_value_receiver` will be marked as resolved
+        let (test_value_sender, test_value_receiver) = futures::oneshot::<Counters>();
 
-        fn update(_: Msg, model: &mut Model) -> Update<Msg> {
-            model.0 += 1;
+        // big numbers because we want to test if it doesn't blow call-stack
+        // Note: Firefox has bigger call stack then Chrome - see http://2ality.com/2014/04/call-stack-size.html
+        const MESSAGES_TO_SEND: i32 = 5_000;
+        const COMMANDS_TO_PERFORM: i32 = 4_000;
 
-            if model.0 < 100 {
-                Update::with_future_msg(future::ok(Msg)).skip()
-            } else {
-                Skip.into()
+        #[derive(Default, Copy, Clone, Debug)]
+        struct Counters {
+            messages_sent: i32,
+            commands_scheduled: i32,
+            messages_received: i32,
+            commands_performed: i32,
+        }
+
+        #[derive(Default)]
+        struct Model {
+            counters: Counters,
+            test_value_sender: Option<futures::sync::oneshot::Sender<Counters>>,
+        }
+        enum Msg {
+            MessageReceived,
+            CommandPerformed,
+            Start,
+        }
+
+        fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+            orders.skip();
+
+            match msg {
+                Msg::MessageReceived => model.counters.messages_received += 1,
+                Msg::CommandPerformed => model.counters.commands_performed += 1,
+                Msg::Start => ()
+            }
+
+            if model.counters.messages_sent < MESSAGES_TO_SEND {
+                orders.send_msg(Msg::MessageReceived);
+                model.counters.messages_sent += 1;
+            }
+            if model.counters.commands_scheduled < MESSAGES_TO_SEND {
+                orders.perform_cmd(future::ok(Msg::CommandPerformed));
+                model.counters.commands_scheduled += 1;
+            }
+
+            if model.counters.messages_received == MESSAGES_TO_SEND
+                && model.counters.commands_performed == COMMANDS_TO_PERFORM
+            {
+                model.test_value_sender
+                    .take()
+                    .unwrap()
+                    .send(model.counters)
+                    .unwrap()
             }
         }
 
-        fn view(_: &Model) -> El<Msg> {
-            div!["test"]
-        }
+        let app = App::build(Model {
+            test_value_sender: Some(test_value_sender),
+            ..Default::default()
+        }, update, |_| seed::empty())
+            .mount(seed::body())
+            .finish()
+            .run();
 
-        let doc = util::document();
-        let parent = doc.create_element("div").unwrap();
+        // ACT
+        app.update(Msg::Start);
 
-        let app = App::new(Model(0), update, view, parent, None, None).run();
-
-        let app2 = app.clone();
-        app.update_inner(Msg)
-            .unwrap()
-            .map_err(|_: ()| JsValue::UNDEFINED)
-            .and_then(move |_| {
-                assert_eq!(app2.data.model.borrow_mut().0, 100);
-                Ok(())
+        // ASSERT
+        test_value_receiver
+            .map(|counters| {
+                assert_eq!(counters.messages_received, MESSAGES_TO_SEND);
+                assert_eq!(counters.commands_performed, COMMANDS_TO_PERFORM);
             })
+            .map_err(|_| panic!("test_value_sender.send probably wasn't called!"))
     }
 }

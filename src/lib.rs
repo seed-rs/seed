@@ -21,6 +21,7 @@ pub mod storage;
 mod util;
 mod vdom;
 mod websys_bridge;
+mod next_tick;
 
 //// todos:
 // todo Give 'components' their own message type/update fn. Could help efficient rendering,
@@ -83,7 +84,7 @@ pub mod prelude {
             UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{ShouldRender, ShouldRender::*, Update, Updater},
+        vdom::Orders,
     };
     pub use std::collections::HashMap;
 
@@ -106,7 +107,7 @@ pub mod tests {
         use crate::prelude::*;
         use crate::{
             dom_types::{mouse_ev, El, UpdateEl},
-            vdom::Update,
+            vdom::Orders,
         };
 
         struct Model {
@@ -124,12 +125,9 @@ pub mod tests {
             Increment,
         }
 
-        fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+        fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
             match msg {
-                Msg::Increment => {
-                    model.val += 1;
-                    Render.into()
-                }
+                Msg::Increment => model.val += 1
             }
         }
 

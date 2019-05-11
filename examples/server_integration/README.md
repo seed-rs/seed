@@ -6,7 +6,6 @@ Seed client is served by Actix.
 ---
 
 ```bash
-cargo make build
 cargo make start
 ```
 

@@ -30,6 +30,7 @@ pub fn history() -> web_sys::History {
 }
 
 /// Request the animation frame.
+#[allow(dead_code)]
 pub fn request_animation_frame(f: &Closure<FnMut()>) {
     window()
         .request_animation_frame(f.as_ref().unchecked_ref())
