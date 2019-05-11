@@ -1489,7 +1489,7 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> seed::App<Msg, Model, El<Msg>> {
-        seed::App::build(Model {}, |_, _| vdom::Update::default(), |_| seed::empty())
+        seed::App::build(Model {}, |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()

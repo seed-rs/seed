@@ -1,5 +1,8 @@
 use crate::interfaces::{Line, Person};
 
+// @TODO: edit this, it's just placeholder so project can be build
+pub const MX_EFF: i8 = 0;
+
 const PILOT_JOB: i8 = 0;
 const WSO_JOB: i8 = 1;
 
