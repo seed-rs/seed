@@ -22,8 +22,6 @@ mod util;
 mod vdom;
 mod websys_bridge;
 
-// todo: Why does this work without importing web_sys??
-
 //// todos:
 // todo Give 'components' their own message type/update fn. Could help efficient rendering,
 // todo and code organization.

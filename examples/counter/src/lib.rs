@@ -30,14 +30,12 @@ enum Msg {
     ChangeWWC(String),
 }
 
-/// The sole source of updating the model
-fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     match msg {
         Msg::Increment => model.count += 1,
         Msg::Decrement => model.count -= 1,
         Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
     }
-    Render.into()
 }
 
 // View

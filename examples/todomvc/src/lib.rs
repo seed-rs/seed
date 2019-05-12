@@ -131,7 +131,7 @@ fn edit_submit(posit: usize, model: &mut Model) {
     }
 }
 
-fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     model.sync_storage(); // Doing it here will miss the most recent update...
 
     // todo has some bugs.
@@ -204,7 +204,7 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
         }
         Msg::ChangeVisibility(visible) => model.visible = visible,
     }
-    Render.into()
+    Render
 }
 
 // View

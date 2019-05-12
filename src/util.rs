@@ -3,8 +3,8 @@
 
 use crate::dom_types;
 use std::fmt;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::closure::Closure;
+use wasm_bindgen::JsCast;
 use web_sys;
 
 /// Convenience function to avoid repeating expect logic.
@@ -72,9 +72,6 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
 ////    Closure::wrap(Box::new(inner)) as Box<FnMut(web_sys::Event) + 'static>
 //    Closure::wrap(Box::new(inner))
 //}
-
-
-
 
 /// Similar to log, but for errors.
 pub fn log<D: fmt::Debug>(text: D) {

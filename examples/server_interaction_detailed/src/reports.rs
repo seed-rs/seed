@@ -89,7 +89,7 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
         }
 
         Msg::OnFetchErr(err) => {
-            log!(format!("Fetch error: {:?}", err));  // todo switch to error! once new seed version released
+            log!(format!("Fetch error: {:?}", err)); // todo switch to error! once new seed version released
             Skip.into()
         }
 
@@ -130,20 +130,20 @@ fn mx_effectivity(lines: &Vec<Line>, mx_start: &Date<Utc>, mx_end: &Date<Utc>) -
     let percent = |num: usize| {
         let val = match lines_filtered.len() {
             0 => num as f32 / lines_filtered.len() as f32,
-            _ => 0.
+            _ => 0.,
         };
         (val * 100.).to_string() + &"%"
     };
 
-    let margin_style = style!{"margin-right" => 60};
+    let margin_style = style! {"margin-right" => 60};
 
     let display_block = |val: usize, title: &str| {
         div![
-                    style!{"display" => "flex"},
-                    h3![&margin_style, title],
-                    h3![&margin_style, val.to_string()],
-                    h3![percent(val)],
-                ]
+            style! {"display" => "flex"},
+            h3![&margin_style, title],
+            h3![&margin_style, val.to_string()],
+            h3![percent(val)],
+        ]
     };
 
     section![
@@ -155,8 +155,7 @@ fn mx_effectivity(lines: &Vec<Line>, mx_start: &Date<Utc>, mx_end: &Date<Utc>) -
                 style! {"display" => "flex"; "margin-bottom" => 60},
                 h3!["Start"],
                 h3!["End"],
-                ],
-
+            ],
             display_block(eff, "Effective:"),
             display_block(ne_wx, "Non-effective weather:"),
             display_block(ne_ops, "Non-effective ops:"),
@@ -185,8 +184,8 @@ fn display_pct2<T>(len: usize, whole: &Vec<T>) -> String {
 
 fn sortie_types(lines: &Vec<Line>, people: &Vec<Person>, missions: &Vec<Mission>) -> El<Msg> {
     let lookback_days = 60; // todo make adjustable
-    //    let min_date = Utc::today() - Duration::days(lookback_days);
-    //    let today = Utc::today();
+                            //    let min_date = Utc::today() - Duration::days(lookback_days);
+                            //    let today = Utc::today();
 
     let mut rows: Vec<El<Msg>> = Vec::new();
 

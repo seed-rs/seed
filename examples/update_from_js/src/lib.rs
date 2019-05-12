@@ -28,12 +28,11 @@ enum Msg {
     Tick(String),
 }
 
-fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     match msg {
         Msg::ClockEnabled => log!("Clock enabled"),
         Msg::Tick(time) => model.time_from_js = Some(time),
     }
-    Render.into()
 }
 
 // View

@@ -24,15 +24,29 @@ impl Default for ShouldRender {
 }
 
 pub trait Updater<Ms> {
-    //    fn should_render(self) -> ShouldRender;
     fn update(self) -> Update<Ms>;
 }
 
-//impl<Ms> Updater<Ms> for ShouldRender {
-//    fn update(self) {
-//        Update::from(self)
-//    }
-//}
+impl<Ms> Updater<Ms> for ShouldRender {
+    fn update(self) -> Update<Ms> {
+        Update::from(self)
+    }
+}
+
+impl<Ms> Updater<Ms> for Update<Ms> {
+    fn update(self) -> Update<Ms> {
+        self
+    }
+}
+
+impl<Ms> Updater<Ms> for () {
+    fn update(self) -> Update<Ms> {
+        Update {
+            should_render: ShouldRender::Render,
+            effect: None
+        }
+    }
+}
 
 pub enum Effect<Ms> {
     Msg(Ms),
@@ -147,7 +161,7 @@ impl<Ms> Update<Ms> {
     }
 }
 
-type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl) -> Update<Ms>;
+type UpdateFn<Ms, Mdl, Up> = fn(Ms, &mut Mdl) -> Up;
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
 type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
@@ -193,22 +207,22 @@ pub struct AppData<Ms: 'static, Mdl> {
     //    mount_pt: RefCell<web_sys::Element>
 }
 
-pub struct AppCfg<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct AppCfg<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> {
     document: web_sys::Document,
     mount_point: web_sys::Element,
-    pub update: UpdateFn<Ms, Mdl>,
+    pub update: UpdateFn<Ms, Mdl, Up>,
     view: ViewFn<Mdl, ElC>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct App<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> {
     /// Stateless app configuration
-    pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
+    pub cfg: Rc<AppCfg<Ms, Mdl, ElC, Up>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
+impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC, Up> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -249,16 +263,16 @@ impl MountPoint for web_sys::HtmlElement {
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
 #[derive(Clone)]
-pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> {
     model: Mdl,
-    update: UpdateFn<Ms, Mdl>,
+    update: UpdateFn<Ms, Mdl, Up>,
     view: ViewFn<Mdl, ElC>,
     mount_point: Option<Element>,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> AppBuilder<Ms, Mdl, ElC, Up> {
     pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
         self.mount_point = Some(mount_point.element());
         self
@@ -280,7 +294,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
         self
     }
 
-    pub fn finish(mut self) -> App<Ms, Mdl, ElC> {
+    pub fn finish(mut self) -> App<Ms, Mdl, ElC, Up> {
         if self.mount_point.is_none() {
             self = self.mount("app")
         }
@@ -297,12 +311,12 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms, Mdl, ElC, Up> {
     pub fn build(
         model: Mdl,
-        update: UpdateFn<Ms, Mdl>,
+        update: UpdateFn<Ms, Mdl, Up>,
         view: ViewFn<Mdl, ElC>,
-    ) -> AppBuilder<Ms, Mdl, ElC> {
+    ) -> AppBuilder<Ms, Mdl, ElC, Up> {
         AppBuilder {
             model,
             update,
@@ -315,7 +329,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 
     fn new(
         model: Mdl,
-        update: UpdateFn<Ms, Mdl>,
+        update: UpdateFn<Ms, Mdl, Up>,
         view: ViewFn<Mdl, ElC>,
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
@@ -427,7 +441,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         let Update {
             should_render,
             effect,
-        } = (self.cfg.update)(message, &mut self.data.model.borrow_mut());
+        } = ((self.cfg.update)(message, &mut self.data.model.borrow_mut())).update();
 
         self.setup_window_listeners();
 
@@ -585,7 +599,7 @@ where
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>> Clone for App<Ms, Mdl, ElC, Up> {
     fn clone(&self) -> Self {
         App {
             cfg: Rc::clone(&self.cfg),
@@ -638,14 +652,14 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
+pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC>,
+    app: &App<Ms, Mdl, ElC, Up>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // TODO: Current sceme is that if the parent changes, redraw all children...

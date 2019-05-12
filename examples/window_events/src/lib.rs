@@ -28,13 +28,12 @@ enum Msg {
     KeyPressed(web_sys::KeyboardEvent),
 }
 
-fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     match msg {
         Msg::ToggleWatching => model.watching = !model.watching,
         Msg::UpdateCoords(ev) => model.coords = (ev.screen_x(), ev.screen_y()),
         Msg::KeyPressed(ev) => model.last_keycode = ev.key_code(),
     }
-    Render.into()
 }
 
 // View

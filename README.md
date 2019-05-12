@@ -119,14 +119,13 @@ enum Msg {
     ChangeWWC(String),
 }
 
-/// The sole source of updating the model
-fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+/// How we update the model
+fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     match msg {
         Msg::Increment => model.count += 1,
         Msg::Decrement => model.count -= 1,
         Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
     }
-    Render.into()
 }
 
 
@@ -257,7 +256,7 @@ quickstart guide.
 
 Seed's different approach to view syntax also distinguishes it:
 rather than use an HTML-like markup similar to JSX,
-it uses Rust builtin types, thinly-wrapped by macros that allow flexible composition.
+it uses Rust builtin types, with thinly-wrapped by macros that allow flexible composition.
 This decision will not appeal to everyone, but I think it integrates more naturally with
 the language.
 

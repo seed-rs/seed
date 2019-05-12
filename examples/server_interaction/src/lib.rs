@@ -97,11 +97,10 @@ enum Msg {
     OnFetchErr(JsValue),
 }
 
-fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
+fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     match msg {
         Msg::Replace(data) => {
             model.data = data;
-            Render.into()
         }
 
         Msg::GetData => Update::with_future_msg(get_data()).skip(),
@@ -110,12 +109,12 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
 
         Msg::OnServerResponse(result) => {
             log!(format!("Response: {:?}", result));
-            Skip.into()
+            Skip
         }
 
         Msg::OnFetchErr(err) => {
             log!(format!("Fetch error: {:?}", err));
-            Skip.into()
+            Skip
         }
     }
 }

@@ -1,9 +1,10 @@
 # Changelog
 
 ## v0.3.4
+- The `update` fn now returns `impl vdom::Updater`, allowing more concise syntax. Non-breaking.
 - `.mount()` now accepts elements. Deprecated `.mount_el()`
 - The `log` function and macro now support items which implement `Debug`
-- Removed decricated `routing::push_path` function (breaking)
+- Removed decrecated `routing::push_path` function (breaking)
 
 ## v0.3.3
 - Added `seed::update` function, which allows custom events, and updates from JS
