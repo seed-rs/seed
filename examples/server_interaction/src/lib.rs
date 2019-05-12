@@ -86,7 +86,6 @@ impl Default for Model {
     }
 }
 
-// Update
 
 #[derive(Clone)]
 enum Msg {
@@ -101,6 +100,7 @@ fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
     match msg {
         Msg::Replace(data) => {
             model.data = data;
+            Render.into()
         }
 
         Msg::GetData => Update::with_future_msg(get_data()).skip(),
@@ -108,18 +108,17 @@ fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
         Msg::Send => Update::with_future_msg(send()).skip(),
 
         Msg::OnServerResponse(result) => {
-            log!(format!("Response: {:?}", result));
-            Skip
+            log!(format!("Response: {:#?}", result));
+            Skip.into()
         }
 
         Msg::OnFetchErr(err) => {
-            log!(format!("Fetch error: {:?}", err));
-            Skip
+            log!(format!("Fetch error: {:#?}", err));
+            Skip.into()
         }
     }
 }
 
-// View
 
 fn view(model: &Model) -> Vec<El<Msg>> {
     vec![

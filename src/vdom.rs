@@ -23,6 +23,8 @@ impl Default for ShouldRender {
     }
 }
 
+/// Allows the app's update function to implicitly return render, or return other things like
+/// Skip, or effects as required.
 pub trait Updater<Ms> {
     fn update(self) -> Update<Ms>;
 }
@@ -43,7 +45,7 @@ impl<Ms> Updater<Ms> for () {
     fn update(self) -> Update<Ms> {
         Update {
             should_render: ShouldRender::Render,
-            effect: None
+            effect: None,
         }
     }
 }
@@ -64,10 +66,10 @@ impl<Ms> Effect<Ms> {
     /// Apply a function to the message. If the effect is a future, the map function
     /// will be called after the future is finished running.
     pub fn map<F, Ms2>(self, f: F) -> Effect<Ms2>
-    where
-        Ms: 'static,
-        Ms2: 'static,
-        F: Fn(Ms) -> Ms2 + 'static,
+        where
+            Ms: 'static,
+            Ms2: 'static,
+            F: Fn(Ms) -> Ms2 + 'static,
     {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
@@ -109,8 +111,8 @@ impl<Ms> Update<Ms> {
     }
 
     pub fn with_future<F>(future: F) -> Self
-    where
-        F: Future<Item = (), Error = ()> + 'static,
+        where
+            F: Future<Item = (), Error = ()> + 'static,
     {
         Self {
             effect: Some(Effect::FutureNoMsg(Box::new(future))),
@@ -119,8 +121,8 @@ impl<Ms> Update<Ms> {
     }
 
     pub fn with_future_msg<F>(future: F) -> Self
-    where
-        F: Future<Item = Ms, Error = Ms> + 'static,
+        where
+            F: Future<Item = Ms, Error = Ms> + 'static,
     {
         Self {
             effect: Some(Effect::FutureMsg(Box::new(future))),
@@ -144,10 +146,10 @@ impl<Ms> Update<Ms> {
     /// If the effect is a future, the map function will be called after the future is
     /// finished running.
     pub fn map<F, Ms2>(self, f: F) -> Update<Ms2>
-    where
-        Ms: 'static,
-        Ms2: 'static,
-        F: Fn(Ms) -> Ms2 + 'static,
+        where
+            Ms: 'static,
+            Ms2: 'static,
+            F: Fn(Ms) -> Ms2 + 'static,
     {
         let Update {
             should_render,
@@ -207,7 +209,13 @@ pub struct AppData<Ms: 'static, Mdl> {
     //    mount_pt: RefCell<web_sys::Element>
 }
 
-pub struct AppCfg<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> {
+pub struct AppCfg<Ms, Mdl, ElC, Up>
+    where
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: ElContainer<Ms>,
+        Up: Updater<Ms>,
+{
     document: web_sys::Document,
     mount_point: web_sys::Element,
     pub update: UpdateFn<Ms, Mdl, Up>,
@@ -215,14 +223,22 @@ pub struct AppCfg<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<M
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> {
+pub struct App<Ms, Mdl, ElC, Up>
+    where
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: ElContainer<Ms>,
+        Up: Updater<Ms>,
+{
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC, Up>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC, Up> {
+impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updater<Ms>> ::std::fmt::Debug
+for App<Ms, Mdl, ElC, Up>
+{
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -272,7 +288,9 @@ pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>, Up: Updat
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> AppBuilder<Ms, Mdl, ElC, Up> {
+impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static>
+AppBuilder<Ms, Mdl, ElC, Up>
+{
     pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
         self.mount_point = Some(mount_point.element());
         self
@@ -527,8 +545,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
-    where
-        F: Fn(&Ms) + 'static,
+        where
+            F: Fn(&Ms) + 'static,
     {
         self.data
             .msg_listeners
@@ -549,8 +567,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static, Up: Updater<Ms> + 'static> App<Ms,
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
 fn setup_input_listener<Ms>(el: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     if el.tag == dom_types::Tag::Input
         || el.tag == dom_types::Tag::Select
@@ -575,8 +593,8 @@ where
 
 // Create the web_sys element; add it to the working tree; store it in its corresponding vdom El.
 fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     if el.el_ws.is_none() {
         el.el_ws = Some(websys_bridge::make_websys_el(el, document));
@@ -585,16 +603,16 @@ where
 
 /// Recursively sets up input listeners
 fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     el_vdom.walk_tree_mut(setup_input_listener);
 }
 
 /// Recursively sets up web_sys elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
@@ -702,7 +720,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>, Up: Updater<Ms>>(
             }
 
             return None;
-        // If new and old are empty, we don't need to do anything.
+            // If new and old are empty, we don't need to do anything.
         } else if new.empty && old.empty {
             return None;
         }
@@ -959,7 +977,7 @@ pub mod tests {
     use super::*;
 
     use crate as seed; // required for macros to work.
-    use crate::{class, prelude::*};
+use crate::{class, prelude::*};
     use wasm_bindgen::JsCast;
     use web_sys::{Node, Text};
 

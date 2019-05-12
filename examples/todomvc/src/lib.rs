@@ -204,7 +204,6 @@ fn update(msg: Msg, model: &mut Model) -> impl Updater<Msg> {
         }
         Msg::ChangeVisibility(visible) => model.visible = visible,
     }
-    Render
 }
 
 // View
