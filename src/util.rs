@@ -73,15 +73,15 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
 //    Closure::wrap(Box::new(inner))
 //}
 
-/// Similar to log, but for errors.
-pub fn log<D: fmt::Debug>(text: D) {
-    web_sys::console::error_1(&format!("{:#?}", &text).into());
-}
-
 /// Convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
-pub fn error<D: fmt::Debug>(text: D) {
+pub fn log<D: fmt::Debug>(text: D) {
     web_sys::console::log_1(&format!("{:#?}", &text).into());
+}
+
+/// Similar to log, but for errors.
+pub fn error<D: fmt::Debug>(text: D) {
+    web_sys::console::error_1(&format!("{:#?}", &text).into());
 }
 
 /// Trigger update function.

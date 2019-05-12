@@ -4,7 +4,7 @@
 - The `update` fn now returns `impl vdom::Updater`, allowing more concise syntax. Non-breaking.
 - `.mount()` now accepts elements. Deprecated `.mount_el()`
 - The `log` function and macro now support items which implement `Debug`
-- Removed decrecated `routing::push_path` function (breaking)
+- Removed deprecated `routing::push_path` function (breaking)
 
 ## v0.3.3
 - Added `seed::update` function, which allows custom events, and updates from JS
@@ -39,7 +39,7 @@ with value as a relative link
 ## v0.2.9
 - Added a `RenderThen` option to `Update`, which allows chaining update messages
 - Added a `.model` method to `Update`, allowing for cleaner recursion in updates
-- Improved controlled-comonent (sync fields with model) logic
+- Improved controlled-component (sync fields with model) logic
 
 ## v0.2.8
 - Reflowed `El::from_html` and `El::from_markdown` to return `Vec`s of `El`s, instead of wrapping
