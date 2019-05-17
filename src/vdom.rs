@@ -9,7 +9,6 @@ use next_tick::NextTick;
 use std::{
     cell::RefCell,
     collections::{vec_deque::VecDeque, HashMap},
-    panic,
     rc::Rc,
 };
 use wasm_bindgen::closure::Closure;
@@ -172,18 +171,11 @@ pub trait MountPoint {
 
 impl MountPoint for &str {
     fn element(self) -> Element {
-        // We log an error instead of relying on panic/except due to the panic hook not yet
-        // being active.
-        util::document().get_element_by_id(self).unwrap_or_else(|| {
-            let text = format!(
-                concat!(
-                    "Can't find parent div with id={:?} (defaults to \"app\", or can be set with the .mount() method)",
-                ),
-                self,
-            );
-            crate::error(&text);
-            panic!(text);
-        })
+        util::document().get_element_by_id(self).expect(&format!(
+            "Can't find element with id={:?} - app cannot be mounted!\n\
+             (Id defaults to \"app\", or can be set with the .mount() method)",
+            self
+        ))
     }
 }
 
@@ -272,6 +264,9 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         update: UpdateFn<Ms, Mdl>,
         view: ViewFn<Mdl, ElC>,
     ) -> AppBuilder<Ms, Mdl, ElC> {
+        // Allows panic messages to output to the browser console.error.
+        console_error_panic_hook::set_once();
+
         AppBuilder {
             model,
             update,
@@ -361,10 +356,6 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             );
             routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
         }
-
-        // Allows panic messages to output to the browser console.error.
-        panic::set_hook(Box::new(console_error_panic_hook::hook));
-
         self
     }
 
