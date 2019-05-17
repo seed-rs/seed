@@ -86,7 +86,6 @@ impl Default for Model {
     }
 }
 
-
 #[derive(Clone)]
 enum Msg {
     Replace(Branch),
@@ -101,16 +100,12 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         Msg::Replace(data) => model.data = data,
 
         Msg::GetData => {
-            orders
-                .skip()
-                .perform_cmd(get_data());
-        },
+            orders.skip().perform_cmd(get_data());
+        }
 
         Msg::Send => {
-            orders
-                .skip()
-                .perform_cmd(send());
-        },
+            orders.skip().perform_cmd(send());
+        }
 
         Msg::OnServerResponse(result) => {
             log!(format!("Response: {:?}", result));
@@ -118,12 +113,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         }
 
         Msg::OnFetchErr(err) => {
-            log!(format!("Fetch error: {:?}", err));
+            error!(format!("Fetch error: {:?}", err));
             orders.skip();
         }
     }
 }
-
 
 fn view(model: &Model) -> Vec<El<Msg>> {
     vec![

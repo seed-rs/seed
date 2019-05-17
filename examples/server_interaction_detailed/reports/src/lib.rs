@@ -5,12 +5,9 @@ use seed::prelude::*;
 use futures::Future;
 use serde::Deserialize;
 
-mod interfaces;
-use crate::interfaces::{Gradesheet, Line, Mission, Person, Syllabus, Upgrade, UpgradeEvent};
-mod util;
+use shared::{datetime, util};
+use shared::interfaces::{Gradesheet, Line, Mission, Person, Syllabus, Upgrade, UpgradeEvent};
 
-use chrono::offset::{TimeZone, Utc};
-use chrono::{Date, Duration};
 
 struct Model {
     lines: Vec<Line>,
@@ -21,8 +18,8 @@ struct Model {
     gradesheets: Vec<Gradesheet>,
     instructors: Vec<Person>,
     missions: Vec<Mission>,
-    mx_start: Date<Utc>,
-    mx_end: Date<Utc>,
+    mx_start: datetime::Date,
+    mx_end: datetime::Date,
 }
 
 impl Default for Model {
@@ -37,8 +34,8 @@ impl Default for Model {
             gradesheets: Vec::new(),
             instructors: Vec::new(),
             missions: Vec::new(),
-            mx_start: chrono::Utc.ymd(1999, 9, 9),
-            mx_end: chrono::Utc.ymd(1999, 9, 9),
+            mx_start: datetime::Date::new(1999, 9, 9),
+            mx_end: datetime::Date::new(1999, 9, 9),
         }
     }
 }
@@ -72,8 +69,8 @@ enum Msg {
     LoadInitial(ServerData),
     OnFetchErr(JsValue),
 
-    ChangeMxStart(chrono::Date<Utc>),
-    ChangeMxEnd(chrono::Date<Utc>),
+    ChangeMxStart(datetime::Date),
+    ChangeMxEnd(datetime::Date),
 }
 
 fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
@@ -89,7 +86,7 @@ fn update(msg: Msg, model: &mut Model) -> Update<Msg> {
         }
 
         Msg::OnFetchErr(err) => {
-            log!(format!("Fetch error: {:?}", err)); // todo switch to error! once new seed version released
+            log!(format!("Fetch error: {:?}", err));  // todo switch to error! once new seed version released
             Skip.into()
         }
 
@@ -109,7 +106,7 @@ fn gradesheets(model: &Model) -> El<Msg> {
     section![]
 }
 
-fn mx_effectivity(lines: &Vec<Line>, mx_start: &Date<Utc>, mx_end: &Date<Utc>) -> El<Msg> {
+fn mx_effectivity(lines: &Vec<Line>, mx_start: &datetime::Date, mx_end: &datetime::Date) -> El<Msg> {
     //    let lines_filtered = lines.iter().filter(l )
     let lines_filtered = lines;
 
@@ -130,20 +127,20 @@ fn mx_effectivity(lines: &Vec<Line>, mx_start: &Date<Utc>, mx_end: &Date<Utc>) -
     let percent = |num: usize| {
         let val = match lines_filtered.len() {
             0 => num as f32 / lines_filtered.len() as f32,
-            _ => 0.,
+            _ => 0.
         };
         (val * 100.).to_string() + &"%"
     };
 
-    let margin_style = style! {"margin-right" => 60};
+    let margin_style = style!{"margin-right" => 60};
 
     let display_block = |val: usize, title: &str| {
         div![
-            style! {"display" => "flex"},
-            h3![&margin_style, title],
-            h3![&margin_style, val.to_string()],
-            h3![percent(val)],
-        ]
+                    style!{"display" => "flex"},
+                    h3![&margin_style, title],
+                    h3![&margin_style, val.to_string()],
+                    h3![percent(val)],
+                ]
     };
 
     section![
@@ -155,7 +152,8 @@ fn mx_effectivity(lines: &Vec<Line>, mx_start: &Date<Utc>, mx_end: &Date<Utc>) -
                 style! {"display" => "flex"; "margin-bottom" => 60},
                 h3!["Start"],
                 h3!["End"],
-            ],
+                ],
+
             display_block(eff, "Effective:"),
             display_block(ne_wx, "Non-effective weather:"),
             display_block(ne_ops, "Non-effective ops:"),
@@ -182,12 +180,17 @@ fn display_pct2<T>(len: usize, whole: &Vec<T>) -> String {
     }
 }
 
+
+
 fn sortie_types(lines: &Vec<Line>, people: &Vec<Person>, missions: &Vec<Mission>) -> El<Msg> {
     let lookback_days = 60; // todo make adjustable
-                            //    let min_date = Utc::today() - Duration::days(lookback_days);
-                            //    let today = Utc::today();
+    let today = datetime::Date::today();
+
+    let min_date = today.sub(chrono::Duration::days(lookback_days));
 
     let mut rows: Vec<El<Msg>> = Vec::new();
+
+//    log!(format!("{:?}", today));
 
     for person in people.iter().filter(|p| util::is_aircrew(*p)) {
         // todo person_lines is much too verbose.
@@ -195,18 +198,15 @@ fn sortie_types(lines: &Vec<Line>, people: &Vec<Person>, missions: &Vec<Mission>
         let person_lines: Vec<&Line> = lines
             .into_iter()
             .filter(|l| {
-                // todo handle l_date in deser
-                //                let l_date = Utc
-                //                    .datetime_from_str(&l.date, "%Y-%m-%d")
-                //                    .expect("Can't format date")
-                //                    .date();
+                let l_date = datetime::Date::from_iso(&l.date);
 
                 if let Some(pilot_id) = l.pilot {
                     let pilot = people.iter().find(|p| p.id == pilot_id);
                     //                        .expect("Can't find pilot");
                     //                if pilot.id == person.id && min_date <= l_date && l_date <= today {
                     if let Some(pilot) = pilot {
-                        if pilot.id == person.id {
+//                        if pilot.id == person.id {
+                        if pilot.id == person.id && min_date <= l_date && l_date <= today {
                             return true;
                         }
                     }
@@ -217,7 +217,8 @@ fn sortie_types(lines: &Vec<Line>, people: &Vec<Person>, missions: &Vec<Mission>
                     //                        .expect("Can't find WSO");
                     //                if wso.id == person.id && min_date <= l_date && l_date <= today {
                     if let Some(wso) = wso {
-                        if wso.id == person.id {
+//                        if wso.id == person.id {
+                        if wso.id == person.id && min_date <= l_date && l_date <= today {
                             return true;
                         }
                     }

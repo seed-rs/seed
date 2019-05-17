@@ -16,8 +16,6 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json;
 
-// todo once this is polished, publish as a standalone crate.
-
 /// HTTP Method types
 ///
 /// # References

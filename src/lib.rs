@@ -16,12 +16,12 @@ pub mod shortcuts;
 
 pub mod dom_types;
 pub mod fetch;
+mod next_tick;
 pub mod routing;
 pub mod storage;
 mod util;
 mod vdom;
 mod websys_bridge;
-mod next_tick;
 
 //// todos:
 // todo Give 'components' their own message type/update fn. Could help efficient rendering,
@@ -127,7 +127,7 @@ pub mod tests {
 
         fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
             match msg {
-                Msg::Increment => model.val += 1
+                Msg::Increment => model.val += 1,
             }
         }
 

@@ -1,10 +1,20 @@
+use std::cmp::Ordering;
+use std::fmt;
+use std::ops::{Add, Sub};
+
 use crate::interfaces::{Line, Person};
+//use chrono::Datelike;
 
-// @TODO: edit this, it's just placeholder so project can be build
+// We use these integers instead of enums for compatibility with the database and serialization.
+pub const PILOT_JOB: i8 = 0;
+pub const WSO_JOB: i8 = 1;
+
+pub const MX_UNK: i8 = -1;
 pub const MX_EFF: i8 = 0;
+pub const MX_NE_WX: i8 = 1;
+pub const MX_NE_OPS: i8 = 2;
+pub const MX_NE_MX: i8 = 3;
 
-const PILOT_JOB: i8 = 0;
-const WSO_JOB: i8 = 1;
 
 pub fn short_name(person: &Person) -> String {
     format! {"{}, {}", person.last_name, person.first_name}

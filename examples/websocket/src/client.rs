@@ -35,7 +35,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
     match msg {
         Msg::Connected => {
             model.connected = true;
-        },
+        }
         Msg::ServerMsg(msg) => {
             model.connected = true;
             model.msg_rx_cnt += 1;
@@ -43,10 +43,10 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
         }
         Msg::EditChange(input_text) => {
             model.input_text = input_text;
-        },
+        }
         Msg::Send(_) => {
             orders.skip();
-        },
+        }
         Msg::Sent => {
             model.input_text = "".into();
             model.msg_tx_cnt += 1;

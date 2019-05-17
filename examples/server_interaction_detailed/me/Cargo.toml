@@ -1,22 +1,24 @@
 [package]
-name = "shared"
+name = "me"
 version = "0.1.0"
-authors = ["Your Name <email@address.com>"]
+authors = ["David O'Connor <david.alan.oconnor@gmail.com"]
 edition = "2018"
 
+
+[lib]
+crate-type = ["cdylib"]
+
+
 [dependencies]
-js-sys = "^0.3.20"
+seed = "^0.3.2"
+wasm-bindgen = "^0.2.42"
+web-sys = "^0.3.19"
 
 # For serialization, eg sending requests to a server. Otherwise, not required.
 serde = { version = "^1.0.85", features = ['derive'] }
-#serde_json = "^1.0.33"
+serde_json = "^1.0.33"
 
 chrono = { version = "^0.4.6", features = ["serde"] }
-#futures = "^0.1.26"
+futures = "^0.1.26"
 
-
-[workspace]
-members = [
-    "me",
-    "reports",
-]
+shared = { path = "../"}

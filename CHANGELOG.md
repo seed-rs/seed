@@ -1,7 +1,9 @@
 # Changelog
 
 ## v0.3.4
-- The `update` fn now returns `impl vdom::Updater`, allowing more concise syntax. Non-breaking.
+- The `update` fn now accepts a (new) `Orders` struct, and returns nothing. Renders occur implicitly,
+with the option to skip rendering, update with an additional message, or perform an asynchronous
+action. (Breaking)
 - `.mount()` now accepts elements. Deprecated `.mount_el()`
 - The `log` function and macro now support items which implement `Debug`
 - Removed deprecated `routing::push_path` function (breaking)

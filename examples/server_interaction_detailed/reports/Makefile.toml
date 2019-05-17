@@ -20,14 +20,14 @@ args = ["build", "--release"]
 description = "Build with wasm-pack"
 install_crate = "wasm-pack"
 command = "wasm-pack"
-args = ["build", "--target", "no-modules", "--out-name", "${@}", "--out-dir", "../pucks/static/pkg", "--dev"]
+args = ["build", "--target", "no-modules", "--out-name", "reports", "--out-dir", "../../pucks/static/pkg", "--dev"]
 
 
 [tasks.create_wasm_release]
 description = "Build with wasm-pack"
 install_crate = "wasm-pack"
 command = "wasm-pack"
-args = ["build", "--target", "no-modules", "--out-name", "${@}", "--out-dir", "../pucks/static/pkg"]
+args = ["build", "--target", "no-modules", "--out-name", "reports", "--out-dir", "../../pucks/static/pkg"]
 
 [tasks.all]
 description = "Build, and create wasms"

@@ -3,7 +3,7 @@ use wasm_bindgen::JsCast;
 
 use crate::dom_types;
 use crate::dom_types::{El, ElContainer};
-use crate::vdom::{App};
+use crate::vdom::App;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {

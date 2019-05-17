@@ -1,24 +1,24 @@
 use crate::{
     dom_types,
     dom_types::{El, ElContainer, Namespace},
-    routing, util, websys_bridge, next_tick,
+    next_tick, routing, util, websys_bridge,
 };
+use enclose::enclose;
 use futures::Future;
+use next_tick::NextTick;
 use std::{
     cell::RefCell,
-    collections::{HashMap, vec_deque::VecDeque},
+    collections::{vec_deque::VecDeque, HashMap},
     panic,
     rc::Rc,
 };
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Document, Element, Event, EventTarget, Window};
-use next_tick::NextTick;
-use enclose::enclose;
 
 pub enum Effect<Ms> {
     Msg(Ms),
-    Cmd(Box<dyn Future<Item=Ms, Error=Ms> + 'static>),
+    Cmd(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
 }
 
 impl<Ms> From<Ms> for Effect<Ms> {
@@ -81,8 +81,8 @@ impl<Ms> Orders<Ms> {
     ///orders.perform_cmd(write_emoticon_after_delay());
     /// ```
     pub fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-        where
-            C: Future<Item=Ms, Error=Ms> + 'static,
+    where
+        C: Future<Item = Ms, Error = Ms> + 'static,
     {
         self.effects.push_back(Effect::Cmd(Box::new(cmd)));
         self
@@ -136,10 +136,10 @@ pub struct AppData<Ms: 'static, Mdl> {
 }
 
 pub struct AppCfg<Ms, Mdl, ElC>
-    where
-        Ms: 'static,
-        Mdl: 'static,
-        ElC: ElContainer<Ms>,
+where
+    Ms: 'static,
+    Mdl: 'static,
+    ElC: ElContainer<Ms>,
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
@@ -149,10 +149,10 @@ pub struct AppCfg<Ms, Mdl, ElC>
 }
 
 pub struct App<Ms, Mdl, ElC>
-    where
-        Ms: 'static,
-        Mdl: 'static,
-        ElC: ElContainer<Ms>,
+where
+    Ms: 'static,
+    Mdl: 'static,
+    ElC: ElContainer<Ms>,
 {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
@@ -160,9 +160,7 @@ pub struct App<Ms, Mdl, ElC>
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug
-for App<Ms, Mdl, ElC>
-{
+impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -391,7 +389,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
                     let mut new_effects = self.process_queue_message(msg);
                     msg_and_cmd_queue.append(&mut new_effects);
                 }
-                Effect::Cmd(cmd) => self.process_queue_cmd(cmd)
+                Effect::Cmd(cmd) => self.process_queue_cmd(cmd),
             }
         }
     }
@@ -412,7 +410,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         orders.effects
     }
 
-    fn process_queue_cmd(&self, cmd: Box<dyn Future<Item=Ms, Error=Ms>>) {
+    fn process_queue_cmd(&self, cmd: Box<dyn Future<Item = Ms, Error = Ms>>) {
         let lazy_schedule_cmd = enclose!((self => s) move |_| {
             // schedule future (cmd) to be executed
             spawn_local(cmd.then(move |res| {
@@ -479,8 +477,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
-        where
-            F: Fn(&Ms) + 'static,
+    where
+        F: Fn(&Ms) + 'static,
     {
         self.data
             .msg_listeners
@@ -500,8 +498,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
 fn setup_input_listener<Ms>(el: &mut El<Ms>)
-    where
-        Ms: 'static,
+where
+    Ms: 'static,
 {
     if el.tag == dom_types::Tag::Input
         || el.tag == dom_types::Tag::Select
@@ -526,8 +524,8 @@ fn setup_input_listener<Ms>(el: &mut El<Ms>)
 
 // Create the web_sys element; add it to the working tree; store it in its corresponding vdom El.
 fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
-    where
-        Ms: 'static,
+where
+    Ms: 'static,
 {
     if el.el_ws.is_none() {
         el.el_ws = Some(websys_bridge::make_websys_el(el, document));
@@ -536,16 +534,16 @@ fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
 
 /// Recursively sets up input listeners
 fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-    where
-        Ms: 'static,
+where
+    Ms: 'static,
 {
     el_vdom.walk_tree_mut(setup_input_listener);
 }
 
 /// Recursively sets up web_sys elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
-    where
-        Ms: 'static,
+where
+    Ms: 'static,
 {
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
@@ -653,7 +651,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             }
 
             return None;
-            // If new and old are empty, we don't need to do anything.
+        // If new and old are empty, we don't need to do anything.
         } else if new.empty && old.empty {
             return None;
         }
@@ -913,9 +911,9 @@ pub mod tests {
     use crate as seed;
     // required for macros to work.
     use crate::{class, prelude::*};
+    use futures::future;
     use wasm_bindgen::JsCast;
     use web_sys::{Node, Text};
-    use futures::future;
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -941,11 +939,11 @@ pub mod tests {
         new_vdom
     }
 
-    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item=Node> {
+    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = Node> {
         (0..list.length()).map(move |i| list.item(i).unwrap())
     }
 
-    fn iter_child_nodes(node: &Node) -> impl Iterator<Item=Node> {
+    fn iter_child_nodes(node: &Node) -> impl Iterator<Item = Node> {
         iter_nodelist(node.child_nodes())
     }
 
@@ -1414,7 +1412,7 @@ pub mod tests {
 
     /// Tests an update() function that repeatedly sends messages or performs commands.
     #[wasm_bindgen_test(async)]
-    fn update_promises() -> impl Future<Item=(), Error=JsValue> {
+    fn update_promises() -> impl Future<Item = (), Error = JsValue> {
         // ARRANGE
 
         // when we call `test_value_sender.send(..)`, future `test_value_receiver` will be marked as resolved
@@ -1450,7 +1448,7 @@ pub mod tests {
             match msg {
                 Msg::MessageReceived => model.counters.messages_received += 1,
                 Msg::CommandPerformed => model.counters.commands_performed += 1,
-                Msg::Start => ()
+                Msg::Start => (),
             }
 
             if model.counters.messages_sent < MESSAGES_TO_SEND {
@@ -1465,7 +1463,8 @@ pub mod tests {
             if model.counters.messages_received == MESSAGES_TO_SEND
                 && model.counters.commands_performed == COMMANDS_TO_PERFORM
             {
-                model.test_value_sender
+                model
+                    .test_value_sender
                     .take()
                     .unwrap()
                     .send(model.counters)
@@ -1473,13 +1472,17 @@ pub mod tests {
             }
         }
 
-        let app = App::build(Model {
-            test_value_sender: Some(test_value_sender),
-            ..Default::default()
-        }, update, |_| seed::empty())
-            .mount(seed::body())
-            .finish()
-            .run();
+        let app = App::build(
+            Model {
+                test_value_sender: Some(test_value_sender),
+                ..Default::default()
+            },
+            update,
+            |_| seed::empty(),
+        )
+        .mount(seed::body())
+        .finish()
+        .run();
 
         // ACT
         app.update(Msg::Start);
