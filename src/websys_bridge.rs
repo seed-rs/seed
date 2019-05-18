@@ -7,6 +7,7 @@ use crate::vdom::App;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
+    // set_special means we don't set the attribute normally.
     let mut set_special = false;
     let at = at.as_str();
 
@@ -81,6 +82,12 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
             }
             set_special = true;
         }
+    }
+    // A disabled value of anything, including "", means disabled. To make not disabled,
+    // the disabled attr can't be present.
+    // Without this shim, setting At::Disabled => false still disables the field.
+    else if at == "disabled" && val == "false" {
+        set_special = true;
     }
 
     if !set_special {

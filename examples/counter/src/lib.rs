@@ -96,7 +96,7 @@ fn view(model: &Model) -> El<Msg> {
         h3!["What precisely is it we're counting?"],
         input![
             attrs! {At::Value => model.what_we_count},
-            input_ev(Ev::Input, Msg::ChangeWWC)
+            input_ev(Ev::Input, Msg::ChangeWWC),
         ],
     ]
 }
