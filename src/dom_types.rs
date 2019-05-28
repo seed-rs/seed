@@ -588,7 +588,7 @@ make_attrs! {
     CalcMode => "calcMode", CapHeight => "cap-height", Clip => "clip",
     // todo fill in rest from link above.
 
-    Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "ViewBox", Fill => "fill"
+    Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "viewBox", Fill => "fill"
 }
 
 /// Similar to tag population.
@@ -1130,6 +1130,8 @@ pub struct El<Ms: 'static> {
     // todo temp?
     //    pub key: Option<u32>,
     pub namespace: Option<Namespace>,
+    // A unique identifier in the vdom. Useful for triggering one-off events.
+    pub ref_: Option<String>,
 
     // control means we keep its text input (value) in sync with the model.
     // static: bool
@@ -1200,6 +1202,8 @@ impl<Ms> El<Ms> {
             hooks: LifecycleHooks::new(),
             empty: false,
             optimizations: Vec::new(),
+
+            ref_: None,
         }
     }
 
@@ -1236,6 +1240,8 @@ impl<Ms> El<Ms> {
             //            hooks: self.hooks,  // todo fix
             empty: self.empty,
             optimizations: self.optimizations,
+
+            ref_: None,
         }
     }
 
@@ -1369,6 +1375,11 @@ impl<Ms> El<Ms> {
 
         walk_tree_mut_inner(self, &mut f);
     }
+
+    /// Set the ref
+    pub fn ref_<S: ToString>(&mut self, ref_: S) {
+        self.ref_ = Some(ref_.to_string());
+    }
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
@@ -1388,6 +1399,8 @@ impl<Ms> Clone for El<Ms> {
             hooks: LifecycleHooks::new(),
             empty: self.empty,
             optimizations: self.optimizations.clone(),
+
+            ref_: self.ref_.clone(),
         }
     }
 }
@@ -1403,6 +1416,7 @@ impl<Ms> PartialEq for El<Ms> {
             && self.listeners == other.listeners
             && self.namespace == other.namespace
             && self.empty == other.empty
+            && self.ref_ == other.ref_
     }
 }
 

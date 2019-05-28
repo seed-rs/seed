@@ -100,7 +100,7 @@ dependencies = [
 name = "counter"
 version = "0.1.0"
 dependencies = [
- "seed 0.3.4",
+ "seed 0.3.5",
  "wasm-bindgen 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -346,7 +346,7 @@ version = "0.1.0"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "gloo-timers 0.1.0",
- "seed 0.3.4",
+ "seed 0.3.5",
  "wasm-bindgen 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -540,7 +540,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "seed"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "enclose 1.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -588,7 +588,7 @@ name = "server-interaction"
 version = "0.1.0"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.3.4",
+ "seed 0.3.5",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -666,7 +666,7 @@ dependencies = [
 name = "todomvc"
 version = "0.1.0"
 dependencies = [
- "seed 0.3.4",
+ "seed 0.3.5",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -676,7 +676,7 @@ dependencies = [
 name = "trigger_update_from_js"
 version = "0.1.0"
 dependencies = [
- "seed 0.3.4",
+ "seed 0.3.5",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -854,7 +854,7 @@ dependencies = [
 name = "websocket"
 version = "0.1.0"
 dependencies = [
- "seed 0.3.4",
+ "seed 0.3.5",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -921,7 +921,7 @@ dependencies = [
 name = "window-events"
 version = "0.1.0"
 dependencies = [
- "seed 0.3.4",
+ "seed 0.3.5",
  "wasm-bindgen 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

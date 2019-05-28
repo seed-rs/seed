@@ -432,7 +432,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         // We'll get a runtime panic if any are left un-removed.
         detach_listeners(&mut old);
 
-        // todo copied from children loop in patch fn (DRY)
+        // todo much of the code below is copied from the patch fn (DRY)
         let num_children_in_both = old.children.len().min(new.children.len());
         let mut old_children_iter = old.children.into_iter();
         let mut new_children_iter = new.children.iter_mut();
@@ -462,6 +462,32 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             );
         }
 
+        for child_new in new_children_iter {
+            // We ran out of old children to patch; create new ones.
+            setup_websys_el_and_children(&self.cfg.document, child_new);
+            websys_bridge::attach_el_and_children(child_new, &self.cfg.mount_point, &self.clone());
+            attach_listeners(child_new, &self.mailbox());
+        }
+
+        // Now purge any existing no-longer-needed children; they're not part of the new vdom.
+        //    while let Some(mut child) = old_children_iter.next() {
+        for mut child in old_children_iter {
+            let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
+
+            // TODO: DRY here between this and earlier in func
+            if let Some(unmount_actions) = &mut child.hooks.will_unmount {
+                (unmount_actions.actions)(&child_el_ws);
+            }
+
+            // todo get to the bottom of this: Ie why we need this code sometimes when using raw html elements.
+            match self.cfg.mount_point.remove_child(&child_el_ws) {
+                Ok(_) => {}
+                Err(_) => {
+                    crate::log("Minor error patching html element. (remove)");
+                }
+            }
+        }
+
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next time.
         self.data.main_el_vdom.borrow_mut().replace(new);
@@ -475,6 +501,20 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             .msg_listeners
             .borrow_mut()
             .push(Box::new(listener));
+    }
+
+    fn find(&self, ref_: &str) -> Option<El<Ms>> {
+        // todo expensive? We're cloning the whole vdom tree.
+        // todo: Let's iterate through refs instead, once this is working.
+
+        let top_el = &self
+            .data
+            .main_el_vdom
+            .borrow()
+            .clone()
+            .expect("Can't find main vdom el in find");
+
+        find_el(ref_, &top_el)
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
@@ -776,49 +816,6 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
         attach_listeners(child_new, &mailbox);
     }
 
-    //    // Now pair up children as best we can.
-    //    // If there are the same number of children, assume there's a 1-to-1 mapping,
-    //    // where we will not add or remove any; but patch as needed.
-    //    let avail_old_children = &mut old.children;
-    //    let mut prev_child: Option<web_sys::Node> = None;
-    //    let mut best_match;
-    ////    let mut t;
-    //    for (i_new, child_new) in new.children.iter_mut().enumerate() {
-    //        if avail_old_children.is_empty() {
-    //            // One or more new children has been added, or much content has
-    //            // changed, or we've made a mistake: Attach new children.
-    //            websys_bridge::attach_els(child_new, &old_el_ws);
-    //            let mut child_new = child_new;
-    //            attach_listeners(&mut child_new, &mailbox);
-    //
-    //        } else {
-    //            // We still have old children to pick a match from. If we pick
-    //            // incorrectly, or there is no "good" match, we'll have some
-    //            // patching and/or attaching (rendering) to do in subsequent recursions.
-    //            let mut scores: Vec<(u32, f32)> = avail_old_children
-    //                .iter()
-    //                .enumerate()
-    //                .map(|(i_old, c_old)| (c_old.id.unwrap(), match_score(c_old, i_old, child_new, i_new)))
-    //                .collect();
-    //
-    //            // should put highest score at the end.
-    //            scores.sort_by(|b, a| b.1.partial_cmp(&a.1).unwrap());
-    //
-    //            // Sorting children vice picking the best one makes this easier to handle
-    //            // without irking the borrow checker, despite appearing less counter-intuitive,
-    //            // due to the convenient pop method.
-    //            avail_old_children.sort_by(|b, a| {
-    //                scores
-    //                    .iter()
-    //                    .find(|s| s.0 == b.id.unwrap())
-    //                    .unwrap()
-    //                    .1
-    //                    .partial_cmp(&scores.iter().find(|s| s.0 == a.id.unwrap()).unwrap().1)
-    //                    .unwrap()
-    //            });
-    //
-    //            best_match = avail_old_children.pop().expect("Problem popping");
-
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
     //    while let Some(mut child) = old_children_iter.next() {
     for mut child in old_children_iter {
@@ -890,6 +887,22 @@ pub trait DomElLifecycle {
     fn did_mount(self) -> Option<Box<FnMut(&Element)>>;
     fn did_update(self) -> Option<Box<FnMut(&Element)>>;
     fn will_unmount(self) -> Option<Box<FnMut(&Element)>>;
+}
+
+/// Find the first element that matches the ref specified.
+//pub fn find_el<'a, Msg>(ref_: &str, top_el: &'a El<Msg>) -> Option<&'a El<Msg>> {
+pub fn find_el<Msg>(ref_: &str, top_el: &El<Msg>) -> Option<El<Msg>> {
+    if top_el.ref_ == Some(ref_.to_string()) {
+        return Some(top_el.clone());
+    }
+
+    for child in &top_el.children {
+        let result = find_el(ref_, child);
+        if result.is_some() {
+            return result;
+        }
+    }
+    return None;
 }
 
 #[cfg(test)]

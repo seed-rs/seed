@@ -6,7 +6,7 @@ pub use crate::{
     fetch::{spawn_local, Method, Request},
     routing::{push_route, Url},
     util::{body, document, error, history, log, update, window},
-    vdom::App,
+    vdom::{find_el, App},
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
