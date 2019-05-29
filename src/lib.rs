@@ -3,7 +3,7 @@
 //#![deny(missing_docs)]
 
 pub use crate::{
-    fetch::{spawn_local, Method, Request},
+    fetch::{Method, Request},
     routing::{push_route, Url},
     util::{body, document, error, history, log, update, window},
     vdom::{find_el, App},
@@ -81,10 +81,10 @@ pub mod prelude {
         dom_types::{
             did_mount, did_update, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
             trigger_update_handler, will_unmount, At, El, ElContainer, Ev, Optimize::Key, Tag,
-            UpdateEl,
+            UpdateEl, MessageMapper
         },
         shortcuts::*, // appears not to work.
-        vdom::Orders,
+        vdom::{Orders, call_update},
     };
     pub use std::collections::HashMap;
 

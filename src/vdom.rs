@@ -1,7 +1,6 @@
 use crate::{
-    dom_types,
-    dom_types::{El, ElContainer, Namespace},
-    next_tick, routing, util, websys_bridge,
+    dom_types::{self, El, ElContainer, Namespace, MessageMapper},
+    routing, util, websys_bridge, next_tick,
 };
 use enclose::enclose;
 use futures::Future;
@@ -15,6 +14,26 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
+/// Function `call_update` is useful for calling submodules' `update`.
+///
+/// # Example
+///
+/// ```rust,no_run
+///fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+///    match msg {
+///        Msg::ExampleA(msg) => {
+///            *orders = call_update(example_a::update, msg, &mut model.example_a)
+///                .map_message(Msg::ExampleA);
+///        }
+///   }
+///}
+/// ```
+pub fn call_update<Ms, Mdl>(update: UpdateFn<Ms, Mdl>, msg: Ms, model: &mut Mdl) -> Orders<Ms> {
+    let mut orders: Orders<Ms> = Default::default();
+    (update)(msg, model, &mut orders);
+    orders
+}
+
 pub enum Effect<Ms> {
     Msg(Ms),
     Cmd(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
@@ -23,6 +42,23 @@ pub enum Effect<Ms> {
 impl<Ms> From<Ms> for Effect<Ms> {
     fn from(message: Ms) -> Self {
         Effect::Msg(message)
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Effect<Ms> {
+    type SelfWithOtherMs = Effect<OtherMs>;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Effect<OtherMs> {
+        match self {
+            Effect::Msg(msg) => Effect::Msg(f(msg)),
+            Effect::Cmd(cmd) => {
+                Effect::Cmd(
+                    Box::new(cmd
+                        .map(f)
+                        .map_err(f)
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -46,7 +82,19 @@ impl<Ms> Default for Orders<Ms> {
     }
 }
 
-impl<Ms> Orders<Ms> {
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Orders<Ms> {
+    type SelfWithOtherMs = Orders<OtherMs>;
+    fn map_message<>(self, f: fn(Ms) -> OtherMs) -> Orders<OtherMs> {
+        Orders {
+            should_render: self.should_render,
+            effects: self.effects.into_iter().map(|effect| {
+                effect.map_message(f)
+            }).collect(),
+        }
+    }
+}
+
+impl<Ms: 'static> Orders<Ms> {
     /// Rerender web page after model update. It's the default behaviour.
     pub fn render(&mut self) -> &mut Self {
         self.should_render = ShouldRender::Render;
