@@ -1,7 +1,10 @@
 ## Server integration example
 
 Example of a workspace with [Actix](https://actix.rs/) server.
-Seed client is served by Actix.
+
+Client:
+ - Is served by Actix.
+ - Consists of Fetch API examples. Examples are submodules.
 
 ---
 

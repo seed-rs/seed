@@ -11,6 +11,11 @@ use web_sys;
 
 pub const UPDATE_TRIGGER_EVENT_ID: &str = "triggerupdate";
 
+pub trait MessageMapper<Ms, OtherMs> {
+    type SelfWithOtherMs;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Self::SelfWithOtherMs;
+}
+
 /// Common Namespaces
 #[derive(Debug, Clone, PartialEq)]
 pub enum Namespace {
@@ -1092,8 +1097,17 @@ pub enum Optimize {
     Static, // unimplemented, and possibly unecessary
 }
 
-pub trait ElContainer<Ms> {
+pub trait ElContainer<Ms: 'static> {
     fn els(self) -> Vec<El<Ms>>;
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
+    type SelfWithOtherMs = Vec<El<OtherMs>>;
+    fn map_message<>(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
+        self.into_iter().map(|el|{
+            el.map_message(f)
+        }).collect()
+    }
 }
 
 impl<Ms> ElContainer<Ms> for El<Ms> {
@@ -1182,31 +1196,8 @@ impl<Ms> fmt::Debug for LifecycleHooks<Ms> {
     }
 }
 
-impl<Ms> El<Ms> {
-    /// Create an empty element, specifying only the tag
-    pub fn empty(tag: Tag) -> Self {
-        Self {
-            tag,
-            attrs: Attrs::empty(),
-            style: Style::empty(),
-            listeners: Vec::new(),
-            text: None,
-            children: Vec::new(),
-
-            el_ws: None,
-
-            namespace: None,
-
-            // static: false,
-            // static_to_parent: false,
-            hooks: LifecycleHooks::new(),
-            empty: false,
-            optimizations: Vec::new(),
-
-            ref_: None,
-        }
-    }
-
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
+    type SelfWithOtherMs = El<OtherMs>;
     /// Maps an element's message to have another message.
     ///
     /// This allows third party components to integrate with your application without
@@ -1215,10 +1206,7 @@ impl<Ms> El<Ms> {
     /// # Note
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
-    pub fn map_message<OtherMs, F>(self, f: F) -> El<OtherMs>
-    where
-        F: Fn(Ms) -> OtherMs + Copy + 'static,
-    {
+    fn map_message<>(self, f: fn(Ms) -> OtherMs) -> El<OtherMs> {
         El {
             tag: self.tag,
             attrs: self.attrs,
@@ -1241,6 +1229,32 @@ impl<Ms> El<Ms> {
             empty: self.empty,
             optimizations: self.optimizations,
 
+            ref_: None,
+        }
+    }
+}
+
+impl<Ms> El<Ms> {
+    /// Create an empty element, specifying only the tag
+    pub fn empty(tag: Tag) -> Self {
+        Self {
+            tag,
+            attrs: Attrs::empty(),
+            style: Style::empty(),
+            listeners: Vec::new(),
+            text: None,
+            children: Vec::new(),
+
+            el_ws: None,
+
+            namespace: None,
+
+            // static: false,
+            // static_to_parent: false,
+            hooks: LifecycleHooks::new(),
+            empty: false,
+            optimizations: Vec::new(),
+            
             ref_: None,
         }
     }

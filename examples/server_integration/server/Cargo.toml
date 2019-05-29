@@ -5,8 +5,9 @@ authors = ["Your Name <email@address.com>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "1.0.0-beta.2"
-actix-files = "0.1.0-betsa.1"
+actix-web = "1.0.0-beta.4"
+actix-files = "0.1.0-beta.4"
+
 serde_json = "^1.0.33"
 
 shared = { path = "../shared" }

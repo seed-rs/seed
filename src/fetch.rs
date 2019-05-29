@@ -1,25 +1,212 @@
 //! High-level interface for web_sys HTTP requests.
-//! # References
-//! * [WASM bindgen fetch](https://rustwasm.github.io/wasm-bindgen/examples/fetch.html)
-//! * [JS Promises and Rust Futures](https://rustwasm.github.io/wasm-bindgen/reference/js-promises-and-rust-futures.html)
-//! * [web_sys Request](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Request.html)
-//! * [WASM bindgen Futures](https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen_futures/)
-//! * [web_sys Response](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Response.html)
 
-use futures::{Future, Poll};
+use futures::{Future, future};
 use wasm_bindgen::JsValue;
-use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
-
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use gloo_timers::callback::Timeout;
+use std::{
+    collections::HashMap,
+    convert::identity,
+    rc::Rc,
+    cell::RefCell,
+    fmt::Debug,
+};
+use serde::{de::DeserializeOwned, Serialize};
 use serde_json;
 
-/// HTTP Method types
+// ---------- Aliases for foreign types ----------
+
+pub type DomException = web_sys::DomException;
+
+// ---------- Aliases ----------
+
+/// Return type for `FetchObject.response()`.
+pub type ResponseResult<T> = Result<Response<T>, FailReason>;
+
+/// Type for `FetchObject.result`.
+pub type FetchResult<T> = Result<ResponseWithDataResult<T>, RequestError>;
+
+/// Type for `ResponseWithDataResult.data`.
+pub type DataResult<T> = Result<T, DataError>;
+
+// ---------- FetchObject ----------
+
+#[derive(Debug, Clone)]
+/// Return type for `Request.fetch*` methods.
+pub struct FetchObject<T: Debug> {
+    pub request: Request,
+    pub result: FetchResult<T>,
+}
+
+impl<T: Debug> FetchObject<T> {
+    /// Get successful `Response` (status code 100-399) or `FailReason`.
+    pub fn response(self) -> ResponseResult<T> {
+        let response = match self.result {
+            // `request_error` means that request was aborted, timed out, there was network error etc.
+            Err(request_error) => return Err(FailReason::RequestError(request_error)),
+            Ok(response) => response
+        };
+
+        if response.status.is_error() {
+            // Response status code is in range 400-599.
+            return Err(FailReason::Status(response.status));
+        }
+
+        let data = match response.data {
+            // Converting body data to required type (String, JSON...) failed.
+            Err(data_error) => return Err(FailReason::DataError(data_error)),
+            Ok(data) => data
+        };
+
+        Ok(Response {
+            raw: response.raw,
+            status: response.status,
+            data,
+        })
+    }
+}
+
+// ---------- Fails ----------
+
+#[derive(Debug, Clone)]
+pub enum FailReason {
+    RequestError(RequestError),
+    Status(Status),
+    DataError(DataError),
+}
+
+#[derive(Debug, Clone)]
+pub enum RequestError {
+    DomException(web_sys::DomException),
+}
+
+#[derive(Debug, Clone)]
+pub enum DataError {
+    DomException(web_sys::DomException),
+    SerdeError(Rc<serde_json::Error>),
+}
+
+// ---------- RequestController ----------
+
+#[derive(Debug, Clone)]
+/// It allows to abort request or disable request's timeout.
+/// You can get it by calling method `Request.controller`.
+pub struct RequestController {
+    abort_controller: Rc<web_sys::AbortController>,
+    timeout_handle: Rc<RefCell<Option<Timeout>>>,
+}
+
+impl RequestController {
+    /// Abort request and disable request's timeout.
+    ///
+    /// https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
+    pub fn abort(&self) {
+        // Cancel timeout by dropping it.
+        self.timeout_handle.replace(None);
+        self.abort_controller.abort();
+    }
+    /// Disable request's timeout.
+    /// Returns error if timeout is already disabled.
+    pub fn disable_timeout(&self) -> Result<(), &'static str> {
+        // Cancel timeout by dropping it.
+        match self.timeout_handle.replace(None) {
+            Some(_) => Ok(()),
+            None => Err("disable_timeout: already disabled")
+        }
+    }
+}
+
+impl Default for RequestController {
+    fn default() -> Self {
+        Self {
+            abort_controller: Rc::new(
+                web_sys::AbortController::new()
+                    .expect("fetch: create AbortController - failed")
+            ),
+            timeout_handle: Rc::new(RefCell::new(None)),
+        }
+    }
+}
+
+// ---------- Response Status ----------
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum StatusCategory {
+    /// Code 1xx
+    Informational,
+    /// Code 2xx
+    Success,
+    /// Code 3xx
+    Redirection,
+    /// Code 4xx
+    ClientError,
+    /// Code 5xx
+    ServerError,
+}
+
+#[derive(Debug, Clone)]
+/// Response status.
 ///
-/// # References
-/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+/// It's intended to create `Status` from `web_sys::Response` - eg: `Status::from(&raw_response)`.
+pub struct Status {
+    /// Code examples: 200, 404, ...
+    pub code: u16,
+    /// Text examples: "OK", "Not Found", ...
+    pub text: String,
+    pub category: StatusCategory,
+}
+
+#[allow(dead_code)]
+impl Status {
+    /// Is response status category `ClientError` or `ServerError`? (Code 400-599)
+    fn is_error(&self) -> bool {
+        match self.category {
+            StatusCategory::ClientError | StatusCategory::ServerError => true,
+            _ => false
+        }
+    }
+    /// Is response status category `Success`? (Code 200-299)
+    fn is_ok(&self) -> bool {
+        self.category == StatusCategory::Success
+    }
+}
+
+impl From<&web_sys::Response> for Status {
+    fn from(response: &web_sys::Response) -> Self {
+        let text = response.status_text();
+        match response.status() {
+            code @ 100..=199 => Status { code, text, category: StatusCategory::Informational },
+            code @ 200..=299 => Status { code, text, category: StatusCategory::Success },
+            code @ 300..=399 => Status { code, text, category: StatusCategory::Redirection },
+            code @ 400..=499 => Status { code, text, category: StatusCategory::ClientError },
+            code @ 500..=599 => Status { code, text, category: StatusCategory::ServerError },
+            code => panic!("create_status: invalid status code: {}", code)
+        }
+    }
+}
+
+// ---------- Response ----------
+
+#[derive(Debug, Clone)]
+pub struct Response<T> {
+    pub raw: web_sys::Response,
+    pub status: Status,
+    pub data: T,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResponseWithDataResult<T> {
+    pub raw: web_sys::Response,
+    pub status: Status,
+    pub data: DataResult<T>,
+}
+
+// ---------- Method ----------
+
+/// HTTP Method types.
+///
+/// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 #[derive(Debug, Clone, Copy)]
 pub enum Method {
     Get,
@@ -49,205 +236,424 @@ impl Method {
     }
 }
 
-/// Request is the entry point for all fetch requests. Its methods configure
-/// the request, and and handle the response. Many of them return the original
-/// struct, and are intended to be used chained together.
-#[derive(Debug)]
-pub struct Request<'a> {
-    url: &'a str,
-    init: web_sys::RequestInit,
-    headers: Option<web_sys::Headers>,
+impl Default for Method {
+    fn default() -> Self {
+        Method::Get
+    }
 }
 
-impl<'a> Request<'a> {
-    pub fn new(url: &'a str) -> Self {
+// ---------- Request ----------
+
+/// Request is the entry point for all fetch requests.
+/// Its methods configure the request, and handle the response. Many of them return the original
+/// struct, and are intended to be used chained together.
+#[derive(Debug, Clone, Default)]
+pub struct Request {
+    url: String,
+    headers: HashMap<String, String>,
+    method: Method,
+    body: Option<JsValue>,
+    cache: Option<web_sys::RequestCache>,
+    credentials: Option<web_sys::RequestCredentials>,
+    integrity: Option<String>,
+    mode: Option<web_sys::RequestMode>,
+    redirect: Option<web_sys::RequestRedirect>,
+    referrer: Option<String>,
+    referrer_policy: Option<web_sys::ReferrerPolicy>,
+    timeout: Option<u32>,
+    controller: RequestController,
+}
+
+impl Request {
+
+    // ------ PUBLIC ------
+
+    pub fn new(url: String) -> Self {
         Self {
             url,
-            init: web_sys::RequestInit::new(),
-            headers: None,
+            ..Default::default()
         }
     }
 
-    /// Set the HTTP method
-    #[inline]
-    pub fn method(mut self, val: Method) -> Self {
-        self.init.method(val.as_str());
+    /// Set the HTTP method.
+    /// Default is GET.
+    ///
+    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+    pub fn method(mut self, method: Method) -> Self {
+        self.method = method;
         self
     }
 
-    fn set_header(&mut self, name: &str, val: &str) {
-        let headers = self
-            .headers
-            .get_or_insert_with(|| web_sys::Headers::new().expect("Error with creating Headers"));
-
-        headers.set(name, val).expect("Error with setting header");
-    }
-
-    /// Add a single header. String multiple calls to this together to add multiple ones.
+    /// Add a single header.
+    /// String multiple calls to this together to add multiple ones.
+    ///
     /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
-    #[inline]
-    pub fn header(mut self, name: &str, val: &str) -> Self {
-        self.set_header(name, val);
+    pub fn header(mut self, name: &str, value: &str) -> Self {
+        self.headers.insert(name.into(), value.into());
         self
     }
 
-    #[inline]
-    pub fn body(mut self, val: &JsValue) -> Self {
-        self.init.body(Some(val));
+    pub fn body(mut self, body: JsValue) -> Self {
+        self.body = Some(body);
         self
-    }
-
-    fn get_json<A: Serialize>(val: &A) -> JsValue {
-        let json = serde_json::to_string(val).expect("Error serializing JSON");
-        JsValue::from_str(&json)
     }
 
     /// Serialize a Rust data structure as JSON; eg the payload in a POST request.
-    #[inline]
-    pub fn body_json<A: Serialize>(self, val: &A) -> Self {
-        self.body(&Self::get_json(val))
+    /// _Note_: If you want to setup `Content-Type` header automatically, use method `send_json`.
+    pub fn body_json<T: Serialize>(self, body_json: &T) -> Self {
+        let json = serde_json::to_string(body_json)
+            .expect("fetch: serialize body to JSON - failed");
+        let json_as_js_value = JsValue::from_str(&json);
+        self.body(json_as_js_value)
     }
 
-    #[inline]
-    pub fn cache(mut self, val: web_sys::RequestCache) -> Self {
-        self.init.cache(val);
+    /// Set body to serialized `data`
+    /// and set header `Content-Type` to `application/json; charset=utf-8`.
+    pub fn send_json<T: Serialize>(self, data: &T) -> Self {
+        self
+            .header("Content-Type", "application/json; charset=utf-8")
+            .body_json(data)
+    }
+
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
+    pub fn cache(mut self, cache: web_sys::RequestCache) -> Self {
+        self.cache = Some(cache);
         self
     }
 
     /// https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials
-    #[inline]
-    pub fn credentials(mut self, val: web_sys::RequestCredentials) -> Self {
-        self.init.credentials(val);
+    pub fn credentials(mut self, request_credentials: web_sys::RequestCredentials) -> Self {
+        self.credentials = Some(request_credentials);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
-    #[inline]
-    pub fn integrity(mut self, val: &str) -> Self {
-        self.init.integrity(val);
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/integrity
+    pub fn integrity(mut self, integrity: &str) -> Self {
+        self.integrity = Some(integrity.into());
         self
     }
 
     /// https://developer.mozilla.org/en-US/docs/Web/API/Request/mode
-    #[inline]
-    pub fn mode(mut self, val: web_sys::RequestMode) -> Self {
-        self.init.mode(val);
+    pub fn mode(mut self, mode: web_sys::RequestMode) -> Self {
+        self.mode = Some(mode);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections
-    #[inline]
-    pub fn redirect(mut self, val: web_sys::RequestRedirect) -> Self {
-        self.init.redirect(val);
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/redirect
+    pub fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
+        self.redirect = Some(redirect);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Document/referrer
-    #[inline]
-    pub fn referrer(mut self, val: &str) -> Self {
-        self.init.referrer(val);
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/referrer
+    pub fn referrer(mut self, referrer: String) -> Self {
+        self.referrer = Some(referrer);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
-    #[inline]
-    pub fn referrer_policy(mut self, val: web_sys::ReferrerPolicy) -> Self {
-        self.init.referrer_policy(val);
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/referrerPolicy
+    pub fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
+        self.referrer_policy = Some(referrer_policy);
         self
     }
 
-    // Must be called before make_future
-    fn make_controller(&mut self) -> web_sys::AbortController {
-        let controller =
-            web_sys::AbortController::new().expect("Error with creating AbortController");
+    /// Enable request timeout and set it to given milliseconds.
+    pub fn timeout(mut self, millis: u32) -> Self {
+        self.timeout = Some(millis);
+        self
+    }
 
-        if let Some(ref headers) = self.headers {
-            self.init.headers(headers.as_ref());
+    /// Get request controller through callback function.
+    /// You can use controller to abort request or disable timeout.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn send_request(
+    ///    request_controller: &mut Option<fetch::RequestController>
+    ///) -> impl Future<Item=Msg, Error=Msg> {
+    ///    fetch::Request::new(get_request_url())
+    ///        .controller(|controller| *request_controller = Some(controller))
+    ///        .fetch_string(Msg::Fetched)
+    ///}
+    /// ```
+    pub fn controller(self, controller_transferrer: impl FnOnce(RequestController)) -> Self {
+        controller_transferrer(self.controller.clone());
+        self
+    }
+
+    /// Fetch.
+    ///
+    /// It never fails. Use callback `f` to map `FetchObject<()>` to `Future` `Item` and `Error`.
+    /// E.g.: You can use `std::convert::identity` as `f`
+    /// to return `Future<Item=FetchObject<()>, Error=FetchObject<()>>`.
+    ///
+    /// It's lazy - fetching is started when `Future` is executed.
+    ///
+    /// It always set `FetchObject.result->ResponseWithDataResult` field `data` to `Ok(())` -
+    /// if you want to get body data, you have to use field `raw` to get raw `web_sys::Response`.
+    /// (Or use methods like `fetch_string` / `fetch_json`.)
+    ///
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn send_request() -> impl Future<Item=Msg, Error=Msg> {
+    ///    fetch::Request::new(get_request_url())
+    ///        .fetch(Msg::Fetched)
+    ///}
+    /// ```
+    pub fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> impl Future<Item=U, Error=U>
+        where
+            U: 'static
+    {
+        // @TODO: once await/async stabilized, refactor
+        future::ok(())
+            .then(|_: Result<(), ()>| {
+                self.send_request()
+                    .map(|raw_response: web_sys::Response| {
+                        ResponseWithDataResult {
+                            status: Status::from(&raw_response),
+                            raw: raw_response,
+                            data: Ok(()),
+                        }
+                    })
+                    .map_err(|js_value_error| RequestError::DomException(js_value_error.into()))
+                    .then(|fetch_result| {
+                        Ok(f(FetchObject {
+                            request: self,
+                            result: fetch_result,
+                        }))
+                    })
+            })
+    }
+
+    /// Same as method `fetch`, but try to convert body to `String` and insert it into `Response` field `data`.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
+    pub fn fetch_string<U>(self, f: impl FnOnce(FetchObject<String>) -> U) -> impl Future<Item=U, Error=U>
+        where
+            U: 'static
+    {
+        // @TODO: once await/async stabilized, refactor + delete Box
+        self
+            .fetch(identity)
+            .then(|fetch_object_result| {
+                let mut output_future: Box<Future<Item=FetchObject<String>, Error=FetchObject<String>>>;
+
+                let fetch_object: FetchObject<()> = fetch_object_result.unwrap();
+                let fetch_result = fetch_object.result;
+                let request = fetch_object.request;
+
+                match fetch_result {
+                    // There was problem with fetching - just change generic parameter from () to String.
+                    Err(request_error) => {
+                        output_future = Box::new(future::ok(FetchObject::<String> {
+                            request,
+                            result: Err(request_error),
+                        }))
+                    }
+                    Ok(response) => {
+                        match response.raw.text() {
+                            // Converting body to String failed.
+                            Err(js_value_error) => {
+                                output_future = Box::new(future::ok(FetchObject::<String> {
+                                    request,
+                                    result: Ok(ResponseWithDataResult {
+                                        raw: response.raw,
+                                        status: response.status,
+                                        data: Err(DataError::DomException(js_value_error.into())),
+                                    }),
+                                }))
+                            }
+                            Ok(promise) => {
+                                output_future = Box::new(JsFuture::from(promise)
+                                    .then(|js_future_result| {
+                                        match js_future_result {
+                                            // Converting `promise` to `JsFuture` failed.
+                                            Err(js_value_error) => {
+                                                Ok(FetchObject::<String> {
+                                                    request,
+                                                    result: Ok(ResponseWithDataResult {
+                                                        raw: response.raw,
+                                                        status: response.status,
+                                                        data: Err(DataError::DomException(js_value_error.into())),
+                                                    }),
+                                                })
+                                            }
+                                            Ok(js_value) => {
+                                                // Converting from body.text() result to String should never fail,
+                                                // so `expect` should be enough.
+                                                let text = js_value.as_string()
+                                                    .expect("fetch: cannot convert js_value to string");
+                                                Ok(FetchObject::<String> {
+                                                    request,
+                                                    result: Ok(ResponseWithDataResult {
+                                                        raw: response.raw,
+                                                        status: response.status,
+                                                        data: Ok(text),
+                                                    }),
+                                                })
+                                            }
+                                        }
+                                    })
+                                )
+                            }
+                        }
+                    }
+                }
+                output_future
+            })
+            .then(|fetch_object_result| {
+                Ok(f(fetch_object_result.unwrap()))
+            })
+    }
+
+    /// Same as method `fetch`, but try to deserialize body and insert it into `Response` field `data`.
+    pub fn fetch_json<T, U>(self, f: impl FnOnce(FetchObject<T>) -> U) -> impl Future<Item=U, Error=U>
+        where
+            T: DeserializeOwned + Debug + 'static,
+            U: 'static
+    {
+        // @TODO: once await/async stabilized, refactor
+        self
+            .fetch_string(identity)
+            .then(|fetch_object_result| {
+                let fetch_object: FetchObject<String> = fetch_object_result.unwrap();
+                let fetch_result = fetch_object.result;
+                let request = fetch_object.request;
+
+                match fetch_result {
+                    // There was problem with fetching - just change generic parameter from String to T.
+                    Err(request_error) => {
+                        future::ok(FetchObject::<T> {
+                            request,
+                            result: Err(request_error),
+                        })
+                    }
+                    Ok(response) => {
+                        match response.data {
+                            // There was problem with converting to String
+                            // - just change generic parameter from String to T.
+                            Err(data_error) => future::ok(FetchObject::<T> {
+                                request,
+                                result: Ok(ResponseWithDataResult {
+                                    raw: response.raw,
+                                    status: response.status,
+                                    data: Err(data_error),
+                                }),
+                            }),
+                            Ok(text) => {
+                                match serde_json::from_str(&text) {
+                                    // Deserialization failed.
+                                    Err(serde_error) => future::ok(FetchObject::<T> {
+                                        request,
+                                        result: Ok(ResponseWithDataResult {
+                                            raw: response.raw,
+                                            status: response.status,
+                                            data: Err(DataError::SerdeError(Rc::new(serde_error))),
+                                        }),
+                                    }),
+                                    Ok(value) => future::ok(FetchObject::<T> {
+                                        request,
+                                        result: Ok(ResponseWithDataResult {
+                                            raw: response.raw,
+                                            status: response.status,
+                                            data: Ok(value),
+                                        }),
+                                    })
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+            .then(|fetch_object_result: Result<FetchObject<T>, FetchObject<T>>| {
+                Ok(f(fetch_object_result.unwrap()))
+            })
+    }
+
+    // ------ PRIVATE ------
+
+    fn send_request(&self) -> impl Future<Item=web_sys::Response, Error=JsValue> {
+        let request_init = self.init_request_and_start_timeout();
+
+        let fetch_promise = web_sys::window()
+            .expect("fetch: cannot find window")
+            .fetch_with_str_and_init(&self.url, &request_init);
+
+        JsFuture::from(fetch_promise)
+            .map(|js_value| js_value.into())
+    }
+
+    fn init_request_and_start_timeout(&self) -> web_sys::RequestInit {
+        let mut init = web_sys::RequestInit::new();
+
+        // headers
+        let headers = web_sys::Headers::new().expect("fetch: cannot create headers");
+        for (name, value) in &self.headers {
+            headers
+                .append(name.as_str(), value.as_str())
+                .expect("fetch: cannot create header")
+        }
+        init.headers(&headers);
+
+        // method
+        init.method(self.method.as_str());
+
+        // body
+        if let Some(body) = &self.body {
+            init.body(Some(body));
         }
 
-        self.init.signal(Some(&controller.signal()));
+        // cache
+        if let Some(cache) = self.cache {
+            init.cache(cache);
+        }
 
-        controller
+        // credentials
+        if let Some(credentials) = self.credentials {
+            init.credentials(credentials);
+        }
+
+        // integrity
+        if let Some(integrity) = &self.integrity {
+            init.integrity(integrity.as_str());
+        }
+
+        // mode
+        if let Some(mode) = self.mode {
+            init.mode(mode);
+        }
+
+        // redirect
+        if let Some(redirect) = self.redirect {
+            init.redirect(redirect);
+        }
+
+        // referrer
+        if let Some(referrer) = &self.referrer {
+            init.referrer(referrer.as_str());
+        }
+
+        // referrer_policy
+        if let Some(referrer_policy) = self.referrer_policy {
+            init.referrer_policy(referrer_policy);
+        }
+
+        // timeout
+        if let Some(timeout) = &self.timeout {
+            let abort_controller = self.controller.clone();
+            *self.controller.timeout_handle.borrow_mut() = Some(
+                // abort request on timeout
+                Timeout::new(*timeout, move || abort_controller.abort())
+            );
+        }
+
+        // controller
+        // https://developer.mozilla.org/en-US/docs/Web/API/AbortController/signal
+        init.signal(Some(&self.controller.abort_controller.signal()));
+
+        init
     }
-
-    // Must be called after make_controller
-    fn make_future(&self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
-        let promise = web_sys::window()
-            .expect("Can't find window")
-            .fetch_with_str_and_init(self.url, &self.init);
-
-        JsFuture::from(promise).map(|x| x.into())
-    }
-
-    /// Use this if you want access to the web_sys::Request, eg for status code.
-    pub fn fetch(mut self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
-        let controller = self.make_controller();
-        let future = self.make_future();
-        AbortFuture::new(controller, future)
-    }
-
-    // Use this for the response's text.
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
-    pub fn fetch_string(mut self) -> impl Future<Item = String, Error = JsValue> {
-        let controller = self.make_controller();
-        let future = self.make_future();
-
-        // TODO handle error codes like 404
-        let future = future.and_then(|x| x.text()).and_then(JsFuture::from);
-
-        AbortFuture::new(controller, future).map(|x| {
-            // TODO avoid copying somehow ?
-            x.as_string().expect("Error when converting into string")
-        })
-    }
-
-    /// Use this to access the response's JSON:
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/json
-    pub fn fetch_json<A: DeserializeOwned>(self) -> impl Future<Item = A, Error = JsValue> {
-        self.fetch_string()
-            .map(|text| serde_json::from_str(&text).expect("Error deserializing JSON"))
-    }
-}
-
-/// This will automatically abort the request when it is dropped
-struct AbortFuture<A> {
-    controller: web_sys::AbortController,
-    future: A,
-}
-
-impl<A> AbortFuture<A> {
-    #[inline]
-    fn new(controller: web_sys::AbortController, future: A) -> Self {
-        Self { controller, future }
-    }
-}
-
-impl<A> Future for AbortFuture<A>
-where
-    A: Future,
-{
-    type Item = A::Item;
-    type Error = A::Error;
-
-    #[inline]
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        self.future.poll()
-    }
-}
-
-impl<A> Drop for AbortFuture<A> {
-    #[inline]
-    fn drop(&mut self) {
-        self.controller.abort();
-    }
-}
-
-pub fn spawn_local<F>(future: F)
-where
-    F: Future<Item = (), Error = JsValue> + 'static,
-{
-    future_to_promise(future.map(|_| JsValue::UNDEFINED).map_err(|err| {
-        web_sys::console::error_1(&err);
-        err
-    }));
 }
