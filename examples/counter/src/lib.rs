@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate seed;
+
 use seed::prelude::*;
 
 // Model
@@ -51,8 +52,6 @@ fn success_level(clicks: i32) -> El<Msg> {
     };
     p![descrip]
 }
-
-use wasm_bindgen::JsCast;
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output has to implement trait ElContainer.
