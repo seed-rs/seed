@@ -37,6 +37,9 @@ dependencies = ["build_release"]
 
 # ---- TEST ----
 
+# wasm-pack test docs:
+# https://rustwasm.github.io/wasm-pack/book/commands/test.html
+
 [tasks.test]
 description = "Run Seed's tests. Ex: 'cargo make test firefox'. Test envs: [chrome, firefox, safari]"
 clear = true
@@ -61,7 +64,15 @@ description = "Run headless Seed's tests in release mode. Ex: 'cargo make test_h
 args = ["test", "--headless", "--${@}", "--release"]
 
 [tasks.test_one]
-description = "Run a single test. Ex 'cargo make test_one my_test'"
+description = "Run a single test in Firefox. Ex 'cargo make test_one my_test'"
+clear = true
+workspace = false
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = ["test", "--firefox", "--", "--lib", "${@}"]
+
+[tasks.test_one_h]
+description = "Run a single test in headless Firefox. Ex 'cargo make test_one my_test'"
 clear = true
 workspace = false
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
