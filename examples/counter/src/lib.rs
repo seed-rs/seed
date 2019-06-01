@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate seed;
+
 use seed::prelude::*;
 
 // Model
