@@ -171,7 +171,7 @@ pub trait MountPoint {
 
 impl MountPoint for &str {
     fn element(self) -> Element {
-        util::document().get_element_by_id(self).expect(&format!(
+        util::document().get_element_by_id(self).unwrap_or_else(|| panic!(
             "Can't find element with id={:?} - app cannot be mounted!\n\
              (Id defaults to \"app\", or can be set with the .mount() method)",
             self
@@ -432,34 +432,34 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         // We'll get a runtime panic if any are left un-removed.
         detach_listeners(&mut old);
 
-        // todo much of the code below is copied from the patch fn (DRY)
+        // todo much of the code below is copied from the patch fn (DRY). The issue driving
+        // todo this lies with the patch fn's `parent` parameter.
         let num_children_in_both = old.children.len().min(new.children.len());
         let mut old_children_iter = old.children.into_iter();
         let mut new_children_iter = new.children.iter_mut();
 
-        //            let mut last_visited_node: Option<web_sys::Node> = None;
-        //
-        //            if let Some(update_actions) = &mut placeholder_topel.hooks.did_update {
-        //                (update_actions.actions)(&old_el_ws) // todo put in / back
-        //            }
+        let mut last_visited_node: Option<web_sys::Node> = None;
 
         for _i in 0..num_children_in_both {
             let child_old = old_children_iter.next().unwrap();
             let child_new = new_children_iter.next().unwrap();
 
-            patch(
+            if let Some(new_el_ws) = patch(
                 &self.cfg.document,
                 child_old,
                 child_new,
                 &self.cfg.mount_point,
-                //                    match last_visited_node.as_ref() {
-                //                        Some(node) => node.next_sibling(),
-                //                        None => old_el_ws.first_child(),
-                //                    },
-                None, // todo make it the next item in new?
+
+                match last_visited_node.as_ref() {
+                    Some(node) => node.next_sibling(),
+                    None => self.cfg.mount_point.first_child(),
+                },
+
                 &self.mailbox(),
                 &self.clone(),
-            );
+            ) {
+                last_visited_node = Some(new_el_ws.clone());
+            }
         }
 
         for child_new in new_children_iter {
@@ -474,19 +474,12 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         for mut child in old_children_iter {
             let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
-            // TODO: DRY here between this and earlier in func
             if let Some(unmount_actions) = &mut child.hooks.will_unmount {
                 (unmount_actions.actions)(&child_el_ws);
             }
-
-            // todo get to the bottom of this: Ie why we need this code sometimes when using raw html elements.
-            match self.cfg.mount_point.remove_child(&child_el_ws) {
-                Ok(_) => {}
-                Err(_) => {
-                    crate::log("Minor error patching html element. (remove)");
-                }
-            }
         }
+
+        // todo end DRY with patch().
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next time.
@@ -503,7 +496,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             .push(Box::new(listener));
     }
 
-    fn find(&self, ref_: &str) -> Option<El<Ms>> {
+    fn _find(&self, ref_: &str) -> Option<El<Ms>> {
         // todo expensive? We're cloning the whole vdom tree.
         // todo: Let's iterate through refs instead, once this is working.
 
@@ -672,7 +665,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
             parent
                 .remove_child(&old_el_ws)
-                .expect("Problem removing old we_el when updating to empty");
+                .expect("Problem removing old el_ws when updating to empty");
 
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 (unmount_actions.actions)(&old_el_ws);
@@ -694,7 +687,6 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             || old.text.is_some() != new.text.is_some()
         {
             // TODO: DRY here between this and later in func.
-
             let old_el_ws = old.el_ws.take();
 
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
@@ -715,9 +707,18 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
 
             if old.empty {
-                parent
-                    .insert_before(new_el_ws, next_node.as_ref())
-                    .expect("Problem adding element to replace previously empty one");
+                match next_node {
+                    Some(n) => {
+                        parent
+                            .insert_before(new_el_ws, Some(&n))
+                            .expect("Problem adding element to replace previously empty one");
+                    }
+                    None => {
+                        parent
+                            .append_child(new_el_ws)
+                            .expect("Problem adding element to replace previously empty one");
+                    }
+                }
             } else {
                 parent
                     .replace_child(
@@ -830,7 +831,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
         match old_el_ws.remove_child(&child_el_ws) {
             Ok(_) => {}
             Err(_) => {
-                crate::log("Minor error patching html element. (remove)");
+                crate::error("Minor error patching html element. (remove)");
             }
         }
     }
@@ -902,7 +903,7 @@ pub fn find_el<Msg>(ref_: &str, top_el: &El<Msg>) -> Option<El<Msg>> {
             return result;
         }
     }
-    return None;
+    None
 }
 
 #[cfg(test)]

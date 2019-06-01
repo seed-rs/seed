@@ -27,7 +27,9 @@ And cargo-make: `cargo install --force cargo-make`
 To start, clone [the quickstart repo](https://github.com/David-OConnor/seed-quickstart):
 `git clone https://github.com/david-oconnor/seed-quickstart.git`,
 run `cargo make all` in a terminal to build the app, and `cargo make serve` to start a dev server
-on `127.0.0.0:8000`.
+on `127.0.0.0:8000`. If you'd like the compiler automatically check and recompile when you 
+make changes, run `cargo make watch` instead of `cargo make all`.
+
 
 ## A little deeper
 
@@ -268,7 +270,7 @@ You may prefer writing in Rust, and using packages from Cargo vice npm. Getting 
 this framework will in most cases be easier, and require less config and setup overhead than
 with JS frameworks. You may appreciate Rust's compile-time error-checking, and built-in testing.
 
-You may choose this approach over `Elm if you're already comfortable with Rust,
+You may choose this approach over Elm if you're already comfortable with Rust,
 or don't want to code business logic in a purely-functional langauge.
 
 Compared with React, you may appreciate the consistency of how to write apps:

@@ -1,8 +1,11 @@
 # Changelog
 
+## v0.3.6
+
+
 ## v0.3.5
 - Fixed a bug where view functions returning `Vec<El>` weren't rendering properly
-- Fixed a type with the `viewBox` attribute
+- Fixed a typo with the `viewBox` attribute
 
 ## v0.3.4
 - The `update` fn now accepts a (new) `Orders` struct, and returns nothing. Renders occur implicitly,
