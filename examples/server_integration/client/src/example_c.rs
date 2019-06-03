@@ -109,8 +109,7 @@ pub fn view(model: &Model) -> impl ElContainer<Msg> {
 
 fn view_response_result(response_result: &Option<fetch::ResponseResult<String>>) -> El<Msg> {
     match &response_result {
-        //@TODO: [BUG] it cannot be `seed::empty()` because of order bug (rewrite after fix)
-        None => div![],
+        None => empty![],
         Some(response_result) => {
             match response_result {
                 Err(fail_reason) => view_fail_reason(fail_reason),
@@ -135,8 +134,7 @@ fn view_fail_reason(fail_reason: &fetch::FailReason) -> El<Msg> {
         }
     }
     log!("Example_C error:", fail_reason);
-    //@TODO: [BUG] it cannot be `seed::empty()` because of order bug (rewrite after fix)
-    div![]
+    empty![]
 }
 
 

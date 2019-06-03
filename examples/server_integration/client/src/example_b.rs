@@ -56,14 +56,12 @@ fn send_request() -> impl Future<Item=Msg, Error=Msg> {
 pub fn view(model: &Model) -> impl ElContainer<Msg> {
     vec![
         match &model.fetch_result {
-            //@TODO: [BUG] it cannot be `seed::empty()` because of order bug (rewrite after fix)
-            None => div![],
+            None => empty![],
             Some(result) => {
                 match result {
                     Err(request_error) => {
                         log!("Example_B error:", request_error);
-                        //@TODO: [BUG] it cannot be `seed::empty()` because of order bug (rewrite after fix)
-                        div![]
+                        empty![]
                     }
                     Ok(response_with_data_result) => {
                         div![
