@@ -88,13 +88,10 @@ pub fn view(model: &Model) -> impl ElContainer<Msg> {
     match &model.response_result {
         None => {
             vec![
-                //@TODO: [BUG] if you comment out div with info (only button remains),
-                //       button disappears when request ends
                 if let Status::WaitingForResponse(_) = model.status {
                     div!["Waiting for response..."]
                 } else {
-                    //@TODO: [BUG] it cannot be `seed::empty()` because of order bug (rewrite after fix)
-                    div![]
+                    empty![]
                 },
                 view_button(&model.status)
             ]

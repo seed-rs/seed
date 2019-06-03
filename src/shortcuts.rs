@@ -10,7 +10,7 @@ macro_rules! with_dollar_sign {
 }
 
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
-/// In the matching mattern below, we match the name we want to use with the name under
+/// In the matching pattern below, we match the name we want to use with the name under
 /// the seed::dom_types::Tag enum. Eg the div! macro uses seed::dom_types::Tag::Div.
 macro_rules! element {
     // Create shortcut macros for any element; populate these functions in this module.
@@ -146,6 +146,11 @@ element_svg! {
 //  - meshrow
 //  - style
 //  - view
+
+#[macro_export]
+macro_rules! empty {
+    () => { seed::empty() }
+}
 
 #[macro_export]
 macro_rules! custom {
@@ -317,7 +322,7 @@ macro_rules! error {
      };
 }
 
-/// A HashMap literal, where the keys and valsmust implement ToString.
+/// A HashMap literal, where the keys and values must implement ToString.
 #[macro_export]
 macro_rules! hashmap_string {
     { $($key:expr => $value:expr),* $(,)* } => {

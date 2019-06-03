@@ -59,14 +59,12 @@ fn send_request(new_message: String) -> impl Future<Item=Msg, Error=Msg> {
 
 pub fn view(model: &Model) -> impl ElContainer<Msg> {
     let message = match &model.response_result {
-        //@TODO: [BUG] div![] cannot be `seed::empty()` because of order bug (rewrite after fix)
-        None => div![],
+        None => empty![],
         Some(response_result) => {
             match response_result {
                 Err(fail_reason) => {
                     log!("Example_A error:", fail_reason);
-                    //@TODO: [BUG] it cannot be `seed::empty()` because of order bug (rewrite after fix)
-                    div![]
+                    empty![]
                 }
                 Ok(response) => {
                     div![
