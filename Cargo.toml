@@ -78,6 +78,7 @@ features = [
 
 [workspace]
 members = [
+    "examples/animation_frame",
     "examples/counter",
     # "examples/homepage",   # isn't Rust project
     # "examples/mathjax",   # isn't Rust project
