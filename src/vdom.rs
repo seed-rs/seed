@@ -1,6 +1,6 @@
 use crate::{
-    dom_types::{self, El, ElContainer, Namespace, MessageMapper},
-    routing, util, websys_bridge, next_tick,
+    dom_types::{self, El, ElContainer, MessageMapper, Namespace},
+    next_tick, routing, util, websys_bridge,
 };
 use enclose::enclose;
 use futures::Future;
@@ -50,14 +50,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Effect<Ms> {
     fn map_message(self, f: fn(Ms) -> OtherMs) -> Effect<OtherMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::Cmd(cmd) => {
-                Effect::Cmd(
-                    Box::new(cmd
-                        .map(f)
-                        .map_err(f)
-                    )
-                )
-            }
+            Effect::Cmd(cmd) => Effect::Cmd(Box::new(cmd.map(f).map_err(f))),
         }
     }
 }
@@ -84,12 +77,14 @@ impl<Ms> Default for Orders<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Orders<Ms> {
     type SelfWithOtherMs = Orders<OtherMs>;
-    fn map_message<>(self, f: fn(Ms) -> OtherMs) -> Orders<OtherMs> {
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Orders<OtherMs> {
         Orders {
             should_render: self.should_render,
-            effects: self.effects.into_iter().map(|effect| {
-                effect.map_message(f)
-            }).collect(),
+            effects: self
+                .effects
+                .into_iter()
+                .map(|effect| effect.map_message(f))
+                .collect(),
         }
     }
 }
@@ -179,7 +174,6 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
     msg_listeners: RefCell<MsgListeners<Ms>>,
-    //    mount_pt: RefCell<web_sys::Element>
 }
 
 pub struct AppCfg<Ms, Mdl, ElC>
@@ -219,11 +213,13 @@ pub trait MountPoint {
 
 impl MountPoint for &str {
     fn element(self) -> Element {
-        util::document().get_element_by_id(self).unwrap_or_else(|| panic!(
-            "Can't find element with id={:?} - app cannot be mounted!\n\
-             (Id defaults to \"app\", or can be set with the .mount() method)",
-            self
-        ))
+        util::document().get_element_by_id(self).unwrap_or_else(|| {
+            panic!(
+                "Can't find element with id={:?} - app cannot be mounted!\n\
+                 (Id defaults to \"app\", or can be set with the .mount() method)",
+                self
+            )
+        })
     }
 }
 
@@ -497,12 +493,10 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
                 child_old,
                 child_new,
                 &self.cfg.mount_point,
-
                 match last_visited_node.as_ref() {
                     Some(node) => node.next_sibling(),
                     None => self.cfg.mount_point.first_child(),
                 },
-
                 &self.mailbox(),
                 &self.clone(),
             ) {

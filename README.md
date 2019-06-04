@@ -170,7 +170,7 @@ fn view(model: &Model) -> El<Msg> {
             button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
 
             // Optionally-displaying an element
-            if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { seed::empty() }
+            if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { empty![] }
         ],
         success_level(model.count),  // Incorporating a separate component
 

@@ -89,11 +89,16 @@ fn view(model: &Model) -> El<Msg> {
                     will_unmount(|_| log!("This shows when clicks drop below 10")),
                 ]
             } else {
-                seed::empty()
+                empty![]
             },
         ],
         success_level(model.count), // Incorporating a separate component
         h3!["What precisely is it we're counting?"],
+        div![
+   style!{
+       "left" => -50;
+   }
+],
         input![
             attrs! {At::Value => model.what_we_count},
             input_ev(Ev::Input, Msg::ChangeWWC),

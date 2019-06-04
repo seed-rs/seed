@@ -1,19 +1,13 @@
 //! High-level interface for web_sys HTTP requests.
 
-use futures::{Future, future};
+use futures::{future, Future};
+use gloo_timers::callback::Timeout;
+use serde::{de::DeserializeOwned, Serialize};
+use serde_json;
+use std::{cell::RefCell, collections::HashMap, convert::identity, fmt::Debug, rc::Rc};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
-use gloo_timers::callback::Timeout;
-use std::{
-    collections::HashMap,
-    convert::identity,
-    rc::Rc,
-    cell::RefCell,
-    fmt::Debug,
-};
-use serde::{de::DeserializeOwned, Serialize};
-use serde_json;
 
 // ---------- Aliases for foreign types ----------
 
@@ -45,7 +39,7 @@ impl<T: Debug> FetchObject<T> {
         let response = match self.result {
             // `request_error` means that request was aborted, timed out, there was network error etc.
             Err(request_error) => return Err(FailReason::RequestError(request_error)),
-            Ok(response) => response
+            Ok(response) => response,
         };
 
         if response.status.is_error() {
@@ -56,7 +50,7 @@ impl<T: Debug> FetchObject<T> {
         let data = match response.data {
             // Converting body data to required type (String, JSON...) failed.
             Err(data_error) => return Err(FailReason::DataError(data_error)),
-            Ok(data) => data
+            Ok(data) => data,
         };
 
         Ok(Response {
@@ -112,7 +106,7 @@ impl RequestController {
         // Cancel timeout by dropping it.
         match self.timeout_handle.replace(None) {
             Some(_) => Ok(()),
-            None => Err("disable_timeout: already disabled")
+            None => Err("disable_timeout: already disabled"),
         }
     }
 }
@@ -121,8 +115,7 @@ impl Default for RequestController {
     fn default() -> Self {
         Self {
             abort_controller: Rc::new(
-                web_sys::AbortController::new()
-                    .expect("fetch: create AbortController - failed")
+                web_sys::AbortController::new().expect("fetch: create AbortController - failed"),
             ),
             timeout_handle: Rc::new(RefCell::new(None)),
         }
@@ -163,7 +156,7 @@ impl Status {
     fn is_error(&self) -> bool {
         match self.category {
             StatusCategory::ClientError | StatusCategory::ServerError => true,
-            _ => false
+            _ => false,
         }
     }
     /// Is response status category `Success`? (Code 200-299)
@@ -176,12 +169,32 @@ impl From<&web_sys::Response> for Status {
     fn from(response: &web_sys::Response) -> Self {
         let text = response.status_text();
         match response.status() {
-            code @ 100..=199 => Status { code, text, category: StatusCategory::Informational },
-            code @ 200..=299 => Status { code, text, category: StatusCategory::Success },
-            code @ 300..=399 => Status { code, text, category: StatusCategory::Redirection },
-            code @ 400..=499 => Status { code, text, category: StatusCategory::ClientError },
-            code @ 500..=599 => Status { code, text, category: StatusCategory::ServerError },
-            code => panic!("create_status: invalid status code: {}", code)
+            code @ 100..=199 => Status {
+                code,
+                text,
+                category: StatusCategory::Informational,
+            },
+            code @ 200..=299 => Status {
+                code,
+                text,
+                category: StatusCategory::Success,
+            },
+            code @ 300..=399 => Status {
+                code,
+                text,
+                category: StatusCategory::Redirection,
+            },
+            code @ 400..=499 => Status {
+                code,
+                text,
+                category: StatusCategory::ClientError,
+            },
+            code @ 500..=599 => Status {
+                code,
+                text,
+                category: StatusCategory::ServerError,
+            },
+            code => panic!("create_status: invalid status code: {}", code),
         }
     }
 }
@@ -265,7 +278,6 @@ pub struct Request {
 }
 
 impl Request {
-
     // ------ PUBLIC ------
 
     pub fn new(url: String) -> Self {
@@ -301,8 +313,8 @@ impl Request {
     /// Serialize a Rust data structure as JSON; eg the payload in a POST request.
     /// _Note_: If you want to setup `Content-Type` header automatically, use method `send_json`.
     pub fn body_json<T: Serialize>(self, body_json: &T) -> Self {
-        let json = serde_json::to_string(body_json)
-            .expect("fetch: serialize body to JSON - failed");
+        let json =
+            serde_json::to_string(body_json).expect("fetch: serialize body to JSON - failed");
         let json_as_js_value = JsValue::from_str(&json);
         self.body(json_as_js_value)
     }
@@ -310,8 +322,7 @@ impl Request {
     /// Set body to serialized `data`
     /// and set header `Content-Type` to `application/json; charset=utf-8`.
     pub fn send_json<T: Serialize>(self, data: &T) -> Self {
-        self
-            .header("Content-Type", "application/json; charset=utf-8")
+        self.header("Content-Type", "application/json; charset=utf-8")
             .body_json(data)
     }
 
@@ -404,42 +415,43 @@ impl Request {
     ///        .fetch(Msg::Fetched)
     ///}
     /// ```
-    pub fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> impl Future<Item=U, Error=U>
-        where
-            U: 'static
+    pub fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> impl Future<Item = U, Error = U>
+    where
+        U: 'static,
     {
         // @TODO: once await/async stabilized, refactor
-        future::ok(())
-            .then(|_: Result<(), ()>| {
-                self.send_request()
-                    .map(|raw_response: web_sys::Response| {
-                        ResponseWithDataResult {
-                            status: Status::from(&raw_response),
-                            raw: raw_response,
-                            data: Ok(()),
-                        }
-                    })
-                    .map_err(|js_value_error| RequestError::DomException(js_value_error.into()))
-                    .then(|fetch_result| {
-                        Ok(f(FetchObject {
-                            request: self,
-                            result: fetch_result,
-                        }))
-                    })
-            })
+        future::ok(()).then(|_: Result<(), ()>| {
+            self.send_request()
+                .map(|raw_response: web_sys::Response| ResponseWithDataResult {
+                    status: Status::from(&raw_response),
+                    raw: raw_response,
+                    data: Ok(()),
+                })
+                .map_err(|js_value_error| RequestError::DomException(js_value_error.into()))
+                .then(|fetch_result| {
+                    Ok(f(FetchObject {
+                        request: self,
+                        result: fetch_result,
+                    }))
+                })
+        })
     }
 
     /// Same as method `fetch`, but try to convert body to `String` and insert it into `Response` field `data`.
     /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
-    pub fn fetch_string<U>(self, f: impl FnOnce(FetchObject<String>) -> U) -> impl Future<Item=U, Error=U>
-        where
-            U: 'static
+    pub fn fetch_string<U>(
+        self,
+        f: impl FnOnce(FetchObject<String>) -> U,
+    ) -> impl Future<Item = U, Error = U>
+    where
+        U: 'static,
     {
         // @TODO: once await/async stabilized, refactor + delete Box
-        self
-            .fetch(identity)
+        self.fetch(identity)
             .then(|fetch_object_result| {
-                let mut output_future: Box<Future<Item=FetchObject<String>, Error=FetchObject<String>>>;
+                let mut output_future: Box<
+                    Future<Item = FetchObject<String>, Error = FetchObject<String>>,
+                >;
 
                 let fetch_object: FetchObject<()> = fetch_object_result.unwrap();
                 let fetch_result = fetch_object.result;
@@ -467,25 +479,26 @@ impl Request {
                                 }))
                             }
                             Ok(promise) => {
-                                output_future = Box::new(JsFuture::from(promise)
-                                    .then(|js_future_result| {
+                                output_future =
+                                    Box::new(JsFuture::from(promise).then(|js_future_result| {
                                         match js_future_result {
                                             // Converting `promise` to `JsFuture` failed.
-                                            Err(js_value_error) => {
-                                                Ok(FetchObject::<String> {
-                                                    request,
-                                                    result: Ok(ResponseWithDataResult {
-                                                        raw: response.raw,
-                                                        status: response.status,
-                                                        data: Err(DataError::DomException(js_value_error.into())),
-                                                    }),
-                                                })
-                                            }
+                                            Err(js_value_error) => Ok(FetchObject::<String> {
+                                                request,
+                                                result: Ok(ResponseWithDataResult {
+                                                    raw: response.raw,
+                                                    status: response.status,
+                                                    data: Err(DataError::DomException(
+                                                        js_value_error.into(),
+                                                    )),
+                                                }),
+                                            }),
                                             Ok(js_value) => {
                                                 // Converting from body.text() result to String should never fail,
                                                 // so `expect` should be enough.
-                                                let text = js_value.as_string()
-                                                    .expect("fetch: cannot convert js_value to string");
+                                                let text = js_value.as_string().expect(
+                                                    "fetch: cannot convert js_value to string",
+                                                );
                                                 Ok(FetchObject::<String> {
                                                     request,
                                                     result: Ok(ResponseWithDataResult {
@@ -496,28 +509,27 @@ impl Request {
                                                 })
                                             }
                                         }
-                                    })
-                                )
+                                    }))
                             }
                         }
                     }
                 }
                 output_future
             })
-            .then(|fetch_object_result| {
-                Ok(f(fetch_object_result.unwrap()))
-            })
+            .then(|fetch_object_result| Ok(f(fetch_object_result.unwrap())))
     }
 
     /// Same as method `fetch`, but try to deserialize body and insert it into `Response` field `data`.
-    pub fn fetch_json<T, U>(self, f: impl FnOnce(FetchObject<T>) -> U) -> impl Future<Item=U, Error=U>
-        where
-            T: DeserializeOwned + Debug + 'static,
-            U: 'static
+    pub fn fetch_json<T, U>(
+        self,
+        f: impl FnOnce(FetchObject<T>) -> U,
+    ) -> impl Future<Item = U, Error = U>
+    where
+        T: DeserializeOwned + Debug + 'static,
+        U: 'static,
     {
         // @TODO: once await/async stabilized, refactor
-        self
-            .fetch_string(identity)
+        self.fetch_string(identity)
             .then(|fetch_object_result| {
                 let fetch_object: FetchObject<String> = fetch_object_result.unwrap();
                 let fetch_result = fetch_object.result;
@@ -525,12 +537,10 @@ impl Request {
 
                 match fetch_result {
                     // There was problem with fetching - just change generic parameter from String to T.
-                    Err(request_error) => {
-                        future::ok(FetchObject::<T> {
-                            request,
-                            result: Err(request_error),
-                        })
-                    }
+                    Err(request_error) => future::ok(FetchObject::<T> {
+                        request,
+                        result: Err(request_error),
+                    }),
                     Ok(response) => {
                         match response.data {
                             // There was problem with converting to String
@@ -561,29 +571,30 @@ impl Request {
                                             status: response.status,
                                             data: Ok(value),
                                         }),
-                                    })
+                                    }),
                                 }
                             }
                         }
                     }
                 }
             })
-            .then(|fetch_object_result: Result<FetchObject<T>, FetchObject<T>>| {
-                Ok(f(fetch_object_result.unwrap()))
-            })
+            .then(
+                |fetch_object_result: Result<FetchObject<T>, FetchObject<T>>| {
+                    Ok(f(fetch_object_result.unwrap()))
+                },
+            )
     }
 
     // ------ PRIVATE ------
 
-    fn send_request(&self) -> impl Future<Item=web_sys::Response, Error=JsValue> {
+    fn send_request(&self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
         let request_init = self.init_request_and_start_timeout();
 
         let fetch_promise = web_sys::window()
             .expect("fetch: cannot find window")
             .fetch_with_str_and_init(&self.url, &request_init);
 
-        JsFuture::from(fetch_promise)
-            .map(|js_value| js_value.into())
+        JsFuture::from(fetch_promise).map(|js_value| js_value.into())
     }
 
     fn init_request_and_start_timeout(&self) -> web_sys::RequestInit {
@@ -646,7 +657,7 @@ impl Request {
             let abort_controller = self.controller.clone();
             *self.controller.timeout_handle.borrow_mut() = Some(
                 // abort request on timeout
-                Timeout::new(*timeout, move || abort_controller.abort())
+                Timeout::new(*timeout, move || abort_controller.abort()),
             );
         }
 

@@ -777,7 +777,7 @@ impl Style {
         for (key, val) in vals.into_iter() {
             // Handle automatic conversion to string with "px" appended, for integers.
             let val_backup = val.clone();
-            match val.parse::<u32>() {
+            match val.parse::<i32>() {
                 Ok(_) => new_vals.insert(key, val_backup + "px"),
                 Err(_) => new_vals.insert(key, val_backup),
             };
@@ -1103,10 +1103,8 @@ pub trait ElContainer<Ms: 'static> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
     type SelfWithOtherMs = Vec<El<OtherMs>>;
-    fn map_message<>(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
-        self.into_iter().map(|el|{
-            el.map_message(f)
-        }).collect()
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
+        self.into_iter().map(|el| el.map_message(f)).collect()
     }
 }
 
@@ -1206,7 +1204,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
     /// # Note
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
-    fn map_message<>(self, f: fn(Ms) -> OtherMs) -> El<OtherMs> {
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> El<OtherMs> {
         El {
             tag: self.tag,
             attrs: self.attrs,
@@ -1254,7 +1252,7 @@ impl<Ms> El<Ms> {
             hooks: LifecycleHooks::new(),
             empty: false,
             optimizations: Vec::new(),
-            
+
             ref_: None,
         }
     }

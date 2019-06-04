@@ -149,7 +149,9 @@ element_svg! {
 
 #[macro_export]
 macro_rules! empty {
-    () => { seed::empty() }
+    () => {
+        seed::empty()
+    };
 }
 
 #[macro_export]

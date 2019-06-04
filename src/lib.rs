@@ -80,11 +80,11 @@ pub mod prelude {
     pub use crate::{
         dom_types::{
             did_mount, did_update, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
-            trigger_update_handler, will_unmount, At, El, ElContainer, Ev, Optimize::Key, Tag,
-            UpdateEl, MessageMapper
+            trigger_update_handler, will_unmount, At, El, ElContainer, Ev, MessageMapper,
+            Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{Orders, call_update},
+        vdom::{call_update, Orders},
     };
     pub use std::collections::HashMap;
 

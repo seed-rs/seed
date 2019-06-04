@@ -1,7 +1,11 @@
 # Changelog
 
 ## v0.3.6
-
+- Fetch module and API heavily changed (breaking)
+- Added support for `request​Animation​Frame`, which improves render performance,
+especially for animations
+- Fixed a bug where `empty` elements at the top-level were rendering in the wrong order
+- Added an `empty!` macro, which is similar to `seed::empty`
 
 ## v0.3.5
 - Fixed a bug where view functions returning `Vec<El>` weren't rendering properly
