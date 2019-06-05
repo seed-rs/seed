@@ -84,7 +84,8 @@ pub mod prelude {
             Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{call_update, Orders},
+        vdom::{Orders, call_update},
+        util::{request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime}
     };
     pub use indexmap::IndexMap;  // for attrs and style to work.
 

@@ -36,7 +36,7 @@ pub fn call_update<Ms, Mdl>(update: UpdateFn<Ms, Mdl>, msg: Ms, model: &mut Mdl)
 
 pub enum Effect<Ms> {
     Msg(Ms),
-    Cmd(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
+    Cmd(Box<dyn Future<Item=Ms, Error=Ms> + 'static>),
 }
 
 impl<Ms> From<Ms> for Effect<Ms> {
@@ -58,6 +58,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Effect<Ms> {
 /// Determines if an update should cause the VDom to rerender or not.
 pub enum ShouldRender {
     Render,
+    ForceRenderNow,
     Skip,
 }
 
@@ -90,9 +91,15 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Orders<Ms> {
 }
 
 impl<Ms: 'static> Orders<Ms> {
-    /// Rerender web page after model update. It's the default behaviour.
+    /// Schedule web page rerender after model update. It's the default behaviour.
     pub fn render(&mut self) -> &mut Self {
         self.should_render = ShouldRender::Render;
+        self
+    }
+
+    /// Force web page to rerender immediately after model update.
+    pub fn force_render_now(&mut self) -> &mut Self {
+        self.should_render = ShouldRender::ForceRenderNow;
         self
     }
 
@@ -123,8 +130,8 @@ impl<Ms: 'static> Orders<Ms> {
     ///orders.perform_cmd(write_emoticon_after_delay());
     /// ```
     pub fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-    where
-        C: Future<Item = Ms, Error = Ms> + 'static,
+        where
+            C: Future<Item=Ms, Error=Ms> + 'static,
     {
         self.effects.push_back(Effect::Cmd(Box::new(cmd)));
         self
@@ -174,13 +181,14 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
     msg_listeners: RefCell<MsgListeners<Ms>>,
+    scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
 }
 
 pub struct AppCfg<Ms, Mdl, ElC>
-where
-    Ms: 'static,
-    Mdl: 'static,
-    ElC: ElContainer<Ms>,
+    where
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: ElContainer<Ms>,
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
@@ -190,10 +198,10 @@ where
 }
 
 pub struct App<Ms, Mdl, ElC>
-where
-    Ms: 'static,
-    Mdl: 'static,
-    ElC: ElContainer<Ms>,
+    where
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: ElContainer<Ms>,
 {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
@@ -348,6 +356,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
                 routes: RefCell::new(routes),
                 window_listeners: RefCell::new(Vec::new()),
                 msg_listeners: RefCell::new(Vec::new()),
+                scheduled_render_handle: RefCell::new(None),
             }),
         }
     }
@@ -439,13 +448,18 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 
         self.setup_window_listeners();
 
-        if let ShouldRender::Render = orders.should_render {
-            self.rerender_vdom();
-        }
+        match orders.should_render {
+            ShouldRender::Render => self.schedule_render(),
+            ShouldRender::ForceRenderNow => {
+                self.cancel_scheduled_render();
+                self.rerender_vdom();
+            }
+            ShouldRender::Skip => ()
+        };
         orders.effects
     }
 
-    fn process_queue_cmd(&self, cmd: Box<dyn Future<Item = Ms, Error = Ms>>) {
+    fn process_queue_cmd(&self, cmd: Box<dyn Future<Item=Ms, Error=Ms>>) {
         let lazy_schedule_cmd = enclose!((self => s) move |_| {
             // schedule future (cmd) to be executed
             spawn_local(cmd.then(move |res| {
@@ -457,6 +471,25 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         });
         // we need to clear the call stack by NextTick so we don't exceed it's capacity
         spawn_local(NextTick::new().map(lazy_schedule_cmd));
+    }
+
+    fn schedule_render(&self) {
+        let mut scheduled_render_handle =
+            self.data.scheduled_render_handle.borrow_mut();
+
+        if scheduled_render_handle.is_none() {
+            let cb = Closure::wrap(Box::new(enclose!((self => s) move |_| {
+                s.rerender_vdom();
+                s.data.scheduled_render_handle.borrow_mut().take();
+            })) as Box<FnMut(util::RequestAnimationFrameTime)>);
+
+            *scheduled_render_handle = Some(util::request_animation_frame(cb));
+        }
+    }
+
+    fn cancel_scheduled_render(&self) {
+        // Cancel animation frame request by dropping it.
+        self.data.scheduled_render_handle.borrow_mut().take();
     }
 
     fn rerender_vdom(&self) {
@@ -529,8 +562,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
-    where
-        F: Fn(&Ms) + 'static,
+        where
+            F: Fn(&Ms) + 'static,
     {
         self.data
             .msg_listeners
@@ -564,8 +597,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
 fn setup_input_listener<Ms>(el: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     if el.tag == dom_types::Tag::Input
         || el.tag == dom_types::Tag::Select
@@ -590,8 +623,8 @@ where
 
 // Create the web_sys element; add it to the working tree; store it in its corresponding vdom El.
 fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     if el.el_ws.is_none() {
         el.el_ws = Some(websys_bridge::make_websys_el(el, document));
@@ -600,16 +633,16 @@ where
 
 /// Recursively sets up input listeners
 fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     el_vdom.walk_tree_mut(setup_input_listener);
 }
 
 /// Recursively sets up web_sys elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     el.walk_tree_mut(|el| setup_websys_el(document, el));
 }
@@ -717,7 +750,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             }
 
             return None;
-        // If new and old are empty, we don't need to do anything.
+            // If new and old are empty, we don't need to do anything.
         } else if new.empty && old.empty {
             return None;
         }
@@ -986,11 +1019,11 @@ pub mod tests {
         new_vdom
     }
 
-    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = Node> {
+    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item=Node> {
         (0..list.length()).map(move |i| list.item(i).unwrap())
     }
 
-    fn iter_child_nodes(node: &Node) -> impl Iterator<Item = Node> {
+    fn iter_child_nodes(node: &Node) -> impl Iterator<Item=Node> {
         iter_nodelist(node.child_nodes())
     }
 
@@ -1459,7 +1492,7 @@ pub mod tests {
 
     /// Tests an update() function that repeatedly sends messages or performs commands.
     #[wasm_bindgen_test(async)]
-    fn update_promises() -> impl Future<Item = (), Error = JsValue> {
+    fn update_promises() -> impl Future<Item=(), Error=JsValue> {
         // ARRANGE
 
         // when we call `test_value_sender.send(..)`, future `test_value_receiver` will be marked as resolved
@@ -1527,9 +1560,9 @@ pub mod tests {
             update,
             |_| seed::empty(),
         )
-        .mount(seed::body())
-        .finish()
-        .run();
+            .mount(seed::body())
+            .finish()
+            .run();
 
         // ACT
         app.update(Msg::Start);
