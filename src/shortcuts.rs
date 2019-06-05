@@ -1,7 +1,7 @@
 //! This file exports helper macros for element creation, populated by a higher-level macro,
 //! and macros for creating the parts of elements. (attrs, style, events)
 
-/// Copied from [https://github.com/rust-lang/rust/issues/35853][https://github.com/rust-lang/rust/issues/35853]
+/// Copied from [https://github.com/rust-lang/rust/issues/35853](https://github.com/rust-lang/rust/issues/35853)
 macro_rules! with_dollar_sign {
     ($($body:tt)*) => {
         macro_rules! __with_dollar_sign { $($body)* }
@@ -11,7 +11,7 @@ macro_rules! with_dollar_sign {
 
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
 /// In the matching pattern below, we match the name we want to use with the name under
-/// the seed::dom_types::Tag enum. Eg the div! macro uses seed::dom_types::Tag::Div.
+/// the `seed::dom_types::Tag` enum. Eg the div! macro uses `seed::dom_types::Tag::Div`.
 macro_rules! element {
     // Create shortcut macros for any element; populate these functions in this module.
     ($($Tag:ident => $Tag_camel:ident);+) => {
@@ -191,7 +191,7 @@ macro_rules! class {
             $(
                 classes.push($class);
             )*
-            result.add_multiple("class".into(), classes);
+            result.add_multiple(At::Class, &classes);
             result
         }
      };
@@ -324,7 +324,7 @@ macro_rules! error {
      };
 }
 
-/// A IndexMap literal, where the keys and values must implement ToString.
+/// A IndexMap literal, where the keys and values must implement `ToString`.
 #[macro_export]
 macro_rules! hashmap_string {
     { $($key:expr => $value:expr),* $(,)* } => {

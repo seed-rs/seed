@@ -1,5 +1,4 @@
-//! Modelled after the todomvc project's Typescript-React example:
-//! https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react
+//! Modelled after the todomvc project's [Typescript-React example](https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react)
 
 #[macro_use]
 extern crate seed;
@@ -36,7 +35,7 @@ struct Todo {
 }
 
 impl Todo {
-    fn visible(&self, visible: &Visible) -> bool {
+    fn visible(&self, visible: Visible) -> bool {
         match visible {
             Visible::All => true,
             Visible::Active => !self.completed,
@@ -54,14 +53,14 @@ struct Model {
 }
 
 impl Model {
-    fn completed_count(&self) -> i32 {
+    fn completed_count(&self) -> usize {
         let completed: Vec<&Todo> = self.todos.iter().filter(|i| i.completed).collect();
-        completed.len() as i32
+        completed.len()
     }
 
-    fn active_count(&self) -> i32 {
+    fn active_count(&self) -> usize {
         // By process of elimination; active means not completed.
-        self.todos.len() as i32 - self.completed_count()
+        self.todos.len() - self.completed_count()
     }
 
     fn sync_storage(&self) {
@@ -295,11 +294,18 @@ fn view(model: &Model) -> Vec<El<Msg>> {
         .clone()
         .into_iter()
         .enumerate()
-        .filter(|(_posit, todo)| todo.visible(&model.visible))
-        .map(|(posit, todo)| todo_item(&todo, posit, &model.edit_text))
+        .filter_map(|(posit, todo)| {
+            if todo.visible(model.visible) {
+                Some(todo_item(&todo, posit, &model.edit_text))
+            } else {
+                None
+            }
+        })
         .collect();
 
-    let main = if !model.todos.is_empty() {
+    let main = if model.todos.is_empty() {
+        seed::empty()
+    } else {
         section![
             class!["main"],
             input![
@@ -310,8 +316,6 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             label![attrs! {At::For => "toggle-all"}, "Mark all as complete"],
             ul![class!["todo-list"], todo_els]
         ]
-    } else {
-        seed::empty()
     };
 
     vec![
@@ -331,7 +335,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
         ],
         main,
         if model.active_count() > 0 || model.completed_count() > 0 {
-            footer(&model)
+            footer(model)
         } else {
             seed::empty()
         },

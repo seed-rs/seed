@@ -1,4 +1,4 @@
-//! Provide a wrapper for commonly-used, but verbose web_sys features.
+//! Provide a wrapper for commonly-used, but verbose `web_sys` features.
 //! This module is decoupled / independent.
 
 use crate::dom_types;
@@ -27,19 +27,19 @@ pub fn window() -> web_sys::Window {
     web_sys::window().expect("Can't find the global Window")
 }
 
-/// Convenience function to access the web_sys DOM document.
+/// Convenience function to access the `web_sys` DOM document.
 pub fn document() -> web_sys::Document {
     window()
         .document()
         .expect("Can't find the window's document")
 }
 
-/// Convenience function to access the web_sys DOM body.
+/// Convenience function to access the `web_sys` DOM body.
 pub fn body() -> web_sys::HtmlElement {
     document().body().expect("Can't find the document's body")
 }
 
-/// Convenience function to access the web_sys history.
+/// Convenience function to access the `web_sys` history.
 pub fn history() -> web_sys::History {
     window().history().expect("Can't find history")
 }
@@ -60,7 +60,7 @@ pub fn request_animation_frame(
 }
 
 /// Simplify getting the value of input elements; required due to the need to cast
-/// from general nodes/elements to HTML_Elements.
+/// from general nodes/elements to `HTML_Elements`.
 pub fn get_value(target: &web_sys::EventTarget) -> String {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         return input.value();
@@ -74,7 +74,7 @@ pub fn get_value(target: &web_sys::EventTarget) -> String {
     "".into()
 }
 
-/// Similar to get_value.
+/// Similar to `get_value`.
 pub fn set_value(target: &web_sys::EventTarget, value: &str) {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         input.set_value(value);

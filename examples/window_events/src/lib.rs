@@ -45,7 +45,7 @@ fn misc_demo() -> El<Msg> {
     custom_el.set_text(""); // Demo of set_text.
 
     let mut attributes = attrs! {};
-    attributes.add_multiple(At::Class, vec!["a-modicum-of", "hardly-any"]);
+    attributes.add_multiple(At::Class, &["a-modicum-of", "hardly-any"]);
 
     custom![
         Tag::Custom("superdiv".into()),

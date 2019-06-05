@@ -1,4 +1,4 @@
-//! High-level interface for web_sys HTTP requests.
+//! High-level interface for `web_sys` HTTP requests.
 
 use futures::{future, Future};
 use gloo_timers::callback::Timeout;
@@ -19,6 +19,7 @@ pub type DomException = web_sys::DomException;
 pub type ResponseResult<T> = Result<Response<T>, FailReason>;
 
 /// Type for `FetchObject.result`.
+#[allow(clippy::module_name_repetitions)]
 pub type FetchResult<T> = Result<ResponseWithDataResult<T>, RequestError>;
 
 /// Type for `ResponseWithDataResult.data`.
@@ -28,6 +29,7 @@ pub type DataResult<T> = Result<T, DataError>;
 
 #[derive(Debug, Clone)]
 /// Return type for `Request.fetch*` methods.
+#[allow(clippy::module_name_repetitions)]
 pub struct FetchObject<T: Debug> {
     pub request: Request,
     pub result: FetchResult<T>,
@@ -136,6 +138,8 @@ pub enum StatusCategory {
     ClientError,
     /// Code 5xx
     ServerError,
+    /// Code < 100 || Code >= 600
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -194,7 +198,11 @@ impl From<&web_sys::Response> for Status {
                 text,
                 category: StatusCategory::ServerError,
             },
-            code => panic!("create_status: invalid status code: {}", code),
+            code => Status {
+                code,
+                text,
+                category: StatusCategory::Unknown,
+            },
         }
     }
 }
@@ -219,7 +227,7 @@ pub struct ResponseWithDataResult<T> {
 
 /// HTTP Method types.
 ///
-/// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+/// [https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 #[derive(Debug, Clone, Copy)]
 pub enum Method {
     Get,
@@ -283,7 +291,7 @@ impl Request {
     pub fn new(url: String) -> Self {
         Self {
             url,
-            ..Default::default()
+            ..Self::default()
         }
     }
 
@@ -291,7 +299,7 @@ impl Request {
     /// Default is GET.
     ///
     /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
-    pub fn method(mut self, method: Method) -> Self {
+    pub const fn method(mut self, method: Method) -> Self {
         self.method = method;
         self
     }
@@ -594,7 +602,7 @@ impl Request {
             .expect("fetch: cannot find window")
             .fetch_with_str_and_init(&self.url, &request_init);
 
-        JsFuture::from(fetch_promise).map(|js_value| js_value.into())
+        JsFuture::from(fetch_promise).map(Into::into)
     }
 
     fn init_request_and_start_timeout(&self) -> web_sys::RequestInit {

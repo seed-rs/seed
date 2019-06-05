@@ -27,14 +27,15 @@ impl Handler for Server {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let client_id: usize = self.out.token().into();
 
-        let client_msg: json::ClientMsg = serde_json::from_str(&msg.into_text().unwrap()).unwrap();
+        let client_msg: json::ClientMessage =
+            serde_json::from_str(&msg.into_text().unwrap()).unwrap();
 
         println!(
             "Server received text: '{}'\nfrom client '{}'\n",
             client_msg.text, client_id
         );
 
-        let server_msg: Message = serde_json::to_string(&json::ServerMsg {
+        let server_msg: Message = serde_json::to_string(&json::ServerMessage {
             id: client_id,
             text: client_msg.text,
         })

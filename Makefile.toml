@@ -1,3 +1,8 @@
+[env]
+# Reset rustup recursion limit because otherwise `cargo make clippy_all` fails.
+# https://github.com/rust-lang/rustup.rs/blob/d35f94183601a81489bce025c2abc35cd395c909/src/toolchain.rs#L296
+RUST_RECURSION_COUNT = "0"
+
 # ---- BUILD ----
 
 [tasks.build]
@@ -41,6 +46,19 @@ dependencies = ["build_release"]
 description = "Format Seed and all examples with rustfmt"
 workspace = false
 dependencies = ["fmt", "fmt_examples"]
+
+[tasks.clippy]
+description = "Lint only Seed with Clippy"
+clear = true
+workspace = false
+install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
+command = "cargo"
+args = ["clippy", "--all-features", "--", "--deny", "clippy::all", "--deny", "clippy::pedantic", "--deny", "clippy::nursery"]
+
+[tasks.clippy_all]
+description = "Lint Seed and all examples with Clippy"
+workspace = false
+dependencies = ["clippy", "clippy_examples"]
 
 # ---- TEST ----
 
@@ -153,9 +171,9 @@ description = "Build examples in release mode"
 args = ["make", "for_each", "build_release"]
 
 [tasks.fmt]
-description = "Format Seed and examples in workspace with rustfmt"
+description = "Format with rustfmt --all"
 workspace = false
-install_crate = "rustfmt"
+install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
 command = "cargo"
 args = ["fmt", "--all"]
 
@@ -164,6 +182,12 @@ description = "Format all examples with rustfmt"
 workspace = false
 command = "cargo"
 args = ["make", "for_each", "fmt"]
+
+[tasks.clippy_examples]
+description = "Lint examples with Clippy"
+workspace = false
+command = "cargo"
+args = ["make", "for_each", "clippy"]
 
 [tasks.for_each]
 description = "Run chosen task for each example in its root. Ex: 'cargo make for_each build'"

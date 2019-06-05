@@ -1,6 +1,7 @@
 //! See readme for details.
 
 //#![deny(missing_docs)]
+#![allow(clippy::use_self, clippy::single_match_else)]
 
 pub use crate::{
     fetch::{Method, Request},
@@ -39,11 +40,11 @@ pub fn empty<Ms>() -> dom_types::El<Ms> {
     el
 }
 
-/// A high-level wrapper for web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0:
+/// A high-level wrapper for `web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0`:
 ///
 /// # References
 /// * [WASM bindgen closures](https://rustwasm.github.io/wasm-bindgen/examples/closures.html)
-/// * [web_sys Window](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Window.html)
+/// * [`web_sys` Window](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Window.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval)
 pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
@@ -56,7 +57,7 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
     callback.forget();
 }
 
-/// See [set_interval](fn.set_interval.html)
+/// See [`set_interval`](fn.set_interval.html)
 ///
 ///
 /// # References
@@ -72,10 +73,10 @@ pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
     callback.forget();
 }
 
-/// Introduce El and Tag into the global namespace for convenience (El will be repeated
-/// often in the output type of components), and UpdateEl, which is required
-/// for element-creation macros, input event constructors, and the History struct.
-/// Expose the wasm_bindgen prelude, and lifecycle hooks.
+/// Introduce `El` and `Tag` into the global namespace for convenience (`El` will be repeated
+/// often in the output type of components), and `UpdateEl`, which is required
+/// for element-creation macros, input event constructors, and the `History` struct.
+/// Expose the `wasm_bindgen` prelude, and lifecycle hooks.
 pub mod prelude {
     pub use crate::{
         dom_types::{

@@ -1,3 +1,5 @@
+#![allow(clippy::enum_variant_names, clippy::large_enum_variant)]
+
 #[macro_use]
 extern crate seed;
 
