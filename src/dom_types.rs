@@ -57,12 +57,12 @@ impl From<String> for Namespace {
     }
 }
 
-/// Create an event that passes no data, other than it occured. Foregoes using a closure,
+/// Create an event that passes no data, other than it occurred. Foregoes using a closure,
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms, T>(trigger: T, message: Ms) -> Listener<Ms>
 where
     Ms: Clone + 'static,
-    T: ToString,
+    T: ToString + Copy,
 {
     let handler = || message;
     let closure = move |_| handler.clone()();
@@ -70,7 +70,7 @@ where
 }
 
 /// Create an event that passes a String of field text, for fast input handling.
-pub fn input_ev<Ms, T: ToString>(
+pub fn input_ev<Ms, T: ToString + Copy>(
     trigger: T,
     mut handler: impl FnMut(String) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -84,9 +84,9 @@ pub fn input_ev<Ms, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
-/// Create an event that passes a web_sys::Event, allowing full control of
+/// Create an event that passes a `web_sys::Event`, allowing full control of
 /// event-handling
-pub fn raw_ev<Ms, T: ToString>(
+pub fn raw_ev<Ms, T: ToString + Copy>(
     trigger: T,
     mut handler: impl FnMut(web_sys::Event) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -94,7 +94,7 @@ pub fn raw_ev<Ms, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
-/// Create an event that passes a web_sys::CustomEvent, allowing easy access
+/// Create an event that passes a `web_sys::CustomEvent`, allowing easy access
 /// to detail() and then trigger update
 pub fn trigger_update_ev<Ms: Clone>(
     mut handler: impl FnMut(web_sys::CustomEvent) -> Ms + 'static,
@@ -105,9 +105,9 @@ pub fn trigger_update_ev<Ms: Clone>(
     Listener::new(UPDATE_TRIGGER_EVENT_ID, Some(Box::new(closure)))
 }
 
-/// Create an event that passes a web_sys::KeyboardEvent, allowing easy access
-/// to items like key_code() and key().
-pub fn keyboard_ev<Ms: Clone, T: ToString>(
+/// Create an event that passes a `web_sys::KeyboardEvent`, allowing easy access
+/// to items like `key_code`() and key().
+pub fn keyboard_ev<Ms: Clone, T: ToString + Copy>(
     trigger: T,
     mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -117,8 +117,8 @@ pub fn keyboard_ev<Ms: Clone, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
-/// See keyboard_ev
-pub fn mouse_ev<Ms: Clone, T: ToString>(
+/// See `keyboard_ev`
+pub fn mouse_ev<Ms: Clone, T: ToString + Copy>(
     trigger: T,
     mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -128,8 +128,8 @@ pub fn mouse_ev<Ms: Clone, T: ToString>(
     Listener::new(&trigger.to_string(), Some(Box::new(closure)))
 }
 
-/// See keyboard_ev
-pub fn pointer_ev<Ms, T: ToString>(
+/// See `keyboard_ev`
+pub fn pointer_ev<Ms, T: ToString + Copy>(
     trigger: T,
     mut handler: impl FnMut(web_sys::PointerEvent) -> Ms + 'static,
 ) -> Listener<Ms> {
@@ -225,7 +225,7 @@ impl<Ms> Listener<Ms> {
     {
         // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
-        let trigger = self.trigger.clone();
+        let trigger = self.trigger;
         // This is the closure ran when a DOM element has an user defined callback
         let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
             // Let the seed user handle the event
@@ -359,7 +359,7 @@ impl<Ms> Listener<Ms> {
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .remove_event_listener_with_callback(
-                &self.trigger.as_str(),
+                self.trigger.as_str(),
                 closure.as_ref().unchecked_ref(),
             )
             .expect("problem removing listener from element");
@@ -395,7 +395,7 @@ impl<Ms> PartialEq for Listener<Ms> {
     }
 }
 
-/// UpdateEl is used to distinguish arguments in element-creation macros, and handle
+/// `UpdateEl` is used to distinguish arguments in element-creation macros, and handle
 /// each type appropriately.
 pub trait UpdateEl<T> {
     // T is the type of thing we're updating; eg attrs, style, events etc.
@@ -495,7 +495,7 @@ macro_rules! make_attrs {
     { $($attr_camel:ident => $attr:expr),+ } => {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
-        /// https://developer.mozilla.org/en-US/docs/Web/Evs
+        /// [https://developer.mozilla.org/en-US/docs/Web/Evs](https://developer.mozilla.org/en-US/docs/Web/Evs)
         #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum At {
             $(
@@ -604,7 +604,7 @@ macro_rules! make_styles {
     { $($st_camel:ident => $st:expr),+ } => {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
-        /// https://developer.mozilla.org/en-US/docs/Web/Evs
+        /// [https://developer.mozilla.org/en-US/docs/Web/Evs](https://developer.mozilla.org/en-US/docs/Web/Evs)
         #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum St {
             $(
@@ -674,7 +674,7 @@ make_styles! {
 
 }
 
-/// A thinly-wrapped HashMap holding DOM attributes
+/// A thinly-wrapped `HashMap` holding DOM attributes
 #[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
     // We use an IndexMap instead of HashMap here, and in Style, to preserve order.
@@ -700,7 +700,7 @@ pub struct Attrs {
 //}
 
 impl Attrs {
-    pub fn new(vals: IndexMap<At, String>) -> Self {
+    pub const fn new(vals: IndexMap<At, String>) -> Self {
         Self { vals }
     }
 
@@ -733,16 +733,13 @@ impl Attrs {
     }
 
     /// Add multiple values for a single attribute. Useful for classes.
-    pub fn add_multiple(&mut self, key: At, items: Vec<&str>) {
-        // Ignore clippy re &[&str]
-        // We can't loop through self.add, single the value we need is a single,
-        // concatonated string.
+    pub fn add_multiple(&mut self, key: At, items: &[&str]) {
         self.add(key, &items.join(" "));
     }
 
     /// Combine with another Attrs
     pub fn merge(&mut self, other: Self) {
-        for (other_key, other_value) in other.vals.into_iter() {
+        for (other_key, other_value) in other.vals {
             match self.vals.get_mut(&other_key) {
                 Some(original_value) => {
                     Self::merge_attribute_values(&other_key, original_value, other_value);
@@ -776,7 +773,7 @@ pub struct Style {
 impl Style {
     pub fn new(vals: IndexMap<String, String>) -> Self {
         let mut new_vals = IndexMap::new();
-        for (key, val) in vals.into_iter() {
+        for (key, val) in vals {
             // Handle automatic conversion to string with "px" appended, for integers.
             let val_backup = val.clone();
             match val.parse::<i32>() {
@@ -826,8 +823,8 @@ macro_rules! make_events {
     { $($event_camel:ident => $event:expr),+ } => {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
-        /// https://developer.mozilla.org/en-US/docs/Web/Evs
-        #[derive(Clone, Debug, PartialEq)]
+        /// [https://developer.mozilla.org/en-US/docs/Web/Evs](https://developer.mozilla.org/en-US/docs/Web/Evs)
+        #[derive(Clone, Copy, Debug, PartialEq)]
         pub enum Ev {
             $(
                 $event_camel,
@@ -938,7 +935,7 @@ macro_rules! make_tags {
     { $($tag_camel:ident => $tag:expr),+ } => {
 
         /// The Tag enum restricts element-creation to only valid tags, as defined here:
-        /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+        /// [https://developer.mozilla.org/en-US/docs/Web/HTML/Element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element)
         #[derive(Clone, Debug, PartialEq)]
         pub enum Tag {
             Custom(String),
@@ -1168,7 +1165,7 @@ pub struct LifecycleHooks<Ms> {
 }
 
 impl<Ms> LifecycleHooks<Ms> {
-    fn new() -> Self {
+    const fn new() -> Self {
         Self {
             did_mount: None,
             did_update: None,
@@ -1382,7 +1379,7 @@ impl<Ms> El<Ms> {
         {
             f(el);
 
-            for child in el.children.iter_mut() {
+            for child in &mut el.children {
                 walk_tree_mut_inner(child, f);
             }
         }
@@ -1391,7 +1388,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Set the ref
-    pub fn ref_<S: ToString>(&mut self, ref_: S) {
+    pub fn ref_<S: ToString>(&mut self, ref_: &S) {
         self.ref_ = Some(ref_.to_string());
     }
 }
@@ -1470,7 +1467,7 @@ impl<Ms> WillUnmount<Ms> {
     }
 }
 
-/// A constructor for DidMount, to be used in the API
+/// A constructor for `DidMount`, to be used in the API
 pub fn did_mount<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidMount<Ms> {
     let closure = move |el: &web_sys::Node| actions(el);
     DidMount {
@@ -1479,7 +1476,7 @@ pub fn did_mount<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidMo
     }
 }
 
-/// A constructor for DidUpdate, to be used in the API
+/// A constructor for `DidUpdate`, to be used in the API
 pub fn did_update<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidUpdate<Ms> {
     let closure = move |el: &web_sys::Node| actions(el);
     DidUpdate {
@@ -1488,7 +1485,7 @@ pub fn did_update<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> DidU
     }
 }
 
-/// A constructor for WillUnmount, to be used in the API
+/// A constructor for `WillUnmount`, to be used in the API
 pub fn will_unmount<Ms>(mut actions: impl FnMut(&web_sys::Node) + 'static) -> WillUnmount<Ms> {
     let closure = move |el: &web_sys::Node| actions(el);
     WillUnmount {

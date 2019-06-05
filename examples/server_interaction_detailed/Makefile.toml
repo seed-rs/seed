@@ -105,8 +105,16 @@ args = ["test", "--firefox", "--headless", "--", "--lib", "${@}"]
 # ---- LINTERS ----
 
 [tasks.fmt]
-description = "Format with rustfmt"
+description = "Format with rustfmt --all"
 workspace = false
-install_crate = "rustfmt"
+install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
 command = "cargo"
 args = ["fmt", "--all"]
+
+[tasks.clippy]
+description = "Lint with Clippy"
+clear = true
+workspace = false
+install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
+command = "cargo"
+args = ["clippy", "--all-features", "--", "--deny", "clippy::all", "--deny", "clippy::pedantic", "--deny", "clippy::nursery"]

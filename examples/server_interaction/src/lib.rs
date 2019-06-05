@@ -1,5 +1,7 @@
-//! https://rustwasm.github.io/wasm-bindgen/examples/fetch.html
-//! https://serde.rs/
+//! [https://rustwasm.github.io/wasm-bindgen/examples/fetch.html](https://rustwasm.github.io/wasm-bindgen/examples/fetch.html)
+//! [https://serde.rs/](https://serde.rs/)
+
+#![allow(clippy::large_enum_variant)]
 
 #[macro_use]
 extern crate seed;

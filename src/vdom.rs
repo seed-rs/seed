@@ -29,7 +29,7 @@ use web_sys::{Document, Element, Event, EventTarget, Window};
 ///}
 /// ```
 pub fn call_update<Ms, Mdl>(update: UpdateFn<Ms, Mdl>, msg: Ms, model: &mut Mdl) -> Orders<Ms> {
-    let mut orders: Orders<Ms> = Default::default();
+    let mut orders = Orders::<Ms>::default();
     (update)(msg, model, &mut orders);
     orders
 }
@@ -55,7 +55,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Effect<Ms> {
     }
 }
 
-/// Determines if an update should cause the VDom to rerender or not.
+/// Determines if an update should cause the `VDom` to rerender or not.
 pub enum ShouldRender {
     Render,
     ForceRenderNow,
@@ -582,7 +582,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             .clone()
             .expect("Can't find main vdom el in find");
 
-        find_el(ref_, &top_el)
+        find_el(ref_, top_el)
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
@@ -592,7 +592,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 }
 
-/// Set up controlled components: Input, Select, and TextArea elements must stay in sync with the
+/// Set up controlled components: Input, Select, and `TextArea` elements must stay in sync with the
 /// model; don't let them get out of sync from typing or other events, which can occur if a change
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
@@ -639,7 +639,7 @@ fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
     el_vdom.walk_tree_mut(setup_input_listener);
 }
 
-/// Recursively sets up web_sys elements
+/// Recursively sets up `web_sys` elements
 fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
     where
         Ms: 'static,
@@ -649,7 +649,7 @@ fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
 
 impl<Ms, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
     fn clone(&self) -> Self {
-        App {
+        Self {
             cfg: Rc::clone(&self.cfg),
             data: Rc::clone(&self.data),
         }
@@ -663,7 +663,7 @@ fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
             for listener in &mut el.listeners {
                 // todo ideally we unify attach as one method
                 if listener.control_val.is_some() || listener.control_checked.is_some() {
-                    listener.attach_control(&el_ws);
+                    listener.attach_control(el_ws);
                 } else {
                     listener.attach(el_ws, mailbox.clone());
                 }
@@ -811,7 +811,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 //                }
             }
 
-            attach_listeners(new, &mailbox);
+            attach_listeners(new, mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
             return new.el_ws.as_ref();
         } else {
@@ -874,7 +874,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 Some(node) => node.next_sibling(),
                 None => old_el_ws.first_child(),
             },
-            &mailbox,
+            mailbox,
             app,
         ) {
             last_visited_node = Some(new_el_ws.clone());
@@ -889,7 +889,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
         // We ran out of old children to patch; create new ones.
         setup_websys_el_and_children(document, child_new);
         websys_bridge::attach_el_and_children(child_new, &old_el_ws, app);
-        attach_listeners(child_new, &mailbox);
+        attach_listeners(child_new, mailbox);
     }
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
@@ -929,7 +929,7 @@ pub trait _Listener<Ms>: Sized {
 }
 
 /// WIP towards a modular VDOM
-/// Assumes dependency on web_sys.
+/// Assumes dependency on `web_sys`.
 // TODO:: Do we need <Ms> ?
 pub trait _DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
     // TODO: tostring

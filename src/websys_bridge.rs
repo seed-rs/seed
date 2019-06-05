@@ -1,4 +1,4 @@
-//! This file contains interactions with web_sys.
+//! This file contains interactions with `web_sys`.
 use wasm_bindgen::JsCast;
 
 use crate::dom_types;
@@ -112,17 +112,17 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
         .expect("Problem setting style");
 }
 
-/// Create and return a web_sys Element from our virtual-dom El. The web_sys
+/// Create and return a `web_sys` Element from our virtual-dom `El`. The `web_sys`
 /// Element is a close analog to JS/DOM elements.
 ///
 /// # References
-/// * [web_sys Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
+/// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
-/// * See also: [web_sys Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
+/// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
     // A simple text node.
     if let Some(text) = &el_vdom.text {
-        return document.create_text_node(&text).into();
+        return document.create_text_node(text).into();
     }
 
     // Create the DOM-analog element; it won't render until attached to something.
@@ -158,7 +158,7 @@ pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) ->
     el_ws.into()
 }
 
-/// Similar to attach_el_and_children, but assumes we've already attached the parent.
+/// Similar to `attach_el_and_children`, but assumes we've already attached the parent.
 pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     app: &App<Ms, Mdl, ElC>,
@@ -243,15 +243,15 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                 Some(old_val) => {
                     // The value's different
                     if old_val != new_val {
-                        set_attr_shim(&old_el_ws, key, new_val);
+                        set_attr_shim(old_el_ws, key, new_val);
                     }
                 }
-                None => set_attr_shim(&old_el_ws, key, new_val),
+                None => set_attr_shim(old_el_ws, key, new_val),
             }
             // We handle value in the vdom using attributes, but the DOM needs
             // to use set_value.
             if key == &dom_types::At::Value {
-                crate::util::set_value(old_el_ws, &new_val);
+                crate::util::set_value(old_el_ws, new_val);
             }
         }
         // Remove attributes that aren't in the new vdom.
@@ -277,7 +277,7 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        set_style(&old_el_ws, &new.style)
+        set_style(old_el_ws, &new.style)
     }
 
     // Patch text
@@ -298,28 +298,28 @@ pub fn to_input(target: &web_sys::EventTarget) -> &web_sys::HtmlInputElement {
         .expect("Unable to cast as an input element")
 }
 
-/// See [to_input](fn.to_input.html)
+/// See [`to_input`](fn.to_input.html)
 pub fn to_textarea(target: &web_sys::EventTarget) -> &web_sys::HtmlTextAreaElement {
     target
         .dyn_ref::<web_sys::HtmlTextAreaElement>()
         .expect("Unable to cast as a textarea element")
 }
 
-/// See [to_input](fn.to_input.html)
+/// See [`to_input`](fn.to_input.html)
 pub fn to_select(target: &web_sys::EventTarget) -> &web_sys::HtmlSelectElement {
     target
         .dyn_ref::<web_sys::HtmlSelectElement>()
         .expect("Unable to cast as a select element")
 }
 
-/// See [to_input](fn.to_input.html)
+/// See [`to_input`](fn.to_input.html)
 pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
     target
         .dyn_ref::<web_sys::HtmlElement>()
         .expect("Unable to cast as an HTML element")
 }
 
-/// Convert a web_sys::Event to a web_sys::KeyboardEvent. Useful for extracting
+/// Convert a `web_sys::Event` to a `web_sys::KeyboardEvent`. Useful for extracting
 /// info like which key has been pressed, which is not available with normal Events.
 pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
     event
@@ -327,14 +327,14 @@ pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
         .expect("Unable to cast as a keyboard event")
 }
 
-/// See to_kbevent
+/// See `to_kbevent`
 pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
     event
         .dyn_ref::<web_sys::MouseEvent>()
         .expect("Unable to cast as a mouse event")
 }
 
-/// Create a vdom node from a web_sys::Element. Used in creating elements from html
+/// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
 /// and markdown strings. Includes children, recursively added.
 pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
     match node.node_type() {

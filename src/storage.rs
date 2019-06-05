@@ -8,13 +8,13 @@
 extern crate serde;
 extern crate serde_json;
 
+#[allow(clippy::module_name_repetitions)]
 pub fn get_storage() -> Option<web_sys::Storage> {
     let window = web_sys::window().unwrap();
 
     match window.local_storage() {
         Ok(Some(local_storage)) => Some(local_storage),
-        Err(_) => None,
-        Ok(None) => None,
+        Err(_) | Ok(None) => None,
     }
 }
 

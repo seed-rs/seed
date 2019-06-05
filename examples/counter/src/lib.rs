@@ -1,5 +1,7 @@
 //! A simple, cliché example demonstrating structure and syntax.
 
+#![allow(clippy::non_ascii_literal)]
+
 #[macro_use]
 extern crate seed;
 
@@ -54,7 +56,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 }
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
-/// only argument, and output has to implement trait ElContainer.
+/// only argument, and output has to implement trait `ElContainer`.
 fn view(model: &Model) -> El<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);

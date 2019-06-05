@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::convert::TryInto;
 use std::fmt;
 
 use chrono;
@@ -55,7 +56,7 @@ impl PartialEq for Date {
 }
 
 impl PartialOrd for Date {
-    fn partial_cmp(&self, other: &Date) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.wrapped.cmp(&other.wrapped))
     }
 }
@@ -128,7 +129,10 @@ impl Date {
         let today_js = js_sys::Date::new_0();
 
         Self::new(
-            today_js.get_utc_full_year() as i32,
+            today_js
+                .get_utc_full_year()
+                .try_into()
+                .expect("casting js year into chrono year failed"),
             today_js.get_utc_month() as u32 + 1, // JS using 0-based month indexing. Fix it.
             today_js.get_utc_date() as u32,
         )
@@ -141,7 +145,7 @@ impl Date {
         Self {
             wrapped: chrono::Utc
                 .datetime_from_str(padded, "%Y-%m-%dT%H%M%S")
-                .expect(&format!("Can't format date: {}", date))
+                .unwrap_or_else(|_| panic!("Can't format date: {}", date))
                 .date(),
         }
     }
@@ -149,18 +153,21 @@ impl Date {
     // todo operator overload with other being diff type?
     pub fn add(&self, dur: chrono::Duration) -> Self {
         Self {
-            wrapped: self.wrapped.clone() + dur,
+            wrapped: self.wrapped + dur,
         }
     }
 
     pub fn sub(&self, dur: chrono::Duration) -> Self {
         Self {
-            wrapped: self.wrapped.clone() - dur,
+            wrapped: self.wrapped - dur,
         }
     }
 
     /// Getters/setters. Perhaps there's a better way.
     pub fn year(&self) -> u16 {
-        self.wrapped.year() as u16
+        self.wrapped
+            .year()
+            .try_into()
+            .expect("casting chrono year (i32) into u16 failed")
     }
 }

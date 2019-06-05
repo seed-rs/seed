@@ -1,8 +1,9 @@
-use std::cmp::Ordering;
-use std::fmt;
-use std::ops::{Add, Sub};
+//use std::cmp::Ordering;
+//use std::fmt;
+//use std::ops::{Add, Sub};
 
 use crate::interfaces::{Line, Person};
+use std::borrow::ToOwned;
 //use chrono::Datelike;
 
 // We use these integers instead of enums for compatibility with the database and serialization.
@@ -20,23 +21,23 @@ pub fn short_name(person: &Person) -> String {
     // todo first initial.
 }
 
-fn includes_line(lines: &Vec<Line>, line: &Line) -> bool {
+fn includes_line(lines: &[Line], line: &Line) -> bool {
     // Helper function that determines if a line's within another's set.
     for l in lines {
         if l.id == line.id {
             return true;
         }
     }
-    return false;
+    false
 }
 
-pub fn formation_lines(selected_line: &Line, lines: &Vec<Line>) -> Vec<Line> {
-    // todo sloppy clone
-    let mut sorted_lines = lines.clone();
+pub fn formation_lines(selected_line: &Line, lines: &[Line]) -> Vec<Line> {
+    // todo sloppy clone (in to_owned)
+    let mut sorted_lines = lines.to_owned();
     sorted_lines.sort_by(|a, b| a.number.cmp(&b.number));
 
     let mut current_form = Vec::new();
-    for line in sorted_lines.into_iter() {
+    for line in sorted_lines {
         if line.flight_lead {
             // We've found the start of a new form. Was the last one our result?
             if includes_line(&current_form, selected_line) {
@@ -52,7 +53,7 @@ pub fn formation_lines(selected_line: &Line, lines: &Vec<Line>) -> Vec<Line> {
     if includes_line(&current_form, selected_line) {
         return current_form;
     }
-    return current_form;
+    current_form
 }
 
 pub fn is_aircrew(person: &Person) -> bool {

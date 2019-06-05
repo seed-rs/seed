@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
-/// Repeated here from seed::util, to make this module standalone.  Once we have a Gloo module
+/// Repeated here from `seed::util`, to make this module standalone.  Once we have a Gloo module
 /// that handles this, use it.
 mod util {
     /// Convenience function to avoid repeating expect logic.
@@ -11,12 +11,12 @@ mod util {
         web_sys::window().expect("Can't find the global Window")
     }
 
-    /// Convenience function to access the web_sys DOM document.
+    /// Convenience function to access the `web_sys` DOM document.
     pub fn document() -> web_sys::Document {
         window().document().expect("Can't find document")
     }
 
-    /// Convenience function to access web_sys history
+    /// Convenience function to access `web_sys` history
     pub fn history() -> web_sys::History {
         window().history().expect("Can't find history")
     }
@@ -74,7 +74,7 @@ impl Url {
 impl From<String> for Url {
     // todo: Include hash and search.
     fn from(s: String) -> Self {
-        let mut path: Vec<String> = s.split('/').map(|s2| s2.to_string()).collect();
+        let mut path: Vec<String> = s.split('/').map(ToString::to_string).collect();
         path.remove(0); // Remove a leading empty string.
         Self {
             path,
@@ -108,16 +108,19 @@ fn get_path() -> String {
 }
 
 fn get_hash() -> String {
-    let hash = util::window().location().hash().expect("Can't find hash");
-    hash.to_string().replace("#", "")
+    util::window()
+        .location()
+        .hash()
+        .expect("Can't find hash")
+        .replace("#", "")
 }
 
 fn get_search() -> String {
-    let search = util::window()
+    util::window()
         .location()
         .search()
-        .expect("Can't find search");
-    search.to_string().replace("?", "")
+        .expect("Can't find search")
+        .replace("?", "")
 }
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
@@ -128,7 +131,7 @@ where
 {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
-    let path: Vec<String> = path_ref.into_iter().map(|p| p.to_string()).collect();
+    let path: Vec<String> = path_ref.into_iter().map(ToString::to_string).collect();
 
     let raw_hash = get_hash();
     let hash = match raw_hash.len() {
@@ -173,7 +176,7 @@ fn clean_url(mut url: Url) -> Url {
     url
 }
 
-/// Add a new route using history's push_state method.
+/// Add a new route using history's `push_state` method.
 ///
 /// # Refenences
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)

@@ -25,8 +25,8 @@ struct Model {
 #[derive(Clone, Serialize, Deserialize)]
 enum Msg {
     Connected,
-    ServerMsg(json::ServerMsg),
-    Send(json::ClientMsg),
+    ServerMessage(json::ServerMessage),
+    Send(json::ClientMessage),
     Sent,
     EditChange(String),
 }
@@ -36,7 +36,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
         Msg::Connected => {
             model.connected = true;
         }
-        Msg::ServerMsg(msg) => {
+        Msg::ServerMessage(msg) => {
             model.connected = true;
             model.msg_rx_cnt += 1;
             model.messages.push(msg.text);
@@ -76,7 +76,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
                     attrs! {"type"=>"button";"id"=>"send"},
                     simple_ev(
                         "click",
-                        Msg::Send(json::ClientMsg {
+                        Msg::Send(json::ClientMessage {
                             text: model.input_text.clone()
                         })
                     ),
@@ -110,27 +110,26 @@ pub fn start() {
 
     let ws = WebSocket::new(WS_URL).unwrap();
     register_handlers(&ws);
-    register_message_listener(ws, app)
+    register_message_listener(ws, &app)
 }
 
 fn register_handlers(ws: &web_sys::WebSocket) {
-    register_handler_on_open(&ws);
-    register_handler_on_message(&ws);
-    register_handler_on_close(&ws);
-    register_handler_on_error(&ws);
+    register_handler_on_open(ws);
+    register_handler_on_message(ws);
+    register_handler_on_close(ws);
+    register_handler_on_error(ws);
 }
 
-fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: App<Msg, Model, ElC>)
+fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: &App<Msg, Model, ElC>)
 where
     ElC: ElContainer<Msg> + 'static,
 {
-    app.add_message_listener(move |msg| match msg {
-        Msg::Send(msg) => {
+    app.add_message_listener(move |msg| {
+        if let Msg::Send(msg) = msg {
             let s = serde_json::to_string(msg).unwrap();
             ws.send_with_str(&s).unwrap();
             seed::update(Msg::Sent);
         }
-        _ => {}
     });
 }
 
@@ -159,9 +158,9 @@ fn register_handler_on_message(ws: &web_sys::WebSocket) {
     let on_message = Closure::wrap(Box::new(move |ev: MessageEvent| {
         log!("Client received a message");
         let txt = ev.data().as_string().unwrap();
-        let json: json::ServerMsg = serde_json::from_str(&txt).unwrap();
+        let json: json::ServerMessage = serde_json::from_str(&txt).unwrap();
         log!("- text message: ", &txt);
-        seed::update(Msg::ServerMsg(json));
+        seed::update(Msg::ServerMessage(json));
     }) as Box<FnMut(MessageEvent)>);
 
     ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
