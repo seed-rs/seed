@@ -15,7 +15,6 @@ pub const MX_NE_WX: i8 = 1;
 pub const MX_NE_OPS: i8 = 2;
 pub const MX_NE_MX: i8 = 3;
 
-
 pub fn short_name(person: &Person) -> String {
     format! {"{}, {}", person.last_name, person.first_name}
     // todo first initial.

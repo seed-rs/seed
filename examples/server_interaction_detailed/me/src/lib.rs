@@ -9,9 +9,6 @@ use shared::interfaces;
 use shared::interfaces::{Gradesheet, Line, Mission, Person, Syllabus, Upgrade, UpgradeEvent};
 use shared::util;
 
-
-
-
 #[wasm_bindgen]
 pub fn render() {
     let state = seed::App::build(Model::default(), update, view)
