@@ -86,7 +86,7 @@ pub mod prelude {
         shortcuts::*, // appears not to work.
         vdom::{call_update, Orders},
     };
-    pub use std::collections::HashMap;
+    pub use indexmap::IndexMap;  // for attrs and style to work.
 
     pub use wasm_bindgen::prelude::*;
 }

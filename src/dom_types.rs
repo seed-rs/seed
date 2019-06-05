@@ -5,7 +5,8 @@ use super::{util, websys_bridge};
 use core::convert::AsRef;
 use pulldown_cmark;
 use serde::de::DeserializeOwned;
-use std::{collections::HashMap, fmt};
+use std::fmt;
+use indexmap::IndexMap;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
 
@@ -676,7 +677,8 @@ make_styles! {
 /// A thinly-wrapped HashMap holding DOM attributes
 #[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
-    pub vals: HashMap<At, String>,
+    // We use an IndexMap instead of HashMap here, and in Style, to preserve order.
+    pub vals: IndexMap<At, String>,
 }
 
 //impl PartialEq for Attrs {
@@ -698,13 +700,13 @@ pub struct Attrs {
 //}
 
 impl Attrs {
-    pub fn new(vals: HashMap<At, String>) -> Self {
+    pub fn new(vals: IndexMap<At, String>) -> Self {
         Self { vals }
     }
 
     pub fn empty() -> Self {
         Self {
-            vals: HashMap::new(),
+            vals: IndexMap::new(),
         }
     }
 
@@ -768,12 +770,12 @@ impl Attrs {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {
     // todo enum for key?
-    pub vals: HashMap<String, String>,
+    pub vals: IndexMap<String, String>,
 }
 
 impl Style {
-    pub fn new(vals: HashMap<String, String>) -> Self {
-        let mut new_vals = HashMap::new();
+    pub fn new(vals: IndexMap<String, String>) -> Self {
+        let mut new_vals = IndexMap::new();
         for (key, val) in vals.into_iter() {
             // Handle automatic conversion to string with "px" appended, for integers.
             let val_backup = val.clone();
@@ -788,7 +790,7 @@ impl Style {
 
     pub fn empty() -> Self {
         Self {
-            vals: HashMap::new(),
+            vals: IndexMap::new(),
         }
     }
 
@@ -1545,7 +1547,7 @@ pub mod tests {
     }
 
     /// Assumes Node is an Element
-    fn get_node_attrs(node: &Node) -> HashMap<String, String> {
+    fn get_node_attrs(node: &Node) -> IndexMap<String, String> {
         let element = node.dyn_ref::<Element>().unwrap();
         element
             .get_attribute_names()
@@ -1558,7 +1560,7 @@ pub mod tests {
                     (name, value)
                 })
             })
-            .collect::<Result<HashMap<String, String>, JsValue>>()
+            .collect::<Result<IndexMap<String, String>, JsValue>>()
             .unwrap()
     }
 
@@ -1613,7 +1615,7 @@ pub mod tests {
             ],
         ]);
 
-        let mut expected = HashMap::new();
+        let mut expected = IndexMap::new();
         expected.insert("id".to_string(), "my_id".to_string());
         expected.insert("style".to_string(), "background-color:red".to_string());
         expected.insert("class".to_string(), "my_class1".to_string());
@@ -1633,7 +1635,7 @@ pub mod tests {
             ]
         ]);
 
-        let mut expected = HashMap::new();
+        let mut expected = IndexMap::new();
         expected.insert(
             "class".to_string(),
             "my_class1 my_class2 my_class3 my_class4 my_class5".to_string(),
@@ -1673,7 +1675,7 @@ pub mod tests {
             ]
         ]);
 
-        let mut expected = HashMap::new();
+        let mut expected = IndexMap::new();
         expected.insert("id".to_string(), "my_id2".to_string());
         assert_eq!(expected, get_node_attrs(&node));
     }

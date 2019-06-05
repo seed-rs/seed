@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <meta name="description" content="Linear algebra symbols / identities">
+
+    <link rel="icon" type="image/png" href="public/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+    
+    <!-- Enable single-dollarsigns for inline formatting; not enabled by default -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+          tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            processEscapes: true
+          }
+        });
+      </script>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+
+    <title>Linear algebra identities</title>
+
+</head>
+<body>
+<section id="app"></section>
+
+<script src='pkg/package.js'></script>
+
+<script>
+    // the `wasm_bindgen` global is set to the exports of the Rust module
+    const { render } = wasm_bindgen;
+    // we'll defer our execution until the wasm is ready to go
+    function run() {
+        render();
+    }
+    // here we tell bindgen the path to the wasm file so it can run
+    // initialization and return to us a promise when it's done
+    wasm_bindgen('pkg/package_bg.wasm')
+        .then(run)
+        .catch(console.error);
+</script>
+
+</body>
+</html>

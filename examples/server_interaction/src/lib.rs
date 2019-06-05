@@ -104,7 +104,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         },
 
         Msg::OnFetchError { label, fail_reason } => {
-            log!(format!("Fetch error - {} - {:#?}", label, fail_reason));
+            error!(format!("Fetch error - {} - {:#?}", label, fail_reason));
             orders.skip();
         }
     }

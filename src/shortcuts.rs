@@ -170,7 +170,7 @@ macro_rules! custom {
 macro_rules! attrs {
     { $($key:expr => $value:expr);* $(;)* } => {
         {
-            let mut vals = std::collections::HashMap::new();
+            let mut vals = IndexMap::new();
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
@@ -214,7 +214,7 @@ macro_rules! id {
 macro_rules! style {
     { $($key:expr => $value:expr);* $(;)* } => {
         {
-            let mut vals = std::collections::HashMap::new();
+            let mut vals = IndexMap::new();
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
@@ -324,7 +324,7 @@ macro_rules! error {
      };
 }
 
-/// A HashMap literal, where the keys and values must implement ToString.
+/// A IndexMap literal, where the keys and values must implement ToString.
 #[macro_export]
 macro_rules! hashmap_string {
     { $($key:expr => $value:expr),* $(,)* } => {

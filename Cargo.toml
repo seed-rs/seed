@@ -19,16 +19,17 @@ crate-type = ["cdylib", "rlib"]
 wasm-bindgen-test = "^0.2.43" # NOTE: keep in sync with wasm-bindgen version
 
 [dependencies]
-# NOTE: keep in sync with wasm-bindgen-test version
-wasm-bindgen = {version = "^0.2.43", features = ["serde-serialize"]}
-js-sys = "0.3.20"
 console_error_panic_hook = "^0.1.5"
-serde = { version = "^1.0.85", features = ['derive'] }
-serde_json = "^1.0.36"
-futures = "^0.1.27"
-wasm-bindgen-futures = "^0.3.20"
 enclose = "1.1.6"
 gloo-timers = { git = "https://github.com/rustwasm/gloo", features = ["futures"] }
+futures = "^0.1.27"
+indexmap = "1.0.2"
+js-sys = "0.3.20"
+serde = { version = "^1.0.85", features = ['derive'] }
+serde_json = "^1.0.36"
+# NOTE: keep in sync with wasm-bindgen-test version
+wasm-bindgen = {version = "^0.2.43", features = ["serde-serialize"]}
+wasm-bindgen-futures = "^0.3.20"
 
 # Markdown conversion
 pulldown-cmark = "^0.2.0"
@@ -81,6 +82,7 @@ members = [
     "examples/counter",
     # "examples/homepage",   # isn't Rust project
     # "examples/mathjax",   # isn't Rust project
+    "examples/mathjax",
     "examples/orders",
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",

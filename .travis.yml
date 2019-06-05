@@ -2,7 +2,6 @@ language: rust
 
 rust:
   - stable
-#  - nightly   # is it necessary?
 
 os:
 #  - windows   # firefox problem
