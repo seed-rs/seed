@@ -35,6 +35,13 @@ description = "Build Seed and chosen example in release mode. Ex: 'cargo make on
 args = ["make", "--cwd", "./examples/${@}", "build_release"]
 dependencies = ["build_release"]
 
+# ---- LINTERS ----
+
+[tasks.fmt_all]
+description = "Format Seed and all examples with rustfmt"
+workspace = false
+dependencies = ["fmt", "fmt_examples"]
+
 # ---- TEST ----
 
 # wasm-pack test docs:
@@ -145,6 +152,19 @@ extend = "build_examples"
 description = "Build examples in release mode"
 args = ["make", "for_each", "build_release"]
 
+[tasks.fmt]
+description = "Format Seed and examples in workspace with rustfmt"
+workspace = false
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fmt_examples]
+description = "Format all examples with rustfmt"
+workspace = false
+command = "cargo"
+args = ["make", "for_each", "fmt"]
+
 [tasks.for_each]
 description = "Run chosen task for each example in its root. Ex: 'cargo make for_each build'"
 workspace = false
@@ -179,6 +199,7 @@ script = [
     }
 
     fn run_task_in_example_root(example_root: &str, task: &str) {
+        println!("Example root: '{}'", example_root);
         Command::new("cargo")
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())

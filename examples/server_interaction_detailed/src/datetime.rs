@@ -3,9 +3,8 @@ use std::fmt;
 
 use chrono;
 use chrono::offset::TimeZone;
-use chrono::{Datelike};
+use chrono::Datelike;
 use js_sys;
-
 
 type Cdate = chrono::Date<chrono::Utc>;
 
@@ -81,7 +80,12 @@ impl PartialOrd for Date {
 
 impl fmt::Debug for Date {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}, {:?}", self.wrapped, self.wrapped.format("%Y-%h-%D").to_string())
+        write!(
+            f,
+            "{:?}, {:?}",
+            self.wrapped,
+            self.wrapped.format("%Y-%h-%D").to_string()
+        )
     }
 }
 
@@ -106,17 +110,15 @@ impl fmt::Debug for Date {
 //}
 
 impl From<Cdate> for Date {
-   fn from(date: Cdate) -> Self {
-       Self {
-           wrapped: date
-       }
-   }
+    fn from(date: Cdate) -> Self {
+        Self { wrapped: date }
+    }
 }
 
 impl Date {
     pub fn new(year: i32, month: u32, day: u32) -> Self {
-        Self{
-            wrapped: chrono::Utc.ymd(year, month, day)
+        Self {
+            wrapped: chrono::Utc.ymd(year, month, day),
         }
     }
 
@@ -127,7 +129,7 @@ impl Date {
 
         Self::new(
             today_js.get_utc_full_year() as i32,
-            today_js.get_utc_month() as u32 + 1,  // JS using 0-based month indexing. Fix it.
+            today_js.get_utc_month() as u32 + 1, // JS using 0-based month indexing. Fix it.
             today_js.get_utc_date() as u32,
         )
     }
@@ -140,20 +142,20 @@ impl Date {
             wrapped: chrono::Utc
                 .datetime_from_str(padded, "%Y-%m-%dT%H%M%S")
                 .expect(&format!("Can't format date: {}", date))
-                .date()
+                .date(),
         }
     }
 
     // todo operator overload with other being diff type?
     pub fn add(&self, dur: chrono::Duration) -> Self {
         Self {
-            wrapped: self.wrapped.clone() + dur
+            wrapped: self.wrapped.clone() + dur,
         }
     }
 
     pub fn sub(&self, dur: chrono::Duration) -> Self {
         Self {
-            wrapped: self.wrapped.clone() - dur
+            wrapped: self.wrapped.clone() - dur,
         }
     }
 

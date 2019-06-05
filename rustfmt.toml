@@ -1,0 +1,22 @@
+# https://github.com/rust-lang/rustfmt/blob/master/Configurations.md
+
+newline_style = "Unix"
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+
+# nightly
+
+#normalize_doc_attributes = true
+#reorder_impl_items = true
+#normalize_comments = true
+#wrap_comments = true
+#format_strings = true
+#match_block_trailing_comma = true
+#trailing_comma = "Always"
+#merge_imports = true
+#error_on_line_overflow = true
+#error_on_unformatted = true
+#report_todo = "Always"
+#report_fixme = "Always"
+#version = "Two"

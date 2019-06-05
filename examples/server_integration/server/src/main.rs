@@ -1,5 +1,5 @@
-use actix_web::{get, post, HttpServer, App, Responder, web, HttpResponse};
 use actix_files::{Files, NamedFile};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 
@@ -14,7 +14,7 @@ type State = Arc<Mutex<StateData>>;
 
 #[derive(Default)]
 struct StateData {
-    message_ordinal_number: u32
+    message_ordinal_number: u32,
 }
 
 #[post("/api/send-message")]
@@ -23,12 +23,10 @@ fn send_message(
     request_data: web::Json<shared::SendMessageRequestBody>,
 ) -> impl Responder {
     state.lock().unwrap().message_ordinal_number += 1;
-    web::Json(
-        shared::SendMessageResponseBody {
-            ordinal_number: state.lock().unwrap().message_ordinal_number,
-            text: request_data.text.clone(),
-        }
-    )
+    web::Json(shared::SendMessageResponseBody {
+        ordinal_number: state.lock().unwrap().message_ordinal_number,
+        text: request_data.text.clone(),
+    })
 }
 
 #[get("/api/delayed-response/{delay}")]
@@ -60,7 +58,6 @@ fn main() -> std::io::Result<()> {
             .service(Files::new("/pkg", "./client/pkg"))
             .service(index)
     })
-        .bind("127.0.0.1:8000")?
-        .run()
+    .bind("127.0.0.1:8000")?
+    .run()
 }
-

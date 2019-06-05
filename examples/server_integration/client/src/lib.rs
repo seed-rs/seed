@@ -55,20 +55,31 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     let examples = vec![
         // example_a
         view_example_introduction(example_a::TITLE, example_a::DESCRIPTION),
-        example_a::view(&model.example_a).els().map_message(Msg::ExampleA),
+        example_a::view(&model.example_a)
+            .els()
+            .map_message(Msg::ExampleA),
         // example_b
         view_example_introduction(example_b::TITLE, example_b::DESCRIPTION),
-        example_b::view(&model.example_b).els().map_message(Msg::ExampleB),
+        example_b::view(&model.example_b)
+            .els()
+            .map_message(Msg::ExampleB),
         // example_c
         view_example_introduction(example_c::TITLE, example_c::DESCRIPTION),
-        example_c::view(&model.example_c).els().map_message(Msg::ExampleC),
+        example_c::view(&model.example_c)
+            .els()
+            .map_message(Msg::ExampleC),
         // example_d
         view_example_introduction(example_d::TITLE, example_d::DESCRIPTION),
-        example_d::view(&model.example_d).els().map_message(Msg::ExampleD),
-    ].into_iter().flatten().collect::<Vec<El<Msg>>>();
+        example_d::view(&model.example_d)
+            .els()
+            .map_message(Msg::ExampleD),
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<El<Msg>>>();
 
     div![
-        style!{
+        style! {
             "font-family" => "sans-serif";
             "max-width" => 460;
             "margin" => "auto";
@@ -81,10 +92,7 @@ fn view_example_introduction(title: &str, description: &str) -> Vec<El<Msg>> {
     vec![
         hr![],
         h2![title],
-        div![
-            style!{"margin-bottom" => 15;},
-            description
-        ]
+        div![style! {"margin-bottom" => 15;}, description],
     ]
 }
 

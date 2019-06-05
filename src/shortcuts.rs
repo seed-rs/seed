@@ -58,7 +58,7 @@ macro_rules! element_svg {
    }
 }
 
-/// El must be exposed in the module where this is called for these to work.
+// El must be exposed in the module where this is called for these to work.
 element! {
     address => Address; article => Article; aside => Aside; footer => Footer;
     header => Header; h1 => H1;

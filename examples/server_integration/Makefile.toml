@@ -49,3 +49,12 @@ extend = "start"
 description = "Build and start Actix server with client on port 8000 in release mode"
 args = ["run", "--package", "server", "--release"]
 dependencies = ["build_release"]
+
+# ---- LINTERS ----
+
+[tasks.fmt]
+description = "Format with rustfmt"
+workspace = false
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all"]

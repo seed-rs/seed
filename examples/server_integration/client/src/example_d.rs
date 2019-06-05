@@ -1,6 +1,6 @@
-use seed::prelude::*;
-use seed::fetch;
 use futures::Future;
+use seed::fetch;
+use seed::prelude::*;
 
 pub const TITLE: &str = "Example D";
 pub const DESCRIPTION: &str =
@@ -53,12 +53,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         Msg::SendRequest => {
             model.status = Status::WaitingForResponse(TimeoutStatus::Enabled);
             model.response_result = None;
-            orders
-                .perform_cmd(send_request(&mut model.request_controller));
+            orders.perform_cmd(send_request(&mut model.request_controller));
         }
 
         Msg::DisableTimeout => {
-            model.request_controller.take()
+            model
+                .request_controller
+                .take()
                 .ok_or("Msg:DisableTimeout: request controller cannot be None")
                 .and_then(|controller| controller.disable_timeout())
                 .unwrap_or_else(|err| log!(err));
@@ -73,9 +74,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 }
 
 fn send_request(
-    request_controller: &mut Option<fetch::RequestController>
-) -> impl Future<Item=Msg, Error=Msg>
-{
+    request_controller: &mut Option<fetch::RequestController>,
+) -> impl Future<Item = Msg, Error = Msg> {
     fetch::Request::new(get_request_url())
         .controller(|controller| *request_controller = Some(controller))
         .timeout(TIMEOUT)
@@ -86,40 +86,30 @@ fn send_request(
 
 pub fn view(model: &Model) -> impl ElContainer<Msg> {
     match &model.response_result {
-        None => {
-            vec![
-                if let Status::WaitingForResponse(_) = model.status {
-                    div!["Waiting for response..."]
-                } else {
-                    empty![]
-                },
-                view_button(&model.status)
-            ]
-        }
-        Some(response_result) => {
-            match response_result {
-                Err(fail_reason) => view_fail_reason(fail_reason, &model.status),
-                Ok(response) => {
-                    vec![
-                        div![format!("Server returned {}.", response.status.text)],
-                        view_button(&model.status)
-                    ]
-                }
-            }
-        }
+        None => vec![
+            if let Status::WaitingForResponse(_) = model.status {
+                div!["Waiting for response..."]
+            } else {
+                empty![]
+            },
+            view_button(&model.status),
+        ],
+        Some(response_result) => match response_result {
+            Err(fail_reason) => view_fail_reason(fail_reason, &model.status),
+            Ok(response) => vec![
+                div![format!("Server returned {}.", response.status.text)],
+                view_button(&model.status),
+            ],
+        },
     }
 }
 
 fn view_fail_reason(fail_reason: &fetch::FailReason, status: &Status) -> Vec<El<Msg>> {
-    if let fetch::FailReason::RequestError(
-        fetch::RequestError::DomException(dom_exception)
-    ) = fail_reason {
+    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception)) =
+        fail_reason
+    {
         if dom_exception.name() == "AbortError" {
-            return
-                vec![
-                    div!["Request aborted."],
-                    view_button(status)
-                ];
+            return vec![div!["Request aborted."], view_button(status)];
         }
     }
     log!("Example_D error:", fail_reason);
@@ -130,29 +120,10 @@ pub fn view_button(status: &Status) -> El<Msg> {
     if let Status::WaitingForResponse(timeout_status) = status {
         return match timeout_status {
             TimeoutStatus::Enabled => {
-                button![
-                    simple_ev(Ev::Click, Msg::DisableTimeout),
-                    "Disable timeout"
-                ]
+                button![simple_ev(Ev::Click, Msg::DisableTimeout), "Disable timeout"]
             }
-            TimeoutStatus::Disabled => {
-                button![
-                    attrs!{"disabled" => true},
-                    "Timeout disabled"
-                ]
-            }
+            TimeoutStatus::Disabled => button![attrs! {"disabled" => true}, "Timeout disabled"],
         };
     }
-    button![
-        simple_ev(Ev::Click, Msg::SendRequest),
-        "Send request"
-    ]
+    button![simple_ev(Ev::Click, Msg::SendRequest), "Send request"]
 }
-
-
-
-
-
-
-
-
