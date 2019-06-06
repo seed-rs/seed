@@ -47,6 +47,11 @@ description = "Format Seed and all examples with rustfmt"
 workspace = false
 dependencies = ["fmt", "fmt_examples"]
 
+[tasks.fmt_all_check]
+description = "Check format of Seed and all examples with rustfmt"
+workspace = false
+dependencies = ["fmt_check", "fmt_examples_check"]
+
 [tasks.clippy]
 description = "Lint only Seed with Clippy"
 clear = true
@@ -185,17 +190,28 @@ description = "Build examples in release mode"
 args = ["make", "for_each", "build_release"]
 
 [tasks.fmt]
-description = "Format with rustfmt --all"
+description = "Format with rustfmt"
 workspace = false
 install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
 command = "cargo"
 args = ["fmt", "--all"]
+
+[tasks.fmt_check]
+extend = "fmt"
+description = "Check format with rustfmt"
+args = ["fmt", "--all", "--", "--check"]
 
 [tasks.fmt_examples]
 description = "Format all examples with rustfmt"
 workspace = false
 command = "cargo"
 args = ["make", "for_each", "fmt"]
+
+[tasks.fmt_examples_check]
+description = "Check format of all examples with rustfmt"
+workspace = false
+command = "cargo"
+args = ["make", "for_each", "fmt_check"]
 
 [tasks.clippy_examples]
 description = "Lint examples with Clippy"
@@ -226,24 +242,31 @@ script = [
             eprintln!("Wrong number of arguments! Correct example: 'cargo make for_each build'");
             exit(1);
         }
+
         let task = &args[1];
+        let mut exit_code = 0;
 
         for entry in glob("examples/*/Makefile.toml").unwrap() {
             if let Ok(path) = entry {
                 let example_root = path.parent().unwrap().to_str().unwrap();
-                run_task_in_example_root(example_root, task);
+                if !run_task_in_example_root(example_root, task) {
+                    exit_code = 1;
+                }
             }
         }
+        exit(exit_code);
     }
 
-    fn run_task_in_example_root(example_root: &str, task: &str) {
+    fn run_task_in_example_root(example_root: &str, task: &str) -> bool {
         println!("Example root: '{}'", example_root);
         Command::new("cargo")
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .args(&["make", "--cwd", example_root, task])
             .output()
-            .unwrap();
+            .unwrap()
+            .status
+            .success()
     }
     '''
 ]

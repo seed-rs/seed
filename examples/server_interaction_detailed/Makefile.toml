@@ -105,11 +105,16 @@ args = ["test", "--firefox", "--headless", "--", "--lib", "${@}"]
 # ---- LINT ----
 
 [tasks.fmt]
-description = "Format with rustfmt --all"
+description = "Format with rustfmt"
 workspace = false
 install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
 command = "cargo"
 args = ["fmt", "--all"]
+
+[tasks.fmt_check]
+extend = "fmt"
+description = "Check format with rustfmt"
+args = ["fmt", "--all", "--", "--check"]
 
 [tasks.clippy]
 description = "Lint with Clippy"
