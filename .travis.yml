@@ -30,6 +30,8 @@ matrix:
 
 script:
   - cargo install --force cargo-make # remove --force in the future (https://github.com/rust-lang/cargo/pull/6798)
+  - cargo make fmt_all_check
+  - cargo make clippy_all
   - cargo make all
   - cargo make test_h firefox
   - cargo make test_h chrome
