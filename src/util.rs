@@ -46,12 +46,11 @@ pub fn history() -> web_sys::History {
 
 /// Request the animation frame.
 pub fn request_animation_frame(
-    f: Closure<FnMut(RequestAnimationFrameTime)>
+    f: Closure<FnMut(RequestAnimationFrameTime)>,
 ) -> RequestAnimationFrameHandle {
-    let request_id =
-        window()
-            .request_animation_frame(f.as_ref().unchecked_ref())
-            .expect("Problem requesting animation frame");
+    let request_id = window()
+        .request_animation_frame(f.as_ref().unchecked_ref())
+        .expect("Problem requesting animation frame");
 
     RequestAnimationFrameHandle {
         request_id,
@@ -111,8 +110,8 @@ pub fn error<D: fmt::Debug>(text: D) {
 /// It requires Msg to be (De)serializable
 /// and to register `trigger_update_handler` in `window_events`.
 pub fn update<Ms>(msg: Ms)
-    where
-        Ms: Clone + 'static + serde::Serialize,
+where
+    Ms: Clone + 'static + serde::Serialize,
 {
     let msg_as_js_value = wasm_bindgen::JsValue::from_serde(&msg)
         .expect("Error: TriggerUpdate - can't serialize given msg!");
@@ -124,7 +123,7 @@ pub fn update<Ms>(msg: Ms)
         dom_types::UPDATE_TRIGGER_EVENT_ID,
         &custom_event_config,
     )
-        .expect("Error: TriggerUpdate - create event failed!");
+    .expect("Error: TriggerUpdate - create event failed!");
 
     window()
         .dispatch_event(&event)

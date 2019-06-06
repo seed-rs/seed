@@ -3,10 +3,10 @@
 
 use super::{util, websys_bridge};
 use core::convert::AsRef;
+use indexmap::IndexMap;
 use pulldown_cmark;
 use serde::de::DeserializeOwned;
 use std::fmt;
-use indexmap::IndexMap;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
 

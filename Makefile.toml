@@ -40,7 +40,7 @@ description = "Build Seed and chosen example in release mode. Ex: 'cargo make on
 args = ["make", "--cwd", "./examples/${@}", "build_release"]
 dependencies = ["build_release"]
 
-# ---- LINTERS ----
+# ---- LINT ----
 
 [tasks.fmt_all]
 description = "Format Seed and all examples with rustfmt"
@@ -53,7 +53,14 @@ clear = true
 workspace = false
 install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
 command = "cargo"
-args = ["clippy", "--all-features", "--", "--deny", "clippy::all", "--deny", "clippy::pedantic", "--deny", "clippy::nursery"]
+args = ["clippy", "--all-features", "--", "--deny", "warnings", "--deny", "clippy::pedantic", "--deny", "clippy::nursery"]
+
+[tasks.clippy_one]
+description = "Lint Seed and chosen example with Clippy. Ex: 'cargo make clippy_one counter'"
+workspace = false
+command = "cargo"
+args = ["make", "--cwd", "./examples/${@}", "clippy"]
+dependencies = ["clippy"]
 
 [tasks.clippy_all]
 description = "Lint Seed and all examples with Clippy"
@@ -156,6 +163,13 @@ dependencies = ["build"]
 extend = "default_start"
 description = "Build and start microserver in release mode"
 dependencies = ["build_release"]
+
+[tasks.default_clippy]
+description = "Lint with Clippy"
+workspace = false
+install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
+command = "cargo"
+args = ["clippy", "--all-features", "--", "--deny", "warnings", "--deny", "clippy::pedantic", "--deny", "clippy::nursery"]
 
 # ---- HELPERS -----
 
