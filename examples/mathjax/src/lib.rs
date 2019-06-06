@@ -1,3 +1,5 @@
+#![allow(clippy::non_ascii_literal)]
+
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
@@ -14,13 +16,10 @@ impl Default for Model {
     }
 }
 
-// Update
+// Msg
 
 #[derive(Clone)]
-enum Msg {}
-
-fn update(msg: Msg, model: &mut Model, _orders: &mut Orders<Msg>) {
-}
+struct Msg;
 
 // View
 
@@ -30,10 +29,13 @@ fn definition(description: &str, def: &str) -> El<Msg> {
 }
 
 fn _dirac_3(left: &str, middle: &str, right: &str) -> String {
-    format!(r"\langle {} \lvert {} \rvert {} \rangle", left, middle, right)
+    format!(
+        r"\langle {} \lvert {} \rvert {} \rangle",
+        left, middle, right
+    )
 }
 
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(_: &Model) -> Vec<El<Msg>> {
     vec![
         h1!["Linear algebra cheatsheet"],
         p!["Intent: Provide a quick reference of definitions and identities that 
@@ -182,7 +184,7 @@ e^{-\mathbf{A}} = \mathbf{B} + [\mathbf{A}, \mathbf{B}]"
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(Model::default(), |_, _, _| (), view)
         .finish()
         .run();
 }

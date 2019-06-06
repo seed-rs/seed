@@ -85,10 +85,10 @@ pub mod prelude {
             Optimize::Key, Tag, UpdateEl,
         },
         shortcuts::*, // appears not to work.
-        vdom::{Orders, call_update},
-        util::{request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime}
+        util::{request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime},
+        vdom::{call_update, Orders},
     };
-    pub use indexmap::IndexMap;  // for attrs and style to work.
+    pub use indexmap::IndexMap; // for attrs and style to work.
 
     pub use wasm_bindgen::prelude::*;
 }

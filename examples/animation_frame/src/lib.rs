@@ -2,8 +2,8 @@
 extern crate seed;
 #[macro_use]
 extern crate serde_derive;
-use seed::prelude::*;
 use rand::prelude::*;
+use seed::prelude::*;
 
 // Model
 
@@ -11,12 +11,12 @@ type CarColor = String;
 
 #[derive(Debug)]
 struct Car {
-    x: i32,
-    y: i32,
+    x: f64,
+    y: f64,
     speed: f64,
     color: CarColor,
-    width: i32,
-    height: i32,
+    width: f64,
+    height: f64,
 }
 
 impl Car {
@@ -35,14 +35,14 @@ impl Car {
 
 impl Default for Car {
     fn default() -> Self {
-        let car_width = 120;
+        let car_width = 120.0;
         Self {
             x: -car_width,
-            y: 100,
+            y: 100.0,
             speed: Self::generate_speed(),
             color: Self::generate_color(),
             width: car_width,
-            height: 60,
+            height: 60.0,
         }
     }
 }
@@ -51,13 +51,13 @@ impl Default for Car {
 struct Model {
     request_animation_frame_handle: Option<RequestAnimationFrameHandle>,
     previous_time: Option<RequestAnimationFrameTime>,
-    viewport_width: i32,
-    car: Car
+    viewport_width: f64,
+    car: Car,
 }
 
 // Update
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 enum Msg {
     Init,
     SetViewportWidth,
@@ -74,31 +74,31 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
                 .skip();
         }
         Msg::SetViewportWidth => {
-            model.viewport_width = seed::body().client_width();
+            model.viewport_width = f64::from(seed::body().client_width());
             orders.skip();
         }
-        Msg::NextAnimationStep =>  {
+        Msg::NextAnimationStep => {
             let cb = Closure::wrap(Box::new(|time| {
                 seed::update(Msg::OnAnimationFrame(time));
             }) as Box<FnMut(RequestAnimationFrameTime)>);
 
             model.request_animation_frame_handle = Some(request_animation_frame(cb));
             orders.skip();
-        },
+        }
         Msg::OnAnimationFrame(time) => {
-            let delta =  match model.previous_time{
+            let delta = match model.previous_time {
                 Some(previous_time) => time - previous_time,
-                None => 0.0
+                None => 0.0,
             };
             model.previous_time = Some(time);
 
             if delta > 0.0 {
                 // move car at least 1px to the right
-                model.car.x += i32::max(1,(delta / 1000.0 * model.car.speed) as i32);
+                model.car.x += f64::max(1.0, delta / 1000.0 * model.car.speed);
 
                 // we don't see car anymore => back to start + generate new color and speed
                 if model.car.x > model.viewport_width {
-                    model.car = Default::default();
+                    model.car = Car::default();
                 }
             }
             orders.send_msg(Msg::NextAnimationStep);
@@ -108,26 +108,30 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 
 // View
 
+fn px(number: impl ToString + Copy) -> String {
+    let mut value = number.to_string();
+    value.push_str("px");
+    value
+}
+
 fn view(model: &Model) -> El<Msg> {
     // scene container + sky
     div![
-        style!{
+        style! {
           "overflow" => "hidden";
           "width" => "100%";
           "position" => "relative";
-          "height" => 170;
+          "height" => "170px";
           "background-color" => "deepskyblue";
         },
         // road
-        div![
-            style!{
-                "width" => "100%";
-                "height" => 20;
-                "bottom" => 0;
-                "background-color" => "darkgray";
-                "position" => "absolute";
-            }
-        ],
+        div![style! {
+            "width" => "100%";
+            "height" => "20px";
+            "bottom" => "0";
+            "background-color" => "darkgray";
+            "position" => "absolute";
+        }],
         view_car(&model.car)
     ]
 }
@@ -135,54 +139,47 @@ fn view(model: &Model) -> El<Msg> {
 fn view_car(car: &Car) -> El<Msg> {
     div![
         // car container
-        // @TODO [BUG?]: Check that Seed doesn't change order of properties between renders
-        style!{
-            "width" => car.width;
-            "height" => car.height;
-            "top" => car.y;
-            "left" => car.x;
+        style! {
+            "width" => px(car.width);
+            "height" => px(car.height);
+            "top" => px(car.y);
+            "left" => px(car.x);
             "position" => "absolute";
         },
         // windows
-        div![
-            style!{
-                "background-color" => "rgb(255,255,255,0.5)";
-                "left" => car.width as f32 * 0.25;
-                "width" => car.width as f32 * 0.50;
-                "height" => car.height as f32 * 0.60;
-                "border-radius" => 9999;
-                "position" => "absolute";
-            }
-        ],
+        div![style! {
+            "background-color" => "rgb(255,255,255,0.5)";
+            "left" => px(car.width * 0.25);
+            "width" => px(car.width * 0.50);
+            "height" => px(car.height * 0.60);
+            "border-radius" => "9999px";
+            "position" => "absolute";
+        }],
         // body
-        div![
-            style!{
-                "top" => car.height as f32 * 0.35;
-                "background-color" => car.color;
-                "width" => car.width;
-                "height" => car.height as f32 * 0.50;
-                "border-radius" => 9999;
-                "position" => "absolute";
-            }
-        ],
-        view_wheel((car.width as f32 * 0.15) as i32, car),
-        view_wheel((car.width as f32 * 0.60) as i32, car)
+        div![style! {
+            "top" => px(car.height * 0.35);
+            "background-color" => car.color;
+            "width" => px(car.width);
+            "height" => px(car.height * 0.50);
+            "border-radius" => "9999px";
+            "position" => "absolute";
+        }],
+        view_wheel(car.width * 0.15, car),
+        view_wheel(car.width * 0.60, car)
     ]
 }
 
-fn view_wheel(wheel_x: i32, car: &Car) -> El<Msg> {
-    let wheel_radius = car.height as f32 * 0.40;
-    div![
-        style!{
-            "top" => car.height as f32 * 0.55;
-            "left" => wheel_x;
-            "background-color" => "black";
-            "width" => wheel_radius;
-            "height" => wheel_radius;
-            "border-radius" => 9999;
-            "position" => "absolute";
-        }
-    ]
+fn view_wheel(wheel_x: f64, car: &Car) -> El<Msg> {
+    let wheel_radius = car.height * 0.40;
+    div![style! {
+        "top" => px(car.height * 0.55);
+        "left" => px(wheel_x);
+        "background-color" => "black";
+        "width" => px(wheel_radius);
+        "height" => px(wheel_radius);
+        "border-radius" => "9999px";
+        "position" => "absolute";
+    }]
 }
 
 #[wasm_bindgen]
@@ -192,7 +189,7 @@ pub fn render() {
             vec![
                 // we want to use `seed::update(...)`
                 trigger_update_handler(),
-                simple_ev(Ev::Resize, Msg::SetViewportWidth)
+                simple_ev(Ev::Resize, Msg::SetViewportWidth),
             ]
         })
         .finish()

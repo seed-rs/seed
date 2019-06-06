@@ -50,7 +50,7 @@ description = "Build and start Actix server with client on port 8000 in release 
 args = ["run", "--package", "server", "--release"]
 dependencies = ["build_release"]
 
-# ---- LINTERS ----
+# ---- LINT ----
 
 [tasks.fmt]
 description = "Format with rustfmt --all"

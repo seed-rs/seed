@@ -102,7 +102,7 @@ install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V
 command = "wasm-pack"
 args = ["test", "--firefox", "--headless", "--", "--lib", "${@}"]
 
-# ---- LINTERS ----
+# ---- LINT ----
 
 [tasks.fmt]
 description = "Format with rustfmt --all"

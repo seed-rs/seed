@@ -15,3 +15,8 @@ alias = "default_start"
 
 [tasks.start_release]
 alias = "default_start_release"
+
+# ---- LINT ----
+
+[tasks.clippy]
+alias = "default_clippy"

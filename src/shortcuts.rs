@@ -324,12 +324,12 @@ macro_rules! error {
      };
 }
 
-/// A IndexMap literal, where the keys and values must implement `ToString`.
+/// A key-value pairs, where the keys and values must implement `ToString`.
 #[macro_export]
-macro_rules! hashmap_string {
+macro_rules! key_value_pairs {
     { $($key:expr => $value:expr),* $(,)* } => {
         {
-            let mut result = std::collections::HashMap::new();
+            let mut result = IndexMap::new();
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.

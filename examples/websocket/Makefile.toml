@@ -70,3 +70,8 @@ description = "Run websocket server on port 9000 in release mode"
 args = ["run", "--bin", "server", "--features", "server", "--release"]
 dependencies = ["build_server_release"]
 
+# ---- LINT ----
+
+[tasks.clippy]
+alias = "default_clippy"
+
