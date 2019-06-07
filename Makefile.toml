@@ -3,6 +3,13 @@
 # https://github.com/rust-lang/rustup.rs/blob/d35f94183601a81489bce025c2abc35cd395c909/src/toolchain.rs#L296
 RUST_RECURSION_COUNT = "0"
 
+# ---- GENERAL ----
+
+[tasks.verify]
+description = "Format, lint with Clippy, build and run tests"
+workspace = false
+dependencies = ["fmt_all", "clippy_all", "all", "test_h_firefox"]
+
 # ---- BUILD ----
 
 [tasks.build]
@@ -94,6 +101,11 @@ args = ["test", "--${@}", "--release"]
 description = "Run headless Seed's tests. Ex: 'cargo make test_h firefox'. Test envs: [chrome, firefox, safari]"
 extend = "test"
 args = ["test", "--headless", "--${@}"]
+
+[tasks.test_h_firefox]
+description = "Run headless Seed's tests with Firefox."
+extend = "test"
+args = ["test", "--headless", "--firefox"]
 
 [tasks.test_h_release]
 extend = "test_h"

@@ -5,14 +5,14 @@ authors = ["Your Name <email@address.com>"]
 edition = "2018"
 
 [dependencies]
-js-sys = "^0.3.20"
+js-sys = "^0.3.22"
 
 # For serialization, eg sending requests to a server. Otherwise, not required.
-serde = { version = "^1.0.85", features = ['derive'] }
-#serde_json = "^1.0.33"
+serde = { version = "^1.0.92", features = ['derive'] }
+#serde_json = "^1.0.39"
 
 chrono = { version = "^0.4.6", features = ["serde"] }
-#futures = "^0.1.26"
+#futures = "^0.1.27"
 
 
 [workspace]
