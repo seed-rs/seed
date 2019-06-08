@@ -15,6 +15,7 @@ use wasm_bindgen::{closure::Closure, JsCast};
 #[macro_use]
 pub mod shortcuts;
 
+pub mod css_units;
 pub mod dom_types;
 pub mod fetch;
 mod next_tick;
@@ -79,6 +80,7 @@ pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
 /// Expose the `wasm_bindgen` prelude, and lifecycle hooks.
 pub mod prelude {
     pub use crate::{
+        css_units::*,
         dom_types::{
             did_mount, did_update, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
             trigger_update_handler, will_unmount, At, El, ElContainer, Ev, MessageMapper,

@@ -69,9 +69,9 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
             "display" => "flex";
             "justify-content" => "center";
             "align-items" => "center";
-            "font-size" => "5vmin";
+            "font-size" => vmin(5);
             "font-family" => "sans-serif";
-            "height" => "50vmin";
+            "height" => vmin(50);
         ],
         if model.greet_clicked {
             h1![model.title]
@@ -79,10 +79,10 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
             div![
                 style![
                     "background-color" => "lightgreen";
-                    "padding" => "3vmin";
-                    "border-radius" => "3vmin";
+                    "padding" => vmin(3);
+                    "border-radius" => vmin(3);
                     "cursor" => "pointer";
-                    "box-shadow" => "0 0.5vmin 0.5vmin green";
+                    "box-shadow" => [vmin(0), vmin(0.5), vmin(0.5), "green".into()].join(" ");
                 ],
                 simple_ev(Ev::Click, Msg::Greet),
                 "Greet!"
