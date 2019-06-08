@@ -161,8 +161,8 @@ fn view(model: &Model) -> El<Msg> {
             style!{
                 // Example of conditional logic in a style.
                 "color" => if model.count > 4 {"purple"} else {"gray"};
-                // When passing numerical values to style!, "px" is implied.
-                "border" => "2px solid #004422"; "padding" => 20
+                "border" => "2px solid #004422"; 
+                "padding" => unit!(20, px);
             },
             // We can use normal Rust code and comments in the view.
             h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
@@ -170,7 +170,7 @@ fn view(model: &Model) -> El<Msg> {
             button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
 
             // Optionally-displaying an element
-            if model.count >= 10 { h2![ style!{"padding" => 50}, "Nice!" ] } else { empty![] }
+            if model.count >= 10 { h2![ style!{"padding" => px(50)}, "Nice!" ] } else { empty![] }
         ],
         success_level(model.count),  // Incorporating a separate component
 

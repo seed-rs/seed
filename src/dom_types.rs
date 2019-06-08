@@ -771,18 +771,8 @@ pub struct Style {
 }
 
 impl Style {
-    pub fn new(vals: IndexMap<String, String>) -> Self {
-        let mut new_vals = IndexMap::new();
-        for (key, val) in vals {
-            // Handle automatic conversion to string with "px" appended, for integers.
-            let val_backup = val.clone();
-            match val.parse::<i32>() {
-                Ok(_) => new_vals.insert(key, val_backup + "px"),
-                Err(_) => new_vals.insert(key, val_backup),
-            };
-        }
-
-        Self { vals: new_vals }
+    pub const fn new(vals: IndexMap<String, String>) -> Self {
+        Self { vals }
     }
 
     pub fn empty() -> Self {

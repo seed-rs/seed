@@ -132,10 +132,10 @@ fn mx_effectivity(
             0 => num as f32 / lines_filtered.len() as f32,
             _ => 0.,
         };
-        (val * 100.).to_string() + &"%"
+        unit!(val * 100., %)
     };
 
-    let margin_style = style! {"margin-right" => 60};
+    let margin_style = style! {"margin-right" => px(60)};
 
     let display_block = |val: usize, title: &str| {
         div![
@@ -147,12 +147,12 @@ fn mx_effectivity(
     };
 
     section![
-        style! {"margin-bottom" => 100},
+        style! {"margin-bottom" => px(100)},
         h2!["Maintenance line effectivity"],
         div![
             style! {"display" => "flex"; "flex-direction" => "column"},
             div![
-                style! {"display" => "flex"; "margin-bottom" => 60},
+                style! {"display" => "flex"; "margin-bottom" => px(60)},
                 h3!["Start"],
                 h3!["End"],
             ],
@@ -273,7 +273,7 @@ fn sortie_types(lines: &Vec<Line>, people: &Vec<Person>, missions: &Vec<Mission>
     }
 
     section![
-        style! {"margin-bottom" => 100},
+        style! {"margin-bottom" => px(100)},
         h2!["Sortie types (last 60 days)"],
         table![
             class![

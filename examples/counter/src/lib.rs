@@ -75,8 +75,8 @@ fn view(model: &Model) -> El<Msg> {
             style! {
                 // Example of conditional logic in a style.
                 "color" => if model.count > 4 {"purple"} else {"gray"};
-                // When passing numerical values to style!, "px" is implied.
-                "border" => "2px solid #004422"; "padding" => 20
+                "border" => "2px solid #004422";
+                "padding" => unit!(20, px);
             },
             // We can use normal Rust code and comments in the view.
             h3![text, did_update(|_| log!("This shows when we increment"))],
@@ -85,7 +85,7 @@ fn view(model: &Model) -> El<Msg> {
             // Optionally-displaying an element, and lifecycle hooks
             if model.count >= 10 {
                 h2![
-                    style! {"padding" => 50},
+                    style! {"padding" => px(50)},
                     "Nice!",
                     did_mount(|_| log!("This shows when clicks reach 10")),
                     will_unmount(|_| log!("This shows when clicks drop below 10")),
