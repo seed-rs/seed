@@ -6,6 +6,7 @@
 especially for animations
 - Fixed a bug where `empty` elements at the top-level were rendering in the wrong order
 - Added an `empty!` macro, which is similar to `seed::empty`
+- Attributes and style now retain order
 
 ## v0.3.5
 - Fixed a bug where view functions returning `Vec<El>` weren't rendering properly

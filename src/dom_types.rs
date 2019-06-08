@@ -463,15 +463,15 @@ impl<Ms> UpdateEl<El<Ms>> for &str {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
-    fn update(mut self, el: &mut El<Ms>) {
-        el.children.append(&mut self);
-    }
-}
-
 impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.children.push(self)
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
+    fn update(mut self, el: &mut El<Ms>) {
+        el.children.append(&mut self);
     }
 }
 
@@ -483,7 +483,6 @@ impl<Ms> UpdateEl<El<Ms>> for Tag {
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Optimize {
-    // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.optimizations.push(self)
     }
