@@ -22,7 +22,8 @@ wasm-bindgen-test = "0.2.45" # NOTE: keep in sync with wasm-bindgen version
 console_error_panic_hook = "^0.1.6"
 enclose = "1.1.6"
 futures = "^0.1.27"
-gloo-timers = { git = "https://github.com/rustwasm/gloo", features = ["futures"] }
+# Can't use repo with a release.
+gloo-timers = { path = "vendor/gloo_timers", features = ["futures"] }
 indexmap = "1.0.2"
 js-sys = "0.3.22"
 pulldown-cmark = "^0.5.2"
@@ -95,4 +96,5 @@ exclude = [
     # it has own workspace
     "examples/server_integration",
     "examples/server_interaction_detailed",
+    "vendor/gloo_timers",  # Temporary until released
 ]

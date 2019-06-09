@@ -668,7 +668,6 @@ dependencies = [
 [[package]]
 name = "gloo-timers"
 version = "0.1.0"
-source = "git+https://github.com/rustwasm/gloo#86a7cc44b16e3eced139b9ec411ff592d5ae171b"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "js-sys 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1315,7 +1314,7 @@ dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "enclose 1.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "gloo-timers 0.1.0 (git+https://github.com/rustwasm/gloo)",
+ "gloo-timers 0.1.0",
  "indexmap 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "js-sys 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "pulldown-cmark 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2035,7 +2034,6 @@ dependencies = [
 "checksum fuchsia-zircon-sys 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
 "checksum futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)" = "a2037ec1c6c1c4f79557762eab1f7eae1f64f6cb418ace90fae88f0942b60139"
 "checksum getopts 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)" = "0a7292d30132fb5424b354f5dc02512a86e4c516fe544bb7a25e7f266951b797"
-"checksum gloo-timers 0.1.0 (git+https://github.com/rustwasm/gloo)" = "<none>"
 "checksum h2 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)" = "85ab6286db06040ddefb71641b50017c06874614001a134b423783e2db2920bd"
 "checksum hashbrown 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "570178d5e4952010d138b0f1d581271ff3a02406d990f887d1e87e3d6e43b0ac"
 "checksum heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
