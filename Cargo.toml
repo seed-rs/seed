@@ -23,7 +23,8 @@ console_error_panic_hook = "^0.1.6"
 enclose = "1.1.6"
 futures = "^0.1.27"
 # Can't use repo with a release.
-gloo-timers = { path = "vendor/gloo_timers", version="0.1.0", features = ["futures"] }
+#gloo-timers = { path = "vendor/gloo_timers", features = ["futures"] }
+#gloo-timers = { git = "https://github.com/rustwasm/gloo", features = ["futures"] }
 indexmap = "1.0.2"
 js-sys = "0.3.22"
 pulldown-cmark = "^0.5.2"
@@ -96,5 +97,5 @@ exclude = [
     # it has own workspace
     "examples/server_integration",
     "examples/server_interaction_detailed",
-    "vendor/gloo_timers",  # Temporary until released
+    "vendor/gloo_timers",  # temporary until released
 ]

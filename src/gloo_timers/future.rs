@@ -47,6 +47,7 @@ use wasm_bindgen_futures::JsFuture;
 /// );
 /// ```
 #[derive(Debug)]
+#[allow(clippy::all)]  // Clippy's still flagging this for name repetition.
 #[must_use = "futures do nothing unless polled or spawned"]
 pub struct TimeoutFuture {
     id: Option<i32>,

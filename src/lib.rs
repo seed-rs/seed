@@ -25,12 +25,11 @@ mod util;
 mod vdom;
 mod websys_bridge;
 
-//// todos:
-// todo Give 'components' their own message type/update fn. Could help efficient rendering,
-// todo and code organization.
-// todo dynamic routing
-// todo local storage
-// todo High-level css-grid and flex api?
+// todo temporary: To allow `cargo publish` to work with the unreleased Gloo crate
+pub mod gloo_timers;
+//pub use gloo_timers;
+//pub use gloo_timers::callback::Timeout;
+//pub use gloo_timers::callback::Timeout;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
