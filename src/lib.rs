@@ -85,7 +85,9 @@ pub mod prelude {
             trigger_update_handler, will_unmount, At, El, ElContainer, Ev, MessageMapper,
             Optimize::Key, Tag, UpdateEl,
         },
-        shortcuts::*, // appears not to work.
+        // macros are exported in crate root
+        // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
+        shortcuts::*,
         util::{request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime},
         vdom::{call_update, Orders},
     };

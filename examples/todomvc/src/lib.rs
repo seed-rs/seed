@@ -2,7 +2,9 @@
 
 #[macro_use]
 extern crate seed;
+use seed::dom_types::Event;
 use seed::prelude::*;
+use seed::storage::Storage;
 use serde::{Deserialize, Serialize};
 
 const ENTER_KEY: u32 = 13;
@@ -49,7 +51,7 @@ struct Model {
     visible: Visible,
     entry_text: String,
     edit_text: String,
-    local_storage: web_sys::Storage,
+    local_storage: Storage,
 }
 
 impl Model {
@@ -106,7 +108,7 @@ enum Msg {
     Destroy(usize),
     Toggle(usize),
     ToggleAll,
-    NewTodo(web_sys::Event),
+    NewTodo(Event),
     EditEntry(String),
 
     EditItem(usize),

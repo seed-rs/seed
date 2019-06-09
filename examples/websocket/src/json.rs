@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// Message from the server to the client.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ServerMessage {

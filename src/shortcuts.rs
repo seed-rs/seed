@@ -1,6 +1,8 @@
 //! This file exports helper macros for element creation, populated by a higher-level macro,
 //! and macros for creating the parts of elements. (attrs, style, events)
 
+use wasm_bindgen::JsValue;
+
 /// Copied from [https://github.com/rust-lang/rust/issues/35853](https://github.com/rust-lang/rust/issues/35853)
 macro_rules! with_dollar_sign {
     ($($body:tt)*) => {
@@ -21,9 +23,9 @@ macro_rules! element {
                 $(
                     #[macro_export]
                     macro_rules! $Tag {
-                        ( $d($d part:expr),* $d(,)* ) => {
+                        ( $d($d part:expr),* $d(,)? ) => {
                             {
-                                let mut el = El::empty(seed::dom_types::Tag::$Tag_camel);
+                                let mut el = El::empty($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
                                 el
                             }
@@ -44,9 +46,9 @@ macro_rules! element_svg {
                 $(
                     #[macro_export]
                     macro_rules! $Tag {
-                        ( $d($d part:expr),* $d(,)* ) => {
+                        ( $d($d part:expr),* $d(,)? ) => {
                             {
-                                let mut el = El::empty_svg(seed::dom_types::Tag::$Tag_camel);
+                                let mut el = El::empty_svg($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
                                 el
                             }
@@ -150,15 +152,15 @@ element_svg! {
 #[macro_export]
 macro_rules! empty {
     () => {
-        seed::empty()
+        $crate::empty()
     };
 }
 
 #[macro_export]
 macro_rules! custom {
-    ( $($part:expr),* $(,)* ) => {
+    ( $($part:expr),* $(,)? ) => {
         {
-            let mut el = El::empty(seed::dom_types::Tag::Custom("missingtagname".into()));
+            let mut el = El::empty($crate::dom_types::Tag::Custom("missingtagname".into()));
             $ ( $part.update(&mut el); )*
             el
         }
@@ -168,7 +170,7 @@ macro_rules! custom {
 /// Provide a shortcut for creating attributes.
 #[macro_export]
 macro_rules! attrs {
-    { $($key:expr => $value:expr);* $(;)* } => {
+    { $($key:expr => $value:expr);* $(;)? } => {
         {
             let mut vals = IndexMap::new();
             $(
@@ -176,7 +178,7 @@ macro_rules! attrs {
                 // Strings, &strs, bools, numbers etc.
                 vals.insert($key.into(), $value.to_string());
             )*
-            seed::dom_types::Attrs::new(vals)
+            $crate::dom_types::Attrs::new(vals)
         }
      };
 }
@@ -184,9 +186,9 @@ macro_rules! attrs {
 /// Convenience macro. Ideal when there are multiple classes, and no other attrs.
 #[macro_export]
 macro_rules! class {
-    { $($class:expr),* $(,)* } => {
+    { $($class:expr),* $(,)? } => {
         {
-            let mut result = seed::dom_types::Attrs::empty();
+            let mut result = $crate::dom_types::Attrs::empty();
             let mut classes = Vec::new();
             $(
                 classes.push($class);
@@ -202,17 +204,15 @@ macro_rules! class {
 macro_rules! id {
     { $id:expr } => {
         {
-            seed::dom_types::Attrs::from_id($id)
+            $crate::dom_types::Attrs::from_id($id)
         }
      };
 }
 
-// todo: Once the macro_at_most_once_rep is in stable, you can use $(;)? here (
-// todo: and in el creation macros) to make only trailing comma/semicolon acceptable.
 /// Provide a shortcut for creating styles.
 #[macro_export]
 macro_rules! style {
-    { $($key:expr => $value:expr);* $(;)* } => {
+    { $($key:expr => $value:expr);* $(;)? } => {
         {
             let mut vals = IndexMap::new();
             $(
@@ -220,7 +220,7 @@ macro_rules! style {
                 // Strings, &strs, bools, numbers etc.
                 vals.insert(String::from($key), $value.to_string());
             )*
-            seed::dom_types::Style::new(vals)
+            $crate::dom_types::Style::new(vals)
         }
      };
 }
@@ -232,19 +232,19 @@ macro_rules! style {
 //            let mut result = Vec::new();
 //            $(
 //                match $event_str {
-////                    _ => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
+////                    _ => result.push($crate::dom_types::Listener::new_input($event_str.into(), $handler)),
 //
 //
-//                    _ => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
+//                    _ => result.push($crate::dom_types::Listener::new_input($event_str.into(), $handler)),
 ////
 ////
 ////
-////  "input" => result.push(seed::dom_types::Listener::new_input($event_str.into(), $handler)),
-////                    _ => result.push(seed::dom_types::Listener::new($event_str.into(), $handler)),
+////  "input" => result.push($crate::dom_types::Listener::new_input($event_str.into(), $handler)),
+////                    _ => result.push($crate::dom_types::Listener::new($event_str.into(), $handler)),
 //
 //                }
 //
-////                result.push(seed::dom_types::Listener::new($event_str.into(), $handler));
+////                result.push($crate::dom_types::Listener::new($event_str.into(), $handler));
 //            )+
 //            result
 //        }
@@ -258,17 +258,17 @@ macro_rules! style {
 //    { $event_str:expr, $handler:expr } => {
 //        {
 //            match event_str {
-//                "input" => seed::dom_types::input_ev($event_str, $handler),
-////                "change" => seed::dom_types::input_ev($event_str, $handler),
+//                "input" => $crate::dom_types::input_ev($event_str, $handler),
+////                "change" => $crate::dom_types::input_ev($event_str, $handler),
 ////
-////                "keydown" => seed::dom_types::keyboard_ev($event_str, $handler),
+////                "keydown" => $crate::dom_types::keyboard_ev($event_str, $handler),
 ////
-////                "click" => seed::dom_types::ev($event_str, $handler),
-////                "auxclick" => seed::dom_types::ev($event_str, $handler),
-////                "dblclick" => seed::dom_types::ev($event_str, $handler),
-////                "contextmenu" => seed::dom_types::input_ev($event_str, $handler),
+////                "click" => $crate::dom_types::ev($event_str, $handler),
+////                "auxclick" => $crate::dom_types::ev($event_str, $handler),
+////                "dblclick" => $crate::dom_types::ev($event_str, $handler),
+////                "contextmenu" => $crate::dom_types::input_ev($event_str, $handler),
 //
-//                _ => seed::dom_types::raw_ev($event_str, $handler),
+//                _ => $crate::dom_types::raw_ev($event_str, $handler),
 //
 //            }
 //        }
@@ -280,12 +280,12 @@ macro_rules! style {
 //macro_rules! ev2 {
 //    { input, $handler:expr } => {
 //        {
-//            seed::dom_types::input_ev("input", $handler),
+//            $crate::dom_types::input_ev("input", $handler),
 //        }
 //    };
 //    { click, $handler:expr } => {
 //        {
-//            seed::dom_types::simple_ev("click", $handler),
+//            $crate::dom_types::simple_ev("click", $handler),
 //        }
 //    };
 //
@@ -297,37 +297,53 @@ macro_rules! style {
 /// a macro to supplement the log function to allow multiple inputs.
 #[macro_export]
 macro_rules! log {
-    { $($expr:expr),* $(,)* } => {
+    { $($expr:expr),* $(,)? } => {
         {
-            let mut text = String::new();
+            let mut formatted_exprs = Vec::new();
             $(
-                text += &format!("{:#?}", $expr);
-                text += " ";
+                formatted_exprs.push(format!("{:#?}", $expr));
             )*
-            web_sys::console::log_1(&text.into());
+            $crate::shortcuts::log_1(
+                &formatted_exprs
+                    .as_slice()
+                    .join(" ")
+                    .into()
+            );
         }
      };
+}
+// wrapper for `log_1` because we don't want to "leak" `web_sys` dependency through macro
+pub fn log_1(data_1: &JsValue) {
+    web_sys::console::log_1(data_1);
 }
 
 /// Similar to log!
 #[macro_export]
 macro_rules! error {
-    { $($expr:expr),* $(,)* } => {
+    { $($expr:expr),* $(,)? } => {
         {
-            let mut text = String::new();
+            let mut formatted_exprs = Vec::new();
             $(
-                text += &format!("{:#?}", $expr);
-                text += " ";
+                formatted_exprs.push(format!("{:#?}", $expr));
             )*
-            web_sys::console::error_1(&text.into());
+            $crate::shortcuts::error_1(
+                &formatted_exprs
+                    .as_slice()
+                    .join(" ")
+                    .into()
+            );
         }
      };
+}
+// wrapper for `error_1` because we don't want to "leak" `web_sys` dependency through macro
+pub fn error_1(data_1: &JsValue) {
+    web_sys::console::error_1(data_1);
 }
 
 /// A key-value pairs, where the keys and values must implement `ToString`.
 #[macro_export]
 macro_rules! key_value_pairs {
-    { $($key:expr => $value:expr),* $(,)* } => {
+    { $($key:expr => $value:expr),* $(,)? } => {
         {
             let mut result = IndexMap::new();
             $(
