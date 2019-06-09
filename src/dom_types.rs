@@ -488,6 +488,17 @@ impl<Ms> UpdateEl<El<Ms>> for Optimize {
     }
 }
 
+impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
+where
+    I: Iterator,
+    U: UpdateEl<El<Ms>>,
+    F: FnMut(I::Item) -> U,
+{
+    fn update(self, el: &mut El<Ms>) {
+        self.for_each(|item| item.update(el));
+    }
+}
+
 /// Similar to tag population.
 macro_rules! make_attrs {
     // Create shortcut macros for any element; populate these functions in this module.

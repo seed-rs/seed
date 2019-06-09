@@ -4,6 +4,8 @@
 - Fetch module and API heavily changed (breaking)
 - Added support for `request​Animation​Frame`, which improves render performance,
 especially for animations
+- `Map` can now be used directly in elements, without needing to annotate type and collect 
+(ie for child `Elements`, and `Listener`s)
 - Fixed a bug where `empty` elements at the top-level were rendering in the wrong order
 - Added an `empty!` macro, which is similar to `seed::empty`
 - Attributes and style now retain order

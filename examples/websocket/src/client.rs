@@ -54,11 +54,6 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
     }
 }
 
-fn render_messages(msgs: &[String]) -> El<Msg> {
-    let msgs: Vec<_> = msgs.iter().map(|m| p![m]).collect();
-    div![msgs]
-}
-
 fn view(model: &Model) -> Vec<El<Msg>> {
     vec![
         h1!["seed websocket example"],
@@ -86,7 +81,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
         } else {
             div![p![em!["Connecting..."]]]
         },
-        render_messages(&model.messages),
+        div![model.messages.iter().map(|m| p![m])],
         footer![
             if model.connected {
                 p!["Connected"]
