@@ -1,63 +1,66 @@
+use actix::prelude::*;
 use actix_files::{Files, NamedFile};
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use std::sync::{Arc, Mutex};
-use std::{thread, time};
-
-// @TODO -- Once Actix 1.0 is stable and documentation is updated --
-// @TODO: rewrite to actors (State and thread::sleep)
-// @TODO: add Api handlers into one scope + better non-existent API handling
-// @TODO: cannot use value 3000 as a 'delay' - a weird actix bug?
+use actix_web::{get, post, web, App, HttpServer};
+use std::time;
+use tokio_timer;
 
 use shared;
 
-type State = Arc<Mutex<StateData>>;
+mod count_actor;
+use count_actor::{CountActor, MsgIncrement};
 
-#[derive(Default)]
-struct StateData {
-    message_ordinal_number: u32,
-}
+// ---- Apis ("/api/*") ----
 
-#[post("/api/send-message")]
+#[post("send-message")]
 fn send_message(
     state: web::Data<State>,
     request_data: web::Json<shared::SendMessageRequestBody>,
-) -> impl Responder {
-    state.lock().unwrap().message_ordinal_number += 1;
-    web::Json(shared::SendMessageResponseBody {
-        ordinal_number: state.lock().unwrap().message_ordinal_number,
-        text: request_data.text.clone(),
-    })
+) -> impl Future<Item = web::Json<shared::SendMessageResponseBody>, Error = actix::MailboxError> {
+    let text = request_data.text.clone();
+    state
+        .count_actor
+        .send(MsgIncrement)
+        .and_then(move |ordinal_number| {
+            Ok(web::Json(shared::SendMessageResponseBody {
+                ordinal_number,
+                text,
+            }))
+        })
 }
 
-#[get("/api/delayed-response/{delay}")]
-fn delayed_response(delay: web::Path<(u64)>) -> impl Responder {
-    thread::sleep(time::Duration::from_millis(*delay));
-    format!("Delay was set to {}ms.", delay)
+#[get("delayed-response/{delay}")]
+fn delayed_response(
+    delay: web::Path<(u64)>,
+) -> impl Future<Item = String, Error = tokio_timer::Error> {
+    tokio_timer::sleep(time::Duration::from_millis(*delay))
+        .and_then(move |()| Ok(format!("Delay was set to {}ms.", delay)))
 }
 
-#[get("/api/*")]
-fn non_existent_api() -> impl Responder {
-    HttpResponse::NotFound()
-}
-
-#[get("*")]
-fn index() -> impl Responder {
-    NamedFile::open("./client/index.html")
+struct State {
+    count_actor: Addr<CountActor>,
 }
 
 fn main() -> std::io::Result<()> {
-    let state = Arc::new(Mutex::new(StateData::default()));
+    let system = System::new("server-integration-example");
+
+    let count_actor_addr = CountActor(0).start();
 
     HttpServer::new(move || {
         App::new()
-            .data(state.clone())
-            .service(send_message)
-            .service(delayed_response)
-            .service(non_existent_api)
+            .data(State {
+                count_actor: count_actor_addr.clone(),
+            })
+            .service(
+                web::scope("/api/")
+                    .service(send_message)
+                    .service(delayed_response),
+            )
             .service(Files::new("/public", "./client/public"))
             .service(Files::new("/pkg", "./client/pkg"))
-            .service(index)
+            .default_service(web::get().to(|| NamedFile::open("./client/index.html")))
     })
     .bind("127.0.0.1:8000")?
-    .run()
+    .run()?;
+
+    system.run()
 }

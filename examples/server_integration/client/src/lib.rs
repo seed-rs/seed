@@ -83,7 +83,7 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     div![
         style! {
             "font-family" => "sans-serif";
-            "max-width" => 460;
+            "max-width" => px(460);
             "margin" => "auto";
         },
         examples
@@ -94,7 +94,7 @@ fn view_example_introduction(title: &str, description: &str) -> Vec<El<Msg>> {
     vec![
         hr![],
         h2![title],
-        div![style! {"margin-bottom" => 15;}, description],
+        div![style! {"margin-bottom" => px(15);}, description],
     ]
 }
 

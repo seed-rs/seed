@@ -1,9 +1,8 @@
 #[macro_use]
 extern crate seed;
-#[macro_use]
-extern crate serde_derive;
 use rand::prelude::*;
 use seed::prelude::*;
+use serde::{Deserialize, Serialize};
 
 // Model
 
@@ -24,7 +23,7 @@ impl Car {
     /// _Note_:
     /// Optional feature "wasm-bindgen" has to be enabled for crate `rand` (otherwise it panics).
     fn generate_speed() -> f64 {
-        thread_rng().gen_range(400.0, 800.0)
+        thread_rng().gen_range(400., 800.)
     }
 
     fn generate_color() -> CarColor {
@@ -35,14 +34,14 @@ impl Car {
 
 impl Default for Car {
     fn default() -> Self {
-        let car_width = 120.0;
+        let car_width = 120.;
         Self {
             x: -car_width,
-            y: 100.0,
+            y: 100.,
             speed: Self::generate_speed(),
             color: Self::generate_color(),
             width: car_width,
-            height: 60.0,
+            height: 60.,
         }
     }
 }
@@ -88,13 +87,13 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         Msg::OnAnimationFrame(time) => {
             let delta = match model.previous_time {
                 Some(previous_time) => time - previous_time,
-                None => 0.0,
+                None => 0.,
             };
             model.previous_time = Some(time);
 
-            if delta > 0.0 {
+            if delta > 0. {
                 // move car at least 1px to the right
-                model.car.x += f64::max(1.0, delta / 1000.0 * model.car.speed);
+                model.car.x += f64::max(1., delta / 1000. * model.car.speed);
 
                 // we don't see car anymore => back to start + generate new color and speed
                 if model.car.x > model.viewport_width {
@@ -108,27 +107,21 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 
 // View
 
-fn px(number: impl ToString + Copy) -> String {
-    let mut value = number.to_string();
-    value.push_str("px");
-    value
-}
-
 fn view(model: &Model) -> El<Msg> {
     // scene container + sky
     div![
         style! {
           "overflow" => "hidden";
-          "width" => "100%";
+          "width" => unit!(100, %);
           "position" => "relative";
-          "height" => "170px";
+          "height" => unit!(170, px);
           "background-color" => "deepskyblue";
         },
         // road
         div![style! {
-            "width" => "100%";
-            "height" => "20px";
-            "bottom" => "0";
+            "width" => unit!(100, %);
+            "height" => unit!(20, px);
+            "bottom" => 0;
             "background-color" => "darkgray";
             "position" => "absolute";
         }],
@@ -140,44 +133,44 @@ fn view_car(car: &Car) -> El<Msg> {
     div![
         // car container
         style! {
-            "width" => px(car.width);
-            "height" => px(car.height);
-            "top" => px(car.y);
-            "left" => px(car.x);
+            "width" => unit!(car.width, px);
+            "height" => unit!(car.height, px);
+            "top" => unit!(car.y, px);
+            "left" => unit!(car.x, px);
             "position" => "absolute";
         },
         // windows
         div![style! {
             "background-color" => "rgb(255,255,255,0.5)";
-            "left" => px(car.width * 0.25);
-            "width" => px(car.width * 0.50);
-            "height" => px(car.height * 0.60);
-            "border-radius" => "9999px";
+            "left" => unit!(car.width * 0.25, px);
+            "width" => unit!(car.width * 0.5, px);
+            "height" => unit!(car.height * 0.6, px);
+            "border-radius" => unit!(9999, px);
             "position" => "absolute";
         }],
         // body
         div![style! {
-            "top" => px(car.height * 0.35);
+            "top" => unit!(car.height * 0.35, px);
             "background-color" => car.color;
-            "width" => px(car.width);
-            "height" => px(car.height * 0.50);
-            "border-radius" => "9999px";
+            "width" => unit!(car.width, px);
+            "height" => unit!(car.height * 0.5, px);
+            "border-radius" => unit!(9999, px);
             "position" => "absolute";
         }],
         view_wheel(car.width * 0.15, car),
-        view_wheel(car.width * 0.60, car)
+        view_wheel(car.width * 0.6, car)
     ]
 }
 
 fn view_wheel(wheel_x: f64, car: &Car) -> El<Msg> {
-    let wheel_radius = car.height * 0.40;
+    let wheel_radius = car.height * 0.4;
     div![style! {
-        "top" => px(car.height * 0.55);
-        "left" => px(wheel_x);
+        "top" => unit!(car.height * 0.55, px);
+        "left" => unit!(wheel_x, px);
         "background-color" => "black";
-        "width" => px(wheel_radius);
-        "height" => px(wheel_radius);
-        "border-radius" => "9999px";
+        "width" => unit!(wheel_radius, px);
+        "height" => unit!(wheel_radius, px);
+        "border-radius" => unit!(9999, px);
         "position" => "absolute";
     }]
 }
