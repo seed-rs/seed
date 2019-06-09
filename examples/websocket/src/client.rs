@@ -1,9 +1,8 @@
 #[macro_use]
 extern crate seed;
-#[macro_use]
-extern crate serde_derive;
 
 use seed::{prelude::*, App};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket};
 

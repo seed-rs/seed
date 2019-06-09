@@ -8,8 +8,10 @@
 extern crate serde;
 extern crate serde_json;
 
+pub type Storage = web_sys::Storage;
+
 #[allow(clippy::module_name_repetitions)]
-pub fn get_storage() -> Option<web_sys::Storage> {
+pub fn get_storage() -> Option<Storage> {
     let window = web_sys::window().unwrap();
 
     match window.local_storage() {
@@ -19,7 +21,7 @@ pub fn get_storage() -> Option<web_sys::Storage> {
 }
 
 /// Create a new store, from a serializable data structure.
-pub fn store_data<T>(storage: &web_sys::Storage, name: &str, data: &T)
+pub fn store_data<T>(storage: &Storage, name: &str, data: &T)
 where
     T: serde::Serialize,
 {

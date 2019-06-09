@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate serde_derive;
-extern crate ws;
-
 use ws::{listen, Handler, Message, Request, Response, Result, Sender};
 
 mod json;

@@ -1,8 +1,7 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-#[macro_use]
-extern crate serde_derive;
+use serde::Deserialize;
 
 // Model
 

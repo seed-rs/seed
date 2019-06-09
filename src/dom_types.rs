@@ -10,6 +10,8 @@ use std::fmt;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys;
 
+pub type Event = web_sys::Event;
+
 pub const UPDATE_TRIGGER_EVENT_ID: &str = "triggerupdate";
 
 pub trait MessageMapper<Ms, OtherMs> {
