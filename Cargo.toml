@@ -23,7 +23,7 @@ console_error_panic_hook = "^0.1.6"
 enclose = "1.1.6"
 futures = "^0.1.27"
 # Can't use repo with a release.
-gloo-timers = { path = "vendor/gloo_timers", features = ["futures"] }
+gloo-timers = { path = "vendor/gloo_timers", version="0.1.0", features = ["futures"] }
 indexmap = "1.0.2"
 js-sys = "0.3.22"
 pulldown-cmark = "^0.5.2"
