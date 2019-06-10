@@ -6,9 +6,14 @@ RUST_RECURSION_COUNT = "0"
 # ---- GENERAL ----
 
 [tasks.verify]
-description = "Format, lint with Clippy, build and run tests"
+description = "Format, lint with Clippy, build, run tests, simulate publish"
 workspace = false
-dependencies = ["fmt_all", "clippy_all", "all", "test_h_firefox"]
+dependencies = ["fmt_all", "clippy_all", "all", "test_h_firefox", "publish_dry_run"]
+
+[tasks.verify_only]
+description = "Like `verify`, but fails if the code isn't formatted. Primarily for CI."
+workspace = false
+dependencies = ["fmt_all_check", "clippy_all", "all", "test_h_firefox", "publish_dry_run"]
 
 # ---- BUILD ----
 
@@ -78,6 +83,12 @@ dependencies = ["clippy"]
 description = "Lint Seed and all examples with Clippy"
 workspace = false
 dependencies = ["clippy", "clippy_examples"]
+
+[tasks.publish_dry_run]
+description = "Check the crate can be published"
+workspace = false
+command = "cargo"
+args = ["publish", "--dry-run", "--allow-dirty"]
 
 # ---- TEST ----
 
