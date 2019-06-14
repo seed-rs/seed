@@ -223,7 +223,7 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
         div![
             class!["view"],
             input![
-                attrs! {At::Class => "toggle"; At::Type => "checkbox"; At::Checked => item.completed },
+                attrs! {At::Class => "toggle", At::Type => "checkbox", At::Checked => item.completed; },
                 simple_ev(Ev::Click, Msg::Toggle(posit))
             ],
             label![simple_ev(Ev::DblClick, Msg::EditItem(posit)), item.title],
@@ -231,7 +231,7 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
         ],
         if item.editing {
             input![
-                attrs! {At::Class => "edit"; At::Value => edit_text},
+                attrs! {At::Class => "edit", At::Value => edit_text},
                 simple_ev(Ev::Blur, Msg::EditSubmit(posit)),
                 input_ev(Ev::Input, Msg::EditChange),
                 keyboard_ev(Ev::KeyDown, move |ev| Msg::EditKeyDown(
@@ -248,8 +248,8 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
 fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     li![a![
         attrs! {
-            At::Class => if visible == highlighter {"selected"} else {""};
-            At::Href => "/".to_string() + &highlighter.to_string();
+            At::Class => if visible == highlighter {"selected"} else {""}
+            At::Href => "/".to_string() + &highlighter.to_string()
         },
         style! {"cursor" => "pointer"},
         text
@@ -311,8 +311,10 @@ fn view(model: &Model) -> Vec<El<Msg>> {
         section![
             class!["main"],
             input![
-                attrs! {At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox";
-                At::Checked => model.active_count() == 0},
+                attrs! {
+                    At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox";
+                    At::Checked => model.active_count() == 0
+                },
                 simple_ev(Ev::Click, Msg::ToggleAll)
             ],
             label![attrs! {At::For => "toggle-all"}, "Mark all as complete"],

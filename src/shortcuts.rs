@@ -184,7 +184,7 @@ macro_rules! custom {
 /// Provide a shortcut for creating attributes.
 #[macro_export]
 macro_rules! attrs {
-    { $($key:expr => $value:expr);* $(;)? } => {
+    { $($key:expr => $value:expr $(;)?$(,)?)* } => {
         {
             let mut vals = IndexMap::new();
             $(
@@ -226,7 +226,7 @@ macro_rules! id {
 /// Provide a shortcut for creating styles.
 #[macro_export]
 macro_rules! style {
-    { $($key:expr => $value:expr);* $(;)? } => {
+    { $($key:expr => $value:expr $(;)?$(,)?)* } => {
         {
             let mut vals = IndexMap::new();
             $(
