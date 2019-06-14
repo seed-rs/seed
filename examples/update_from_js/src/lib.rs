@@ -39,10 +39,10 @@ fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
 fn view(model: &Model) -> El<Msg> {
     h1![
         style![
-            "text-align" => "center";
-            "margin-top" => unit!(40, vmin);
-            "font-size" => unit!(10, vmin);
-            "font-family" => "monospace";
+            "text-align" => "center"
+            "margin-top" => unit!(40, vmin)
+            "font-size" => unit!(10, vmin)
+            "font-family" => "monospace"
         ],
         model.time_from_js.clone().unwrap_or_default()
     ]
