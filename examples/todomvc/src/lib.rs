@@ -327,7 +327,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
             input![
                 attrs! {
                     At::Class => "new-todo";
-                    At::PlaceHolder => "What needs to be done?";
+                    At::Placeholder => "What needs to be done?";
                     At::AutoFocus => true;
                     At::Value => model.entry_text;
                 },
