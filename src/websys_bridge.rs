@@ -366,7 +366,10 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
             result.attrs = attrs;
 
             if let Some(ns) = el_ws.namespace_uri() {
-                result.namespace = Some(ns.into());
+                // Prevent attaching a `xlmns` attribute to normal HTML elements.
+                if ns != "http://www.w3.org/1999/xhtml" {
+                    result.namespace = Some(ns.into());
+                }
             }
 
             let children = el_ws.child_nodes();
@@ -383,7 +386,7 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
         }
         3 => Some(El::new_text(&node.text_content().expect("Can't find text"))),
         _ => {
-            crate::log("Unexpected node type found from raw html");
+            crate::error("Unexpected node type found from raw html");
             None
         }
     }
