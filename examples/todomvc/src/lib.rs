@@ -346,14 +346,11 @@ fn view(model: &Model) -> Vec<El<Msg>> {
     ]
 }
 
-fn routes(url: &seed::Url) -> Msg {
-    if url.path.is_empty() {
-        return Msg::ChangeVisibility(Visible::All);
-    }
-
-    match url.path[0].as_ref() {
-        "active" => Msg::ChangeVisibility(Visible::Active),
-        "completed" => Msg::ChangeVisibility(Visible::Completed),
+#[allow(clippy::needless_pass_by_value)]
+fn routes(url: seed::Url) -> Msg {
+    match url.path.get(0).map(String::as_str) {
+        Some("active") => Msg::ChangeVisibility(Visible::Active),
+        Some("completed") => Msg::ChangeVisibility(Visible::Completed),
         _ => Msg::ChangeVisibility(Visible::All),
     }
 }

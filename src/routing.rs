@@ -125,7 +125,7 @@ fn get_search() -> String {
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
-pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(&Url) -> Ms)
+pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(Url) -> Ms)
 where
     Ms: 'static,
 {
@@ -152,7 +152,7 @@ where
         title: None,
     };
 
-    update(routes(&url));
+    update(routes(url));
 }
 
 fn remove_first(s: &str) -> Option<&str> {
@@ -180,7 +180,7 @@ fn clean_url(mut url: Url) -> Url {
 ///
 /// # Refenences
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
-pub fn push_route<U: Into<Url>>(url: U) {
+pub fn push_route<U: Into<Url>>(url: U) -> Url {
     let mut url = url.into();
     // Purge leading / from each part, if it exists, eg passed by user.
     url = clean_url(url);
@@ -191,32 +191,34 @@ pub fn push_route<U: Into<Url>>(url: U) {
             .expect("Problem converting route data to JsValue");
 
     // title is currently unused by Firefox.
-    let title = match url.title {
+    let title = match &url.title {
         Some(t) => t,
-        None => "".into(),
+        None => "",
     };
 
     // Prepending / means replace
     // the existing path. Not doing so will add the path to the existing one.
     let mut path = String::from("/") + &url.path.join("/");
-    if let Some(search) = url.search {
-        path = path + "?" + &search;
+    if let Some(search) = &url.search {
+        path = path + "?" + search;
     }
 
-    if let Some(hash) = url.hash {
-        path = path + "#" + &hash;
+    if let Some(hash) = &url.hash {
+        path = path + "#" + hash;
     }
 
     util::history()
-        .push_state_with_url(&data, &title, Some(&path))
+        .push_state_with_url(&data, title, Some(&path))
         .expect("Problem pushing state");
+
+    url
 }
 
 /// Add a listener that handles routing for navigation events like forward and back.
 pub fn setup_popstate_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     update_ps_listener: impl Fn(Closure<FnMut(web_sys::Event)>) + 'static,
-    routes: fn(&Url) -> Ms,
+    routes: fn(Url) -> Ms,
 ) where
     Ms: 'static,
 {
@@ -236,7 +238,7 @@ pub fn setup_popstate_listener<Ms>(
             }
         };
 
-        update(routes(&url));
+        update(routes(url));
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -248,7 +250,7 @@ pub fn setup_popstate_listener<Ms>(
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
-pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(&Url) -> Ms)
+pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) -> Ms)
 where
     Ms: 'static,
 {
@@ -271,9 +273,9 @@ where
                         }
                         event.prevent_default(); // Prevent page refresh
                                                  // Route internally based on href's value
-                        let url = href.into();
-                        update(routes(&url));
-                        push_route(url);
+
+                        let url = push_route(Url::from(href));
+                        update(routes(url));
                     }
                 }
             }

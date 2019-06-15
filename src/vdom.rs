@@ -140,7 +140,7 @@ impl<Ms: 'static> Orders<Ms> {
 
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl, &mut Orders<Ms>);
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
-type RoutesFn<Ms> = fn(&routing::Url) -> Ms;
+type RoutesFn<Ms> = fn(routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
 
