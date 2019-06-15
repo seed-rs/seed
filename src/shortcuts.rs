@@ -157,6 +157,20 @@ macro_rules! empty {
 }
 
 #[macro_export]
+macro_rules! raw {
+    ($raw_html:expr) => {
+        El::from_html($raw_html)
+    };
+}
+
+#[macro_export]
+macro_rules! md {
+    ($md:expr) => {
+        El::from_markdown($md)
+    };
+}
+
+#[macro_export]
 macro_rules! custom {
     ( $($part:expr),* $(,)? ) => {
         {
