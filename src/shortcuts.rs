@@ -171,6 +171,13 @@ macro_rules! md {
 }
 
 #[macro_export]
+macro_rules! plain {
+    ($text:expr) => {
+        El::new_text($text)
+    };
+}
+
+#[macro_export]
 macro_rules! custom {
     ( $($part:expr),* $(,)? ) => {
         {
