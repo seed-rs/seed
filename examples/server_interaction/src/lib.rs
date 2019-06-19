@@ -59,9 +59,9 @@ impl Default for Model {
 #[derive(Clone)]
 enum Msg {
     FetchRepositoryInfo,
-    RepositoryInfoFetched(fetch::FetchObject<Branch>),
+    RepositoryInfoFetched(fetch::ResponseDataResult<Branch>),
     SendMessage,
-    MessageSent(fetch::FetchObject<SendMessageResponseBody>),
+    MessageSent(fetch::ResponseDataResult<SendMessageResponseBody>),
     OnFetchError {
         label: &'static str,
         fail_reason: fetch::FailReason,
@@ -74,36 +74,34 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
             orders.skip().perform_cmd(fetch_repository_info());
         }
 
-        Msg::RepositoryInfoFetched(fetch_object) => match fetch_object.response() {
-            Ok(response) => model.branch = response.data,
-            Err(fail_reason) => {
-                orders
-                    .send_msg(Msg::OnFetchError {
-                        label: "Fetching repository info failed",
-                        fail_reason,
-                    })
-                    .skip();
-            }
-        },
+        Msg::RepositoryInfoFetched(Ok(branch)) => model.branch = branch,
+
+        Msg::RepositoryInfoFetched(Err(fail_reason)) => {
+            orders
+                .send_msg(Msg::OnFetchError {
+                    label: "Fetching repository info failed",
+                    fail_reason,
+                })
+                .skip();
+        }
 
         Msg::SendMessage => {
             orders.skip().perform_cmd(send_message());
         }
 
-        Msg::MessageSent(fetch_object) => match fetch_object.response() {
-            Ok(response) => {
-                log!(format!("Response data: {:#?}", response.data));
-                orders.skip();
-            }
-            Err(fail_reason) => {
-                orders
-                    .send_msg(Msg::OnFetchError {
-                        label: "Sending message failed",
-                        fail_reason,
-                    })
-                    .skip();
-            }
-        },
+        Msg::MessageSent(Ok(response_data)) => {
+            log!(format!("Response data: {:#?}", response_data));
+            orders.skip();
+        }
+
+        Msg::MessageSent(Err(fail_reason)) => {
+            orders
+                .send_msg(Msg::OnFetchError {
+                    label: "Sending message failed",
+                    fail_reason,
+                })
+                .skip();
+        }
 
         Msg::OnFetchError { label, fail_reason } => {
             error!(format!("Fetch error - {} - {:#?}", label, fail_reason));
@@ -113,7 +111,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 }
 
 fn fetch_repository_info() -> impl Future<Item = Msg, Error = Msg> {
-    Request::new(REPOSITORY_URL.into()).fetch_json(Msg::RepositoryInfoFetched)
+    Request::new(REPOSITORY_URL.into()).fetch_json_data(Msg::RepositoryInfoFetched)
 }
 
 fn send_message() -> impl Future<Item = Msg, Error = Msg> {
@@ -126,7 +124,7 @@ fn send_message() -> impl Future<Item = Msg, Error = Msg> {
     Request::new(CONTACT_URL.into())
         .method(Method::Post)
         .send_json(&message)
-        .fetch_json(Msg::MessageSent)
+        .fetch_json_data(Msg::MessageSent)
 }
 
 fn view(model: &Model) -> Vec<El<Msg>> {

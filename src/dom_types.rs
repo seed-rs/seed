@@ -746,7 +746,15 @@ impl Attrs {
 
     /// Add multiple values for a single attribute. Useful for classes.
     pub fn add_multiple(&mut self, key: At, items: &[&str]) {
-        self.add(key, &items.join(" "));
+        self.add(
+            key,
+            items
+                .iter()
+                .filter_map(|item| if item.is_empty() { None } else { Some(*item) })
+                .collect::<Vec<&str>>()
+                .join(" ")
+                .as_str(),
+        );
     }
 
     /// Combine with another Attrs
@@ -1627,8 +1635,8 @@ pub mod tests {
     #[wasm_bindgen_test]
     pub fn merge_classes() {
         let node = el_to_websys(a![
-            class!["my_class1", "my_class2"],
-            class!["my_class3"],
+            class!["", "my_class1", "my_class2"],
+            class!["my_class3", "", ""],
             attrs![
                 At::Class => "my_class4 my_class5";
             ]
