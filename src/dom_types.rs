@@ -1639,13 +1639,18 @@ pub mod tests {
             class!["my_class3", "", ""],
             attrs![
                 At::Class => "my_class4 my_class5";
+            ],
+            class![
+                "my_class6"
+                "my_class7" => false
+                "my_class8" => 1 == 1
             ]
         ]);
 
         let mut expected = IndexMap::new();
         expected.insert(
             "class".to_string(),
-            "my_class1 my_class2 my_class3 my_class4 my_class5".to_string(),
+            "my_class1 my_class2 my_class3 my_class4 my_class5 my_class6 my_class8".to_string(),
         );
         assert_eq!(expected, get_node_attrs(&node));
     }

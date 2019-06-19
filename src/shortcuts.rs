@@ -207,11 +207,14 @@ macro_rules! attrs {
 /// Convenience macro. Ideal when there are multiple classes, and no other attrs.
 #[macro_export]
 macro_rules! class {
-    { $($class:expr),* $(,)? } => {
+    { $($class:expr $(=> $predicate:expr)? $(,)?)* } => {
         {
             let mut result = $crate::dom_types::Attrs::empty();
             let mut classes = Vec::new();
             $(
+                $(
+                    if !$predicate { return }
+                )?
                 classes.push($class);
             )*
             result.add_multiple(At::Class, &classes);
