@@ -16,7 +16,7 @@ fn get_request_url() -> String {
 
 #[derive(Default)]
 pub struct Model {
-    pub response_result: Option<fetch::ResponseResult<String>>,
+    pub response_data_result: Option<fetch::ResponseDataResult<String>>,
     pub request_controller: Option<fetch::RequestController>,
     pub status: Status,
 }
@@ -39,14 +39,14 @@ impl Default for Status {
 pub enum Msg {
     SendRequest,
     AbortRequest,
-    Fetched(fetch::FetchObject<String>),
+    Fetched(fetch::ResponseDataResult<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
             model.status = Status::WaitingForResponse;
-            model.response_result = None;
+            model.response_data_result = None;
             orders.perform_cmd(send_request(&mut model.request_controller));
         }
 
@@ -59,9 +59,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
             model.status = Status::RequestAborted;
         }
 
-        Msg::Fetched(fetch_object) => {
+        Msg::Fetched(response_data_result) => {
             model.status = Status::ReadyToSendRequest;
-            model.response_result = Some(fetch_object.response());
+            model.response_data_result = Some(response_data_result);
         }
     }
 }
@@ -71,7 +71,7 @@ fn send_request(
 ) -> impl Future<Item = Msg, Error = Msg> {
     fetch::Request::new(get_request_url())
         .controller(|controller| *request_controller = Some(controller))
-        .fetch_string(Msg::Fetched)
+        .fetch_string_data(Msg::Fetched)
 }
 
 // View
@@ -79,7 +79,7 @@ fn send_request(
 pub fn view(model: &Model) -> impl ElContainer<Msg> {
     match model.status {
         Status::ReadyToSendRequest => vec![
-            view_response_result(&model.response_result),
+            view_response_data_result(&model.response_data_result),
             button![simple_ev(Ev::Click, Msg::SendRequest), "Send request"],
         ],
         Status::WaitingForResponse => vec![
@@ -87,19 +87,19 @@ pub fn view(model: &Model) -> impl ElContainer<Msg> {
             button![simple_ev(Ev::Click, Msg::AbortRequest), "Abort request"],
         ],
         Status::RequestAborted => vec![
-            view_response_result(&model.response_result),
+            view_response_data_result(&model.response_data_result),
             button![attrs! {At::Disabled => false}, "Request aborted"],
         ],
     }
 }
 
-fn view_response_result(response_result: &Option<fetch::ResponseResult<String>>) -> El<Msg> {
-    match &response_result {
+fn view_response_data_result(
+    response_data_result: &Option<fetch::ResponseDataResult<String>>,
+) -> El<Msg> {
+    match &response_data_result {
         None => empty![],
-        Some(response_result) => match response_result {
-            Err(fail_reason) => view_fail_reason(fail_reason),
-            Ok(response) => div![format!(r#"Response String body: "{}""#, response.data)],
-        },
+        Some(Ok(response_data)) => div![format!(r#"Response String body: "{}""#, response_data)],
+        Some(Err(fail_reason)) => view_fail_reason(fail_reason),
     }
 }
 

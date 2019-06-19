@@ -94,13 +94,11 @@ pub fn view(model: &Model) -> impl ElContainer<Msg> {
             },
             view_button(&model.status),
         ],
-        Some(response_result) => match response_result {
-            Err(fail_reason) => view_fail_reason(fail_reason, &model.status),
-            Ok(response) => vec![
-                div![format!("Server returned {}.", response.status.text)],
-                view_button(&model.status),
-            ],
-        },
+        Some(Ok(response)) => vec![
+            div![format!("Server returned {}.", response.status.text)],
+            view_button(&model.status),
+        ],
+        Some(Err(fail_reason)) => view_fail_reason(fail_reason, &model.status),
     }
 }
 
@@ -117,13 +115,13 @@ fn view_fail_reason(fail_reason: &fetch::FailReason, status: &Status) -> Vec<El<
 }
 
 pub fn view_button(status: &Status) -> El<Msg> {
-    if let Status::WaitingForResponse(timeout_status) = status {
-        return match timeout_status {
-            TimeoutStatus::Enabled => {
-                button![simple_ev(Ev::Click, Msg::DisableTimeout), "Disable timeout"]
-            }
-            TimeoutStatus::Disabled => button![attrs! {"disabled" => true}, "Timeout disabled"],
-        };
+    match status {
+        Status::WaitingForResponse(TimeoutStatus::Enabled) => {
+            button![simple_ev(Ev::Click, Msg::DisableTimeout), "Disable timeout"]
+        }
+        Status::WaitingForResponse(TimeoutStatus::Disabled) => {
+            button![attrs! {"disabled" => true}, "Timeout disabled"]
+        }
+        _ => button![simple_ev(Ev::Click, Msg::SendRequest), "Send request"],
     }
-    button![simple_ev(Ev::Click, Msg::SendRequest), "Send request"]
 }

@@ -19,6 +19,9 @@ pub type DomException = web_sys::DomException;
 /// Return type for `FetchObject.response()`.
 pub type ResponseResult<T> = Result<Response<T>, FailReason>;
 
+/// Return type for `FetchObject.response_data()`.
+pub type ResponseDataResult<T> = Result<T, FailReason>;
+
 /// Type for `FetchObject.result`.
 #[allow(clippy::module_name_repetitions)]
 pub type FetchResult<T> = Result<ResponseWithDataResult<T>, RequestError>;
@@ -61,6 +64,11 @@ impl<T: Debug> FetchObject<T> {
             status: response.status,
             data,
         })
+    }
+
+    /// Get successful `Response` data or `FailReason`.
+    pub fn response_data(self) -> ResponseDataResult<T> {
+        self.response().map(|response| response.data)
     }
 }
 
@@ -528,6 +536,18 @@ impl Request {
             .then(|fetch_object_result| Ok(f(fetch_object_result.unwrap())))
     }
 
+    /// Fetch and then convert body to `String`. It passes `ResponseDataResult<String>` into callback `f`.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
+    pub fn fetch_string_data<U>(
+        self,
+        f: impl FnOnce(ResponseDataResult<String>) -> U,
+    ) -> impl Future<Item = U, Error = U>
+    where
+        U: 'static,
+    {
+        self.fetch_string(|fetch_object| f(fetch_object.response_data()))
+    }
+
     /// Same as method `fetch`, but try to deserialize body and insert it into `Response` field `data`.
     pub fn fetch_json<T, U>(
         self,
@@ -592,6 +612,18 @@ impl Request {
                     Ok(f(fetch_object_result.unwrap()))
                 },
             )
+    }
+
+    /// Fetch and then deserialize body to `T`. It passes `ResponseDataResult<T>` into callback `f`.
+    pub fn fetch_json_data<T, U>(
+        self,
+        f: impl FnOnce(ResponseDataResult<T>) -> U,
+    ) -> impl Future<Item = U, Error = U>
+    where
+        T: DeserializeOwned + Debug + 'static,
+        U: 'static,
+    {
+        self.fetch_json(|fetch_object| f(fetch_object.response_data()))
     }
 
     // ------ PRIVATE ------

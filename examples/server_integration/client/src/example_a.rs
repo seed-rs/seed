@@ -18,7 +18,7 @@ fn get_request_url() -> String {
 #[derive(Default)]
 pub struct Model {
     pub new_message: String,
-    pub response_result: Option<fetch::ResponseResult<shared::SendMessageResponseBody>>,
+    pub response_data: Option<shared::SendMessageResponseBody>,
 }
 
 // Update
@@ -27,7 +27,7 @@ pub struct Model {
 pub enum Msg {
     NewMessageChanged(String),
     SendRequest,
-    Fetched(fetch::FetchObject<shared::SendMessageResponseBody>),
+    Fetched(fetch::ResponseDataResult<shared::SendMessageResponseBody>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
@@ -41,8 +41,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
                 .perform_cmd(send_request(model.new_message.clone()));
         }
 
-        Msg::Fetched(fetch_object) => {
-            model.response_result = Some(fetch_object.response());
+        Msg::Fetched(Ok(response_data)) => {
+            model.response_data = Some(response_data);
+        }
+
+        Msg::Fetched(Err(fail_reason)) => {
+            log!("Example_A error:", fail_reason);
+            orders.skip();
         }
     }
 }
@@ -51,24 +56,18 @@ fn send_request(new_message: String) -> impl Future<Item = Msg, Error = Msg> {
     fetch::Request::new(get_request_url())
         .method(fetch::Method::Post)
         .send_json(&shared::SendMessageRequestBody { text: new_message })
-        .fetch_json(Msg::Fetched)
+        .fetch_json_data(Msg::Fetched)
 }
 
 // View
 
 pub fn view(model: &Model) -> impl ElContainer<Msg> {
-    let message = match &model.response_result {
+    let message = match &model.response_data {
         None => empty![],
-        Some(response_result) => match response_result {
-            Err(fail_reason) => {
-                log!("Example_A error:", fail_reason);
-                empty![]
-            }
-            Ok(response) => div![format!(
-                r#"{}. message: "{}""#,
-                response.data.ordinal_number, response.data.text
-            )],
-        },
+        Some(shared::SendMessageResponseBody {
+            ordinal_number,
+            text,
+        }) => div![format!(r#"{}. message: "{}""#, ordinal_number, text)],
     };
 
     vec![
