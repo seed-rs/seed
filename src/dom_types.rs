@@ -368,10 +368,9 @@ impl<Ms> Listener<Ms> {
     }
 }
 
-
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Listener<Ms> {
     type SelfWithOtherMs = Listener<OtherMs>;
-    fn map_message(self, f: fn(Ms) -> OtherMs) -> Self::SelfWithOtherMs {
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Listener<OtherMs> {
         Listener {
             trigger: self.trigger,
             handler: self.handler.map(|mut eh| {
