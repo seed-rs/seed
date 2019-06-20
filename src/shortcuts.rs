@@ -212,10 +212,13 @@ macro_rules! class {
             let mut result = $crate::dom_types::Attrs::empty();
             let mut classes = Vec::new();
             $(
-                $(
-                    if !$predicate { return }
-                )?
-                classes.push($class);
+                // refactor to labeled block once stable (https://github.com/rust-lang/rust/issues/48594)
+                (||{
+                    $(
+                        if !$predicate { return }
+                    )?
+                    classes.push($class);
+                })();
             )*
             result.add_multiple(At::Class, &classes);
             result
