@@ -16,7 +16,7 @@ fn get_request_url() -> String {
 
 #[derive(Default)]
 pub struct Model {
-    pub fetch_result: Option<fetch::FetchResult<ExpectedResponseData>>,
+    pub response_with_data_result: Option<fetch::ResponseWithDataResult<ExpectedResponseData>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -29,7 +29,7 @@ pub struct ExpectedResponseData {
 #[derive(Clone)]
 pub enum Msg {
     SendRequest,
-    Fetched(fetch::FetchObject<ExpectedResponseData>),
+    Fetched(fetch::FetchResult<ExpectedResponseData>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
@@ -38,39 +38,33 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
             orders.skip().perform_cmd(send_request());
         }
 
-        Msg::Fetched(fetch_object) => {
-            model.fetch_result = Some(fetch_object.result);
+        Msg::Fetched(Ok(response_with_data_result)) => {
+            model.response_with_data_result = Some(response_with_data_result);
+        }
+
+        Msg::Fetched(Err(request_error)) => {
+            log!("Example_B error:", request_error);
+            orders.skip();
         }
     }
 }
 
 fn send_request() -> impl Future<Item = Msg, Error = Msg> {
-    fetch::Request::new(get_request_url()).fetch_json(Msg::Fetched)
+    fetch::Request::new(get_request_url())
+        .fetch_json(|fetch_object| Msg::Fetched(fetch_object.result))
 }
 
 // View
 
 pub fn view(model: &Model) -> impl ElContainer<Msg> {
     vec![
-        match &model.fetch_result {
+        match &model.response_with_data_result {
             None => empty![],
-            Some(result) => match result {
-                Err(request_error) => {
-                    log!("Example_B error:", request_error);
-                    empty![]
-                }
-                Ok(response_with_data_result) => div![
-                    div![format!(
-                        "Status code: {}",
-                        response_with_data_result.status.code
-                    )],
-                    div![format!(
-                        r#"Status text: "{}""#,
-                        response_with_data_result.status.text
-                    )],
-                    div![format!(r#"Data: "{:#?}""#, response_with_data_result.data)]
-                ],
-            },
+            Some(fetch::ResponseWithDataResult { status, data, .. }) => div![
+                div![format!("Status code: {}", status.code)],
+                div![format!(r#"Status text: "{}""#, status.text)],
+                div![format!(r#"Data: "{:#?}""#, data)]
+            ],
         },
         button![simple_ev(Ev::Click, Msg::SendRequest), "Try to Fetch JSON"],
     ]

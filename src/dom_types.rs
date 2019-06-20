@@ -385,7 +385,15 @@ impl Attrs {
 
     /// Add multiple values for a single attribute. Useful for classes.
     pub fn add_multiple(&mut self, key: At, items: &[&str]) {
-        self.add(key, &items.join(" "));
+        self.add(
+            key,
+            items
+                .iter()
+                .filter_map(|item| if item.is_empty() { None } else { Some(*item) })
+                .collect::<Vec<&str>>()
+                .join(" ")
+                .as_str(),
+        );
     }
 
     /// Combine with another Attrs
@@ -1149,17 +1157,22 @@ pub mod tests {
     #[wasm_bindgen_test]
     pub fn merge_classes() {
         let node = el_to_websys(a![
-            class!["my_class1", "my_class2"],
-            class!["my_class3"],
+            class!["", "my_class1", "my_class2"],
+            class!["my_class3", "", ""],
             attrs![
                 At::Class => "my_class4 my_class5";
+            ],
+            class![
+                "my_class6"
+                "my_class7" => false
+                "my_class8" => 1 == 1
             ]
         ]);
 
         let mut expected = IndexMap::new();
         expected.insert(
             "class".to_string(),
-            "my_class1 my_class2 my_class3 my_class4 my_class5".to_string(),
+            "my_class1 my_class2 my_class3 my_class4 my_class5 my_class6 my_class8".to_string(),
         );
         assert_eq!(expected, get_node_attrs(&node));
     }
