@@ -9,8 +9,11 @@ and `El::new_text` respectively
 in addition to semicolons
 - Fixed typos in a few attributes (Breaking)
 - Fixed a bug where an HTML namespace was applied to raw html/markdown elements
-- New conditionaln syntax added in `class!` macro: ``
+- New conditional syntax added in `class!` macro, similar to `Elm`'s `classList`
 - `Listener` now implements `MessageMapper`
+- `El methods` `add_child`, `add_style`, `add_attr`, and `set_text` now return the elements,
+allowing chaining
+- Fixed a bug with `set_text`
 
 
 ## v0.3.6

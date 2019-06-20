@@ -835,23 +835,28 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new child to the element
-    pub fn add_child(&mut self, element: El<Ms>) {
+    pub fn add_child(mut self, element: El<Ms>) -> Self {
         self.children.push(element);
+        self
     }
 
     /// Add an attribute (eg class, or href)
-    pub fn add_attr(&mut self, key: String, val: String) {
+    pub fn add_attr(mut self, key: String, val: String) -> Self {
         self.attrs.vals.insert(key.into(), val);
+        self
     }
 
     /// Add a new style (eg display, or height)
-    pub fn add_style(&mut self, key: String, val: String) {
+    pub fn add_style(mut self, key: String, val: String) -> Self {
         self.style.vals.insert(key, val);
+        self
     }
 
     /// Replace the element's text node. (ie between the HTML tags)
-    pub fn set_text(&mut self, text: &str) {
-        self.text = Some(text.into())
+    pub fn set_text(mut self, text: &str) -> Self {
+        // todo: Allow text to be impl ToString?
+        self.children.push(El::new_text(text));
+        self
     }
 
     /// Shortcut for finding the key, if one exists

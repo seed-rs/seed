@@ -9,4 +9,9 @@ Required tools to build and test:
 
 Before submitting a PR, please run `cargo make verify`: This will run `fmt`, `clippy`, build all examples, and run all tests.
 
-We're currently moving quickly and making breaking API changes, when appropriate.
+Recommended starting points:
+- Open issues
+- Adding and improving tests
+- Friction points in your Seed apps
+- `//todo` comments in code
+

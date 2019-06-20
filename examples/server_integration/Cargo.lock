@@ -427,7 +427,7 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.3.6",
+ "seed 0.3.7",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "shared 0.1.0",
  "wasm-bindgen 0.2.45 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1295,7 +1295,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "seed"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "enclose 1.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
