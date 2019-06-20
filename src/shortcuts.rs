@@ -101,7 +101,7 @@ element! {
 
 element_svg! {
     // SVG shape elements
-    line_ => Line;
+    line_ => Line;  // line is a builtin rust macro.
     rect => Rect; circle => Circle; ellipse => Elipse; polygon => Polygon; polyline => Polyline;
     mesh => Mesh; path => Path; defs => Defs; marker => Marker; mask => Mask;
     // SVG container elements

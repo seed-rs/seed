@@ -63,9 +63,9 @@ fn view(model: &Model) -> El<Msg> {
 
     // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style! {
-            "display" => "flex";
-            "flex-direction" => "column";
-            "text-align" => "center"
+            "display" => "flex",
+            "flex-direction" => "column",
+            "text-align" => "center",
     };
 
     div![

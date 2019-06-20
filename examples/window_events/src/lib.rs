@@ -2,7 +2,7 @@
 
 #[macro_use]
 extern crate seed;
-use seed::{dom_types::Listener, prelude::*};
+use seed::{events::Listener, prelude::*};
 
 // Model
 

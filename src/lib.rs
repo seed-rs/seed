@@ -17,6 +17,7 @@ pub mod shortcuts;
 
 pub mod css_units;
 pub mod dom_types;
+pub mod events;
 pub mod fetch;
 mod next_tick;
 pub mod routing;
@@ -81,9 +82,12 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
-            did_mount, did_update, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
-            trigger_update_handler, will_unmount, At, El, ElContainer, Ev, MessageMapper,
-            Optimize::Key, Tag, UpdateEl,
+            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Optimize::Key,
+            Tag, UpdateEl,
+        },
+        events::{
+            input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
+            Ev,
         },
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
@@ -111,7 +115,8 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
         use crate::{
-            dom_types::{mouse_ev, El, UpdateEl},
+            dom_types::{El, UpdateEl},
+            events::mouse_ev,
             vdom::Orders,
         };
 
@@ -140,7 +145,7 @@ pub mod tests {
             vec![div!["Hello world"]]
         }
 
-        fn window_events(_model: &Model) -> Vec<seed::dom_types::Listener<Msg>> {
+        fn window_events(_model: &Model) -> Vec<seed::events::Listener<Msg>> {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 

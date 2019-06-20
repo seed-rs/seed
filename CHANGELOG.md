@@ -1,12 +1,13 @@
 # Changelog
 
 ## v0.3.7
-- Added `raw!` and `md!` macros that alias `El::from_html` and `El::from_markdown`
-respectively
+- Added `raw!`, `md!`, and `plain!` macros that alias `El::from_html`, `El::from_markdown`,
+and `El::new_text` respectively
 - `Attrs!` and `Style!` macros can now use commas and whitespace as separators,
 in addition to semicolons
 - Fixed typos in a few attributes (Breaking)
 - Fixed a bug where an HTML namespace was applied to raw html/markdown elements
+- `routes` now accepts `Url` instead of `&Url` (Breaking)
 
 ## v0.3.6
 - Fetch module and API heavily changed (breaking)

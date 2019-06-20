@@ -2,7 +2,7 @@
 
 #[macro_use]
 extern crate seed;
-use seed::dom_types::Event;
+use seed::events::Event;
 use seed::prelude::*;
 use seed::storage::Storage;
 use serde::{Deserialize, Serialize};

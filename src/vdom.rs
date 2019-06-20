@@ -1,6 +1,6 @@
 use crate::{
     dom_types::{self, El, ElContainer, MessageMapper, Namespace},
-    next_tick, routing, util, websys_bridge,
+    events, next_tick, routing, util, websys_bridge,
 };
 use enclose::enclose;
 use futures::Future;
@@ -141,7 +141,7 @@ impl<Ms: 'static> Orders<Ms> {
 type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl, &mut Orders<Ms>);
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
 type RoutesFn<Ms> = fn(routing::Url) -> Ms;
-type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<dom_types::Listener<Ms>>;
+type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<events::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
 
 pub struct Mailbox<Message: 'static> {
@@ -179,7 +179,7 @@ pub struct AppData<Ms: 'static, Mdl> {
     main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
-    window_listeners: RefCell<Vec<dom_types::Listener<Ms>>>,
+    window_listeners: RefCell<Vec<events::Listener<Ms>>>,
     msg_listeners: RefCell<MsgListeners<Ms>>,
     scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
 }
@@ -610,12 +610,12 @@ where
                 "false" => false,
                 _ => panic!("checked must be true or false."),
             };
-            dom_types::Listener::new_control_check(checked_bool)
+            events::Listener::new_control_check(checked_bool)
         } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
-            dom_types::Listener::new_control(control_val.to_string())
+            events::Listener::new_control(control_val.to_string())
         } else {
             // If Value is not specified, force the field to be blank.
-            dom_types::Listener::new_control("".to_string())
+            events::Listener::new_control("".to_string())
         };
         el.listeners.push(listener); // Add to the El, so we can deattach later.
     }
@@ -687,10 +687,31 @@ fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>) {
 /// way of diffing them.
 fn setup_window_listeners<Ms>(
     window: &Window,
-    old: &mut Vec<dom_types::Listener<Ms>>,
-    new: &mut Vec<dom_types::Listener<Ms>>,
+    old: &mut Vec<events::Listener<Ms>>,
+    new: &mut Vec<events::Listener<Ms>>,
     mailbox: &Mailbox<Ms>,
 ) {
+    // todo: Temporary shim to group all events using the same trigger
+    // todo inton one, to prevent them from interupting each other.
+    //    let mut by_trigger = HashMap::new();
+    //    for l in new {
+    //        match by_trigger.contains_key(l.trigger) {
+    //            Some(v) => {
+    //                let new_handlers = hand
+    //                by_trigger.insert(l.trigger, );
+    //            }
+    //        }
+    //    }
+    //
+    //    let grouped_listeners = events::Listener::new(
+    //        |l|
+    //    )
+    //
+    //    let mut new = Vec::new();
+    //    for (trigger, closure) in grouped_listeners {
+    //        new.push(trigger, );
+    //    }
+
     for listener in old {
         listener.detach(window);
     }
