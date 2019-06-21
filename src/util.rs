@@ -109,6 +109,7 @@ pub fn error<D: fmt::Debug>(text: D) {
 /// Trigger update function.
 /// It requires Msg to be (De)serializable
 /// and to register `trigger_update_handler` in `window_events`.
+/// Consider to use [`App::update`](struct.App.html#method.update) if you have access to the [`App`](struct.App.html) instance.
 pub fn update<Ms>(msg: Ms)
 where
     Ms: Clone + 'static + serde::Serialize,
