@@ -181,7 +181,22 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
         }
     }
 
+    // Note: Call `set_default_element_state` after child appending,
+    // otherwise it breaks autofocus in Firefox
+    set_default_element_state(el_ws, el_vdom);
+
+    // Perform side-effects specified for mounting.
+    if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
+        (mount_actions.actions)(el_ws);
+        //        if let Some(message) = mount_actions.message.clone() {
+        //            app.update(message);
+        //        }
+    }
+}
+
+fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
     // @TODO handle also other Auto* attributes?
+    // Set focus because of attribute "autofocus"
     if let Some(at_value) = el_vdom.attrs.vals.get(&dom_types::At::AutoFocus) {
         match at_value {
             AtValue::Some(_) | AtValue::None => el_ws
@@ -193,12 +208,12 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
         }
     }
 
-    // Perform side-effects specified for mounting.
-    if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
-        (mount_actions.actions)(el_ws);
-        //        if let Some(message) = mount_actions.message.clone() {
-        //            app.update(message);
-        //        }
+    // We set Textarea's initial value through non-standard attribute "value", so we have to simulate
+    // the standard way (i.e. `<textarea>A Value</textarea>`)
+    if let Some(textarea) = el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
+        if let Some(AtValue::Some(value)) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
+            textarea.set_value(value);
+        }
     }
 }
 
@@ -236,23 +251,16 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
             // to use set_value or set_checked.
             match key {
                 dom_types::At::Value => match new_val {
-                    AtValue::Some(new_val) => {
-                        crate::util::set_value(old_el_ws, new_val);
-                    }
-                    AtValue::None | AtValue::Ignored => {
-                        crate::util::set_value(old_el_ws, "");
-                    }
+                    AtValue::Some(new_val) => crate::util::set_value(old_el_ws, new_val),
+                    AtValue::None | AtValue::Ignored => crate::util::set_value(old_el_ws, ""),
                 },
                 dom_types::At::Checked => match new_val {
-                    AtValue::Some(_) | AtValue::None => {
-                        crate::util::set_checked(old_el_ws, true).unwrap_or_else(crate::error);
-                    }
-                    AtValue::Ignored => {
-                        crate::util::set_checked(old_el_ws, false).unwrap_or_else(crate::error);
-                    }
+                    AtValue::Some(_) | AtValue::None => crate::util::set_checked(old_el_ws, true),
+                    AtValue::Ignored => crate::util::set_checked(old_el_ws, false),
                 },
-                _ => (),
+                _ => Ok(()),
             }
+            .unwrap_or_else(crate::error)
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {

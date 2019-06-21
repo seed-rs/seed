@@ -60,40 +60,96 @@ pub fn request_animation_frame(
 
 /// Simplify getting the value of input elements; required due to the need to cast
 /// from general nodes/elements to `HTML_Elements`.
-pub fn get_value(target: &web_sys::EventTarget) -> String {
-    // @TODO support more elements (in get_value and set_value)?
-    // @TODO (https://docs.rs/web-sys/0.3.25/web_sys/struct.HtmlMenuItemElement.html?search=set_value)
-    // @TODO return Result / panic?
-    if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-        return input.value();
+pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> {
+    use web_sys::*;
+    macro_rules! get {
+        ($element:ty) => {
+            get!($element, |_| Ok(()))
+        };
+        ($element:ty, $result_callback:expr) => {
+            if let Some(input) = target.dyn_ref::<$element>() {
+                return ($result_callback(input)).map(|_| input.value().to_string());
+            }
+        };
     }
-    if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-        return input.value();
-    }
-    if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-        return input.value();
-    }
-    "".into()
+    // List of elements
+    // https://docs.rs/web-sys/0.3.25/web_sys/struct.HtmlMenuItemElement.html?search=value
+    // They should be ordered by expected frequency of use
+
+    get!(HtmlInputElement, |input: &HtmlInputElement| {
+        // https://www.w3schools.com/tags/att_input_value.asp
+        match input.type_().as_str() {
+            "file" => Err(r#"The value attribute cannot be used with <input type="file">."#),
+            _ => Ok(()),
+        }
+    });
+    get!(HtmlTextAreaElement);
+    get!(HtmlSelectElement);
+    get!(HtmlProgressElement);
+    get!(HtmlOptionElement);
+    get!(HtmlButtonElement);
+    get!(HtmlDataElement);
+    get!(HtmlMeterElement);
+    get!(HtmlLiElement);
+    get!(HtmlOutputElement);
+    get!(HtmlParamElement);
+
+    Err("Can't use function `get_value` for given element.")
 }
 
 /// Similar to `get_value`.
-pub fn set_value(target: &web_sys::EventTarget, value: &str) {
-    if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-        return input.set_value(value);
+pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'static str> {
+    use web_sys::*;
+    macro_rules! set {
+        ($element:ty) => {
+            set!($element, |_| Ok(value))
+        };
+        ($element:ty, $value_result_callback:expr) => {
+            if let Some(input) = target.dyn_ref::<$element>() {
+                return ($value_result_callback(input)).map(|value| input.set_value(value));
+            }
+        };
     }
-    if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-        return input.set_value(value);
-    }
-    if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-        return input.set_value(value);
-    }
+    // List of elements
+    // https://docs.rs/web-sys/0.3.25/web_sys/struct.HtmlMenuItemElement.html?search=set_value
+    // They should be ordered by expected frequency of use
+
+    set!(HtmlInputElement, |input: &HtmlInputElement| {
+        // https://www.w3schools.com/tags/att_input_value.asp
+        match input.type_().as_str() {
+            "file" => Err(r#"The value attribute cannot be used with <input type="file">."#),
+            _ => Ok(value),
+        }
+    });
+    set!(HtmlTextAreaElement);
+    set!(HtmlSelectElement);
+    set!(HtmlProgressElement, |_| value.parse().map_err(|_| {
+        "Can't parse value to `f64` for `HtmlProgressElement`."
+    }));
+    set!(HtmlOptionElement);
+    set!(HtmlButtonElement);
+    set!(HtmlDataElement);
+    set!(HtmlMeterElement, |_| value.parse().map_err(|_| {
+        "Can't parse value to `f64` for `HtmlMeterElement`."
+    }));
+    set!(HtmlLiElement, |_| value.parse().map_err(|_| {
+        "Can't parse value to `i32` for `HtmlLiElement`."
+    }));
+    set!(HtmlOutputElement);
+    set!(HtmlParamElement);
+
+    Err("Can't use function `set_value` for given element.")
 }
 
 /// Similar to `get_value`
 #[allow(dead_code)]
 pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, &'static str> {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-        return Ok(input.checked());
+        // https://www.w3schools.com/tags/att_input_checked.asp
+        return match input.type_().as_str() {
+            "file" => Err(r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#),
+            _ => Ok(input.checked())
+        };
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
         return Ok(input.checked());
@@ -102,26 +158,40 @@ pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, &'static str> 
 }
 
 /// Similar to `set_value`.
+#[allow(clippy::unit_arg)]
 pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'static str> {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-        input.set_checked(value);
-        return Ok(());
+        // https://www.w3schools.com/tags/att_input_checked.asp
+        return match input.type_().as_str() {
+            "file" => Err(r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#),
+            _ => Ok(input.set_checked(value))
+        };
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
-        input.set_checked(value);
-        return Ok(());
+        return Ok(input.set_checked(value));
     }
     Err("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `set_checked`.")
 }
 
-// todo: Unable to get this convenience function working
-///// Prevent repetition when wrapping closures.
-////pub fn make_closure(inner: impl FnMut(web_sys::Event)) -> Box<FnMut(web_sys::Event) + 'static> {
-//pub fn make_closure<T>(inner: T) -> Closure<Box<T>>
-//    where T: WasmClosure {
-////    Closure::wrap(Box::new(inner)) as Box<FnMut(web_sys::Event) + 'static>
-//    Closure::wrap(Box::new(inner))
-//}
+// @TODO: (1) Replace `Closure::wrap` in codebase with `Closure::new` (inspiration in `routing.rs`)
+// @TODO: (2) Delete once `Closure::new` is stable
+// https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
+/// Prevent repetition when wrapping closures.
+pub trait ClosureNew<T> {
+    #[allow(clippy::new_ret_no_self)]
+    fn new(inner: impl FnMut(T) + 'static) -> Closure<FnMut(T)>
+    where
+        T: wasm_bindgen::convert::FromWasmAbi + 'static;
+}
+impl<T> ClosureNew<T> for Closure<T> {
+    #[allow(clippy::new_ret_no_self)]
+    fn new(inner: impl FnMut(T) + 'static) -> Closure<FnMut(T)>
+    where
+        T: wasm_bindgen::convert::FromWasmAbi + 'static,
+    {
+        Closure::wrap(Box::new(inner))
+    }
+}
 
 /// Convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.

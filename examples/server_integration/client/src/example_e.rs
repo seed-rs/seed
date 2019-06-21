@@ -1,13 +1,17 @@
 use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
-use serde::Serialize;
 use std::mem;
+use wasm_bindgen::JsCast;
+use web_sys::{
+    self,
+    console::{log_1, log_2},
+    File,
+};
 
 pub const TITLE: &str = "Example E";
 pub const DESCRIPTION: &str =
-    "Write something and click button 'Submit`. See console.log for more info. \
-     It sends form to the server and server returns 200 OK with 2 seconds delay.";
+    "Fill form and click 'Submit` button. Server echoes the form back. See console log for more info.";
 
 fn get_request_url() -> String {
     "/api/form".into()
@@ -15,10 +19,25 @@ fn get_request_url() -> String {
 
 // Model
 
-#[derive(Serialize, Default)]
+#[derive(Default, Debug)]
 pub struct Form {
-    text: String,
-    checked: bool,
+    title: String,
+    description: String,
+    file: Option<File>,
+    answer: bool,
+}
+
+impl Form {
+    fn to_form_data(&self) -> Result<web_sys::FormData, JsValue> {
+        let form_data = web_sys::FormData::new()?;
+        form_data.append_with_str("title", &self.title)?;
+        form_data.append_with_str("description", &self.description)?;
+        if let Some(file) = &self.file {
+            form_data.append_with_blob("file", file)?;
+        }
+        form_data.append_with_str("answer", &self.answer.to_string())?;
+        Ok(form_data)
+    }
 }
 
 pub enum Model {
@@ -28,7 +47,12 @@ pub enum Model {
 
 impl Default for Model {
     fn default() -> Self {
-        Model::ReadyToSubmit(Form::default())
+        Model::ReadyToSubmit(Form {
+            title: "I'm title".into(),
+            description: "I'm description".into(),
+            file: None,
+            answer: true,
+        })
     }
 }
 
@@ -49,25 +73,33 @@ impl Model {
 
 #[derive(Clone)]
 pub enum Msg {
-    TextChanged(String),
-    CheckedChanged,
+    TitleChanged(String),
+    DescriptionChanged(String),
+    FileChanged(Option<File>),
+    AnswerChanged,
     FormSubmitted(String),
-    ServerResponded(fetch::ResponseResult<()>),
+    ServerResponded(fetch::ResponseDataResult<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
     match msg {
-        Msg::TextChanged(text) => model.form_mut().text = text,
-        Msg::CheckedChanged => toggle(&mut model.form_mut().checked),
+        Msg::TitleChanged(title) => model.form_mut().title = title,
+        Msg::DescriptionChanged(description) => model.form_mut().description = description,
+        Msg::FileChanged(file) => {
+            model.form_mut().file = file;
+        }
+        Msg::AnswerChanged => toggle(&mut model.form_mut().answer),
         Msg::FormSubmitted(id) => {
             let form = take(model.form_mut());
             orders.perform_cmd(send_request(&form));
             *model = Model::WaitingForResponse(form);
-            log!("Form with id", id, "submitted.");
+            log!(format!("Form {} submitted.", id));
         }
-        Msg::ServerResponded(Ok(_)) => {
+        Msg::ServerResponded(Ok(response_data)) => {
             *model = Model::ReadyToSubmit(Form::default());
-            log!("Form processed successfully.");
+            clear_file_input();
+            log_2(&"%cResponse data:".into(), &"background: yellow".into());
+            log_1(&response_data.into());
         }
         Msg::ServerResponded(Err(fail_reason)) => {
             *model = Model::ReadyToSubmit(take(model.form_mut()));
@@ -79,8 +111,19 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 fn send_request(form: &Form) -> impl Future<Item = Msg, Error = Msg> {
     fetch::Request::new(get_request_url())
         .method(fetch::Method::Post)
-        .send_json(form)
-        .fetch(|fetch_object| Msg::ServerResponded(fetch_object.response()))
+        .body(form.to_form_data().unwrap().into())
+        .fetch_string_data(Msg::ServerResponded)
+}
+
+#[allow(clippy::option_map_unit_fn)]
+fn clear_file_input() {
+    seed::document()
+        .get_element_by_id("form-file")
+        .and_then(|element| element.dyn_into::<web_sys::HtmlInputElement>().ok())
+        .map(|file_input| {
+            // Note: `file_input.set_files(None)` doesn't work
+            file_input.set_value("")
+        });
 }
 
 fn take<T: Default>(source: &mut T) -> T {
@@ -93,29 +136,85 @@ fn toggle(value: &mut bool) {
 
 // View
 
+fn view_form_field(label: Node<Msg>, control: Node<Msg>) -> Node<Msg> {
+    div![
+        style! {
+          "margin-bottom" => unit!(7, px),
+          "display" => "flex",
+        },
+        label.add_style("margin-right", unit!(7, px)),
+        control
+    ]
+}
+
 pub fn view(model: &Model) -> impl View<Msg> {
     let btn_disabled = match model {
-        Model::ReadyToSubmit(form) if !form.text.is_empty() => false,
+        Model::ReadyToSubmit(form) if !form.title.is_empty() => false,
         _ => true,
     };
 
     let form_id = "A_FORM".to_string();
     form![
+        style! {
+            "display" => "flex",
+            "flex-direction" => "column",
+        },
         raw_ev(Ev::Submit, move |event| {
             event.prevent_default();
             Msg::FormSubmitted(form_id)
         }),
-        input![
-            input_ev(Ev::Input, Msg::TextChanged),
-            attrs! {At::Value => model.form().text}
-        ],
-        input![
-            simple_ev(Ev::Click, Msg::CheckedChanged),
-            attrs! {
-                At::Type => "checkbox",
-                At::Checked => model.form().checked.as_at_value(),
-            }
-        ],
+        view_form_field(
+            label!["Title:", attrs! {At::For => "form-title" }],
+            input![
+                input_ev(Ev::Input, Msg::TitleChanged),
+                attrs! {
+                    At::Id => "form-title",
+                    At::Value => model.form().title,
+                    At::Required => true.as_at_value(),
+                }
+            ]
+        ),
+        view_form_field(
+            label!["Description:", attrs! {At::For => "form-description" }],
+            textarea![
+                input_ev(Ev::Input, Msg::DescriptionChanged),
+                attrs! {
+                    At::Id => "form-description",
+                    At::Value => model.form().description,
+                    At::Rows => 1,
+                },
+            ],
+        ),
+        view_form_field(
+            label!["Text file:", attrs! {At::For => "form-file" }],
+            input![
+                raw_ev(Ev::Change, |event| {
+                    let file = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<web_sys::HtmlInputElement>().ok())
+                        .and_then(|file_input| file_input.files())
+                        .and_then(|file_list| file_list.get(0));
+
+                    Msg::FileChanged(file)
+                }),
+                attrs! {
+                    At::Type => "file",
+                    At::Id => "form-file",
+                    At::Accept => "text/plain",
+                }
+            ],
+        ),
+        view_form_field(
+            label!["Do you like cocoa?:", attrs! {At::For => "form-answer" }],
+            input![
+                simple_ev(Ev::Click, Msg::AnswerChanged),
+                attrs! {
+                    At::Type => "checkbox",
+                    At::Id => "form-answer",
+                    At::Checked => model.form().answer.as_at_value(),
+                }
+            ],
+        ),
         button![
             style! {
                 "padding" => format!{"{} {}", px(2), px(12)},

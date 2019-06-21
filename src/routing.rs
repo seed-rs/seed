@@ -1,5 +1,6 @@
 //! This module is decoupled / independent.
 
+use crate::util::ClosureNew;
 use serde::{Deserialize, Serialize};
 use std::convert::identity;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
@@ -223,7 +224,7 @@ pub fn setup_popstate_listener<Ms>(
 ) where
     Ms: 'static,
 {
-    let closure = Closure::wrap(Box::new(move |ev: web_sys::Event| {
+    let closure = Closure::new(move |ev: web_sys::Event| {
         let ev = ev
             .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
@@ -238,9 +239,8 @@ pub fn setup_popstate_listener<Ms>(
                 Url::new(empty)
             }
         };
-
         update(routes(url));
-    }) as Box<FnMut(web_sys::Event) + 'static>);
+    });
 
     (util::window().as_ref() as &web_sys::EventTarget)
         .add_event_listener_with_callback("popstate", closure.as_ref().unchecked_ref())

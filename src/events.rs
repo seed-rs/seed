@@ -220,49 +220,11 @@ impl<Ms> Listener<Ms> {
     where
         T: AsRef<web_sys::EventTarget>,
     {
-        // This and detach taken from Draco.
         let mut handler = self.handler.take().expect("Can't find old handler");
-        let trigger = self.trigger;
         // This is the closure ran when a DOM element has an user defined callback
         let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
-            // Let the seed user handle the event
-            let msg = handler(event.clone());
+            let msg = handler(event);
             mailbox.send(msg);
-            // update the value field if needed
-            // The update is needed when the event is of type input, the input field is
-            // of type number, text or password and the DOM value field is different from
-            // the default_value. Default value is the one set by the seed user when he sets the
-            // value, setting the value in HTML only changes the default value, not
-            // the actual value. To change the actual value it is necessary to call set_value
-            if trigger == Ev::Input {
-                let target = event.target().unwrap();
-
-                if let Some(input_el) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-                    let input_type = input_el.type_();
-                    // For number, text and password, might be useful for other inputs too
-                    // but breaks the file input for example, which cannot have its value
-                    // set by using the set_value function
-                    let should_trigger_rerender_with_set_value = {
-                        (input_type == "number" || input_type == "text" || input_type == "password")
-                    };
-                    if should_trigger_rerender_with_set_value {
-                        let value_set_by_seed_user = input_el.default_value();
-                        let actual_value = input_el.value();
-                        if value_set_by_seed_user != actual_value {
-                            input_el.set_value(&value_set_by_seed_user);
-                        }
-                    }
-                }
-                //                            else if let Some(select_el) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-                //                            let value_set_by_seed_user = select_el.default_value();
-                //                            let actual_value = select_el.value();
-                //                            if value_set_by_seed_user != actual_value {
-                //                                select_el.set_value(&value_set_by_seed_user);
-                //                            }
-                //                        }
-                // todo do we need to handle textarea separately?
-                // todo should just get attach_control (below) working
-            }
         }) as Box<FnMut(web_sys::Event) + 'static>);
 
         (el_ws.as_ref() as &web_sys::EventTarget)
@@ -270,81 +232,12 @@ impl<Ms> Listener<Ms> {
                 self.trigger.as_str(),
                 closure.as_ref().unchecked_ref(),
             )
-            .expect("problem adding listener to element");
+            .expect("Problem adding listener to element");
 
         // Store the closure so we can detach it later. Not detaching it when an element
         // is removed will trigger a panic.
         if self.closure.replace(closure).is_some() {
             panic!("self.closure already set in attach");
-        }
-    }
-
-    //    /// This method is where the processing logic for events happens.
-    //    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
-    //        where
-    //            T: AsRef<web_sys::EventTarget>,
-    //    {
-    //        let mut handler = self.handler.take().expect("Can't find old handler");
-    //
-    //        // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-    //        let closure =
-    //            Closure::wrap(
-    //                Box::new(move |event: web_sys::Event| mailbox.send(handler(event)))
-    //                    as Box<FnMut(web_sys::Event) + 'static>,
-    //            );
-    //
-    //        (el_ws.as_ref() as &web_sys::EventTarget)
-    //            .add_event_listener_with_callback(
-    //                self.trigger.as_str(),
-    //                closure.as_ref().unchecked_ref(),
-    //            )
-    //            .expect("problem adding listener to element");
-    //
-    //        // Store the closure so we can detach it later. Not detaching it when an element
-    //        // is removed will trigger a panic.
-    //        self.closure = Some(closure);
-    //    }
-
-    // todo: Note this func and the above commented-out code: This approach, of passing
-    // todo control values from the model appears not to work, perhaps due to a clash between
-    // todo user-inputted, and control Ev::input listeners. This solution will not keep
-    // todo the model and field synced if the model changes due to somethign other
-    // todo than input, or if a value attribute isn't specified.
-
-    /// todo: Would like this in the same fn as attach, but run into issues
-    /// between el_ws as EventTarget, and as Node. Could possibly resolve using traits.
-    pub fn attach_control(&mut self, el_ws: &web_sys::Node) {
-        // Dummy vars outside the closure to avoid lifetime problems.
-        let val2 = self.control_val.clone();
-        let checked2 = self.control_checked;
-        let el_ws2 = el_ws.clone();
-        let closure = Closure::wrap(Box::new(move |_| {
-            if let Some(val) = val2.clone() {
-                if util::get_value(&el_ws2) != val {
-                    util::set_value(&el_ws2, &val);
-                }
-            }
-            if let Some(checked) = checked2 {
-                let input_el = &el_ws2
-                    .dyn_ref::<web_sys::HtmlInputElement>()
-                    .expect("Problem casting as checkbox");
-                if input_el.checked() != checked {
-                    input_el.set_checked(checked);
-                }
-            }
-        }) as Box<FnMut(web_sys::Event) + 'static>);
-
-        (el_ws.as_ref() as &web_sys::EventTarget)
-            .add_event_listener_with_callback(
-                self.trigger.as_str(),
-                closure.as_ref().unchecked_ref(),
-            )
-            .expect("problem adding listener to element");
-
-        // Store the closure so we can detach it later. Not detaching it when an element
-        // is removed will trigger a panic.
-        if self.closure.replace(closure).is_some() {
-            panic!("self.closure already set in attach_control");
         }
     }
 
@@ -359,7 +252,7 @@ impl<Ms> Listener<Ms> {
                 self.trigger.as_str(),
                 closure.as_ref().unchecked_ref(),
             )
-            .expect("problem removing listener from element");
+            .expect("Problem removing listener from element");
     }
 }
 
@@ -403,7 +296,9 @@ pub fn input_ev<Ms, T: ToString + Copy>(
         let value = event
             .target()
             .as_ref()
-            .map(util::get_value)
+            .ok_or("Can't get event target reference")
+            .and_then(util::get_value)
+            .map_err(crate::error)
             .unwrap_or_default();
 
         (handler.clone())(value)
@@ -416,34 +311,6 @@ pub fn input_ev<Ms, T: ToString + Copy>(
         None,
     )
 }
-
-// todo: Attempt to get something of the below form working.
-/// Create an event that passes a String of field text, for fast input handling.
-//pub fn input_ev<Ms, T, Q>(trigger: T, message: Ms) -> Listener<Ms>
-//    where
-//        Ms: Clone + 'static,
-//        T: ToString + Copy,
-//{
-//    let msg_closure = message.clone();
-//    let mut handler = |text: String| msg_closure;
-//
-//    let closure = move |event: web_sys::Event| {
-////        if let Some(target) = event.target() {
-////            return handler.clone()(util::get_value(&target));
-////        }
-//        handler.clone()(String::new())
-//    };
-//
-////    let handler = || msg_closure;
-////    let closure = move |_| handler.clone()();
-//
-//    Listener::new(
-//        &trigger.to_string(),
-//        Some(Box::new(closure)),
-//        Some(Category::Input),
-//        Some(message),
-//    )
-//}
 
 /// Create an event that passes a `web_sys::KeyboardEvent`, allowing easy access
 /// to items like `key_code`() and key().
