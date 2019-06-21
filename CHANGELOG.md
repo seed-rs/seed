@@ -13,7 +13,8 @@ in addition to semicolons
 - `Listener` now implements `MessageMapper`
 - `El methods` `add_child`, `add_style`, `add_attr`, and `set_text` now return the elements,
 allowing chaining
-- Fixed a bug with `set_text`
+- Fixed a bug with `set_text`. Renamed to `replace_text`. Aded `add_text`, which adds
+a text node, but doesn't remove existing ones. Added `add_class`.
 
 
 ## v0.3.6

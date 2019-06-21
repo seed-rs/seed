@@ -846,15 +846,37 @@ impl<Ms> El<Ms> {
         self
     }
 
+    /// Add a class. May be cleaner than `add_attr`
+    pub fn add_class(mut self, name: &str) -> Self {
+        let mut updated = name.to_string();
+        if let Some(names) = self.attrs.vals.get(&At::Class) {
+            updated = names.clone() + " " + name;
+        }
+        self.attrs.vals.insert(At::Class, updated);
+        self
+    }
+
     /// Add a new style (eg display, or height)
     pub fn add_style(mut self, key: String, val: String) -> Self {
         self.style.vals.insert(key, val);
         self
     }
 
-    /// Replace the element's text node. (ie between the HTML tags)
-    pub fn set_text(mut self, text: &str) -> Self {
+    /// Add a text node to the element. (ie between the HTML tags)
+    pub fn add_text(mut self, text: &str) -> Self {
         // todo: Allow text to be impl ToString?
+        self.children.push(El::new_text(text));
+        self
+    }
+
+    /// Replace the element's text.
+    pub fn replace_text(mut self, text: &str) -> Self {
+        self.children = self
+            .children
+            .into_iter()
+            .filter(|c| c.text.is_none())
+            .collect();
+
         self.children.push(El::new_text(text));
         self
     }
