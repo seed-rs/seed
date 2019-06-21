@@ -362,31 +362,6 @@ impl<Ms> Listener<Ms> {
     }
 }
 
-impl<Ms: 'static> Listener<Ms> {
-    /// Converts the message type of the listener.
-    pub(crate) fn map_message<OtherMs, F>(self, f: F) -> Listener<OtherMs>
-    where
-        F: Fn(Ms) -> OtherMs + 'static,
-    {
-        Listener {
-            trigger: self.trigger,
-            handler: self.handler.map(|mut eh| {
-                Box::new(move |event| {
-                    let m = (*eh)(event);
-                    (f)(m)
-                }) as EventHandler<OtherMs>
-            }),
-            closure: self.closure,
-            control_val: self.control_val,
-            control_checked: self.control_checked,
-            category: self.category,
-            // This function is used when changing message types, so it doesn't make sense to
-            // retain this. (And doing so won't compile)
-            message: None,
-        }
-    }
-}
-
 impl<Ms> PartialEq for Listener<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // Todo: This isn't (yet) a comprehensive check, but can catch some differences.
