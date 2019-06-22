@@ -848,15 +848,16 @@ impl<Ms> El<Ms> {
 
     /// Add a class. May be cleaner than `add_attr`
     pub fn add_class(mut self, name: &str) -> Self {
-        let mut updated = name.to_string();
-        if let Some(names) = self.attrs.vals.get(&At::Class) {
-            if names.is_empty() {
-                updated = name.to_string();
-            } else {
-                updated = names.clone() + " " + name;
-            }
-        }
-        self.attrs.vals.insert(At::Class, updated);
+        self.attrs
+            .vals
+            .entry(At::Class)
+            .and_modify(|v| {
+                if !v.is_empty() {
+                    *v += " ";
+                }
+                *v += name;
+            })
+            .or_insert(name.into());
         self
     }
 
@@ -867,7 +868,6 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a text node to the element. (ie between the HTML tags).
-    /// Removes all text nodes from element, then adds the new one.
     pub fn add_text(mut self, text: &str) -> Self {
         // todo: Allow text to be impl ToString?
         self.children.push(El::new_text(text));
@@ -875,6 +875,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Replace the element's text.
+    /// Removes all text nodes from element, then adds the new one.
     pub fn replace_text(mut self, text: &str) -> Self {
         self.children = self
             .children
@@ -1188,23 +1189,26 @@ pub mod tests {
     /// Tests that multiple class attributes are handled correctly
     #[wasm_bindgen_test]
     pub fn merge_classes() {
-        let node = el_to_websys(a![
-            class!["", "my_class1", "my_class2"],
-            class!["my_class3", "", ""],
-            attrs![
-                At::Class => "my_class4 my_class5";
-            ],
-            class![
-                "my_class6"
-                "my_class7" => false
-                "my_class8" => 1 == 1
+        let node = el_to_websys(
+            a![
+                class!["", "cls_1", "cls_2"],
+                class!["cls_3", "", ""],
+                attrs![
+                    At::Class => "cls_4 cls_5";
+                ],
+                class![
+                    "cls_6"
+                    "cls_7" => false
+                    "cls_8" => 1 == 1
+                ]
             ]
-        ]);
+            .add_class("cls_9"),
+        );
 
         let mut expected = IndexMap::new();
         expected.insert(
             "class".to_string(),
-            "my_class1 my_class2 my_class3 my_class4 my_class5 my_class6 my_class8".to_string(),
+            "cls_1 cls_2 cls_3 cls_4 cls_5 cls_6 cls_8 cls_9".to_string(),
         );
         assert_eq!(expected, get_node_attrs(&node));
     }
@@ -1244,5 +1248,16 @@ pub mod tests {
         let mut expected = IndexMap::new();
         expected.insert("id".to_string(), "my_id2".to_string());
         assert_eq!(expected, get_node_attrs(&node));
+    }
+
+    /// Tests that method `replace_text` removes all text nodes and then adds a new one
+    #[wasm_bindgen_test]
+    pub fn replace_text() {
+        let expected = "<div><span>bbb</span>xxx</div>";
+
+        let node =
+            el_to_websys(div!["aaa", span!["bbb"], plain!["ccc"], "ddd"].replace_text("xxx"));
+
+        assert_eq!(expected, get_node_html(&node));
     }
 }
