@@ -850,7 +850,11 @@ impl<Ms> El<Ms> {
     pub fn add_class(mut self, name: &str) -> Self {
         let mut updated = name.to_string();
         if let Some(names) = self.attrs.vals.get(&At::Class) {
-            updated = names.clone() + " " + name;
+            if names.is_empty() {
+                updated = name.to_string();
+            } else {
+                updated = names.clone() + " " + name;
+            }
         }
         self.attrs.vals.insert(At::Class, updated);
         self
@@ -862,7 +866,8 @@ impl<Ms> El<Ms> {
         self
     }
 
-    /// Add a text node to the element. (ie between the HTML tags)
+    /// Add a text node to the element. (ie between the HTML tags).
+    /// Removes all text nodes from element, then adds the new one.
     pub fn add_text(mut self, text: &str) -> Self {
         // todo: Allow text to be impl ToString?
         self.children.push(El::new_text(text));
