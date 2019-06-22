@@ -166,14 +166,14 @@ pub struct Status {
 #[allow(dead_code)]
 impl Status {
     /// Is response status category `ClientError` or `ServerError`? (Code 400-599)
-    fn is_error(&self) -> bool {
+    pub fn is_error(&self) -> bool {
         match self.category {
             StatusCategory::ClientError | StatusCategory::ServerError => true,
             _ => false,
         }
     }
     /// Is response status category `Success`? (Code 200-299)
-    fn is_ok(&self) -> bool {
+    pub fn is_ok(&self) -> bool {
         self.category == StatusCategory::Success
     }
 }
