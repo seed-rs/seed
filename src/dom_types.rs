@@ -725,6 +725,32 @@ impl<Ms> fmt::Debug for LifecycleHooks<Ms> {
     }
 }
 
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for LifecycleHooks<Ms> {
+    type SelfWithOtherMs = LifecycleHooks<OtherMs>;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Self::SelfWithOtherMs {
+        LifecycleHooks {
+            did_mount: self.did_mount.map(|d| {
+                DidMount {
+                    actions: d.actions,
+                    message: d.message.map(f)
+                }
+            }),
+            did_update: self.did_update.map(|d| {
+                DidUpdate {
+                    actions: d.actions,
+                    message: d.message.map(f)
+                }
+            }),
+            will_unmount: self.will_unmount.map(|d| {
+                WillUnmount {
+                    actions: d.actions,
+                    message: d.message.map(f)
+                }
+            })
+        }
+    }
+}
+
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
     type SelfWithOtherMs = El<OtherMs>;
     /// Maps an element's message to have another message.
@@ -753,8 +779,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
                 .collect(),
             el_ws: self.el_ws,
             namespace: self.namespace,
-            hooks: LifecycleHooks::new(),
-            //            hooks: self.hooks,  // todo fix
+            hooks: self.hooks.map_message(f),
             empty: self.empty,
             optimizations: self.optimizations,
 
