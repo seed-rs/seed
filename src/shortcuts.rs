@@ -103,9 +103,11 @@ element_svg! {
     // SVG shape elements
     line_ => Line;  // line is a builtin rust macro.
     rect => Rect; circle => Circle; ellipse => Elipse; polygon => Polygon; polyline => Polyline;
-    mesh => Mesh; path => Path; defs => Defs; marker => Marker; mask => Mask;
+    mesh => Mesh; path => Path;
     // SVG container elements
-    svg => Svg; g => G;
+    defs => Defs; g => G; marker => Marker; mask => Mask;
+    // missing-glyph => MissingGlyph; // todo unable to populate with macro due to hyphen
+    pattern => Pattern; svg => Svg; switch => Switch; symbol => Symbol; unknown => Unknown;
     // SVG gradient elements
     linear_gradient => LinearGradient; radial_gradient => RadialGradient; mesh_gradient => MeshGradient;
     stop => Stop;
@@ -114,40 +116,34 @@ element_svg! {
     // SVG graphics referencing elements
     r#use => Use;
     // SVG text content elements
-    text => Text; tref => TRef; tspan => TSpan
+    altGlyph => AltGlyph; altGlyphDef => AltGlyphDef; altGlyphItem => AltGlyphItem; glyph => Glyph;
+    glyphRef => GlyphRef; textPath => TextPath; text => Text; tref => TRef; tspan => TSpan;
+    // SVG uncategorized elements
+    clipPath => ClipPath; cursor => Cursor; filter => Filter; foreignObject => ForeignObject;
+    hatchpath => HatchPath; meshPatch => MeshPatch; meshrow => MeshRow; view => View;
+    // style missing due to conflict with the style macro.
+    // colorProfile => ColorProfile;  // todo hypthen-issue
+    // SVG animation elements
+    animate => Animate; animateColor => AnimateColor; animateMotion => AnimateMotion;
+    animateTransform => AnimateTransform; discard => Discard; mpath => Mpath; set => Set;
+    // SVG descriptive elements
+    desc => Desc; metadata => Metadata; title => Title;
+    // SVG filter primitive elements
+    feBlend => FeBlend; feColorMatrix => FeColorMatrix; feComponentTransfer => FeComponentTransfer;
+    feComposite => FeComposite; feConvolveMatrix => FeConvolveMatrix;
+    feDiffuseLighting => FeDiffuseLighting; feDisplacementMap => FeDisplacementMap;
+    feDropShadow => FeDropShadow; feFlood => FeFlood; feFuncA => FeFuncA; feFuncB => FeFuncB;
+    feFuncG => FeFuncG; feFuncR => FeFuncR; feGaussianBlur => FeGaussianBlur; feImage => FeImage;
+    feMerge => FeMerge; feMergeNode => FeMergeNode; feMorphology => FeMorphology;
+    feOffset => FeOffset; feSpecularLighting => FeSpecularLighting; feTile => FeTile;
+    feTurbulence => FeTurbulence;
+    // SVG font elements
+    font => Font; hkern => HKern; vkern => VKern;
+    // todo many font elements with hyphen issue
+    // SVG Paint sever elements
+    hatch => Hatch; solidcolor => SolidColor
+
 }
-
-// TODO:
-// Create the following svg macros
-// - missing-glyph
-// - pattern
-// - switch
-// - symbol
-// - unknown
-
-// - add SVG animation elements
-// - add SVG filter primitive elements
-// - add SVG descriptive elements
-// - add SVG font elements
-// - add SVG paint server elements
-// - altGlyph
-// - altGlyphDef
-// - altGlyphItem
-// - glyph
-// - glyphRef
-// - textPath
-
-// Add the following SVG element macros:
-//  - clipPath
-//  - color-profile
-//  - cursor
-//  - filter
-//  - foreignObject
-//  - hatchpath
-//  - meshpatch
-//  - meshrow
-//  - style
-//  - view
 
 #[macro_export]
 macro_rules! empty {
