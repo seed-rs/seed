@@ -254,31 +254,40 @@ pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) ->
 where
     Ms: 'static,
 {
+    // todo: Excessive nesting?
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         if let Some(et) = event.target() {
-            if let Some(el) = et.dyn_ref::<web_sys::Element>() {
-                let tag = el.tag_name();
-                // Base and Link tags use href for something other than navigation.
-                if tag == "Base" || tag == "Link" {
-                    return;
-                }
-                // todo use anchor element/property?
-                if let Some(href) = el.get_attribute("href") {
-                    if let Some(first) = href.chars().next() {
-                        // The first character being / indicates a rel link, which is what
-                        // we're intercepting.
-                        // todo: Handle other cases that imply a relative link.
-                        if first != '/' {
+            return if let Some(el) = et.dyn_ref::<web_sys::Element>() {
+                // Invoke this logic for not only the element clicked, but its parents
+                // as well.
+                if let Ok(href_el) = el.closest("[href]") {
+                    if let Some(href_el) = href_el {
+                        let tag = href_el.tag_name();
+                        // Base and Link tags use href for something other than navigation.
+                        if tag == "Base" || tag == "Link" {
                             return;
                         }
-                        event.prevent_default(); // Prevent page refresh
-                                                 // Route internally based on href's value
+                        // todo use anchor element/property?
+                        if let Some(href) = href_el.get_attribute("href") {
+                            if let Some(first) = href.chars().next() {
+                                // The first character being / indicates a rel link, which is what
+                                // we're intercepting.
+                                // todo: Handle other cases that imply a relative link.
+                                // todo: I think not having anything, eg no http/www implies
+                                // todo rel link as well.
+                                if first != '/' {
+                                    return;
+                                }
+                                event.prevent_default(); // Prevent page refresh
 
-                        let url = push_route(Url::from(href));
-                        update(routes(url));
+                                // Route internally based on href's value
+                                let url = push_route(Url::from(href));
+                                update(routes(url));
+                            }
+                        }
                     }
                 }
-            }
+            };
         }
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
