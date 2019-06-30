@@ -76,13 +76,13 @@ pub fn get_value(target: &web_sys::EventTarget) -> String {
 /// Similar to `get_value`.
 pub fn set_value(target: &web_sys::EventTarget, value: &str) {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
-        input.set_value(value);
+        return input.set_value(value);
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-        input.set_value(value);
+        return input.set_value(value);
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
-        input.set_value(value);
+        return input.set_value(value);
     }
 }
 

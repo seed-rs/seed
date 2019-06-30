@@ -28,9 +28,6 @@ mod websys_bridge;
 
 // todo temporary: To allow `cargo publish` to work with the unreleased Gloo crate
 pub mod gloo_timers;
-//pub use gloo_timers;
-//pub use gloo_timers::callback::Timeout;
-//pub use gloo_timers::callback::Timeout;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
