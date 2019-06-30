@@ -1,6 +1,7 @@
 //! This module is decoupled / independent.
 
 use serde::{Deserialize, Serialize};
+use std::convert::identity;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Repeated here from `seed::util`, to make this module standalone.  Once we have a Gloo module
@@ -250,45 +251,38 @@ pub fn setup_popstate_listener<Ms>(
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
+#[allow(clippy::option_map_unit_fn)]
 pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) -> Ms)
 where
     Ms: 'static,
 {
-    // todo: Excessive nesting?
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
-        if let Some(et) = event.target() {
-            return if let Some(el) = et.dyn_ref::<web_sys::Element>() {
-                // Invoke this logic for not only the element clicked, but its parents
-                // as well.
-                if let Ok(href_el) = el.closest("[href]") {
-                    if let Some(href_el) = href_el {
-                        let tag = href_el.tag_name();
-                        // Base and Link tags use href for something other than navigation.
-                        if tag == "Base" || tag == "Link" {
-                            return;
-                        }
-                        // todo use anchor element/property?
-                        if let Some(href) = href_el.get_attribute("href") {
-                            if let Some(first) = href.chars().next() {
-                                // The first character being / indicates a rel link, which is what
-                                // we're intercepting.
-                                // todo: Handle other cases that imply a relative link.
-                                // todo: I think not having anything, eg no http/www implies
-                                // todo rel link as well.
-                                if first != '/' {
-                                    return;
-                                }
-                                event.prevent_default(); // Prevent page refresh
-
-                                // Route internally based on href's value
-                                let url = push_route(Url::from(href));
-                                update(routes(url));
-                            }
-                        }
-                    }
-                }
-            };
-        }
+        event.target()
+            .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
+            .and_then(|el| el.closest("[href]").ok())
+            .and_then(identity)  // Option::flatten not stable (https://github.com/rust-lang/rust/issues/60258)
+            .and_then(|href_el| match href_el.tag_name().as_str() {
+                // Base and Link tags use href for something other than navigation.
+                "Base" | "Link" => None,
+                _ => Some(href_el)
+            })
+            .and_then(|href_el| href_el.get_attribute("href"))
+            .and_then(|href| {
+                href.chars().next()
+                    .map(|first_char| (href, first_char))
+            })
+            // The first character being / indicates a rel link, which is what
+            // we're intercepting.
+            // todo: Handle other cases that imply a relative link.
+            // todo: I think not having anything, eg no http/www implies
+            // todo rel link as well.
+            .and_then(|(href, first_char)| if first_char == '/' { Some(href) } else { None })
+            .map(|href| {
+                event.prevent_default(); // Prevent page refresh
+                // Route internally based on href's value
+                let url = push_route(Url::from(href));
+                update(routes(url));
+            });
     }) as Box<FnMut(web_sys::Event) + 'static>);
 
     (util::document().as_ref() as &web_sys::EventTarget)
