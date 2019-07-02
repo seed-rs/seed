@@ -514,6 +514,12 @@ macro_rules! make_tags {
 // - https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 // Grouped here by category on Mozilla's pages, linked above.
 make_tags! {
+    // -------- Custom Tags -------- //
+
+    Empty => "empty",
+
+    // -------- Standard HTML Tags -------- //
+
     Address => "address", Article => "article", Aside => "aside", Footer => "footer",
     Header => "header", H1 => "h1",
     H2 => "h2", H3 => "h3", H4 => "h4", H5 => "h5", H6 => "h6",
