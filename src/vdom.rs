@@ -1,5 +1,5 @@
 use crate::{
-    dom_types::{self, El, ElContainer, MessageMapper, Namespace},
+    dom_types::{self, El, ElContainer, MessageMapper, Namespace, Node},
     events, next_tick, routing, util, websys_bridge,
 };
 use enclose::enclose;
@@ -391,7 +391,13 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 
         // Attach all top-level elements to the mount point: This is where our initial render occurs.
         for top_child in &mut new.children {
-            websys_bridge::attach_el_and_children(top_child, &self.cfg.mount_point, &self)
+            match top_child {
+                Node::Element(top_child_el) => {
+                    websys_bridge::attach_el_and_children(top_child_el, &self.cfg.mount_point, &self)
+                }
+                Node::Empty => (),
+            }
+
         }
 
         self.data.main_el_vdom.replace(Some(new));
@@ -541,23 +547,33 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         }
 
         for child_new in new_children_iter {
-            // We ran out of old children to patch; create new ones.
-            setup_websys_el_and_children(&self.cfg.document, child_new);
-            websys_bridge::attach_el_and_children(child_new, &self.cfg.mount_point, &self.clone());
-            attach_listeners(child_new, &self.mailbox());
+            match child_new {
+                Node::Element(child_new_el) => {
+                    // We ran out of old children to patch; create new ones.
+                    setup_websys_el_and_children(&self.cfg.document, child_new_el);
+                    websys_bridge::attach_el_and_children(
+                        child_new_el,
+                        &self.cfg.mount_point,
+                        &self.clone(),
+                    );
+                    attach_listeners(child_new_el, &self.mailbox());
+                }
+                Node::Empty => (),
+            }
         }
 
         // Now purge any existing no-longer-needed children; they're not part of the new vdom.
         //    while let Some(mut child) = old_children_iter.next() {
         for mut child in old_children_iter {
-            if child.empty {
-                continue;
-            }
+            match child {
+                Node::Element(child_el) => {
+                    let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
 
-            let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
-
-            if let Some(unmount_actions) = &mut child.hooks.will_unmount {
-                (unmount_actions.actions)(&child_el_ws);
+                    if let Some(unmount_actions) = &mut child_el.hooks.will_unmount {
+                        (unmount_actions.actions)(&child_el_ws);
+                    }
+                }
+                Node::Empty => (),
             }
         }
 
@@ -578,19 +594,20 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             .push(Box::new(listener));
     }
 
-    fn _find(&self, ref_: &str) -> Option<El<Ms>> {
-        // todo expensive? We're cloning the whole vdom tree.
-        // todo: Let's iterate through refs instead, once this is working.
-
-        let top_el = &self
-            .data
-            .main_el_vdom
-            .borrow()
-            .clone()
-            .expect("Can't find main vdom el in find");
-
-        find_el(ref_, top_el)
-    }
+    // todo add back once you sort how to handle with Node refactor
+    //    fn _find(&self, ref_: &str) -> Option<El<Ms>> {
+    //        // todo expensive? We're cloning the whole vdom tree.
+    //        // todo: Let's iterate through refs instead, once this is working.
+    //
+    //        let top_el = &self
+    //            .data
+    //            .main_el_vdom
+    //            .borrow()
+    //            .clone()
+    //            .expect("Can't find main vdom el in find");
+    //
+    //        find_el(ref_, top_el)
+    //    }
 
     fn mailbox(&self) -> Mailbox<Ms> {
         Mailbox::new(enclose!((self => s) move |message| {
@@ -728,7 +745,7 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
+pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
@@ -737,20 +754,6 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, ElC>,
 ) -> Option<&'a web_sys::Node> {
-    // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
-    // TODO: Current sceme is that if the parent changes, redraw all children...
-    // TODO: fix this later.
-    // We make an assumption that most of the page is not dramatically changed
-    // by each event, to optimize.
-
-    // Assume all listeners have been removed from the old el_ws (if any), and the
-    // old el vdom's elements are still attached.
-
-    // take removes the interior value from the Option; otherwise we run into problems
-    // about not being able to remove from borrowed content.
-    // We remove it from the old el_vodom now, and at the end... add it to the new one.
-    // We don't run attach_children() when patching, hence this approach.
-
     if old != *new {
         // At this step, we already assume we have the right element - either
         // by entering this func directly for the top-level, or recursively after
@@ -760,33 +763,11 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
         // no way to patch one element type into another.
         // TODO: forcing a rerender for differnet listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
-        if new.empty && !old.empty {
-            let old_el_ws = old
-                .el_ws
-                .take()
-                .expect("old el_ws missing in call to unmount_actions");
 
-            parent
-                .remove_child(&old_el_ws)
-                .expect("Problem removing old el_ws when updating to empty");
-
-            if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                (unmount_actions.actions)(&old_el_ws);
-                //                if let Some(message) = unmount_actions.message.clone() {
-                //                    app.update(message);
-                //                }
-            }
-
-            return None;
-        // If new and old are empty, we don't need to do anything.
-        } else if new.empty && old.empty {
-            return None;
-        }
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
-        else if old.tag != new.tag
+        if old.tag != new.tag
             || old.namespace != new.namespace
-            || old.empty != new.empty
             || old.text.is_some() != new.text.is_some()
         {
             // TODO: DRY here between this and later in func.
@@ -809,27 +790,12 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
             let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
 
-            if old.empty {
-                match next_node {
-                    Some(n) => {
-                        parent
-                            .insert_before(new_el_ws, Some(&n))
-                            .expect("Problem adding element to replace previously empty one");
-                    }
-                    None => {
-                        parent
-                            .append_child(new_el_ws)
-                            .expect("Problem adding element to replace previously empty one");
-                    }
-                }
-            } else {
-                parent
-                    .replace_child(
-                        new_el_ws,
-                        &old_el_ws.expect("old el_ws missing in call to replace_child"),
-                    )
-                    .expect("Problem replacing element");
-            }
+            parent
+                .replace_child(
+                    new_el_ws,
+                    &old_el_ws.expect("old el_ws missing in call to replace_child"),
+                )
+                .expect("Problem replacing element");
 
             // Perform side-effects specified for mounting.
             if let Some(mount_actions) = &mut new.hooks.did_mount {
@@ -851,10 +817,6 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 .clone();
             websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
         }
-    }
-
-    if old.empty && new.empty {
-        return None;
     }
 
     let old_el_ws = old.el_ws.take().unwrap();
@@ -914,37 +876,115 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
     //    while let Some(child_new) = new_children_iter.next() {
     for child_new in new_children_iter {
-        // We ran out of old children to patch; create new ones.
-        setup_websys_el_and_children(document, child_new);
-        websys_bridge::attach_el_and_children(child_new, &old_el_ws, app);
-        attach_listeners(child_new, mailbox);
+        match child_new {
+            Node::Element(child_new_el) => {
+                // We ran out of old children to patch; create new ones.
+                setup_websys_el_and_children(document, child_new_el);
+                websys_bridge::attach_el_and_children(child_new_el, &old_el_ws, app);
+                attach_listeners(child_new_el, mailbox);
+            }
+            Node::Empty => (),
+        }
     }
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
     //    while let Some(mut child) = old_children_iter.next() {
     for mut child in old_children_iter {
-        if child.empty {
-            continue;
-        }
+        match child {
+            Node::Element(mut child_el) => {
+                let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
 
-        let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
+                // TODO: DRY here between this and earlier in func
+                if let Some(unmount_actions) = &mut child_el.hooks.will_unmount {
+                    (unmount_actions.actions)(&child_el_ws);
+                }
 
-        // TODO: DRY here between this and earlier in func
-        if let Some(unmount_actions) = &mut child.hooks.will_unmount {
-            (unmount_actions.actions)(&child_el_ws);
-        }
-
-        // todo get to the bottom of this: Ie why we need this code sometimes when using raw html elements.
-        match old_el_ws.remove_child(&child_el_ws) {
-            Ok(_) => {}
-            Err(_) => {
-                crate::error("Minor error patching html element. (remove)");
+                // todo get to the bottom of this: Ie why we need this code sometimes when using raw html elements.
+                match old_el_ws.remove_child(&child_el_ws) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        crate::error("Minor error patching html element. (remove)");
+                    }
+                }
             }
+            Node::Empty => (),
         }
     }
 
     new.el_ws = Some(old_el_ws);
     new.el_ws.as_ref()
+}
+
+pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
+    document: &Document,
+    mut old: Node<Ms>,
+    new: &'a mut Node<Ms>,
+    parent: &web_sys::Node,
+    next_node: Option<web_sys::Node>,
+    mailbox: &Mailbox<Ms>,
+    app: &App<Ms, Mdl, ElC>,
+) -> Option<&'a web_sys::Node> {
+    // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
+    // TODO: Current sceme is that if the parent changes, redraw all children...
+    // TODO: fix this later.
+    // We make an assumption that most of the page is not dramatically changed
+    // by each event, to optimize.
+
+    // Assume all listeners have been removed from the old el_ws (if any), and the
+    // old el vdom's elements are still attached.
+
+    // take removes the interior value from the Option; otherwise we run into problems
+    // about not being able to remove from borrowed content.
+    // We remove it from the old el_vodom now, and at the end... add it to the new one.
+    // We don't run attach_children() when patching, hence this approach.
+
+    match old {
+        Node::Element(mut old_el) => match new {
+            Node::Element(new_el) => {
+                patch_el(document, old_el, new_el, parent, next_node, mailbox, app)
+            }
+            Node::Empty => {
+                let old_el_ws = old_el
+                    .el_ws
+                    .take()
+                    .expect("old el_ws missing in call to unmount_actions");
+
+                parent
+                    .remove_child(&old_el_ws)
+                    .expect("Problem removing old el_ws when updating to empty");
+
+                if let Some(unmount_actions) = &mut old_el.hooks.will_unmount {
+                    (unmount_actions.actions)(&old_el_ws);
+                    //                if let Some(message) = unmount_actions.message.clone() {
+                    //                    app.update(message);
+                    //                }
+                }
+
+                return None;
+            }
+        },
+        Node::Empty => match new {
+            Node::Element(new_el) => {
+                let new_el_ws = new_el.el_ws.as_ref().expect("Missing websys el");
+
+                match next_node {
+                    Some(n) => {
+                        parent
+                            .insert_before(new_el_ws, Some(&n))
+                            .expect("Problem adding element to replace previously empty one");
+                    }
+                    None => {
+                        parent
+                            .append_child(new_el_ws)
+                            .expect("Problem adding element to replace previously empty one");
+                    }
+                }
+                Some(new_el_ws)
+            }
+            // If new and old are empty, we don't need to do anything.
+            Node::Empty => None,
+        },
+    }
 }
 
 pub trait _Attrs: PartialEq + ToString {
@@ -997,21 +1037,21 @@ pub trait DomElLifecycle {
     fn will_unmount(self) -> Option<Box<FnMut(&Element)>>;
 }
 
-/// Find the first element that matches the ref specified.
-//pub fn find_el<'a, Msg>(ref_: &str, top_el: &'a El<Msg>) -> Option<&'a El<Msg>> {
-pub fn find_el<Msg>(ref_: &str, top_el: &El<Msg>) -> Option<El<Msg>> {
-    if top_el.ref_ == Some(ref_.to_string()) {
-        return Some(top_el.clone());
-    }
-
-    for child in &top_el.children {
-        let result = find_el(ref_, child);
-        if result.is_some() {
-            return result;
-        }
-    }
-    None
-}
+// todo add back once you sort out how to handle with Node
+///// Find the first element that matches the ref specified.
+//pub fn find_el<Msg>(ref_: &str, top_el: &El<Msg>) -> Option<El<Msg>> {
+//    if top_el.ref_ == Some(ref_.to_string()) {
+//        return Some(top_el.clone());
+//    }
+//
+//    for child in &top_el.children {
+//        let result = find_el(ref_, child);
+//        if result.is_some() {
+//            return result;
+//        }
+//    }
+//    None
+//}
 
 #[cfg(test)]
 pub mod tests {

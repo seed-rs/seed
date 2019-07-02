@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.8
+- Added more SVG element macros
+- Several minor bux fixes
+
 ## v0.3.7
 - `routes` now accepts `Url` instead of `&Url` (Breaking)
 - Improvements to fetch API

@@ -7,7 +7,8 @@ pub use crate::{
     fetch::{Method, Request},
     routing::{push_route, Url},
     util::{body, document, error, history, log, update, window},
-    vdom::{find_el, App},
+//    vdom::{find_el, App},
+    vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -31,11 +32,10 @@ pub mod gloo_timers;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub fn empty<Ms>() -> dom_types::El<Ms> {
-    // The tag doesn't matter here, but this seems semantically appropriate.
-    let mut el = dom_types::El::empty(dom_types::Tag::Empty);
-    el.empty = true;
-    el
+pub fn empty<Ms>() -> dom_types::Node<Ms> {
+    // todo: Perhaps get rid of this and just use the macro, or replace with
+    // todo exposing Node::Empty directly.
+    dom_types::Node::Empty
 }
 
 /// A high-level wrapper for `web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0`:

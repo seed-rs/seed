@@ -2,7 +2,7 @@
 use wasm_bindgen::JsCast;
 
 use crate::dom_types;
-use crate::dom_types::{El, ElContainer};
+use crate::dom_types::{El, ElContainer, Node};
 use crate::vdom::App;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
@@ -179,7 +179,10 @@ pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
         .expect("Missing websys el in attach children");
 
     for child in &mut el_vdom.children {
-        attach_el_and_children(child, &el_ws, app)
+        match child {
+            Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
+            Node::Empty => (),
+        }
     }
 
     el_vdom.el_ws.replace(el_ws);
@@ -196,11 +199,6 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
-    // Don't render if we're dealing with an empty element.
-    if el_vdom.empty {
-        return;
-    }
-
     let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
 
     // Append the element
@@ -215,8 +213,11 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
 
     // appending the its children to the el_ws
     for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
-        attach_el_and_children(child, &el_ws, app)
+        match child {
+            // Raise the active level once per recursion.
+            Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
+            Node::Empty => (),
+        }
     }
 
     // Perform side-effects specified for mounting.
@@ -274,12 +275,6 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                         .expect("Removing an attribute"),
                     None => crate::error("Minor error on html element (setting attrs)"),
                 }
-
-                //                old_el_ws
-                //                    .dyn_ref::<web_sys::Element>()
-                //                    .expect("Problem casting Node as Element while removing an attribute")
-                //                    .remove_attribute(name.as_str())
-                //                    .expect("Removing an attribute");
             }
         }
     }
@@ -389,7 +384,7 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
                     .expect("Can't find child in raw html element.");
 
                 if let Some(child_vdom) = el_from_ws(&child) {
-                    result.children.push(child_vdom);
+                    result.children.push(Node::Element(child_vdom));
                 }
             }
             Some(result)

@@ -119,19 +119,19 @@ impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(El::new_text(self))
+        el.children.push(Node::Element(El::new_text(self)))
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(self)
+        el.children.push(Node::Element(self))
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
-        el.children.append(&mut self);
+        el.children.append(&mut self.map|el| Node::Element(el));
     }
 }
 
@@ -149,10 +149,10 @@ impl<Ms> UpdateEl<El<Ms>> for Optimize {
 }
 
 impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
-where
-    I: Iterator,
-    U: UpdateEl<El<Ms>>,
-    F: FnMut(I::Item) -> U,
+    where
+        I: Iterator,
+        U: UpdateEl<El<Ms>>,
+        F: FnMut(I::Item) -> U,
 {
     fn update(self, el: &mut El<Ms>) {
         self.for_each(|item| item.update(el));
@@ -514,10 +514,6 @@ macro_rules! make_tags {
 // - https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 // Grouped here by category on Mozilla's pages, linked above.
 make_tags! {
-    // -------- Custom Tags -------- //
-
-    Empty => "empty",
-
     // -------- Standard HTML Tags -------- //
 
     Address => "address", Article => "article", Aside => "aside", Footer => "footer",
@@ -642,7 +638,8 @@ pub enum Optimize {
 }
 
 pub trait ElContainer<Ms: 'static> {
-    fn els(self) -> Vec<El<Ms>>;
+    //    fn els(self) -> Vec<El<Ms>>;
+    fn els(self) -> Vec<Node<Ms>>;
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
@@ -653,15 +650,39 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
 }
 
 impl<Ms> ElContainer<Ms> for El<Ms> {
-    fn els(self) -> Vec<El<Ms>> {
-        vec![self]
+    fn els(self) -> Vec<Node<Ms>> {
+        vec![Node::Element(self)]
     }
 }
 
 impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
-    fn els(self) -> Vec<El<Ms>> {
+    fn els(self) -> Vec<Node<Ms>> {
+        self.map(|el| Node::Element(el)).collect()
+    }
+}
+
+impl<Ms: 'static> ElContainer<Ms> for Node<Ms> {
+    fn els(self) -> Vec<Node<Ms>> {
+        vec![self]
+    }
+}
+
+impl<Ms: 'static> ElContainer<Ms> for Vec<Node<Ms>> {
+    fn els(self) -> Vec<Node<Ms>> {
         self
     }
+}
+
+/// An component in our virtual DOM. Related to, but different from
+/// [DOM Nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType)
+#[derive(Clone, Debug, PartialEq)] // todo: Custom debug implementation where children are on new lines and indented.
+pub enum Node<Ms: 'static> {
+    Element(El<Ms>),
+    //    Svg(El<Ms>),
+    // todo impl this. Ie: Why does our vdom need text nodes, when
+    // todo we treat it as a DOM/web_sys implementation detail?
+    //    Text(String),
+    Empty,
 }
 
 /// An component in our virtual DOM.
@@ -676,27 +697,18 @@ pub struct El<Ms: 'static> {
     pub attrs: Attrs,
     pub style: Style,
     pub listeners: Vec<Listener<Ms>>,
-    // Text is None unless this is a text node.
     pub text: Option<String>,
-    pub children: Vec<El<Ms>>,
+    pub children: Vec<Node<Ms>>,
 
     /// The actual web element/node
     pub el_ws: Option<web_sys::Node>,
 
-    // todo temp?
-    //    pub key: Option<u32>,
     pub namespace: Option<Namespace>,
     // A unique identifier in the vdom. Useful for triggering one-off events.
     pub ref_: Option<String>,
 
-    // control means we keep its text input (value) in sync with the model.
-    // static: bool
-    // static_to_parent: bool
-    // ancestors: Vec<u32>  // ids of parent, grandparent etc.
-
     // Lifecycle hooks
     pub hooks: LifecycleHooks<Ms>,
-    pub empty: bool,
     // Indicates not to render anything.
     optimizations: Vec<Optimize>,
 }
@@ -780,7 +792,6 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             el_ws: self.el_ws,
             namespace: self.namespace,
             hooks: self.hooks.map_message(f),
-            empty: self.empty,
             optimizations: self.optimizations,
 
             ref_: None,
@@ -806,7 +817,6 @@ impl<Ms> El<Ms> {
             // static: false,
             // static_to_parent: false,
             hooks: LifecycleHooks::new(),
-            empty: false,
             optimizations: Vec::new(),
 
             ref_: None,
@@ -860,7 +870,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new child to the element
-    pub fn add_child(mut self, element: El<Ms>) -> Self {
+    pub fn add_child(mut self, element: Node<Ms>) -> Self {
         self.children.push(element);
         self
     }
@@ -901,6 +911,7 @@ impl<Ms> El<Ms> {
 
     /// Replace the element's text.
     /// Removes all text nodes from element, then adds the new one.
+    /// todo: We shouldn't be storing text nodes in the vdom.
     pub fn replace_text(mut self, text: &str) -> Self {
         self.children = self
             .children
@@ -948,8 +959,13 @@ impl<Ms> El<Ms> {
         let mut result = String::new();
 
         for child in &self.children {
-            if let Some(text) = &child.text {
-                result += text;
+            match child {
+                Node::Element(child_el) => {
+                    if let Some(text) = &child_el.text {
+                        result += text;
+                    }
+                }
+                Node::Empty => ()
             }
         }
 
@@ -958,19 +974,23 @@ impl<Ms> El<Ms> {
 
     /// Call f(&mut el) for this El and each of its descendants
     pub fn walk_tree_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut Self),
+        where
+            F: FnMut(&mut Self),
     {
         // This inner function is required to avoid recursive compilation errors having to do
         // with the generic trait bound on F.
         fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-        where
-            F: FnMut(&mut El<Ms>),
+            where
+                F: FnMut(&mut El<Ms>),
         {
             f(el);
 
             for child in &mut el.children {
-                walk_tree_mut_inner(child, f);
+                match child {
+                    Node::Element(child_el) => walk_tree_mut_inner(child, f),
+                    Node::Empty => (),
+                }
+
             }
         }
 
@@ -993,12 +1013,10 @@ impl<Ms> Clone for El<Ms> {
             style: self.style.clone(),
             text: self.text.clone(),
             children: self.children.clone(),
-            //            key: self.key,
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
             hooks: LifecycleHooks::new(),
-            empty: self.empty,
             optimizations: self.optimizations.clone(),
 
             ref_: self.ref_.clone(),
@@ -1016,7 +1034,6 @@ impl<Ms> PartialEq for El<Ms> {
             && self.text == other.text
             && self.listeners == other.listeners
             && self.namespace == other.namespace
-            && self.empty == other.empty
             && self.ref_ == other.ref_
     }
 }
@@ -1227,7 +1244,7 @@ pub mod tests {
                     "cls_8" => 1 == 1
                 ]
             ]
-            .add_class("cls_9"),
+                .add_class("cls_9"),
         );
 
         let mut expected = IndexMap::new();
