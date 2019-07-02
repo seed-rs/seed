@@ -33,7 +33,7 @@ pub mod gloo_timers;
 /// in ternary operations.
 pub fn empty<Ms>() -> dom_types::El<Ms> {
     // The tag doesn't matter here, but this seems semantically appropriate.
-    let mut el = dom_types::El::empty(dom_types::Tag::Del);
+    let mut el = dom_types::El::empty(dom_types::Tag::Empty);
     el.empty = true;
     el
 }

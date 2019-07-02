@@ -550,6 +550,10 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         // Now purge any existing no-longer-needed children; they're not part of the new vdom.
         //    while let Some(mut child) = old_children_iter.next() {
         for mut child in old_children_iter {
+            if child.empty {
+                continue;
+            }
+
             let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
             if let Some(unmount_actions) = &mut child.hooks.will_unmount {
@@ -919,6 +923,10 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
     //    while let Some(mut child) = old_children_iter.next() {
     for mut child in old_children_iter {
+        if child.empty {
+            continue;
+        }
+
         let child_el_ws = child.el_ws.take().expect("Missing child el_ws");
 
         // TODO: DRY here between this and earlier in func
