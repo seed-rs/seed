@@ -87,11 +87,21 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     // the disabled attr can't be present.
     // Without this shim, setting At::Disabled => false still disables the field.
     else if at == "disabled" && val == "false" {
+        match el_ws.node_type() {
+            // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
+            1 => el_ws
+                .dyn_ref::<web_sys::Element>()
+                .expect("Problem casting Node as Element while removing the attribute `disabled`")
+                .remove_attribute(at)
+                .expect("Problem removing the atrribute `disabled`."),
+            _ => crate::error("Found non el node while removing attribute `disabled`."),
+        }
         set_special = true;
     }
 
     if !set_special {
         match el_ws.node_type() {
+            // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
             1 => el_ws
                 .dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element while setting an attribute")

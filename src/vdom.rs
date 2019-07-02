@@ -1206,6 +1206,83 @@ pub mod tests {
         assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
     }
 
+    /// Test if attribute `disabled` is correctly added and then removed.
+    #[wasm_bindgen_test]
+    fn attr_disabled() {
+        let app = create_app();
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        setup_websys_el(&doc, &mut vdom);
+        // clone so we can keep using it after vdom is modified
+        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        parent.append_child(&old_ws).unwrap();
+
+        // First add button without attribute `disabled`
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![button![attrs! { At::Disabled => false }]],
+            &app,
+        );
+
+        assert_eq!(parent.child_nodes().length(), 1);
+        assert_eq!(old_ws.child_nodes().length(), 1);
+        let button = old_ws
+            .child_nodes()
+            .item(0)
+            .unwrap()
+            .dyn_into::<Element>()
+            .unwrap();
+        assert_eq!(button.has_attribute("disabled"), false);
+
+        // Now add attribute `disabled`
+        vdom = call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![button![attrs! { At::Disabled => true }]],
+            &app,
+        );
+
+        let button = old_ws
+            .child_nodes()
+            .item(0)
+            .unwrap()
+            .dyn_into::<Element>()
+            .unwrap();
+        assert_eq!(
+            button
+                .get_attribute("disabled")
+                .expect("button hasn't got attribute `disabled`!"),
+            "true"
+        );
+
+        // And remove attribute `disabled`
+        call_patch(
+            &doc,
+            &parent,
+            &mailbox,
+            vdom,
+            div![button![attrs! { At::Disabled => false }]],
+            &app,
+        );
+
+        let button = old_ws
+            .child_nodes()
+            .item(0)
+            .unwrap()
+            .dyn_into::<Element>()
+            .unwrap();
+        assert_eq!(button.has_attribute("disabled"), false);
+    }
+
     /// Test that if the first child was a seed::empty() and it is changed to a non-empty El,
     /// then the new element is inserted at the correct position.
     #[wasm_bindgen_test]
@@ -1346,7 +1423,7 @@ pub mod tests {
         assert_eq!(parent.children().length(), 0);
     }
 
-    /// Test that a text Node is correctly patched to an Element and vice versa
+    /// Test that a text Node is correctly patched to an Element and vice versa.
     #[wasm_bindgen_test]
     fn text_to_element_to_text() {
         let app = create_app();
