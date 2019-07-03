@@ -131,7 +131,7 @@ impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
-        el.children.append(&mut self.map|el| Node::Element(el));
+        el.children.append(&mut self.map | el | Node::Element(el));
     }
 }
 
@@ -149,10 +149,10 @@ impl<Ms> UpdateEl<El<Ms>> for Optimize {
 }
 
 impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
-    where
-        I: Iterator,
-        U: UpdateEl<El<Ms>>,
-        F: FnMut(I::Item) -> U,
+where
+    I: Iterator,
+    U: UpdateEl<El<Ms>>,
+    F: FnMut(I::Item) -> U,
 {
     fn update(self, el: &mut El<Ms>) {
         self.for_each(|item| item.update(el));
@@ -673,15 +673,29 @@ impl<Ms: 'static> ElContainer<Ms> for Vec<Node<Ms>> {
     }
 }
 
+/// For representing text nodes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Text {
+    pub text: String,
+    pub node_ws: Option<web_sys::Node>,
+}
+
+impl Text {
+    pub fn new(text: String) -> Self {
+        Self {
+            text,
+            node_ws: None,
+        }
+    }
+}
+
 /// An component in our virtual DOM. Related to, but different from
 /// [DOM Nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType)
-#[derive(Clone, Debug, PartialEq)] // todo: Custom debug implementation where children are on new lines and indented.
+#[derive(Clone, Debug, PartialEq)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
     //    Svg(El<Ms>),
-    // todo impl this. Ie: Why does our vdom need text nodes, when
-    // todo we treat it as a DOM/web_sys implementation detail?
-    //    Text(String),
+    Text(Text),
     Empty,
 }
 
@@ -697,7 +711,6 @@ pub struct El<Ms: 'static> {
     pub attrs: Attrs,
     pub style: Style,
     pub listeners: Vec<Listener<Ms>>,
-    pub text: Option<String>,
     pub children: Vec<Node<Ms>>,
 
     /// The actual web element/node
@@ -807,7 +820,6 @@ impl<Ms> El<Ms> {
             attrs: Attrs::empty(),
             style: Style::empty(),
             listeners: Vec::new(),
-            text: None,
             children: Vec::new(),
 
             el_ws: None,
@@ -823,11 +835,11 @@ impl<Ms> El<Ms> {
         }
     }
 
-    pub fn new_text(text: &str) -> Self {
-        let mut result = Self::empty(Tag::Span);
-        result.text = Some(text.into());
-        result
-    }
+    //    pub fn new_text(text: &str) -> Self {
+    //        let mut result = Self::empty(Tag::Span);
+    //        result.text = Some(text.into());
+    //        result
+    //    }
 
     /// Create an empty SVG element, specifying only the tag
     pub fn empty_svg(tag: Tag) -> Self {
@@ -959,13 +971,8 @@ impl<Ms> El<Ms> {
         let mut result = String::new();
 
         for child in &self.children {
-            match child {
-                Node::Element(child_el) => {
-                    if let Some(text) = &child_el.text {
-                        result += text;
-                    }
-                }
-                Node::Empty => ()
+            if let Node::Text(text_node) = child {
+                result += &text_node.text;
             }
         }
 
@@ -974,23 +981,22 @@ impl<Ms> El<Ms> {
 
     /// Call f(&mut el) for this El and each of its descendants
     pub fn walk_tree_mut<F>(&mut self, mut f: F)
-        where
-            F: FnMut(&mut Self),
+    where
+        F: FnMut(&mut Self),
     {
         // This inner function is required to avoid recursive compilation errors having to do
         // with the generic trait bound on F.
         fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-            where
-                F: FnMut(&mut El<Ms>),
+        where
+            F: FnMut(&mut El<Ms>),
         {
             f(el);
 
             for child in &mut el.children {
                 match child {
-                    Node::Element(child_el) => walk_tree_mut_inner(child, f),
-                    Node::Empty => (),
+                    Node::Element(child_el) => walk_tree_mut_inner(child_el, f),
+                    _ => (),
                 }
-
             }
         }
 
@@ -1011,7 +1017,6 @@ impl<Ms> Clone for El<Ms> {
             tag: self.tag.clone(),
             attrs: self.attrs.clone(),
             style: self.style.clone(),
-            text: self.text.clone(),
             children: self.children.clone(),
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
@@ -1031,7 +1036,6 @@ impl<Ms> PartialEq for El<Ms> {
         self.tag == other.tag
             && self.attrs == other.attrs
             && self.style == other.style
-            && self.text == other.text
             && self.listeners == other.listeners
             && self.namespace == other.namespace
             && self.ref_ == other.ref_
@@ -1244,7 +1248,7 @@ pub mod tests {
                     "cls_8" => 1 == 1
                 ]
             ]
-                .add_class("cls_9"),
+            .add_class("cls_9"),
         );
 
         let mut expected = IndexMap::new();

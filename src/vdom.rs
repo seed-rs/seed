@@ -392,12 +392,13 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         // Attach all top-level elements to the mount point: This is where our initial render occurs.
         for top_child in &mut new.children {
             match top_child {
-                Node::Element(top_child_el) => {
-                    websys_bridge::attach_el_and_children(top_child_el, &self.cfg.mount_point, &self)
-                }
+                Node::Element(top_child_el) => websys_bridge::attach_el_and_children(
+                    top_child_el,
+                    &self.cfg.mount_point,
+                    &self,
+                ),
                 Node::Empty => (),
             }
-
         }
 
         self.data.main_el_vdom.replace(Some(new));
@@ -651,7 +652,7 @@ where
     Ms: 'static,
 {
     if el.el_ws.is_none() {
-        el.el_ws = Some(websys_bridge::make_websys_el(el, document));
+        el.el_ws = Some(websys_bridge::make_websys_node(Node::Element(el), document));
     }
 }
 
@@ -745,6 +746,8 @@ fn setup_window_listeners<Ms>(
     }
 }
 
+
+// todo: Split into a separate patch module.
 pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
     mut old: El<Ms>,
@@ -764,11 +767,12 @@ pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
         // TODO: forcing a rerender for differnet listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
 
+        // Assume all listeners have been removed from the old el_ws (if any), and the
+        // old el vdom's elements are still attached.
+
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
-        if old.tag != new.tag
-            || old.namespace != new.namespace
-            || old.text.is_some() != new.text.is_some()
+        if old.tag != new.tag || old.namespace != new.namespace
         {
             // TODO: DRY here between this and later in func.
             let old_el_ws = old.el_ws.take();
@@ -930,18 +934,23 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     // We make an assumption that most of the page is not dramatically changed
     // by each event, to optimize.
 
-    // Assume all listeners have been removed from the old el_ws (if any), and the
-    // old el vdom's elements are still attached.
-
-    // take removes the interior value from the Option; otherwise we run into problems
-    // about not being able to remove from borrowed content.
-    // We remove it from the old el_vodom now, and at the end... add it to the new one.
-    // We don't run attach_children() when patching, hence this approach.
-
+    // todo: Lots of DRY issues in this refactoring. Split into fns?
+    // We go through each combination of new and old variants to determine how to patch.
     match old {
         Node::Element(mut old_el) => match new {
             Node::Element(new_el) => {
                 patch_el(document, old_el, new_el, parent, next_node, mailbox, app)
+            }
+            Node::Text => {
+                let old_el_ws = old_el
+                    .el_ws
+                    .take()
+                    .expect("old el_ws missing in call to unmount_actions");
+                websys_bridge::remove_node(&old_el_ws, parent, old_el);
+
+                let text_node = document.create_text_node(text);
+                websys_bridge::insert_node(&text_node, parent, next_node);
+                Some(Node::Element(&text_node))
             }
             Node::Empty => {
                 let old_el_ws = old_el
@@ -949,40 +958,52 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                     .take()
                     .expect("old el_ws missing in call to unmount_actions");
 
-                parent
-                    .remove_child(&old_el_ws)
-                    .expect("Problem removing old el_ws when updating to empty");
-
-                if let Some(unmount_actions) = &mut old_el.hooks.will_unmount {
-                    (unmount_actions.actions)(&old_el_ws);
-                    //                if let Some(message) = unmount_actions.message.clone() {
-                    //                    app.update(message);
-                    //                }
-                }
-
-                return None;
+                websys_bridge::remove_node(&old_el_ws, parent, Some(old_el));
+                None
             }
         },
         Node::Empty => match new {
             Node::Element(new_el) => {
                 let new_el_ws = new_el.el_ws.as_ref().expect("Missing websys el");
 
-                match next_node {
-                    Some(n) => {
-                        parent
-                            .insert_before(new_el_ws, Some(&n))
-                            .expect("Problem adding element to replace previously empty one");
-                    }
-                    None => {
-                        parent
-                            .append_child(new_el_ws)
-                            .expect("Problem adding element to replace previously empty one");
-                    }
-                }
+                websys_bridge::insert_node(new_el_ws, parent, next_node);
                 Some(new_el_ws)
+            }
+            Note::Text => {
+                let text_node = document.create_text_node(text);
+                websys_bridge::insert_node(&text_node, parent, next_node);
+                Some(&text_node)
             }
             // If new and old are empty, we don't need to do anything.
             Node::Empty => None,
+        },
+        Node::Text(mut old_text) => match new {
+            Node::Element(new_el) => {
+                websys_bridge::remove_node(&old_el_ws, parent, old_el);
+
+                let new_el_ws = new_el.el_ws.as_ref().expect("Missing websys el");
+
+                websys_bridge::insert_node(new_el_ws, parent, next_node);
+                Some(&Node::Element(new_el_ws))
+            }
+            Node::Empty => {
+                websys_bridge::remove_node(
+                    &old_text.node_ws.expect("Can't find old text"),
+                    parent,
+                    None,
+                );
+                None
+            }
+            Node::Text(text_node) => {
+                let old_node_ws = old_text
+                    .node_ws
+                    .take()
+                    .expect("old node_ws missing when changing text");
+
+                old_node_ws.set_text_content(Some(&text_node.text));
+                old_text.node_ws = Some(old_node_ws);
+                Some(&Node::Text(old_text))
+            }
         },
     }
 }
