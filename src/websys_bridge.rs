@@ -129,47 +129,44 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 /// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub fn make_websys_node<Ms>(
-    node_vdom: &mut Node<Ms>,
-    document: &web_sys::Document,
-) -> web_sys::Node {
+pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
     // A simple text node.
-    match node_vdom {
-        Node::Element(el_vdom) => {
-            // Create the DOM-analog element; it won't render until attached to something.
-            let tag = el_vdom.tag.as_str();
+    //    match node_vdom {
+    //        Node::Element(el_vdom) => {
+    // Create the DOM-analog element; it won't render until attached to something.
+    let tag = el_vdom.tag.as_str();
 
-            let el_ws = match el_vdom.namespace {
-                Some(ref ns) => document
-                    .create_element_ns(Some(ns.as_str()), tag)
-                    .expect("Problem creating web-sys El"),
-                None => document
-                    .create_element(tag)
-                    .expect("Problem creating web-sys El"),
-            };
+    let el_ws = match el_vdom.namespace {
+        Some(ref ns) => document
+            .create_element_ns(Some(ns.as_str()), tag)
+            .expect("Problem creating web-sys El"),
+        None => document
+            .create_element(tag)
+            .expect("Problem creating web-sys El"),
+    };
 
-            for (at, val) in &el_vdom.attrs.vals {
-                set_attr_shim(&el_ws, at, val);
-            }
-            if let Some(ns) = &el_vdom.namespace {
-                el_ws
-                    .dyn_ref::<web_sys::Element>()
-                    .expect("Problem casting Node as Element while setting an attribute")
-                    .set_attribute("xmlns", ns.as_str())
-                    .expect("Problem setting xlmns attribute");
-            }
-
-            // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
-            // merge the different parts of style here.
-            if el_vdom.style.vals.keys().len() > 0 {
-                set_style(&el_ws, &el_vdom.style)
-            }
-
-            el_ws.into()
-        }
-        Node::Text(text_node) => document.create_text_node(text_node.text).into(),
-        Node::Empty => panic!("empty element passed to make_websys_node"),
+    for (at, val) in &el_vdom.attrs.vals {
+        set_attr_shim(&el_ws, at, val);
     }
+    if let Some(ns) = &el_vdom.namespace {
+        el_ws
+            .dyn_ref::<web_sys::Element>()
+            .expect("Problem casting Node as Element while setting an attribute")
+            .set_attribute("xmlns", ns.as_str())
+            .expect("Problem setting xlmns attribute");
+    }
+
+    // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
+    // merge the different parts of style here.
+    if el_vdom.style.vals.keys().len() > 0 {
+        set_style(&el_ws, &el_vdom.style)
+    }
+
+    el_ws.into()
+    //        }
+    //        Node::Text(text_node) => document.create_text_node(&text_node.text).into(),
+    //        Node::Empty => panic!("empty element passed to make_websys_node"),
+    //    }
 }
 
 /// Similar to `attach_el_and_children`, but assumes we've already attached the parent.
@@ -337,7 +334,7 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 
 /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
 /// and markdown strings. Includes children, recursively added.
-pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
+pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
         1 => {
             // Element node
@@ -379,7 +376,7 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
                     .get(i)
                     .expect("Can't find child in raw html element.");
 
-                if let Some(child_vdom) = el_from_ws(&child) {
+                if let Some(child_vdom) = node_from_ws(&child) {
                     result.children.push(child_vdom);
                 }
             }
@@ -418,7 +415,7 @@ pub(crate) fn insert_node(
 pub(crate) fn remove_node<Ms>(
     node: &web_sys::Node,
     parent: &web_sys::Node,
-    el_vdom: Some(&mut El<Ms>),
+    el_vdom: Option<&mut El<Ms>>,
 ) {
     parent
         .remove_child(node)

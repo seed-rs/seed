@@ -10,7 +10,7 @@ use std::{
     collections::{vec_deque::VecDeque, HashMap},
     rc::Rc,
 };
-use wasm_bindgen::closure::Closure;
+use wasm_bindgen::{closure::Closure, JsCast};
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Document, Element, Event, EventTarget, Window};
 
@@ -652,7 +652,7 @@ where
     Ms: 'static,
 {
     if el.el_ws.is_none() {
-        el.el_ws = Some(websys_bridge::make_websys_node(Node::Element(el), document));
+        el.el_ws = Some(websys_bridge::make_websys_el(el, document));
     }
 }
 
@@ -746,7 +746,6 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-
 // todo: Split into a separate patch module.
 pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
@@ -772,8 +771,7 @@ pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
-        if old.tag != new.tag || old.namespace != new.namespace
-        {
+        if old.tag != new.tag || old.namespace != new.namespace {
             // TODO: DRY here between this and later in func.
             let old_el_ws = old.el_ws.take();
 
@@ -941,16 +939,21 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             Node::Element(new_el) => {
                 patch_el(document, old_el, new_el, parent, next_node, mailbox, app)
             }
-            Node::Text => {
+            Node::Text(new_text) => {
                 let old_el_ws = old_el
                     .el_ws
                     .take()
                     .expect("old el_ws missing in call to unmount_actions");
-                websys_bridge::remove_node(&old_el_ws, parent, old_el);
+                websys_bridge::remove_node(&old_el_ws, parent, Some(&mut old_el));
 
-                let text_node = document.create_text_node(text);
-                websys_bridge::insert_node(&text_node, parent, next_node);
-                Some(Node::Element(&text_node))
+                let new_text_ws = document.create_text_node(&new_text.text);
+                websys_bridge::insert_node(&new_text_ws, parent, next_node);
+                new_text.node_ws = Some(
+                    new_text_ws
+                        .dyn_into::<web_sys::Node>()
+                        .expect("Problem casting Text as Node."),
+                );
+                new_text.node_ws.as_ref()
             }
             Node::Empty => {
                 let old_el_ws = old_el
@@ -958,33 +961,44 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                     .take()
                     .expect("old el_ws missing in call to unmount_actions");
 
-                websys_bridge::remove_node(&old_el_ws, parent, Some(old_el));
+                websys_bridge::remove_node(&old_el_ws, parent, Some(&mut old_el));
                 None
             }
         },
         Node::Empty => match new {
             Node::Element(new_el) => {
-                let new_el_ws = new_el.el_ws.as_ref().expect("Missing websys el");
+                let new_el_ws = new_el.el_ws.expect("Missing websys el");
 
-                websys_bridge::insert_node(new_el_ws, parent, next_node);
-                Some(new_el_ws)
+                websys_bridge::insert_node(&new_el_ws, parent, next_node);
+                new_el.el_ws = Some(new_el_ws);
+                new_el.el_ws.as_ref()
             }
-            Note::Text => {
-                let text_node = document.create_text_node(text);
+            Node::Text(new_text) => {
+                let text_node = document.create_text_node(&new_text.text);
                 websys_bridge::insert_node(&text_node, parent, next_node);
-                Some(&text_node)
+                new_text.node_ws = Some(
+                    text_node
+                        .dyn_into::<web_sys::Node>()
+                        .expect("Problem casting Text as Node."),
+                );
+                new_text.node_ws.as_ref()
             }
             // If new and old are empty, we don't need to do anything.
             Node::Empty => None,
         },
         Node::Text(mut old_text) => match new {
             Node::Element(new_el) => {
-                websys_bridge::remove_node(&old_el_ws, parent, old_el);
+                websys_bridge::remove_node(
+                    &old_text.node_ws.expect("Can't find node from Text"),
+                    parent,
+                    None,
+                );
 
-                let new_el_ws = new_el.el_ws.as_ref().expect("Missing websys el");
+                let new_el_ws = new_el.el_ws.expect("Missing websys el");
 
-                websys_bridge::insert_node(new_el_ws, parent, next_node);
-                Some(&Node::Element(new_el_ws))
+                websys_bridge::insert_node(&new_el_ws, parent, next_node);
+                new_el.el_ws = Some(new_el_ws);
+                new_el.el_ws.as_ref()
             }
             Node::Empty => {
                 websys_bridge::remove_node(
@@ -994,15 +1008,15 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 );
                 None
             }
-            Node::Text(text_node) => {
+            Node::Text(new_text) => {
                 let old_node_ws = old_text
                     .node_ws
                     .take()
                     .expect("old node_ws missing when changing text");
 
-                old_node_ws.set_text_content(Some(&text_node.text));
-                old_text.node_ws = Some(old_node_ws);
-                Some(&Node::Text(old_text))
+                old_node_ws.set_text_content(Some(&new_text.text));
+                new_text.node_ws = Some(old_node_ws);
+                new_text.node_ws.as_ref()
             }
         },
     }

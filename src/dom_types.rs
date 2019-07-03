@@ -119,7 +119,7 @@ impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(Node::Element(El::new_text(self)))
+        el.children.push(Node::Text(Text::new(self.into())))
     }
 }
 
@@ -131,7 +131,8 @@ impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
-        el.children.append(&mut self.map | el | Node::Element(el));
+        el.children
+            .append(&mut self.into_iter().map(|el| Node::Element(el)).collect());
     }
 }
 
@@ -657,7 +658,7 @@ impl<Ms> ElContainer<Ms> for El<Ms> {
 
 impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
-        self.map(|el| Node::Element(el)).collect()
+        self.into_iter().map(|el| Node::Element(el)).collect()
     }
 }
 
@@ -674,10 +675,16 @@ impl<Ms: 'static> ElContainer<Ms> for Vec<Node<Ms>> {
 }
 
 /// For representing text nodes.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Text {
     pub text: String,
     pub node_ws: Option<web_sys::Node>,
+}
+
+impl PartialEq for Text {
+    fn eq(&self, other: &Self) -> bool {
+        self.text == other.text
+    }
 }
 
 impl Text {
@@ -694,10 +701,22 @@ impl Text {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
-    //    Svg(El<Ms>),
+    //    Svg(El<Ms>),  // May be best to handle using namespace field on El
     Text(Text),
     Empty,
 }
+//
+//impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
+//    type SelfWithOtherMs = Node<OtherMs>;
+//    /// See note on impl for El
+//    fn map_message(self, f: fn(Ms) -> OtherMs) -> Node<OtherMs> {
+//        // todo: Is this adaptation correct?
+//        match self {
+//            Node::Element(el) => Node::Element(el.map_message(f)),
+//            _ => self,
+//        }
+//    }
+//}
 
 /// An component in our virtual DOM.
 #[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
@@ -796,7 +815,6 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
                 .into_iter()
                 .map(|l| l.map_message(f))
                 .collect(),
-            text: self.text,
             children: self
                 .children
                 .into_iter()
@@ -848,8 +866,9 @@ impl<Ms> El<Ms> {
         el
     }
 
+    // todo: Post Node refactor, consider moving out of El's Impl
     /// Create elements from a markdown string.
-    pub fn from_markdown(markdown: &str) -> Vec<Self> {
+    pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         let parser = pulldown_cmark::Parser::new(markdown);
         let mut html_text = String::new();
         pulldown_cmark::html::push_html(&mut html_text, parser);
@@ -857,8 +876,9 @@ impl<Ms> El<Ms> {
         Self::from_html(&html_text)
     }
 
+    // todo: Post Node refactor, consider moving out of El's Impl
     /// Create elements from an HTML string.
-    pub fn from_html(html: &str) -> Vec<Self> {
+    pub fn from_html(html: &str) -> Vec<Node<Ms>> {
         // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.
         // We allow web_sys to parse into a DOM tree, then analyze the tree to create our vdom
         // element.
@@ -874,7 +894,7 @@ impl<Ms> El<Ms> {
                 .get(i)
                 .expect("Can't find child in raw html element.");
 
-            if let Some(child_vdom) = websys_bridge::el_from_ws(&child) {
+            if let Some(child_vdom) = websys_bridge::node_from_ws(&child) {
                 result.push(child_vdom)
             }
         }
@@ -917,7 +937,7 @@ impl<Ms> El<Ms> {
     /// Add a text node to the element. (ie between the HTML tags).
     pub fn add_text(mut self, text: &str) -> Self {
         // todo: Allow text to be impl ToString?
-        self.children.push(El::new_text(text));
+        self.children.push(Node::Text(Text::new(text.into())));
         self
     }
 
@@ -925,13 +945,22 @@ impl<Ms> El<Ms> {
     /// Removes all text nodes from element, then adds the new one.
     /// todo: We shouldn't be storing text nodes in the vdom.
     pub fn replace_text(mut self, text: &str) -> Self {
-        self.children = self
-            .children
-            .into_iter()
-            .filter(|c| c.text.is_none())
-            .collect();
+        //        self.children = self
+        //            .children
+        //            .into_iter()
+        //            .filter(|c| c not let = Node::Text)
+        //            .collect();
 
-        self.children.push(El::new_text(text));
+        let mut non_text_children = Vec::new();
+        for child in self.children.into_iter() {
+            match child {
+                Node::Text(_) => (),
+                _ => non_text_children.push(child),
+            }
+        }
+        self.children = non_text_children;
+
+        self.children.push(Node::Text(Text::new(text.into())));
         self
     }
 
@@ -943,27 +972,6 @@ impl<Ms> El<Ms> {
             }
         }
         None
-    }
-
-    /// Output the HTML of this node, including all its children, recursively.
-    fn _html(&self) -> String {
-        let text = self.text.clone().unwrap_or_default();
-
-        let opening = String::from("<")
-            + self.tag.as_str()
-            + &self.attrs.to_string()
-            + " style=\""
-            + &self.style.to_string()
-            + ">\n";
-
-        let inner = self
-            .children
-            .iter()
-            .fold(String::new(), |result, child| result + &child._html());
-
-        let closing = String::from("\n</") + self.tag.as_str() + ">";
-
-        opening + &text + &inner + &closing
     }
 
     // Pull text from child text nodes
