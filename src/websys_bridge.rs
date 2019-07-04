@@ -182,12 +182,28 @@ pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     for child in &mut el_vdom.children {
         match child {
             Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
-            Node::Text(text) => (), //todo ?
+            Node::Text(child_text_node) => {
+                let node_ws = child_text_node
+                    .node_ws
+                    .take()
+                    .expect("Missing websys node on Text");
+                &el_ws.append_child(&node_ws);
+                child_text_node.node_ws.replace(node_ws);
+            }
             Node::Empty => (),
         }
     }
 
     el_vdom.el_ws.replace(el_ws);
+}
+
+/// Similar to attach_el_and_children, but for text nodes
+pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
+    let node_ws = text.node_ws.take().expect("Missing websys node for Text");
+    parent
+        .append_child(&node_ws)
+        .expect("Problem appending text node");
+    text.node_ws.replace(node_ws);
 }
 
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
@@ -412,21 +428,8 @@ pub(crate) fn insert_node(
     };
 }
 
-pub(crate) fn remove_node<Ms>(
-    node: &web_sys::Node,
-    parent: &web_sys::Node,
-    el_vdom: Option<&mut El<Ms>>,
-) {
+pub(crate) fn remove_node(node: &web_sys::Node, parent: &web_sys::Node) {
     parent
         .remove_child(node)
         .expect("Problem removing old el_ws when updating to empty");
-
-    if let Some(inner) = el_vdom {
-        if let Some(unmount_actions) = &mut inner.hooks.will_unmount {
-            (unmount_actions.actions)(node);
-            //                if let Some(message) = unmount_actions.message.clone() {
-            //                    app.update(message);
-            //                }
-        }
-    }
 }

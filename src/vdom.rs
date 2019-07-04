@@ -1,6 +1,6 @@
 use crate::{
     dom_types::{self, El, ElContainer, MessageMapper, Namespace, Node},
-    events, next_tick, routing, util, websys_bridge,
+    events, next_tick, patch, routing, util, websys_bridge,
 };
 use enclose::enclose;
 use futures::Future;
@@ -397,6 +397,9 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
                     &self.cfg.mount_point,
                     &self,
                 ),
+                Node::Text(top_child_text) => {
+                    websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
+                }
                 Node::Empty => (),
             }
         }
@@ -559,26 +562,29 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
                     );
                     attach_listeners(child_new_el, &self.mailbox());
                 }
-                Node::Empty => (),
-            }
-        }
-
-        // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-        //    while let Some(mut child) = old_children_iter.next() {
-        for mut child in old_children_iter {
-            match child {
-                Node::Element(child_el) => {
-                    let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
-
-                    if let Some(unmount_actions) = &mut child_el.hooks.will_unmount {
-                        (unmount_actions.actions)(&child_el_ws);
-                    }
+                Node::Text(child_new_text) => {
+                    websys_bridge::attach_text_node(child_new_text, &self.cfg.mount_point);
                 }
                 Node::Empty => (),
             }
         }
 
-        // todo end DRY with patch().
+        // Now purge any existing no-longer-needed children; they're not part of the new vdom.
+        for child in old_children_iter {
+            match child {
+                Node::Element(mut child_el) => {
+                    let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
+                    // todo?
+                    //                    patch::remove_node(&child_el_ws, &old_el_ws, &mut child_el)
+                }
+                Node::Text(child_text) => {
+                    // todo?
+                    //                    let child_node_ws = child_text.node_ws.take().expect("Missing child node_ws");
+                    //                    websys_bridge::remove_node(&child_node_ws, &old_el_ws)
+                }
+                Node::Empty => (),
+            }
+        }
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next time.
@@ -746,13 +752,12 @@ fn setup_window_listeners<Ms>(
     }
 }
 
-// todo: Split into a separate patch module.
 pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
-    next_node: Option<web_sys::Node>,
+    _next_node: Option<web_sys::Node>, // todo remove if the app works without this.
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, ElC>,
 ) -> Option<&'a web_sys::Node> {
@@ -875,8 +880,6 @@ pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
     // Now one of the iterators is entirely consumed, and any items left in one iterator
     // don't have any matching items in the other.
-
-    //    while let Some(child_new) = new_children_iter.next() {
     for child_new in new_children_iter {
         match child_new {
             Node::Element(child_new_el) => {
@@ -885,29 +888,29 @@ pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 websys_bridge::attach_el_and_children(child_new_el, &old_el_ws, app);
                 attach_listeners(child_new_el, mailbox);
             }
+            Node::Text(child_new_text) => {
+                let new_text_ws = document.create_text_node(&child_new_text.text);
+                child_new_text.node_ws.replace(
+                    new_text_ws
+                        .dyn_into::<web_sys::Node>()
+                        .expect("Problem casting Text as Node."),
+                );
+            }
             Node::Empty => (),
         }
     }
 
     // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-    //    while let Some(mut child) = old_children_iter.next() {
-    for mut child in old_children_iter {
+    // while let Some(mut child) = old_children_iter.next() {
+    for child in old_children_iter {
         match child {
             Node::Element(mut child_el) => {
                 let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
-
-                // TODO: DRY here between this and earlier in func
-                if let Some(unmount_actions) = &mut child_el.hooks.will_unmount {
-                    (unmount_actions.actions)(&child_el_ws);
-                }
-
-                // todo get to the bottom of this: Ie why we need this code sometimes when using raw html elements.
-                match old_el_ws.remove_child(&child_el_ws) {
-                    Ok(_) => {}
-                    Err(_) => {
-                        crate::error("Minor error patching html element. (remove)");
-                    }
-                }
+                patch::remove_node(&child_el_ws, &old_el_ws, &mut child_el)
+            }
+            Node::Text(mut child_text) => {
+                let child_node_ws = child_text.node_ws.take().expect("Missing child node_ws");
+                websys_bridge::remove_node(&child_node_ws, &old_el_ws)
             }
             Node::Empty => (),
         }
@@ -917,9 +920,11 @@ pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     new.el_ws.as_ref()
 }
 
+/// Routes patching through different channels, depending on the Node variant
+/// of old and new.
 pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     document: &Document,
-    mut old: Node<Ms>,
+    old: Node<Ms>,
     new: &'a mut Node<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
@@ -927,12 +932,6 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     app: &App<Ms, Mdl, ElC>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
-    // TODO: Current sceme is that if the parent changes, redraw all children...
-    // TODO: fix this later.
-    // We make an assumption that most of the page is not dramatically changed
-    // by each event, to optimize.
-
-    // todo: Lots of DRY issues in this refactoring. Split into fns?
     // We go through each combination of new and old variants to determine how to patch.
     match old {
         Node::Element(mut old_el) => match new {
@@ -944,7 +943,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                     .el_ws
                     .take()
                     .expect("old el_ws missing in call to unmount_actions");
-                websys_bridge::remove_node(&old_el_ws, parent, Some(&mut old_el));
+                patch::remove_node(&old_el_ws, parent, &mut old_el);
 
                 let new_text_ws = document.create_text_node(&new_text.text);
                 websys_bridge::insert_node(&new_text_ws, parent, next_node);
@@ -961,16 +960,18 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                     .take()
                     .expect("old el_ws missing in call to unmount_actions");
 
-                websys_bridge::remove_node(&old_el_ws, parent, Some(&mut old_el));
+                patch::remove_node(&old_el_ws, parent, &mut old_el);
                 None
             }
         },
         Node::Empty => match new {
             Node::Element(new_el) => {
-                let new_el_ws = new_el.el_ws.expect("Missing websys el");
+                let new_el_ws = new_el.el_ws.take().expect("Missing websys el");
 
                 websys_bridge::insert_node(&new_el_ws, parent, next_node);
-                new_el.el_ws = Some(new_el_ws);
+                //                attach_listeners(child_new_el, mailbox);
+
+                new_el.el_ws.replace(new_el_ws);
                 new_el.el_ws.as_ref()
             }
             Node::Text(new_text) => {
@@ -991,21 +992,16 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 websys_bridge::remove_node(
                     &old_text.node_ws.expect("Can't find node from Text"),
                     parent,
-                    None,
                 );
 
-                let new_el_ws = new_el.el_ws.expect("Missing websys el");
+                let new_el_ws = new_el.el_ws.take().expect("Missing websys el");
 
                 websys_bridge::insert_node(&new_el_ws, parent, next_node);
-                new_el.el_ws = Some(new_el_ws);
+                new_el.el_ws.replace(new_el_ws);
                 new_el.el_ws.as_ref()
             }
             Node::Empty => {
-                websys_bridge::remove_node(
-                    &old_text.node_ws.expect("Can't find old text"),
-                    parent,
-                    None,
-                );
+                websys_bridge::remove_node(&old_text.node_ws.expect("Can't find old text"), parent);
                 None
             }
             Node::Text(new_text) => {
@@ -1015,7 +1011,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                     .expect("old node_ws missing when changing text");
 
                 old_node_ws.set_text_content(Some(&new_text.text));
-                new_text.node_ws = Some(old_node_ws);
+                new_text.node_ws.replace(old_node_ws);
                 new_text.node_ws.as_ref()
             }
         },

@@ -27,7 +27,7 @@ macro_rules! element {
                             {
                                 let mut el = El::empty($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
-                                el
+                                $crate::dom_types::Node::Element(el)
                             }
                         };
                     }
@@ -148,7 +148,7 @@ element_svg! {
 #[macro_export]
 macro_rules! empty {
     () => {
-        $crate::empty()
+        $crate::dom_types::Node::Empty
     };
 }
 

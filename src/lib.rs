@@ -21,6 +21,7 @@ pub mod dom_types;
 pub mod events;
 pub mod fetch;
 mod next_tick;
+mod patch;
 pub mod routing;
 pub mod storage;
 mod util;
@@ -33,8 +34,6 @@ pub mod gloo_timers;
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
 pub fn empty<Ms>() -> dom_types::Node<Ms> {
-    // todo: Perhaps get rid of this and just use the macro, or replace with
-    // todo exposing Node::Empty directly.
     dom_types::Node::Empty
 }
 
@@ -79,8 +78,8 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
-            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Optimize::Key,
-            Tag, UpdateEl,
+            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Node,
+            Optimize::Key, Tag, UpdateEl,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,

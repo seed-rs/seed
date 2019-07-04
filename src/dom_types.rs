@@ -130,9 +130,21 @@ impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
-    fn update(mut self, el: &mut El<Ms>) {
+    fn update(self, el: &mut El<Ms>) {
         el.children
             .append(&mut self.into_iter().map(|el| Node::Element(el)).collect());
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Node<Ms> {
+    fn update(self, el: &mut El<Ms>) {
+        el.children.push(self)
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
+    fn update(mut self, el: &mut El<Ms>) {
+        el.children.append(&mut self);
     }
 }
 
@@ -639,7 +651,6 @@ pub enum Optimize {
 }
 
 pub trait ElContainer<Ms: 'static> {
-    //    fn els(self) -> Vec<El<Ms>>;
     fn els(self) -> Vec<Node<Ms>>;
 }
 
@@ -705,18 +716,19 @@ pub enum Node<Ms: 'static> {
     Text(Text),
     Empty,
 }
-//
-//impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
-//    type SelfWithOtherMs = Node<OtherMs>;
-//    /// See note on impl for El
-//    fn map_message(self, f: fn(Ms) -> OtherMs) -> Node<OtherMs> {
-//        // todo: Is this adaptation correct?
-//        match self {
-//            Node::Element(el) => Node::Element(el.map_message(f)),
-//            _ => self,
-//        }
-//    }
-//}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
+    type SelfWithOtherMs = Node<OtherMs>;
+    /// See note on impl for El
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Node<OtherMs> {
+        // todo: Is this adaptation correct?
+        match self {
+            Node::Element(el) => Node::Element(el.map_message(f)),
+            Node::Text(text) => Node::Text(text),
+            Node::Empty => Node::Empty,
+        }
+    }
+}
 
 /// An component in our virtual DOM.
 #[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
@@ -1025,7 +1037,9 @@ impl<Ms> Clone for El<Ms> {
             tag: self.tag.clone(),
             attrs: self.attrs.clone(),
             style: self.style.clone(),
-            children: self.children.clone(),
+            // todo: Put this back - removed during troubleshooting Node change
+            //            children: self.children.clone(),
+            children: Vec::new(),
             el_ws: self.el_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
