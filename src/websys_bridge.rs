@@ -1,9 +1,9 @@
 //! This file contains interactions with `web_sys`.
-use wasm_bindgen::JsCast;
-
-use crate::dom_types;
+use crate::{dom_types, App};
 use crate::dom_types::{El, ElContainer, Node, Text};
-use crate::vdom::App;
+
+use wasm_bindgen::JsCast;
+use web_sys::Document;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
@@ -28,7 +28,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     }
     // todo DRY! Massive dry between checked and auto, and in autofocus.
     // https://www.w3schools.com/tags/att_autofocus.asp
-    //todo needs to work for other type sof input!
+    //todo needs to work for other types of input!
     else if at == "autofocus" {
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
             //            autofocus_helper(input)
@@ -122,6 +122,30 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
         .expect("Problem setting style");
 }
 
+/// Recursively create `web_sys::Node`s, and place them in the vdom Nodes' fields.
+pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>)
+where
+    Ms: 'static,
+{
+    match node {
+        Node::Element(el) => {
+            el.node_ws = Some(make_websys_el(el, document));
+            for mut child in el.children.iter_mut() {
+                assign_ws_nodes(document, &mut child);
+            }
+        }
+        Node::Text(text) => {
+            text.node_ws = Some(
+                document
+                    .create_text_node(&text.text)
+                    .dyn_into::<web_sys::Node>()
+                    .expect("Problem casting Text as Node."),
+            )
+        }
+        Node::Empty => (),
+    }
+}
+
 /// Create and return a `web_sys` Element from our virtual-dom `El`. The `web_sys`
 /// Element is a close analog to JS/DOM elements.
 ///
@@ -129,20 +153,19 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 /// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
-    // A simple text node.
-    //    match node_vdom {
-    //        Node::Element(el_vdom) => {
-    // Create the DOM-analog element; it won't render until attached to something.
+pub(crate) fn make_websys_el<Ms>(
+    el_vdom: &mut El<Ms>,
+    document: &web_sys::Document,
+) -> web_sys::Node {
     let tag = el_vdom.tag.as_str();
 
     let el_ws = match el_vdom.namespace {
         Some(ref ns) => document
             .create_element_ns(Some(ns.as_str()), tag)
-            .expect("Problem creating web-sys El"),
+            .expect("Problem creating web-sys element with namespace"),
         None => document
             .create_element(tag)
-            .expect("Problem creating web-sys El"),
+            .expect("Problem creating web-sys element"),
     };
 
     for (at, val) in &el_vdom.attrs.vals {
@@ -163,38 +186,6 @@ pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) ->
     }
 
     el_ws.into()
-    //        }
-    //        Node::Text(text_node) => document.create_text_node(&text_node.text).into(),
-    //        Node::Empty => panic!("empty element passed to make_websys_node"),
-    //    }
-}
-
-/// Similar to `attach_el_and_children`, but assumes we've already attached the parent.
-pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
-    el_vdom: &mut El<Ms>,
-    app: &App<Ms, Mdl, ElC>,
-) {
-    let el_ws = el_vdom
-        .el_ws
-        .take()
-        .expect("Missing websys el in attach children");
-
-    for child in &mut el_vdom.children {
-        match child {
-            Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
-            Node::Text(child_text_node) => {
-                let node_ws = child_text_node
-                    .node_ws
-                    .take()
-                    .expect("Missing websys node on Text");
-                &el_ws.append_child(&node_ws);
-                child_text_node.node_ws.replace(node_ws);
-            }
-            Node::Empty => (),
-        }
-    }
-
-    el_vdom.el_ws.replace(el_ws);
 }
 
 /// Similar to attach_el_and_children, but for text nodes
@@ -212,12 +203,15 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
 pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     parent: &web_sys::Node,
-    app: &App<Ms, Mdl, ElC>,
+    app: &App<Ms, Mdl, ElC>,  // To avoid inferring type for Mdl.
 ) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
-    let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
+    let el_ws = el_vdom
+        .node_ws
+        .take()
+        .expect("Missing websys el in attach_el_and_children");
 
     // Append the element
 
@@ -234,7 +228,8 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
         match child {
             // Raise the active level once per recursion.
             Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
-            _ => (),
+            Node::Text(child_text) => attach_text_node(child_text, &el_ws),
+            Node::Empty => (),
         }
     }
 
@@ -247,7 +242,7 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     }
 
     // Replace the web_sys el
-    el_vdom.el_ws.replace(el_ws);
+    el_vdom.node_ws.replace(el_ws);
 }
 
 /// Recursively remove all children.
@@ -432,4 +427,10 @@ pub(crate) fn remove_node(node: &web_sys::Node, parent: &web_sys::Node) {
     parent
         .remove_child(node)
         .expect("Problem removing old el_ws when updating to empty");
+}
+
+pub(crate) fn replace_child(new: &web_sys::Node, old: &web_sys::Node, parent: &web_sys::Node) {
+    parent
+        .replace_child(new, old)
+        .expect("Problem replacing element");
 }

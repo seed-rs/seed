@@ -132,7 +132,7 @@ impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         el.children
-            .append(&mut self.into_iter().map(|el| Node::Element(el)).collect());
+            .append(&mut self.into_iter().map(Node::Element).collect());
     }
 }
 
@@ -669,7 +669,7 @@ impl<Ms> ElContainer<Ms> for El<Ms> {
 
 impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
-        self.into_iter().map(|el| Node::Element(el)).collect()
+        self.into_iter().map(Node::Element).collect()
     }
 }
 
@@ -745,7 +745,7 @@ pub struct El<Ms: 'static> {
     pub children: Vec<Node<Ms>>,
 
     /// The actual web element/node
-    pub el_ws: Option<web_sys::Node>,
+    pub node_ws: Option<web_sys::Node>,
 
     pub namespace: Option<Namespace>,
     // A unique identifier in the vdom. Useful for triggering one-off events.
@@ -832,7 +832,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
                 .into_iter()
                 .map(|c| c.map_message(f))
                 .collect(),
-            el_ws: self.el_ws,
+            node_ws: self.node_ws,
             namespace: self.namespace,
             hooks: self.hooks.map_message(f),
             optimizations: self.optimizations,
@@ -852,7 +852,7 @@ impl<Ms> El<Ms> {
             listeners: Vec::new(),
             children: Vec::new(),
 
-            el_ws: None,
+            node_ws: None,
 
             namespace: None,
 
@@ -999,30 +999,6 @@ impl<Ms> El<Ms> {
         result
     }
 
-    /// Call f(&mut el) for this El and each of its descendants
-    pub fn walk_tree_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut Self),
-    {
-        // This inner function is required to avoid recursive compilation errors having to do
-        // with the generic trait bound on F.
-        fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-        where
-            F: FnMut(&mut El<Ms>),
-        {
-            f(el);
-
-            for child in &mut el.children {
-                match child {
-                    Node::Element(child_el) => walk_tree_mut_inner(child_el, f),
-                    _ => (),
-                }
-            }
-        }
-
-        walk_tree_mut_inner(self, &mut f);
-    }
-
     /// Set the ref
     pub fn ref_<S: ToString>(&mut self, ref_: &S) {
         self.ref_ = Some(ref_.to_string());
@@ -1040,7 +1016,7 @@ impl<Ms> Clone for El<Ms> {
             // todo: Put this back - removed during troubleshooting Node change
             //            children: self.children.clone(),
             children: Vec::new(),
-            el_ws: self.el_ws.clone(),
+            node_ws: self.node_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
             hooks: LifecycleHooks::new(),
@@ -1168,7 +1144,7 @@ pub mod tests {
             &app,
         );
 
-        el.el_ws.unwrap()
+        el.node_ws.unwrap()
     }
 
     /// Assumes Node is an Element

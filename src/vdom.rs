@@ -10,9 +10,9 @@ use std::{
     collections::{vec_deque::VecDeque, HashMap},
     rc::Rc,
 };
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen_futures::spawn_local;
-use web_sys::{Document, Element, Event, EventTarget, Window};
+use web_sys::{Element, Event, EventTarget};
 
 /// Function `call_update` is useful for calling submodules' `update`.
 ///
@@ -130,8 +130,8 @@ impl<Ms: 'static> Orders<Ms> {
     ///orders.perform_cmd(write_emoticon_after_delay());
     /// ```
     pub fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-    where
-        C: Future<Item = Ms, Error = Ms> + 'static,
+        where
+            C: Future<Item = Ms, Error = Ms> + 'static,
     {
         self.effects.push_back(Effect::Cmd(Box::new(cmd)));
         self
@@ -185,10 +185,10 @@ pub struct AppData<Ms: 'static, Mdl> {
 }
 
 pub struct AppCfg<Ms, Mdl, ElC>
-where
-    Ms: 'static,
-    Mdl: 'static,
-    ElC: ElContainer<Ms>,
+    where
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: ElContainer<Ms>,
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
@@ -198,10 +198,10 @@ where
 }
 
 pub struct App<Ms, Mdl, ElC>
-where
-    Ms: 'static,
-    Mdl: 'static,
-    ElC: ElContainer<Ms>,
+    where
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: ElContainer<Ms>,
 {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
@@ -364,7 +364,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     pub fn setup_window_listeners(&self) {
         if let Some(window_events) = self.cfg.window_events {
             let mut new_listeners = (window_events)(&self.data.model.borrow());
-            setup_window_listeners(
+            patch::setup_window_listeners(
                 &util::window(),
                 &mut self.data.window_listeners.borrow_mut(),
                 &mut new_listeners,
@@ -379,32 +379,39 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     pub fn run(self) -> Self {
         // Our initial render. Can't initialize in new due to mailbox() requiring self.
         // "new" name is for consistency with `update` function.
+        // this section parent is a placeholder, so we can iterate over children
+        // in a way consistent with patching code.
         let mut new = El::empty(dom_types::Tag::Section);
         new.children = (self.cfg.view)(&self.data.model.borrow()).els();
 
         self.setup_window_listeners();
+        patch::setup_input_listeners(&mut new);
+        patch::attach_listeners(&mut new, &self.mailbox());
 
-        setup_input_listeners(&mut new);
-        setup_websys_el_and_children(&util::document(), &mut new);
+        let mut new_node = Node::Element(new);
 
-        attach_listeners(&mut new, &self.mailbox());
+        websys_bridge::assign_ws_nodes(&util::document(), &mut new_node);
 
-        // Attach all top-level elements to the mount point: This is where our initial render occurs.
-        for top_child in &mut new.children {
-            match top_child {
-                Node::Element(top_child_el) => websys_bridge::attach_el_and_children(
-                    top_child_el,
-                    &self.cfg.mount_point,
-                    &self,
-                ),
-                Node::Text(top_child_text) => {
-                    websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
+        if let Node::Element(mut new) = new_node {
+            // Attach all top-level elements to the mount point: This is where our initial render occurs.
+            for child in &mut new.children {
+                match child {
+                    Node::Element(child_el) => {
+                        websys_bridge::attach_el_and_children(
+                            child_el,
+                            &self.cfg.mount_point,
+                            &self,
+                        );
+                        patch::attach_listeners(child_el, &self.mailbox());
+                    }
+                    Node::Text(top_child_text) => {
+                        websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
+                    }
+                    Node::Empty => (),
                 }
-                Node::Empty => (),
             }
+            self.data.main_el_vdom.replace(Some(new));
         }
-
-        self.data.main_el_vdom.replace(Some(new));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
@@ -520,7 +527,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
 
         // Detach all old listeners before patching. We'll re-add them as required during patching.
         // We'll get a runtime panic if any are left un-removed.
-        detach_listeners(&mut old);
+        patch::detach_listeners(&mut old);
 
         // todo much of the code below is copied from the patch fn (DRY). The issue driving
         // todo this lies with the patch fn's `parent` parameter.
@@ -534,7 +541,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             let child_old = old_children_iter.next().unwrap();
             let child_new = new_children_iter.next().unwrap();
 
-            if let Some(new_el_ws) = patch(
+            if let Some(new_el_ws) = patch::patch(
                 &self.cfg.document,
                 child_old,
                 child_new,
@@ -551,16 +558,13 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         }
 
         for child_new in new_children_iter {
+            // todo probably remove
+            //            websys_bridge::assign_ws_nodes(&self.cfg.document, child_new);
             match child_new {
                 Node::Element(child_new_el) => {
                     // We ran out of old children to patch; create new ones.
-                    setup_websys_el_and_children(&self.cfg.document, child_new_el);
-                    websys_bridge::attach_el_and_children(
-                        child_new_el,
-                        &self.cfg.mount_point,
-                        &self.clone(),
-                    );
-                    attach_listeners(child_new_el, &self.mailbox());
+                    websys_bridge::attach_el_and_children(child_new_el, &self.cfg.mount_point, &self);
+                    patch::attach_listeners(child_new_el, &self.mailbox());
                 }
                 Node::Text(child_new_text) => {
                     websys_bridge::attach_text_node(child_new_text, &self.cfg.mount_point);
@@ -573,14 +577,14 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
         for child in old_children_iter {
             match child {
                 Node::Element(mut child_el) => {
-                    let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
-                    // todo?
-                    //                    patch::remove_node(&child_el_ws, &old_el_ws, &mut child_el)
+                    let child_ws = child_el.node_ws.take().expect("Missing child el_ws");
+                    //                    patch::remove_node(&child_ws, &old_el_ws, &mut child_el);  // todo put back node refactor
+                    child_el.node_ws.replace(child_ws);
                 }
-                Node::Text(child_text) => {
-                    // todo?
-                    //                    let child_node_ws = child_text.node_ws.take().expect("Missing child node_ws");
-                    //                    websys_bridge::remove_node(&child_node_ws, &old_el_ws)
+                Node::Text(mut child_text) => {
+                    let child_ws = child_text.node_ws.take().expect("Missing child node_ws");
+                    //                    websys_bridge::remove_node(&child_ws, &old_el_ws);  todo put back Node refac
+                    child_text.node_ws.replace(child_ws);
                 }
                 Node::Empty => (),
             }
@@ -592,8 +596,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
-    where
-        F: Fn(&Ms) + 'static,
+        where
+            F: Fn(&Ms) + 'static,
     {
         self.data
             .msg_listeners
@@ -623,398 +627,12 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 }
 
-/// Set up controlled components: Input, Select, and `TextArea` elements must stay in sync with the
-/// model; don't let them get out of sync from typing or other events, which can occur if a change
-/// doesn't trigger a re-render, or if something else modifies them using a side effect.
-/// Handle controlled inputs: Ie force sync with the model.
-fn setup_input_listener<Ms>(el: &mut El<Ms>)
-where
-    Ms: 'static,
-{
-    if el.tag == dom_types::Tag::Input
-        || el.tag == dom_types::Tag::Select
-        || el.tag == dom_types::Tag::TextArea
-    {
-        let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
-            let checked_bool = match checked.as_ref() {
-                "true" => true,
-                "false" => false,
-                _ => panic!("checked must be true or false."),
-            };
-            events::Listener::new_control_check(checked_bool)
-        } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
-            events::Listener::new_control(control_val.to_string())
-        } else {
-            // If Value is not specified, force the field to be blank.
-            events::Listener::new_control("".to_string())
-        };
-        el.listeners.push(listener); // Add to the El, so we can deattach later.
-    }
-}
-
-// Create the web_sys element; add it to the working tree; store it in its corresponding vdom El.
-fn setup_websys_el<Ms>(document: &Document, el: &mut El<Ms>)
-where
-    Ms: 'static,
-{
-    if el.el_ws.is_none() {
-        el.el_ws = Some(websys_bridge::make_websys_el(el, document));
-    }
-}
-
-/// Recursively sets up input listeners
-fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-where
-    Ms: 'static,
-{
-    el_vdom.walk_tree_mut(setup_input_listener);
-}
-
-/// Recursively sets up `web_sys` elements
-fn setup_websys_el_and_children<Ms>(document: &Document, el: &mut El<Ms>)
-where
-    Ms: 'static,
-{
-    el.walk_tree_mut(|el| setup_websys_el(document, el));
-}
-
 impl<Ms, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
     fn clone(&self) -> Self {
         Self {
             cfg: Rc::clone(&self.cfg),
             data: Rc::clone(&self.data),
         }
-    }
-}
-
-/// Recursively attach all event-listeners. Run this after creating fresh elements.
-fn attach_listeners<Ms>(el: &mut dom_types::El<Ms>, mailbox: &Mailbox<Ms>) {
-    el.walk_tree_mut(|el| {
-        if let Some(el_ws) = el.el_ws.as_ref() {
-            for listener in &mut el.listeners {
-                // todo ideally we unify attach as one method
-                if listener.control_val.is_some() || listener.control_checked.is_some() {
-                    listener.attach_control(el_ws);
-                } else {
-                    listener.attach(el_ws, mailbox.clone());
-                }
-            }
-        }
-    });
-}
-
-/// Recursively detach event-listeners. Run this before patching.
-fn detach_listeners<Ms>(el: &mut dom_types::El<Ms>) {
-    el.walk_tree_mut(|el| {
-        if let Some(el_ws) = el.el_ws.as_ref() {
-            for listener in &mut el.listeners {
-                listener.detach(el_ws);
-            }
-        }
-    });
-}
-
-/// We reattach all listeners, as with normal Els, since we have no
-/// way of diffing them.
-fn setup_window_listeners<Ms>(
-    window: &Window,
-    old: &mut Vec<events::Listener<Ms>>,
-    new: &mut Vec<events::Listener<Ms>>,
-    mailbox: &Mailbox<Ms>,
-) {
-    // todo: Temporary shim to group all events using the same trigger
-    // todo inton one, to prevent them from interupting each other.
-    //    let mut by_trigger = HashMap::new();
-    //    for l in new {
-    //        match by_trigger.contains_key(l.trigger) {
-    //            Some(v) => {
-    //                let new_handlers = hand
-    //                by_trigger.insert(l.trigger, );
-    //            }
-    //        }
-    //    }
-    //
-    //    let grouped_listeners = events::Listener::new(
-    //        |l|
-    //    )
-    //
-    //    let mut new = Vec::new();
-    //    for (trigger, closure) in grouped_listeners {
-    //        new.push(trigger, );
-    //    }
-
-    for listener in old {
-        listener.detach(window);
-    }
-
-    for listener in new {
-        listener.attach(window, mailbox.clone());
-    }
-}
-
-pub(crate) fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
-    document: &Document,
-    mut old: El<Ms>,
-    new: &'a mut El<Ms>,
-    parent: &web_sys::Node,
-    _next_node: Option<web_sys::Node>, // todo remove if the app works without this.
-    mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC>,
-) -> Option<&'a web_sys::Node> {
-    if old != *new {
-        // At this step, we already assume we have the right element - either
-        // by entering this func directly for the top-level, or recursively after
-        // analyzing children
-
-        // If the tag's different, we must redraw the element and its children; there's
-        // no way to patch one element type into another.
-        // TODO: forcing a rerender for differnet listeners is inefficient
-        // TODO:, but I'm not sure how to patch them.
-
-        // Assume all listeners have been removed from the old el_ws (if any), and the
-        // old el vdom's elements are still attached.
-
-        // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
-        // Something about this element itself is different: patch it.
-        if old.tag != new.tag || old.namespace != new.namespace {
-            // TODO: DRY here between this and later in func.
-            let old_el_ws = old.el_ws.take();
-
-            if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                (unmount_actions.actions)(
-                    old_el_ws
-                        .as_ref()
-                        .expect("old el_ws missing in call to unmount_actions"),
-                );
-                //                if let Some(message) = unmount_actions.message.clone() {
-                //                            app.update(message);
-                //                }
-            }
-
-            // todo: Perhaps some of this next segment should be moved to websys_bridge
-            setup_websys_el_and_children(document, new);
-            websys_bridge::attach_children(new, app);
-
-            let new_el_ws = new.el_ws.as_ref().expect("Missing websys el");
-
-            parent
-                .replace_child(
-                    new_el_ws,
-                    &old_el_ws.expect("old el_ws missing in call to replace_child"),
-                )
-                .expect("Problem replacing element");
-
-            // Perform side-effects specified for mounting.
-            if let Some(mount_actions) = &mut new.hooks.did_mount {
-                (mount_actions.actions)(new_el_ws);
-                //                if let Some(message) = mount_actions.message.clone() {
-                //                            app.update(message);
-                //                }
-            }
-
-            attach_listeners(new, mailbox);
-            // We've re-rendered this child and all children; we're done with this recursion.
-            return new.el_ws.as_ref();
-        } else {
-            // Patch parts of the Element.
-            let old_el_ws = old
-                .el_ws
-                .as_ref()
-                .expect("missing old el_ws when patching non-empty el")
-                .clone();
-            websys_bridge::patch_el_details(&mut old, new, &old_el_ws);
-        }
-    }
-
-    let old_el_ws = old.el_ws.take().unwrap();
-
-    // Before running patch, assume we've removed all listeners from the old element.
-    // Perform this attachment after we've verified we can patch this element, ie
-    // it has the same tag - otherwise  we'd have to detach after the parent.remove_child step.
-    // Note that unlike the attach_listeners function, this only attaches for the current
-    // element.
-    for listener in &mut new.listeners {
-        if listener.control_val.is_some() || listener.control_checked.is_some() {
-            listener.attach_control(&old_el_ws);
-        } else {
-            listener.attach(&old_el_ws, mailbox.clone());
-        }
-    }
-
-    let num_children_in_both = old.children.len().min(new.children.len());
-    let mut old_children_iter = old.children.into_iter();
-    let mut new_children_iter = new.children.iter_mut();
-
-    let mut last_visited_node: Option<web_sys::Node> = None;
-
-    // TODO: Lines below commented out, because they were breaking `lifecycle_hooks` test
-    //       - did_update was called 2x instead of 1x after 2nd call_patch
-    //
-    //  if let Some(update_actions) = &mut new.hooks.did_update {
-    //      (update_actions.actions)(&old_el_ws) // todo
-    //  }
-
-    // Not using .zip() here to make sure we don't miss any of the children when one array is
-    // longer than the other.
-    for _i in 0..num_children_in_both {
-        let child_old = old_children_iter.next().unwrap();
-        let child_new = new_children_iter.next().unwrap();
-
-        // Don't compare equality here; we do that at the top of this function
-        // in the recursion.
-        if let Some(new_el_ws) = patch(
-            document,
-            child_old,
-            child_new,
-            &old_el_ws,
-            match last_visited_node.as_ref() {
-                Some(node) => node.next_sibling(),
-                None => old_el_ws.first_child(),
-            },
-            mailbox,
-            app,
-        ) {
-            last_visited_node = Some(new_el_ws.clone());
-        }
-    }
-
-    // Now one of the iterators is entirely consumed, and any items left in one iterator
-    // don't have any matching items in the other.
-    for child_new in new_children_iter {
-        match child_new {
-            Node::Element(child_new_el) => {
-                // We ran out of old children to patch; create new ones.
-                setup_websys_el_and_children(document, child_new_el);
-                websys_bridge::attach_el_and_children(child_new_el, &old_el_ws, app);
-                attach_listeners(child_new_el, mailbox);
-            }
-            Node::Text(child_new_text) => {
-                let new_text_ws = document.create_text_node(&child_new_text.text);
-                child_new_text.node_ws.replace(
-                    new_text_ws
-                        .dyn_into::<web_sys::Node>()
-                        .expect("Problem casting Text as Node."),
-                );
-            }
-            Node::Empty => (),
-        }
-    }
-
-    // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-    // while let Some(mut child) = old_children_iter.next() {
-    for child in old_children_iter {
-        match child {
-            Node::Element(mut child_el) => {
-                let child_el_ws = child_el.el_ws.take().expect("Missing child el_ws");
-                patch::remove_node(&child_el_ws, &old_el_ws, &mut child_el)
-            }
-            Node::Text(mut child_text) => {
-                let child_node_ws = child_text.node_ws.take().expect("Missing child node_ws");
-                websys_bridge::remove_node(&child_node_ws, &old_el_ws)
-            }
-            Node::Empty => (),
-        }
-    }
-
-    new.el_ws = Some(old_el_ws);
-    new.el_ws.as_ref()
-}
-
-/// Routes patching through different channels, depending on the Node variant
-/// of old and new.
-pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
-    document: &Document,
-    old: Node<Ms>,
-    new: &'a mut Node<Ms>,
-    parent: &web_sys::Node,
-    next_node: Option<web_sys::Node>,
-    mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC>,
-) -> Option<&'a web_sys::Node> {
-    // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
-    // We go through each combination of new and old variants to determine how to patch.
-    match old {
-        Node::Element(mut old_el) => match new {
-            Node::Element(new_el) => {
-                patch_el(document, old_el, new_el, parent, next_node, mailbox, app)
-            }
-            Node::Text(new_text) => {
-                let old_el_ws = old_el
-                    .el_ws
-                    .take()
-                    .expect("old el_ws missing in call to unmount_actions");
-                patch::remove_node(&old_el_ws, parent, &mut old_el);
-
-                let new_text_ws = document.create_text_node(&new_text.text);
-                websys_bridge::insert_node(&new_text_ws, parent, next_node);
-                new_text.node_ws = Some(
-                    new_text_ws
-                        .dyn_into::<web_sys::Node>()
-                        .expect("Problem casting Text as Node."),
-                );
-                new_text.node_ws.as_ref()
-            }
-            Node::Empty => {
-                let old_el_ws = old_el
-                    .el_ws
-                    .take()
-                    .expect("old el_ws missing in call to unmount_actions");
-
-                patch::remove_node(&old_el_ws, parent, &mut old_el);
-                None
-            }
-        },
-        Node::Empty => match new {
-            Node::Element(new_el) => {
-                let new_el_ws = new_el.el_ws.take().expect("Missing websys el");
-
-                websys_bridge::insert_node(&new_el_ws, parent, next_node);
-                //                attach_listeners(child_new_el, mailbox);
-
-                new_el.el_ws.replace(new_el_ws);
-                new_el.el_ws.as_ref()
-            }
-            Node::Text(new_text) => {
-                let text_node = document.create_text_node(&new_text.text);
-                websys_bridge::insert_node(&text_node, parent, next_node);
-                new_text.node_ws = Some(
-                    text_node
-                        .dyn_into::<web_sys::Node>()
-                        .expect("Problem casting Text as Node."),
-                );
-                new_text.node_ws.as_ref()
-            }
-            // If new and old are empty, we don't need to do anything.
-            Node::Empty => None,
-        },
-        Node::Text(mut old_text) => match new {
-            Node::Element(new_el) => {
-                websys_bridge::remove_node(
-                    &old_text.node_ws.expect("Can't find node from Text"),
-                    parent,
-                );
-
-                let new_el_ws = new_el.el_ws.take().expect("Missing websys el");
-
-                websys_bridge::insert_node(&new_el_ws, parent, next_node);
-                new_el.el_ws.replace(new_el_ws);
-                new_el.el_ws.as_ref()
-            }
-            Node::Empty => {
-                websys_bridge::remove_node(&old_text.node_ws.expect("Can't find old text"), parent);
-                None
-            }
-            Node::Text(new_text) => {
-                let old_node_ws = old_text
-                    .node_ws
-                    .take()
-                    .expect("old node_ws missing when changing text");
-
-                old_node_ws.set_text_content(Some(&new_text.text));
-                new_text.node_ws.replace(old_node_ws);
-                new_text.node_ws.as_ref()
-            }
-        },
     }
 }
 
@@ -1103,7 +721,7 @@ pub mod tests {
 
     struct Model {}
 
-    fn create_app() -> App<Msg, Model, El<Msg>> {
+    fn create_app() -> App<Msg, Model, Node<Msg>> {
         App::build(Model {}, |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
@@ -1202,7 +820,7 @@ pub mod tests {
         let mut vdom = El::empty(seed::dom_types::Tag::Div);
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         // First add some child nodes using the vdom
@@ -1239,7 +857,7 @@ pub mod tests {
         let mut vdom = El::empty(seed::dom_types::Tag::Div);
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         // First add some child nodes using the vdom
@@ -1297,7 +915,7 @@ pub mod tests {
         let mut vdom = El::empty(seed::dom_types::Tag::Div);
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         // First add button without attribute `disabled`
@@ -1375,7 +993,7 @@ pub mod tests {
         let mut vdom = El::empty(seed::dom_types::Tag::Div);
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         assert_eq!(parent.children().length(), 1);
@@ -1423,7 +1041,7 @@ pub mod tests {
         let mut vdom = El::empty(seed::dom_types::Tag::Div);
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
         parent.append_child(&old_ws).unwrap();
 
         assert_eq!(parent.children().length(), 1);
@@ -1740,9 +1358,9 @@ pub mod tests {
             update,
             |_| seed::empty(),
         )
-        .mount(seed::body())
-        .finish()
-        .run();
+            .mount(seed::body())
+            .finish()
+            .run();
 
         // ACT
         app.update(Msg::Start);
