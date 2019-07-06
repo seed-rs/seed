@@ -7,7 +7,6 @@ pub use crate::{
     fetch::{Method, Request},
     routing::{push_route, Url},
     util::{body, document, error, history, log, update, window},
-    //    vdom::{find_el, App},
     vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
@@ -137,7 +136,7 @@ pub mod tests {
             }
         }
 
-        fn view(_model: &Model) -> Vec<El<Msg>> {
+        fn view(_model: &Model) -> Vec<Node<Msg>> {
             vec![div!["Hello world"]]
         }
 

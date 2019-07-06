@@ -610,7 +610,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 
     // todo add back once you sort how to handle with Node refactor
-    //    fn _find(&self, ref_: &str) -> Option<El<Ms>> {
+    //    fn _find(&self, ref_: &str) -> Option<Node<Ms>> {
     //        // todo expensive? We're cloning the whole vdom tree.
     //        // todo: Let's iterate through refs instead, once this is working.
     //
@@ -718,7 +718,7 @@ pub mod tests {
     use crate::{class, prelude::*};
     use futures::future;
     use wasm_bindgen::JsCast;
-    use web_sys::{Node, Text};
+    use web_sys;
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -736,19 +736,19 @@ pub mod tests {
         doc: &Document,
         parent: &Element,
         mailbox: &Mailbox<Msg>,
-        old_vdom: El<Msg>,
-        mut new_vdom: El<Msg>,
-        app: &App<Msg, Model, El<Msg>>,
-    ) -> El<Msg> {
+        old_vdom: Node<Msg>,
+        mut new_vdom: Node<Msg>,
+        app: &App<Msg, Model, Node<Msg>>,
+    ) -> Node<Msg> {
         patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox, &app);
         new_vdom
     }
 
-    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = Node> {
+    fn iter_nodelist(list: web_sys::NodeList) -> impl Iterator<Item = web_sys::Node> {
         (0..list.length()).map(move |i| list.item(i).unwrap())
     }
 
-    fn iter_child_nodes(node: &Node) -> impl Iterator<Item = Node> {
+    fn iter_child_nodes(node: &web_sys::Node) -> impl Iterator<Item = web_sys::Node> {
         iter_nodelist(node.child_nodes())
     }
 
@@ -760,7 +760,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.el_ws.as_ref().unwrap().clone();
@@ -821,7 +821,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.node_ws.as_ref().unwrap().clone();
@@ -858,7 +858,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.node_ws.as_ref().unwrap().clone();
@@ -916,7 +916,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.node_ws.as_ref().unwrap().clone();
@@ -994,7 +994,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.node_ws.as_ref().unwrap().clone();
@@ -1042,7 +1042,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = El::empty(seed::dom_types::Tag::Div);
+        let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         let old_ws = vdom.node_ws.as_ref().unwrap().clone();
@@ -1089,7 +1089,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = seed::empty();
+        let mut vdom = Node::Element(seed::empty());
 
         vdom = call_patch(
             &doc,
@@ -1134,12 +1134,12 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = seed::empty();
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"), &app);
+        vdom = call_patch(&doc, &parent, &mailbox, vdom, Node::new_text("abc"), &app);
         assert_eq!(parent.child_nodes().length(), 1);
         let text = parent
             .first_child()
             .unwrap()
-            .dyn_ref::<Text>()
+            .dyn_ref::<web_sys::Text>()
             .expect("not a Text node")
             .clone();
         assert_eq!(text.text_content().unwrap(), "abc");
@@ -1165,12 +1165,12 @@ pub mod tests {
         assert_eq!(&element.tag_name().to_lowercase(), "span");
 
         // change back to a text node
-        call_patch(&doc, &parent, &mailbox, vdom, El::new_text("abc"), &app);
+        call_patch(&doc, &parent, &mailbox, vdom, Node::new_text("abc"), &app);
         assert_eq!(parent.child_nodes().length(), 1);
         let text = parent
             .first_child()
             .unwrap()
-            .dyn_ref::<Text>()
+            .dyn_ref::<web_sys::Text>()
             .expect("not a Text node")
             .clone();
         assert_eq!(text.text_content().unwrap(), "abc");
@@ -1189,7 +1189,7 @@ pub mod tests {
 
         let mut vdom = seed::empty();
 
-        let node_ref: Rc<RefCell<Option<Node>>> = Default::default();
+        let node_ref: Rc<RefCell<Option<web_sys::Node>>> = Default::default();
         let mount_op_counter: Rc<AtomicUsize> = Default::default();
         let update_counter: Rc<AtomicUsize> = Default::default();
 
@@ -1198,7 +1198,7 @@ pub mod tests {
         let did_mount_func = {
             let node_ref = node_ref.clone();
             let mount_op_counter = mount_op_counter.clone();
-            move |node: &Node| {
+            move |node: &web_sys::Node| {
                 node_ref.borrow_mut().replace(node.clone());
                 assert_eq!(
                     mount_op_counter.fetch_add(1, SeqCst),
@@ -1209,13 +1209,13 @@ pub mod tests {
         };
         let did_update_func = {
             let update_counter = update_counter.clone();
-            move |_node: &Node| {
+            move |_node: &web_sys::Node| {
                 update_counter.fetch_add(1, SeqCst);
             }
         };
         let will_unmount_func = {
             let node_ref = node_ref.clone();
-            move |_node: &Node| {
+            move |_node: &web_sys::Node| {
                 node_ref.borrow_mut().take();
                 // If the counter wasn't 1, then either:
                 // * did_mount wasn't called - we already check this elsewhere

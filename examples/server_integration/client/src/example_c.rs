@@ -95,7 +95,7 @@ pub fn view(model: &Model) -> impl ElContainer<Msg> {
 
 fn view_response_data_result(
     response_data_result: &Option<fetch::ResponseDataResult<String>>,
-) -> El<Msg> {
+) -> Node<Msg> {
     match &response_data_result {
         None => empty![],
         Some(Ok(response_data)) => div![format!(r#"Response String body: "{}""#, response_data)],
@@ -103,7 +103,7 @@ fn view_response_data_result(
     }
 }
 
-fn view_fail_reason(fail_reason: &fetch::FailReason) -> El<Msg> {
+fn view_fail_reason(fail_reason: &fetch::FailReason) -> Node<Msg> {
     if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception)) =
         fail_reason
     {

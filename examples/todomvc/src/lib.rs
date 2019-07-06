@@ -240,7 +240,7 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> Node<Msg> {
                 )),
             ]
         } else {
-            seed::empty()
+            empty![]
         }
     ]
 }

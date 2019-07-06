@@ -50,7 +50,7 @@ macro_rules! element_svg {
                             {
                                 let mut el = El::empty_svg($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
-                                el
+                                $crate::dom_types::Node::Element(el)
                             }
                         };
                     }
@@ -179,7 +179,7 @@ macro_rules! custom {
         {
             let mut el = El::empty($crate::dom_types::Tag::Custom("missingtagname".into()));
             $ ( $part.update(&mut el); )*
-            el
+            $crate::dom_types::Node::Element(el)
         }
     };
 }

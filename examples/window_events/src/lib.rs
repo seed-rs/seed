@@ -40,7 +40,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
 
 /// This func demonstrates use of custom element tags, and the class! and
 /// id! convenience macros
-fn misc_demo() -> El<Msg> {
+fn misc_demo() -> Node<Msg> {
     let custom_el = El::empty(Tag::Custom("mytag".into())).add_text(""); // Demo of add_text.
 
     let mut attributes = attrs! {};
@@ -56,7 +56,7 @@ fn misc_demo() -> El<Msg> {
     ]
 }
 
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
         h2![model.coords_string()],
         h2![format!("Last key pressed: {}", model.last_keycode)],

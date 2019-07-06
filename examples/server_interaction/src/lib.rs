@@ -127,7 +127,7 @@ fn send_message() -> impl Future<Item = Msg, Error = Msg> {
         .fetch_json_data(Msg::MessageSent)
 }
 
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
         div![format!(
             "Repo info: Name: {}, SHA: {}",

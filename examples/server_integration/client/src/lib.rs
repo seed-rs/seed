@@ -78,7 +78,7 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     ]
     .into_iter()
     .flatten()
-    .collect::<Vec<El<Msg>>>();
+    .collect::<Vec<Node<Msg>>>();
 
     div![
         style! {
@@ -90,7 +90,7 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     ]
 }
 
-fn view_example_introduction(title: &str, description: &str) -> Vec<El<Msg>> {
+fn view_example_introduction(title: &str, description: &str) -> Vec<Node<Msg>> {
     vec![
         hr![],
         h2![title],

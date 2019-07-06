@@ -119,7 +119,7 @@ impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(Node::Text(Text::new(self.into())))
+        el.children.push(Node::Text(Node::new_text(self.into())))
     }
 }
 
@@ -717,6 +717,12 @@ pub enum Node<Ms: 'static> {
     Empty,
 }
 
+impl<Ms> Node<Ms> {
+    pub fn new_text(text: impl ToString) -> Self {
+        Node::Node::new_text(text.to_string())
+    }
+}
+
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
     type SelfWithOtherMs = Node<OtherMs>;
     /// See note on impl for El
@@ -865,12 +871,6 @@ impl<Ms> El<Ms> {
         }
     }
 
-    //    pub fn new_text(text: &str) -> Self {
-    //        let mut result = Self::empty(Tag::Span);
-    //        result.text = Some(text.into());
-    //        result
-    //    }
-
     /// Create an empty SVG element, specifying only the tag
     pub fn empty_svg(tag: Tag) -> Self {
         let mut el = El::empty(tag);
@@ -955,7 +955,7 @@ impl<Ms> El<Ms> {
     /// Add a text node to the element. (ie between the HTML tags).
     pub fn add_text(mut self, text: &str) -> Self {
         // todo: Allow text to be impl ToString?
-        self.children.push(Node::Text(Text::new(text.into())));
+        self.children.push(Node::Text(Node::new_text(text.into())));
         self
     }
 
@@ -978,7 +978,7 @@ impl<Ms> El<Ms> {
         }
         self.children = non_text_children;
 
-        self.children.push(Node::Text(Text::new(text.into())));
+        self.children.push(Node::Text(Node::new_text(text.into())));
         self
     }
 

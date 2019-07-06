@@ -102,7 +102,7 @@ pub fn view(model: &Model) -> impl ElContainer<Msg> {
     }
 }
 
-fn view_fail_reason(fail_reason: &fetch::FailReason, status: &Status) -> Vec<El<Msg>> {
+fn view_fail_reason(fail_reason: &fetch::FailReason, status: &Status) -> Vec<Node<Msg>> {
     if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception)) =
         fail_reason
     {
@@ -114,7 +114,7 @@ fn view_fail_reason(fail_reason: &fetch::FailReason, status: &Status) -> Vec<El<
     vec![]
 }
 
-pub fn view_button(status: &Status) -> El<Msg> {
+pub fn view_button(status: &Status) -> Node<Msg> {
     match status {
         Status::WaitingForResponse(TimeoutStatus::Enabled) => {
             button![simple_ev(Ev::Click, Msg::DisableTimeout), "Disable timeout"]

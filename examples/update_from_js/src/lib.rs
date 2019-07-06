@@ -36,7 +36,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
 
 // View
 
-fn view(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> Node<Msg> {
     h1![
         style![
             "text-align" => "center"
