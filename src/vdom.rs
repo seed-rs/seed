@@ -130,8 +130,8 @@ impl<Ms: 'static> Orders<Ms> {
     ///orders.perform_cmd(write_emoticon_after_delay());
     /// ```
     pub fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-        where
-            C: Future<Item = Ms, Error = Ms> + 'static,
+    where
+        C: Future<Item = Ms, Error = Ms> + 'static,
     {
         self.effects.push_back(Effect::Cmd(Box::new(cmd)));
         self
@@ -185,10 +185,10 @@ pub struct AppData<Ms: 'static, Mdl> {
 }
 
 pub struct AppCfg<Ms, Mdl, ElC>
-    where
-        Ms: 'static,
-        Mdl: 'static,
-        ElC: ElContainer<Ms>,
+where
+    Ms: 'static,
+    Mdl: 'static,
+    ElC: ElContainer<Ms>,
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
@@ -198,10 +198,10 @@ pub struct AppCfg<Ms, Mdl, ElC>
 }
 
 pub struct App<Ms, Mdl, ElC>
-    where
-        Ms: 'static,
-        Mdl: 'static,
-        ElC: ElContainer<Ms>,
+where
+    Ms: 'static,
+    Mdl: 'static,
+    ElC: ElContainer<Ms>,
 {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
@@ -563,7 +563,11 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
             match child_new {
                 Node::Element(child_new_el) => {
                     // We ran out of old children to patch; create new ones.
-                    websys_bridge::attach_el_and_children(child_new_el, &self.cfg.mount_point, &self);
+                    websys_bridge::attach_el_and_children(
+                        child_new_el,
+                        &self.cfg.mount_point,
+                        &self,
+                    );
                     patch::attach_listeners(child_new_el, &self.mailbox());
                 }
                 Node::Text(child_new_text) => {
@@ -596,8 +600,8 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
-        where
-            F: Fn(&Ms) + 'static,
+    where
+        F: Fn(&Ms) + 'static,
     {
         self.data
             .msg_listeners
@@ -1358,9 +1362,9 @@ pub mod tests {
             update,
             |_| seed::empty(),
         )
-            .mount(seed::body())
-            .finish()
-            .run();
+        .mount(seed::body())
+        .finish()
+        .run();
 
         // ACT
         app.update(Msg::Start);

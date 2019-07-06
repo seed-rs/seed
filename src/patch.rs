@@ -7,6 +7,7 @@ use crate::{
     vdom::{App, Mailbox},
     websys_bridge,
 };
+use wasm_bindgen::JsCast;
 use web_sys::{Document, Window};
 
 /// Recursively attach all event-listeners. Run this after creating fresh elements.
@@ -97,8 +98,8 @@ pub(crate) fn remove_node<Ms>(node: &web_sys::Node, parent: &web_sys::Node, el_v
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
 fn setup_input_listener<Ms>(el: &mut El<Ms>)
-    where
-        Ms: 'static,
+where
+    Ms: 'static,
 {
     if el.tag == dom_types::Tag::Input
         || el.tag == dom_types::Tag::Select
@@ -123,8 +124,8 @@ fn setup_input_listener<Ms>(el: &mut El<Ms>)
 
 /// Recursively sets up input listeners
 pub(crate) fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-    where
-        Ms: 'static,
+where
+    Ms: 'static,
 {
     setup_input_listener(el_vdom);
     for child in el_vdom.children.iter_mut() {
@@ -159,13 +160,23 @@ fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
         // Something about this element itself is different: patch it.
         if old.tag != new.tag || old.namespace != new.namespace {
-            let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");;
+            let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");
 
-            websys_bridge::assign_ws_nodes(document, &mut Node::Element(new.clone())); // todo temp clone
+            // We don't use assign_nodes directly here, since we only have access to
+            // the El, not wrapping node.
+            new.node_ws = Some(websys_bridge::make_websys_el(new, document));
+            for mut child in new.children.iter_mut() {
+                websys_bridge::assign_ws_nodes(document, &mut child);
+            }
+                if let Some(unmount_actions) = &mut old.hooks.will_unmount {
+                    let old_ws = old.node_ws.as_ref().expect("Missing websys el");
+                    (unmount_actions.actions)(&old_ws);
+                }
+
             websys_bridge::attach_el_and_children(new, parent, app);
 
-            let new_el_ws = new.node_ws.as_ref().expect("Missing websys el");
-            websys_bridge::replace_child(new_el_ws, old_el_ws, parent);
+            let new_ws = new.node_ws.as_ref().expect("Missing websys el");
+            websys_bridge::replace_child(new_ws, old_el_ws, parent);
 
             attach_listeners(new, mailbox);
             // We've re-rendered this child and all children; we're done with this recursion.
@@ -293,14 +304,19 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     // assign them here when we create them.
     match old {
         Node::Element(mut old_el) => {
-            // todo: Move this assign call to the Text arm, once you determine
-            // todo how to satisfy borrow checker.
-            websys_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
                     patch_el(document, old_el, new_el, parent, next_node, mailbox, app)
                 }
                 Node::Text(new_text) => {
+                    // Can't just use assign_ws_nodes; borrow-checker issues.
+                    new_text.node_ws = Some(
+                        document
+                            .create_text_node(&new_text.text)
+                            .dyn_into::<web_sys::Node>()
+                            .expect("Problem casting Text as Node."),
+                    );
+
                     let old_node_ws = old_el
                         .node_ws
                         .take()
@@ -322,20 +338,24 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                     None
                 }
             }
-        },
+        }
         Node::Empty => {
             // If the old node's empty, assign and attach web_sys nodes.
             websys_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
+                    websys_bridge::attach_children(new_el, app);
                     let new_el_ws = new_el
                         .node_ws
-                        .as_ref()
+                        .take()
                         .expect("new_node_ws missing when patching Empty to Element");
-
                     websys_bridge::insert_node(&new_el_ws, parent, next_node);
                     attach_listeners(new_el, mailbox);
 
+                    if let Some(mount_actions) = &mut new_el.hooks.did_mount {
+                        (mount_actions.actions)(&new_el_ws);
+                    }
+                    new_el.node_ws.replace(new_el_ws);
                     new_el.node_ws.as_ref()
                 }
                 Node::Text(new_text) => {

@@ -1,6 +1,6 @@
 //! This file contains interactions with `web_sys`.
-use crate::{dom_types, App};
 use crate::dom_types::{El, ElContainer, Node, Text};
+use crate::{dom_types, App};
 
 use wasm_bindgen::JsCast;
 use web_sys::Document;
@@ -140,7 +140,7 @@ where
                     .create_text_node(&text.text)
                     .dyn_into::<web_sys::Node>()
                     .expect("Problem casting Text as Node."),
-            )
+            );
         }
         Node::Empty => (),
     }
@@ -197,20 +197,41 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
     text.node_ws.replace(node_ws);
 }
 
+/// Similar to attach_el_and_children, but without attaching the elemnt. Useful for
+/// patching, where we want to insert the element at a specific place.
+pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
+    el_vdom: &mut El<Ms>,
+    app: &App<Ms, Mdl, ElC>, // To avoid inferring type for Mdl.
+) {
+    let el_ws = el_vdom
+        .node_ws
+        .as_ref()
+        .expect("Missing websys el in attach_children");
+    // appending the its children to the el_ws
+    for child in &mut el_vdom.children {
+        match child {
+            // Raise the active level once per recursion.
+            Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
+            Node::Text(child_text) => attach_text_node(child_text, &el_ws),
+            Node::Empty => (),
+        }
+    }
+}
+
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
 pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     el_vdom: &mut El<Ms>,
     parent: &web_sys::Node,
-    app: &App<Ms, Mdl, ElC>,  // To avoid inferring type for Mdl.
+    app: &App<Ms, Mdl, ElC>, // To avoid inferring type for Mdl.
 ) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
     let el_ws = el_vdom
         .node_ws
-        .take()
+        .as_ref()
         .expect("Missing websys el in attach_el_and_children");
 
     // Append the element
@@ -240,9 +261,6 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
         //            app.update(message);
         //        }
     }
-
-    // Replace the web_sys el
-    el_vdom.node_ws.replace(el_ws);
 }
 
 /// Recursively remove all children.
