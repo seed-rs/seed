@@ -53,7 +53,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
     }
 }
 
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
         h1!["seed websocket example"],
         if model.connected {

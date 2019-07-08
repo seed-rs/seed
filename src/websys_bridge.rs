@@ -380,7 +380,7 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
                         .as_string()
                         .expect("problem converting attr to string");
                     if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
-                        attrs.add(attr_name2.into(), &attr_val);
+                        attrs.add(attr_name2.into(), attr_val);
                     }
                 });
             result.attrs = attrs;
