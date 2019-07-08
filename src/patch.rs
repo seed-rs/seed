@@ -153,7 +153,7 @@ fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                 (unmount_actions.actions)(&old_ws);
             }
 
-            websys_bridge::attach_el_and_children(new, parent, app);
+            websys_bridge::attach_el_and_children(new, parent);
 
             let new_ws = new.node_ws.as_ref().expect("Missing websys el");
             websys_bridge::replace_child(new_ws, old_el_ws, parent);
@@ -232,7 +232,7 @@ fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 
         match child_new {
             Node::Element(child_new_el) => {
-                websys_bridge::attach_el_and_children(child_new_el, &old_el_ws, app);
+                websys_bridge::attach_el_and_children(child_new_el, &old_el_ws);
                 attach_listeners(child_new_el, mailbox);
             }
             Node::Text(child_new_text) => {
@@ -265,14 +265,13 @@ fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 }
 
 // Reduces code repetition
-fn add_el_helper<Ms, Mdl, ElC: ElContainer<Ms>>(
+fn add_el_helper<Ms>(
     new: &mut El<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC>,
 ) {
-    websys_bridge::attach_children(new, app);
+    websys_bridge::attach_children(new);
     let new_ws = new
         .node_ws
         .take()
@@ -348,7 +347,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             websys_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
-                    add_el_helper(new_el, parent, next_node, mailbox, app);
+                    add_el_helper(new_el, parent, next_node, mailbox);
                     new_el.node_ws.as_ref()
                 }
                 Node::Text(new_text) => {
@@ -373,7 +372,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                         parent,
                     );
 
-                    add_el_helper(new_el, parent, next_node, mailbox, app);
+                    add_el_helper(new_el, parent, next_node, mailbox);
                     new_el.node_ws.as_ref()
                 }
                 Node::Empty => {
