@@ -119,7 +119,7 @@ impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(Node::Text(Node::new_text(self.into())))
+        el.children.push(Node::Text(Text::new(self.into())))
     }
 }
 
@@ -152,12 +152,6 @@ impl<Ms> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
 impl<Ms> UpdateEl<El<Ms>> for Tag {
     fn update(self, el: &mut El<Ms>) {
         el.tag = self;
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for Optimize {
-    fn update(self, el: &mut El<Ms>) {
-        el.optimizations.push(self)
     }
 }
 
@@ -642,14 +636,6 @@ make_tags! {
     Style => "style", View => "view"
 }
 
-/// WIP that marks elements in ways to improve diffing and rendering efficiency.
-#[derive(Copy, Clone, Debug)]
-pub enum Optimize {
-    Key(u32),
-    // Helps correctly match children, prevening unecessary rerenders
-    Static, // unimplemented, and possibly unecessary
-}
-
 pub trait ElContainer<Ms: 'static> {
     fn els(self) -> Vec<Node<Ms>>;
 }
@@ -719,7 +705,89 @@ pub enum Node<Ms: 'static> {
 
 impl<Ms> Node<Ms> {
     pub fn new_text(text: impl ToString) -> Self {
-        Node::Node::new_text(text.to_string())
+        Node::Text(Text::new(text.to_string()))
+    }
+
+    /// See `El::from_markdown`
+    pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
+        El::from_markdown(markdown)
+    }
+
+    /// See `El::from_html`
+    pub fn from_html(html: &str) -> Vec<Node<Ms>> {
+        El::from_html(html)
+    }
+
+    /// See `El::add_child`
+    pub fn add_child(self, node: Node<Ms>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_child(node))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_attr`
+    pub fn add_attr(self, key: String, val: String) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_attr(key, val))
+        } else {
+            self
+        }
+    }
+
+    /// /// See `El::add_class``
+    pub fn add_class(self, name: &str) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_class(name))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_style`
+    pub fn add_style(self, key: String, val: String) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_style(key, val))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_listener`
+    pub fn add_listener(self, listener: Listener<Ms>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_listener(listener))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_text`
+    pub fn add_text(self, text: &str) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_text(text))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::replace_text`
+    pub fn replace_text(self, text: &str) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.replace_text(text))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::get_text`
+    pub fn get_text(&self) -> String {
+        match self {
+            Node::Element(el) => el.get_text(),
+            Node::Text(text) => (&text.text).to_string(),
+            _ => "".to_string(),
+        }
     }
 }
 
@@ -754,13 +822,9 @@ pub struct El<Ms: 'static> {
     pub node_ws: Option<web_sys::Node>,
 
     pub namespace: Option<Namespace>,
-    // A unique identifier in the vdom. Useful for triggering one-off events.
-    pub ref_: Option<String>,
 
     // Lifecycle hooks
     pub hooks: LifecycleHooks<Ms>,
-    // Indicates not to render anything.
-    optimizations: Vec<Optimize>,
 }
 
 type _HookFn = Box<FnMut(&web_sys::Node)>; // todo
@@ -841,9 +905,6 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             node_ws: self.node_ws,
             namespace: self.namespace,
             hooks: self.hooks.map_message(f),
-            optimizations: self.optimizations,
-
-            ref_: None,
         }
     }
 }
@@ -857,17 +918,9 @@ impl<Ms> El<Ms> {
             style: Style::empty(),
             listeners: Vec::new(),
             children: Vec::new(),
-
             node_ws: None,
-
             namespace: None,
-
-            // static: false,
-            // static_to_parent: false,
             hooks: LifecycleHooks::new(),
-            optimizations: Vec::new(),
-
-            ref_: None,
         }
     }
 
@@ -878,7 +931,6 @@ impl<Ms> El<Ms> {
         el
     }
 
-    // todo: Post Node refactor, consider moving out of El's Impl
     /// Create elements from a markdown string.
     pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         let parser = pulldown_cmark::Parser::new(markdown);
@@ -888,7 +940,6 @@ impl<Ms> El<Ms> {
         Self::from_html(&html_text)
     }
 
-    // todo: Post Node refactor, consider moving out of El's Impl
     /// Create elements from an HTML string.
     pub fn from_html(html: &str) -> Vec<Node<Ms>> {
         // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.
@@ -955,20 +1006,13 @@ impl<Ms> El<Ms> {
     /// Add a text node to the element. (ie between the HTML tags).
     pub fn add_text(mut self, text: &str) -> Self {
         // todo: Allow text to be impl ToString?
-        self.children.push(Node::Text(Node::new_text(text.into())));
+        self.children.push(Node::Text(Text::new(text.into())));
         self
     }
 
     /// Replace the element's text.
     /// Removes all text nodes from element, then adds the new one.
-    /// todo: We shouldn't be storing text nodes in the vdom.
     pub fn replace_text(mut self, text: &str) -> Self {
-        //        self.children = self
-        //            .children
-        //            .into_iter()
-        //            .filter(|c| c not let = Node::Text)
-        //            .collect();
-
         let mut non_text_children = Vec::new();
         for child in self.children.into_iter() {
             match child {
@@ -978,18 +1022,8 @@ impl<Ms> El<Ms> {
         }
         self.children = non_text_children;
 
-        self.children.push(Node::Text(Node::new_text(text.into())));
+        self.children.push(Node::Text(Text::new(text.into())));
         self
-    }
-
-    /// Shortcut for finding the key, if one exists
-    pub fn key(&self) -> Option<u32> {
-        for o in &self.optimizations {
-            if let Optimize::Key(key) = o {
-                return Some(*key);
-            }
-        }
-        None
     }
 
     // Pull text from child text nodes
@@ -1003,11 +1037,6 @@ impl<Ms> El<Ms> {
         }
 
         result
-    }
-
-    /// Set the ref
-    pub fn ref_<S: ToString>(&mut self, ref_: &S) {
-        self.ref_ = Some(ref_.to_string());
     }
 }
 
@@ -1026,9 +1055,6 @@ impl<Ms> Clone for El<Ms> {
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
             hooks: LifecycleHooks::new(),
-            optimizations: self.optimizations.clone(),
-
-            ref_: self.ref_.clone(),
         }
     }
 }
@@ -1042,7 +1068,6 @@ impl<Ms> PartialEq for El<Ms> {
             && self.style == other.style
             && self.listeners == other.listeners
             && self.namespace == other.namespace
-            && self.ref_ == other.ref_
     }
 }
 

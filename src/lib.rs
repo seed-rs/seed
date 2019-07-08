@@ -77,8 +77,8 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
-            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Node,
-            Optimize::Key, Tag, UpdateEl,
+            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Node, Tag,
+            UpdateEl,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,

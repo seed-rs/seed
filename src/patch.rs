@@ -108,7 +108,7 @@ where
     Ms: 'static,
 {
     setup_input_listener(el_vdom);
-    for child in el_vdom.children.iter_mut() {
+    for child in &mut el_vdom.children {
         if let Node::Element(child_el) = child {
             setup_input_listener(child_el);
         }

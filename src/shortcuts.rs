@@ -162,14 +162,15 @@ macro_rules! raw {
 #[macro_export]
 macro_rules! md {
     ($md:expr) => {
-        El::from_markdown($md)
+        let el = El::from_markdown($md)
+        $crate::dom_types::Node::Element(el)
     };
 }
 
 #[macro_export]
 macro_rules! plain {
     ($text:expr) => {
-        El::new_text($text)
+        $crate::dom_types::Node::new_text($text)
     };
 }
 

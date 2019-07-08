@@ -763,7 +763,9 @@ pub mod tests {
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.el_ws.as_ref().unwrap().clone();
+        if let Node::Element(vdom_el) = vdom {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+        }
         parent.append_child(&old_ws).unwrap();
 
         assert_eq!(parent.children().length(), 1);
@@ -824,30 +826,34 @@ pub mod tests {
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
-        parent.append_child(&old_ws).unwrap();
+        if let Node::Element(vdom_el) = vdom {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            if let Node::Element(vdom_el) = vdom {
+                parent.append_child(&old_ws).unwrap();
 
-        // First add some child nodes using the vdom
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div!["text", "more text", vec![li!["even more text"]]],
-            &app,
-        );
+                // First add some child nodes using the vdom
+                vdom = call_patch(
+                    &doc,
+                    &parent,
+                    &mailbox,
+                    vdom,
+                    div!["text", "more text", vec![li!["even more text"]]],
+                    &app,
+                );
 
-        assert_eq!(parent.children().length(), 1);
-        assert_eq!(old_ws.child_nodes().length(), 3);
-        let old_child1 = old_ws.child_nodes().item(0).unwrap();
+                assert_eq!(parent.children().length(), 1);
+                assert_eq!(old_ws.child_nodes().length(), 3);
+                let old_child1 = old_ws.child_nodes().item(0).unwrap();
 
-        // Now test that patch function removes the last 2 nodes
-        call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
+                // Now test that patch function removes the last 2 nodes
+                call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
 
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(old_ws.child_nodes().length(), 1);
-        assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
+                assert_eq!(parent.children().length(), 1);
+                assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+                assert_eq!(old_ws.child_nodes().length(), 1);
+                assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
+            }
+        }
     }
 
     #[wasm_bindgen_test]
@@ -919,7 +925,9 @@ pub mod tests {
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
+        if let Node::Element(vdom_el) = vdom {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+        }
         parent.append_child(&old_ws).unwrap();
 
         // First add button without attribute `disabled`
@@ -997,7 +1005,9 @@ pub mod tests {
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         setup_websys_el(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
+        if let Node::Element(vdom_el) = vdom {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+        }
         parent.append_child(&old_ws).unwrap();
 
         assert_eq!(parent.children().length(), 1);
@@ -1043,9 +1053,11 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        setup_websys_el(&doc, &mut vdom);
+        websys_bridge::make_websys_el(&mut vdom, &doc);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
+        if let Node::Element(vdom_el) = vdom {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+        }
         parent.append_child(&old_ws).unwrap();
 
         assert_eq!(parent.children().length(), 1);
@@ -1089,7 +1101,7 @@ pub mod tests {
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
 
-        let mut vdom = Node::Element(seed::empty());
+        let mut vdom = seed::empty();
 
         vdom = call_patch(
             &doc,
@@ -1100,7 +1112,9 @@ pub mod tests {
             &app,
         );
         assert_eq!(parent.children().length(), 1);
-        let el_ws = vdom.el_ws.as_ref().expect("el_ws missing");
+        if let Node::Element(vdom_el) = vdom {
+            let el_ws = vdom_el.node_ws.as_ref().expect("el_ws missing");
+        }
         assert!(el_ws.is_same_node(parent.first_child().as_ref()));
         assert_eq!(
             iter_child_nodes(&el_ws)
