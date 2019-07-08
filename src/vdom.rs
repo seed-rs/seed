@@ -1,18 +1,21 @@
-use crate::{
-    dom_types::{self, El, ElContainer, MessageMapper, Namespace, Node},
-    events, next_tick, patch, routing, util, websys_bridge,
-};
-use enclose::enclose;
-use futures::Future;
-use next_tick::NextTick;
 use std::{
     cell::RefCell,
     collections::{vec_deque::VecDeque, HashMap},
     rc::Rc,
 };
+
+use futures::Future;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Element, Event, EventTarget};
+
+use enclose::enclose;
+use next_tick::NextTick;
+
+use crate::{
+    dom_types::{self, El, ElContainer, MessageMapper, Namespace, Node},
+    events, next_tick, patch, routing, util, websys_bridge,
+};
 
 /// Function `call_update` is useful for calling submodules' `update`.
 ///
@@ -708,17 +711,18 @@ pub trait DomElLifecycle {
 
 #[cfg(test)]
 pub mod tests {
+    use futures::future;
+    use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    use super::*;
+    use web_sys;
 
     use crate as seed;
     // required for macros to work.
     use crate::{class, prelude::*};
-    use futures::future;
-    use wasm_bindgen::JsCast;
-    use web_sys;
+
+    use super::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
 
     #[derive(Clone, Debug)]
     enum Msg {}
@@ -733,14 +737,14 @@ pub mod tests {
     }
 
     fn call_patch(
-        doc: &Document,
+        doc: &web_sys::Document,
         parent: &Element,
         mailbox: &Mailbox<Msg>,
         old_vdom: Node<Msg>,
         mut new_vdom: Node<Msg>,
         app: &App<Msg, Model, Node<Msg>>,
     ) -> Node<Msg> {
-        patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox, &app);
+        patch::patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox, &app);
         new_vdom
     }
 
@@ -761,58 +765,61 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        setup_websys_el(&doc, &mut vdom);
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        if let Node::Element(vdom_el) = vdom {
+        if let Node::Element(vdom_el) = vdom.clone() {
+            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 0);
+
+            vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(old_ws.child_nodes().length(), 1);
+            assert_eq!(
+                old_ws.first_child().unwrap().text_content().unwrap(),
+                "text"
+            );
+
+            call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div!["text", "more text", vec![li!["even more text"]]],
+                &app,
+            );
+
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(old_ws.child_nodes().length(), 3);
+            assert_eq!(
+                old_ws
+                    .child_nodes()
+                    .item(0)
+                    .unwrap()
+                    .text_content()
+                    .unwrap(),
+                "text"
+            );
+            assert_eq!(
+                old_ws
+                    .child_nodes()
+                    .item(1)
+                    .unwrap()
+                    .text_content()
+                    .unwrap(),
+                "more text"
+            );
+            let child3 = old_ws.child_nodes().item(2).unwrap();
+            assert_eq!(child3.node_name(), "LI");
+            assert_eq!(child3.text_content().unwrap(), "even more text");
+        } else {
+            panic!("Node not Element")
         }
-        parent.append_child(&old_ws).unwrap();
-
-        assert_eq!(parent.children().length(), 1);
-        assert_eq!(old_ws.child_nodes().length(), 0);
-
-        vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(old_ws.child_nodes().length(), 1);
-        assert_eq!(
-            old_ws.first_child().unwrap().text_content().unwrap(),
-            "text"
-        );
-
-        call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div!["text", "more text", vec![li!["even more text"]]],
-            &app,
-        );
-
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(old_ws.child_nodes().length(), 3);
-        assert_eq!(
-            old_ws
-                .child_nodes()
-                .item(0)
-                .unwrap()
-                .text_content()
-                .unwrap(),
-            "text"
-        );
-        assert_eq!(
-            old_ws
-                .child_nodes()
-                .item(1)
-                .unwrap()
-                .text_content()
-                .unwrap(),
-            "more text"
-        );
-        let child3 = old_ws.child_nodes().item(2).unwrap();
-        assert_eq!(child3.node_name(), "LI");
-        assert_eq!(child3.text_content().unwrap(), "even more text");
     }
 
     #[wasm_bindgen_test]
@@ -824,35 +831,34 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        setup_websys_el(&doc, &mut vdom);
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        if let Node::Element(vdom_el) = vdom {
+        if let Node::Element(vdom_el) = vdom.clone() {
+            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
-            if let Node::Element(vdom_el) = vdom {
-                parent.append_child(&old_ws).unwrap();
+            parent.append_child(&old_ws).unwrap();
 
-                // First add some child nodes using the vdom
-                vdom = call_patch(
-                    &doc,
-                    &parent,
-                    &mailbox,
-                    vdom,
-                    div!["text", "more text", vec![li!["even more text"]]],
-                    &app,
-                );
+            // First add some child nodes using the vdom
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div!["text", "more text", vec![li!["even more text"]]],
+                &app,
+            );
 
-                assert_eq!(parent.children().length(), 1);
-                assert_eq!(old_ws.child_nodes().length(), 3);
-                let old_child1 = old_ws.child_nodes().item(0).unwrap();
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 3);
+            let old_child1 = old_ws.child_nodes().item(0).unwrap();
 
-                // Now test that patch function removes the last 2 nodes
-                call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
+            // Now test that patch function removes the last 2 nodes
+            call_patch(&doc, &parent, &mailbox, vdom, div!["text"], &app);
 
-                assert_eq!(parent.children().length(), 1);
-                assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-                assert_eq!(old_ws.child_nodes().length(), 1);
-                assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
-            }
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(old_ws.child_nodes().length(), 1);
+            assert!(old_child1.is_same_node(old_ws.child_nodes().item(0).as_ref()));
         }
     }
 
@@ -865,52 +871,57 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        setup_websys_el(&doc, &mut vdom);
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        let old_ws = vdom.node_ws.as_ref().unwrap().clone();
-        parent.append_child(&old_ws).unwrap();
+        if let Node::Element(el) = vdom.clone() {
+            // todo clone ok here?
+            let old_ws = el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
 
-        // First add some child nodes using the vdom
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![span!["hello"], ", ", span!["world"]],
-            &app,
-        );
+            // First add some child nodes using the vdom
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![span!["hello"], ", ", span!["world"]],
+                &app,
+            );
 
-        assert_eq!(parent.child_nodes().length(), 1);
-        assert_eq!(old_ws.child_nodes().length(), 3);
+            assert_eq!(parent.child_nodes().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 3);
 
-        // Now add some attributes
-        call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![
-                span![class!["first"], "hello"],
-                ", ",
-                span![class!["second"], "world"],
-            ],
-            &app,
-        );
+            // Now add some attributes
+            call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![
+                    span![class!["first"], "hello"],
+                    ", ",
+                    span![class!["second"], "world"],
+                ],
+                &app,
+            );
 
-        let child1 = old_ws
-            .child_nodes()
-            .item(0)
-            .unwrap()
-            .dyn_into::<Element>()
-            .unwrap();
-        assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
-        let child3 = old_ws
-            .child_nodes()
-            .item(2)
-            .unwrap()
-            .dyn_into::<Element>()
-            .unwrap();
-        assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
+            let child1 = old_ws
+                .child_nodes()
+                .item(0)
+                .unwrap()
+                .dyn_into::<Element>()
+                .unwrap();
+            assert_eq!(child1.get_attribute("class"), Some("first".to_string()));
+            let child3 = old_ws
+                .child_nodes()
+                .item(2)
+                .unwrap()
+                .dyn_into::<Element>()
+                .unwrap();
+            assert_eq!(child3.get_attribute("class"), Some("second".to_string()));
+        } else {
+            panic!("Node not Element")
+        }
     }
 
     /// Test if attribute `disabled` is correctly added and then removed.
@@ -923,73 +934,76 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        setup_websys_el(&doc, &mut vdom);
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        if let Node::Element(vdom_el) = vdom {
+        if let Node::Element(vdom_el) = vdom.clone() {
+            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            // First add button without attribute `disabled`
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![button![attrs! { At::Disabled => false }]],
+                &app,
+            );
+
+            assert_eq!(parent.child_nodes().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 1);
+            let button = old_ws
+                .child_nodes()
+                .item(0)
+                .unwrap()
+                .dyn_into::<Element>()
+                .unwrap();
+            assert_eq!(button.has_attribute("disabled"), false);
+
+            // Now add attribute `disabled`
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![button![attrs! { At::Disabled => true }]],
+                &app,
+            );
+
+            let button = old_ws
+                .child_nodes()
+                .item(0)
+                .unwrap()
+                .dyn_into::<Element>()
+                .unwrap();
+            assert_eq!(
+                button
+                    .get_attribute("disabled")
+                    .expect("button hasn't got attribute `disabled`!"),
+                "true"
+            );
+
+            // And remove attribute `disabled`
+            call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![button![attrs! { At::Disabled => false }]],
+                &app,
+            );
+
+            let button = old_ws
+                .child_nodes()
+                .item(0)
+                .unwrap()
+                .dyn_into::<Element>()
+                .unwrap();
+            assert_eq!(button.has_attribute("disabled"), false);
+        } else {
+            panic!("Node not El")
         }
-        parent.append_child(&old_ws).unwrap();
-
-        // First add button without attribute `disabled`
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![button![attrs! { At::Disabled => false }]],
-            &app,
-        );
-
-        assert_eq!(parent.child_nodes().length(), 1);
-        assert_eq!(old_ws.child_nodes().length(), 1);
-        let button = old_ws
-            .child_nodes()
-            .item(0)
-            .unwrap()
-            .dyn_into::<Element>()
-            .unwrap();
-        assert_eq!(button.has_attribute("disabled"), false);
-
-        // Now add attribute `disabled`
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![button![attrs! { At::Disabled => true }]],
-            &app,
-        );
-
-        let button = old_ws
-            .child_nodes()
-            .item(0)
-            .unwrap()
-            .dyn_into::<Element>()
-            .unwrap();
-        assert_eq!(
-            button
-                .get_attribute("disabled")
-                .expect("button hasn't got attribute `disabled`!"),
-            "true"
-        );
-
-        // And remove attribute `disabled`
-        call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![button![attrs! { At::Disabled => false }]],
-            &app,
-        );
-
-        let button = old_ws
-            .child_nodes()
-            .item(0)
-            .unwrap()
-            .dyn_into::<Element>()
-            .unwrap();
-        assert_eq!(button.has_attribute("disabled"), false);
     }
 
     /// Test that if the first child was a seed::empty() and it is changed to a non-empty El,
@@ -1003,43 +1017,46 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        setup_websys_el(&doc, &mut vdom);
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
-        if let Node::Element(vdom_el) = vdom {
+        if let Node::Element(vdom_el) = vdom.clone() {
+            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 0);
+
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![seed::empty(), "b", "c"],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(
+                iter_child_nodes(&old_ws)
+                    .map(|node| node.text_content().unwrap())
+                    .collect::<Vec<_>>(),
+                &["b", "c"],
+            );
+
+            call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"], &app);
+
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(
+                iter_child_nodes(&old_ws)
+                    .map(|node| node.text_content().unwrap())
+                    .collect::<Vec<_>>(),
+                &["a", "b", "c"],
+            );
+        } else {
+            panic!("Not Element node")
         }
-        parent.append_child(&old_ws).unwrap();
-
-        assert_eq!(parent.children().length(), 1);
-        assert_eq!(old_ws.child_nodes().length(), 0);
-
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![seed::empty(), "b", "c"],
-            &app,
-        );
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(
-            iter_child_nodes(&old_ws)
-                .map(|node| node.text_content().unwrap())
-                .collect::<Vec<_>>(),
-            &["b", "c"],
-        );
-
-        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"], &app);
-
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(
-            iter_child_nodes(&old_ws)
-                .map(|node| node.text_content().unwrap())
-                .collect::<Vec<_>>(),
-            &["a", "b", "c"],
-        );
     }
 
     /// Test that if a middle child was a seed::empty() and it is changed to a non-empty El,
@@ -1053,43 +1070,46 @@ pub mod tests {
         let parent = doc.create_element("div").unwrap();
 
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
-        websys_bridge::make_websys_el(&mut vdom, &doc);
-        // clone so we can keep using it after vdom is modified
-        if let Node::Element(vdom_el) = vdom {
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
+        if let Node::Element(vdom_el) = vdom.clone() {
+            // todo clone ok here?
+            // clone so we can keep using it after vdom is modified
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 0);
+
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div!["a", seed::empty(), "c"],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(
+                iter_child_nodes(&old_ws)
+                    .map(|node| node.text_content().unwrap())
+                    .collect::<Vec<_>>(),
+                &["a", "c"],
+            );
+
+            call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"], &app);
+
+            assert_eq!(parent.children().length(), 1);
+            assert!(old_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(
+                iter_child_nodes(&old_ws)
+                    .map(|node| node.text_content().unwrap())
+                    .collect::<Vec<_>>(),
+                &["a", "b", "c"],
+            );
+        } else {
+            panic!("Not Element node")
         }
-        parent.append_child(&old_ws).unwrap();
-
-        assert_eq!(parent.children().length(), 1);
-        assert_eq!(old_ws.child_nodes().length(), 0);
-
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div!["a", seed::empty(), "c"],
-            &app,
-        );
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(
-            iter_child_nodes(&old_ws)
-                .map(|node| node.text_content().unwrap())
-                .collect::<Vec<_>>(),
-            &["a", "c"],
-        );
-
-        call_patch(&doc, &parent, &mailbox, vdom, div!["a", "b", "c"], &app);
-
-        assert_eq!(parent.children().length(), 1);
-        assert!(old_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(
-            iter_child_nodes(&old_ws)
-                .map(|node| node.text_content().unwrap())
-                .collect::<Vec<_>>(),
-            &["a", "b", "c"],
-        );
     }
 
     /// Test that if the old_el passed to patch was itself an empty, it is correctly patched to a non-empty.
@@ -1114,14 +1134,16 @@ pub mod tests {
         assert_eq!(parent.children().length(), 1);
         if let Node::Element(vdom_el) = vdom {
             let el_ws = vdom_el.node_ws.as_ref().expect("el_ws missing");
+            assert!(el_ws.is_same_node(parent.first_child().as_ref()));
+            assert_eq!(
+                iter_child_nodes(&el_ws)
+                    .map(|node| node.text_content().unwrap())
+                    .collect::<Vec<_>>(),
+                &["a", "c"],
+            );
+        } else {
+            panic!("Node not Element type")
         }
-        assert!(el_ws.is_same_node(parent.first_child().as_ref()));
-        assert_eq!(
-            iter_child_nodes(&el_ws)
-                .map(|node| node.text_content().unwrap())
-                .collect::<Vec<_>>(),
-            &["a", "c"],
-        );
     }
 
     /// Test that an empty->empty transition is handled correctly.

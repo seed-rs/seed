@@ -1143,48 +1143,52 @@ pub mod tests {
 
     use crate as seed;
     // required for macros to work.
-    use crate::vdom;
+    use crate::{patch, vdom};
     use std::collections::HashSet;
     use wasm_bindgen::{JsCast, JsValue};
-    use web_sys::{Element, Node};
+    use web_sys::Element;
 
     #[derive(Debug)]
     enum Msg {}
 
     struct Model {}
 
-    fn create_app() -> seed::App<Msg, Model, El<Msg>> {
-        seed::App::build(Model {}, |_, _, _| (), |_| seed::empty())
+    fn create_app() -> seed::App<Msg, Model, Node<Msg>> {
+        seed::App::build(Model {}, |_, _, _| (), |_| div![])
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()
     }
 
-    fn el_to_websys(mut el: El<Msg>) -> Node {
+    fn el_to_websys(mut node: Node<Msg>) -> web_sys::Node {
         let document = crate::util::document();
         let parent = document.create_element("div").unwrap();
         let app = create_app();
 
-        vdom::patch(
+        patch::patch(
             &document,
             seed::empty(),
-            &mut el,
+            &mut node,
             &parent,
             None,
             &vdom::Mailbox::new(|_: Msg| {}),
             &app,
         );
 
-        el.node_ws.unwrap()
+        if let Node::Element(el) = node {
+            el.node_ws.unwrap()
+        } else {
+            panic!("not an El node")
+        }
     }
 
     /// Assumes Node is an Element
-    fn get_node_html(node: &Node) -> String {
+    fn get_node_html(node: &web_sys::Node) -> String {
         node.dyn_ref::<Element>().unwrap().outer_html()
     }
 
     /// Assumes Node is an Element
-    fn get_node_attrs(node: &Node) -> IndexMap<String, String> {
+    fn get_node_attrs(node: &web_sys::Node) -> IndexMap<String, String> {
         let element = node.dyn_ref::<Element>().unwrap();
         element
             .get_attribute_names()
