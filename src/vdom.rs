@@ -514,7 +514,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static> App<Ms, Mdl, ElC> {
     fn rerender_vdom(&self) {
         // Create a new vdom: The top element, and all its children. Does not yet
         // have associated web_sys elements.
-        let mut new = El::empty(dom_types::Tag::Section);
+        let mut new = El::empty(dom_types::Tag::PlaceHolder);
         new.children = (self.cfg.view)(&self.data.model.borrow()).els();
 
         let mut old = self

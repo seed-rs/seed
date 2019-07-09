@@ -56,7 +56,7 @@ fn send_request() -> impl Future<Item = Msg, Error = Msg> {
 
 // View
 
-pub fn view(model: &Model) -> impl ElContainer<Msg> {
+pub fn view(model: &Model) -> impl View<Msg> {
     vec![
         match &model.response_with_data_result {
             None => empty![],

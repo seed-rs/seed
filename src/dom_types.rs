@@ -648,18 +648,14 @@ make_tags! {
     // Uncategorized elements
     ClipPath => "clipPath", ColorProfile => "color-profile", Cursor => "cursor", Filter => "filter",
     ForeignObject => "foreignObject", HatchPath => "hatchpath", MeshPatch => "meshpatch", MeshRow => "meshrow",
-    Style => "style", View => "view"
+    Style => "style", View => "view",
+
+    // A custom placeholder tag, for internal use
+    PlaceHolder => "placeholder"
 }
 
 pub trait View<Ms: 'static> {
     fn els(self) -> Vec<Node<Ms>>;
-}
-
-impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
-    type SelfWithOtherMs = Vec<El<OtherMs>>;
-    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
-        self.into_iter().map(|el| el.map_message(f)).collect()
-    }
 }
 
 impl<Ms> View<Ms> for El<Ms> {
@@ -826,12 +822,18 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
     type SelfWithOtherMs = Node<OtherMs>;
     /// See note on impl for El
     fn map_message(self, f: fn(Ms) -> OtherMs) -> Node<OtherMs> {
-        // todo: Is this adaptation correct?
         match self {
             Node::Element(el) => Node::Element(el.map_message(f)),
             Node::Text(text) => Node::Text(text),
             Node::Empty => Node::Empty,
         }
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>> {
+    type SelfWithOtherMs = Vec<Node<OtherMs>>;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<Node<OtherMs>> {
+        self.into_iter().map(|node| node.map_message(f)).collect()
     }
 }
 
@@ -937,6 +939,13 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             namespace: self.namespace,
             hooks: self.hooks.map_message(f),
         }
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
+    type SelfWithOtherMs = Vec<El<OtherMs>>;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
+        self.into_iter().map(|el| el.map_message(f)).collect()
     }
 }
 

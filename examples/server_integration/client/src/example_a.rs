@@ -61,7 +61,7 @@ fn send_request(new_message: String) -> impl Future<Item = Msg, Error = Msg> {
 
 // View
 
-pub fn view(model: &Model) -> impl ElContainer<Msg> {
+pub fn view(model: &Model) -> impl View<Msg> {
     let message = match &model.response_data {
         None => empty![],
         Some(shared::SendMessageResponseBody {

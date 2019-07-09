@@ -84,7 +84,7 @@ fn send_request(
 
 // View
 
-pub fn view(model: &Model) -> impl ElContainer<Msg> {
+pub fn view(model: &Model) -> impl View<Msg> {
     match &model.response_result {
         None => vec![
             if let Status::WaitingForResponse(_) = model.status {

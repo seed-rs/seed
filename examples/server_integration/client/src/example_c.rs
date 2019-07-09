@@ -76,7 +76,7 @@ fn send_request(
 
 // View
 
-pub fn view(model: &Model) -> impl ElContainer<Msg> {
+pub fn view(model: &Model) -> impl View<Msg> {
     match model.status {
         Status::ReadyToSendRequest => vec![
             view_response_data_result(&model.response_data_result),
