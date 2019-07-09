@@ -400,11 +400,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static> App<Ms, Mdl, ElC> {
             for child in &mut new.children {
                 match child {
                     Node::Element(child_el) => {
-                        websys_bridge::attach_el_and_children(
-                            child_el,
-                            &self.cfg.mount_point,
-                            &self,
-                        );
+                        websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
                         patch::attach_listeners(child_el, &self.mailbox());
                     }
                     Node::Text(top_child_text) => {
@@ -566,11 +562,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static> App<Ms, Mdl, ElC> {
             match child_new {
                 Node::Element(child_new_el) => {
                     // We ran out of old children to patch; create new ones.
-                    websys_bridge::attach_el_and_children(
-                        child_new_el,
-                        &self.cfg.mount_point,
-                        self,
-                    );
+                    websys_bridge::attach_el_and_children(child_new_el, &self.cfg.mount_point);
                     patch::attach_listeners(child_new_el, &self.mailbox());
                 }
                 Node::Text(child_new_text) => {

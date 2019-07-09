@@ -1,6 +1,6 @@
 //! This file contains interactions with `web_sys`.
-use crate::dom_types::{El, Node, Text, View};
-use crate::{dom_types, App};
+use crate::dom_types;
+use crate::dom_types::{El, Node, Text};
 
 use wasm_bindgen::JsCast;
 use web_sys::Document;
@@ -199,10 +199,7 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
 
 /// Similar to `attach_el_and_children`, but without attaching the elemnt. Useful for
 /// patching, where we want to insert the element at a specific place.
-pub fn attach_children<Ms, Mdl, ElC: View<Ms>>(
-    el_vdom: &mut El<Ms>,
-    app: &App<Ms, Mdl, ElC>, // To avoid inferring type for Mdl.
-) {
+pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
     let el_ws = el_vdom
         .node_ws
         .as_ref()
@@ -211,7 +208,7 @@ pub fn attach_children<Ms, Mdl, ElC: View<Ms>>(
     for child in &mut el_vdom.children {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, app),
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
             Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
@@ -221,11 +218,7 @@ pub fn attach_children<Ms, Mdl, ElC: View<Ms>>(
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms, Mdl, ElC: View<Ms>>(
-    el_vdom: &mut El<Ms>,
-    parent: &web_sys::Node,
-    app: &App<Ms, Mdl, ElC>, // To avoid inferring type for Mdl.
-) {
+pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
@@ -248,7 +241,7 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: View<Ms>>(
     for child in &mut el_vdom.children {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, app),
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
             Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
@@ -387,7 +380,7 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
                         .as_string()
                         .expect("problem converting attr to string");
                     if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
-                        attrs.add(attr_name2.into(), &attr_val);
+                        attrs.add(attr_name2.into(), attr_val);
                     }
                 });
             result.attrs = attrs;
