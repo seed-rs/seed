@@ -116,7 +116,7 @@ fn register_handlers(ws: &web_sys::WebSocket) {
 
 fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: &App<Msg, Model, ElC>)
 where
-    ElC: ElContainer<Msg> + 'static,
+    ElC: View<Msg> + 'static,
 {
     app.add_message_listener(move |msg| {
         if let Msg::Send(msg) = msg {

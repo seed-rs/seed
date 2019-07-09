@@ -57,7 +57,7 @@ fn success_level(clicks: i32) -> Node<Msg> {
 
 /// The top-level component we pass to the virtual dom. Must accept the model as its
 /// only argument, and output has to implement trait `ElContainer`.
-fn view(model: &Model) -> impl ElContainer<Msg> {
+fn view(model: &Model) -> impl View<Msg> {
     let plural = if model.count == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 

@@ -1,6 +1,9 @@
 # Changelog
 
-## v0.3.8
+## v0.4.0
+- `ElContainer`, imported in prelude, renamed to `View`. (Breaking)
+- Internal refactor of `El`: Now wrapped in `Node`, along with
+`Empty` and `Text`. Creation macros return `Node(Element)`. (Breaking)
 - Added more SVG element macros
 - Several minor bux fixes
 

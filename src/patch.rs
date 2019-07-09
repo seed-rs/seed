@@ -2,7 +2,7 @@
 //! a subset of the `vdom` module.
 
 use crate::{
-    dom_types::{self, El, ElContainer, Node},
+    dom_types::{self, El, Node, View},
     events::{self, Listener},
     vdom::{App, Mailbox},
     websys_bridge,
@@ -11,7 +11,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{Document, Window};
 
 /// Recursively attach all event-listeners. Run this after creating elements.
-/// The associated web_sys nodes must be assigned prior to running this.
+/// The associated `web_sys` nodes must be assigned prior to running this.
 pub(crate) fn attach_listeners<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
     if let Some(el_ws) = el.node_ws.as_ref() {
         for listener in &mut el.listeners {
@@ -23,7 +23,7 @@ pub(crate) fn attach_listeners<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
             }
         }
     }
-    for child in el.children.iter_mut() {
+    for child in &mut el.children {
         if let Node::Element(child_el) = child {
             attach_listeners(child_el, mailbox);
         }
@@ -61,7 +61,7 @@ pub(crate) fn setup_window_listeners<Ms>(
     }
 }
 
-/// Remove a node from the vdom and web_sys DOM.
+/// Remove a node from the vdom and `web_sys` DOM.
 pub(crate) fn remove_node<Ms>(node: &web_sys::Node, parent: &web_sys::Node, el_vdom: &mut El<Ms>) {
     websys_bridge::remove_node(node, parent);
 
@@ -115,12 +115,11 @@ where
     }
 }
 
-fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
+fn patch_el<'a, Ms, Mdl, ElC: View<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
-    _next_node: Option<web_sys::Node>, // todo remove if the app works without this.
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, ElC>,
 ) -> Option<&'a web_sys::Node> {
@@ -145,12 +144,12 @@ fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
             // We don't use assign_nodes directly here, since we only have access to
             // the El, not wrapping node.
             new.node_ws = Some(websys_bridge::make_websys_el(new, document));
-            for mut child in new.children.iter_mut() {
+            for mut child in &mut new.children {
                 websys_bridge::assign_ws_nodes(document, &mut child);
             }
             if let Some(unmount_actions) = &mut old.hooks.will_unmount {
                 let old_ws = old.node_ws.as_ref().expect("Missing websys el");
-                (unmount_actions.actions)(&old_ws);
+                (unmount_actions.actions)(old_ws);
             }
 
             websys_bridge::attach_el_and_children(new, parent, app);
@@ -265,7 +264,7 @@ fn patch_el<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
 }
 
 // Reduces code repetition
-fn add_el_helper<Ms, Mdl, ElC: ElContainer<Ms>>(
+fn add_el_helper<Ms, Mdl, ElC: View<Ms>>(
     new: &mut El<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
@@ -290,7 +289,7 @@ fn add_el_helper<Ms, Mdl, ElC: ElContainer<Ms>>(
 
 /// Routes patching through different channels, depending on the Node variant
 /// of old and new.
-pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
+pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>>(
     document: &Document,
     old: Node<Ms>,
     new: &'a mut Node<Ms>,
@@ -309,9 +308,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
     match old {
         Node::Element(mut old_el) => {
             match new {
-                Node::Element(new_el) => {
-                    patch_el(document, old_el, new_el, parent, next_node, mailbox, app)
-                }
+                Node::Element(new_el) => patch_el(document, old_el, new_el, parent, mailbox, app),
                 Node::Text(new_text) => {
                     // Can't just use assign_ws_nodes; borrow-checker issues.
                     new_text.node_ws = Some(
@@ -357,7 +354,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: ElContainer<Ms>>(
                         .as_ref()
                         .expect("new_node_ws missing when patching Empty to Text");
 
-                    websys_bridge::insert_node(&new_node_ws, parent, next_node);
+                    websys_bridge::insert_node(new_node_ws, parent, next_node);
                     new_text.node_ws.as_ref()
                 }
                 // If new and old are empty, we don't need to do anything.

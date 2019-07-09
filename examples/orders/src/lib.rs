@@ -64,7 +64,7 @@ fn write_emoticon_after_delay(emoticon: String) -> impl Future<Item = Msg, Error
 
 // View
 
-fn view(model: &Model) -> impl ElContainer<Msg> {
+fn view(model: &Model) -> impl View<Msg> {
     div![
         style![
             "display" => "flex",

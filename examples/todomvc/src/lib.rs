@@ -287,7 +287,7 @@ fn footer(model: &Model) -> Node<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn view(model: &Model) -> impl ElContainer<Msg> {
+fn view(model: &Model) -> impl View<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.

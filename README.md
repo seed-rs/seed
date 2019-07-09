@@ -134,7 +134,7 @@ fn update(msg: Msg, model: &mut Model, _orders: &mut Orders<Msg>) {
 // View
 
 /// A simple component.
-fn success_level(clicks: i32) -> El<Msg> {
+fn success_level(clicks: i32) -> Node<Msg> {
     let descrip = match clicks {
         0 ... 5 => "Not very many 🙁",
         6 ... 9 => "I got my first real six-string 😐",
@@ -145,7 +145,7 @@ fn success_level(clicks: i32) -> El<Msg> {
 }
 
 /// The top-level component we pass to the virtual dom.
-fn view(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> impl View<Msg> {
     let plural = if model.count == 1 {""} else {"s"};
 
     // Attrs, Style, Events, and children may be defined separately.

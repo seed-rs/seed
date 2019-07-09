@@ -13,7 +13,7 @@ use enclose::enclose;
 use next_tick::NextTick;
 
 use crate::{
-    dom_types::{self, El, ElContainer, MessageMapper, Namespace, Node},
+    dom_types::{self, El, MessageMapper, Namespace, Node, View},
     events, next_tick, patch, routing, util, websys_bridge,
 };
 
@@ -191,7 +191,7 @@ pub struct AppCfg<Ms, Mdl, ElC>
 where
     Ms: 'static,
     Mdl: 'static,
-    ElC: ElContainer<Ms>,
+    ElC: View<Ms>,
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
@@ -204,7 +204,7 @@ pub struct App<Ms, Mdl, ElC>
 where
     Ms: 'static,
     Mdl: 'static,
-    ElC: ElContainer<Ms>,
+    ElC: View<Ms>,
 {
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC>>,
@@ -212,7 +212,7 @@ where
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
+impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>> ::std::fmt::Debug for App<Ms, Mdl, ElC> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -248,7 +248,7 @@ impl MountPoint for web_sys::HtmlElement {
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
 #[derive(Clone)]
-pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
+pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: View<Ms>> {
     model: Mdl,
     update: UpdateFn<Ms, Mdl>,
     view: ViewFn<Mdl, ElC>,
@@ -257,7 +257,7 @@ pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: ElContainer<Ms>> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: View<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
     /// Choose the element where the application will be mounted.
     /// The default one is the element with `id` = "app".
     ///
@@ -313,7 +313,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> AppBuilder<Ms, Mdl, ElC> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: View<Ms> + 'static> App<Ms, Mdl, ElC> {
     pub fn build(
         model: Mdl,
         update: UpdateFn<Ms, Mdl>,
@@ -569,7 +569,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
                     websys_bridge::attach_el_and_children(
                         child_new_el,
                         &self.cfg.mount_point,
-                        &self,
+                        self,
                     );
                     patch::attach_listeners(child_new_el, &self.mailbox());
                 }
@@ -634,7 +634,7 @@ impl<Ms, Mdl, ElC: ElContainer<Ms> + 'static> App<Ms, Mdl, ElC> {
     }
 }
 
-impl<Ms, Mdl, ElC: ElContainer<Ms>> Clone for App<Ms, Mdl, ElC> {
+impl<Ms, Mdl, ElC: View<Ms>> Clone for App<Ms, Mdl, ElC> {
     fn clone(&self) -> Self {
         Self {
             cfg: Rc::clone(&self.cfg),
@@ -768,7 +768,6 @@ pub mod tests {
         websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         if let Node::Element(vdom_el) = vdom.clone() {
-            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
             parent.append_child(&old_ws).unwrap();
 
@@ -834,7 +833,6 @@ pub mod tests {
         websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         if let Node::Element(vdom_el) = vdom.clone() {
-            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
             parent.append_child(&old_ws).unwrap();
 
@@ -874,7 +872,6 @@ pub mod tests {
         websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         if let Node::Element(el) = vdom.clone() {
-            // todo clone ok here?
             let old_ws = el.node_ws.as_ref().unwrap().clone();
             parent.append_child(&old_ws).unwrap();
 
@@ -937,7 +934,6 @@ pub mod tests {
         websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         if let Node::Element(vdom_el) = vdom.clone() {
-            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
             parent.append_child(&old_ws).unwrap();
 
@@ -1020,7 +1016,6 @@ pub mod tests {
         websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         if let Node::Element(vdom_el) = vdom.clone() {
-            // todo clone ok here?
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
             parent.append_child(&old_ws).unwrap();
 
@@ -1072,7 +1067,6 @@ pub mod tests {
         let mut vdom = Node::Element(El::empty(seed::dom_types::Tag::Div));
         websys_bridge::assign_ws_nodes(&doc, &mut vdom);
         if let Node::Element(vdom_el) = vdom.clone() {
-            // todo clone ok here?
             // clone so we can keep using it after vdom is modified
             let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
             parent.append_child(&old_ws).unwrap();

@@ -32,7 +32,7 @@ pub mod gloo_timers;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub fn empty<Ms>() -> dom_types::Node<Ms> {
+pub const fn empty<Ms>() -> dom_types::Node<Ms> {
     dom_types::Node::Empty
 }
 
@@ -77,8 +77,7 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
-            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Node, Tag,
-            UpdateEl,
+            did_mount, did_update, will_unmount, At, El, MessageMapper, Node, Tag, UpdateEl, View,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,

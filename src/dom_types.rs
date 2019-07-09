@@ -636,7 +636,7 @@ make_tags! {
     Style => "style", View => "view"
 }
 
-pub trait ElContainer<Ms: 'static> {
+pub trait View<Ms: 'static> {
     fn els(self) -> Vec<Node<Ms>>;
 }
 
@@ -647,25 +647,25 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
     }
 }
 
-impl<Ms> ElContainer<Ms> for El<Ms> {
+impl<Ms> View<Ms> for El<Ms> {
     fn els(self) -> Vec<Node<Ms>> {
         vec![Node::Element(self)]
     }
 }
 
-impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
+impl<Ms> View<Ms> for Vec<El<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
         self.into_iter().map(Node::Element).collect()
     }
 }
 
-impl<Ms: 'static> ElContainer<Ms> for Node<Ms> {
+impl<Ms: 'static> View<Ms> for Node<Ms> {
     fn els(self) -> Vec<Node<Ms>> {
         vec![self]
     }
 }
 
-impl<Ms: 'static> ElContainer<Ms> for Vec<Node<Ms>> {
+impl<Ms: 'static> View<Ms> for Vec<Node<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
         self
     }
@@ -685,7 +685,7 @@ impl PartialEq for Text {
 }
 
 impl Text {
-    pub fn new(text: String) -> Self {
+    pub const fn new(text: String) -> Self {
         Self {
             text,
             node_ws: None,
@@ -704,7 +704,15 @@ pub enum Node<Ms: 'static> {
 }
 
 impl<Ms> Node<Ms> {
-    pub fn new_text(text: impl ToString) -> Self {
+    fn is_text(&self) -> bool {
+        if let Node::Text(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn new_text(text: &impl ToString) -> Self {
         Node::Text(Text::new(text.to_string()))
     }
 
@@ -1013,30 +1021,20 @@ impl<Ms> El<Ms> {
     /// Replace the element's text.
     /// Removes all text nodes from element, then adds the new one.
     pub fn replace_text(mut self, text: &str) -> Self {
-        let mut non_text_children = Vec::new();
-        for child in self.children.into_iter() {
-            match child {
-                Node::Text(_) => (),
-                _ => non_text_children.push(child),
-            }
-        }
-        self.children = non_text_children;
-
+        self.children.retain(|node| !node.is_text());
         self.children.push(Node::Text(Text::new(text.into())));
         self
     }
 
     // Pull text from child text nodes
     pub fn get_text(&self) -> String {
-        let mut result = String::new();
-
-        for child in &self.children {
-            if let Node::Text(text_node) = child {
-                result += &text_node.text;
-            }
-        }
-
-        result
+        self.children
+            .iter()
+            .filter_map(|child| match child {
+                Node::Text(text_node) => Some(text_node.text.as_str()),
+                _ => None,
+            })
+            .collect()
     }
 }
 

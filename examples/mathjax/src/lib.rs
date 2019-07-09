@@ -35,7 +35,7 @@ fn _dirac_3(left: &str, middle: &str, right: &str) -> String {
     )
 }
 
-fn view(_: &Model) -> impl ElContainer<Msg> {
+fn view(_: &Model) -> impl View<Msg> {
     vec![
         h1!["Linear algebra cheatsheet"],
         p!["Intent: Provide a quick reference of definitions and identities that 

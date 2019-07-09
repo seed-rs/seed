@@ -1,5 +1,5 @@
 //! This file contains interactions with `web_sys`.
-use crate::dom_types::{El, ElContainer, Node, Text};
+use crate::dom_types::{El, Node, Text, View};
 use crate::{dom_types, App};
 
 use wasm_bindgen::JsCast;
@@ -130,7 +130,7 @@ where
     match node {
         Node::Element(el) => {
             el.node_ws = Some(make_websys_el(el, document));
-            for mut child in el.children.iter_mut() {
+            for mut child in &mut el.children {
                 assign_ws_nodes(document, &mut child);
             }
         }
@@ -188,7 +188,7 @@ pub(crate) fn make_websys_el<Ms>(
     el_ws.into()
 }
 
-/// Similar to attach_el_and_children, but for text nodes
+/// Similar to `attach_el_and_children`, but for text nodes
 pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
     let node_ws = text.node_ws.take().expect("Missing websys node for Text");
     parent
@@ -197,9 +197,9 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
     text.node_ws.replace(node_ws);
 }
 
-/// Similar to attach_el_and_children, but without attaching the elemnt. Useful for
+/// Similar to `attach_el_and_children`, but without attaching the elemnt. Useful for
 /// patching, where we want to insert the element at a specific place.
-pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
+pub fn attach_children<Ms, Mdl, ElC: View<Ms>>(
     el_vdom: &mut El<Ms>,
     app: &App<Ms, Mdl, ElC>, // To avoid inferring type for Mdl.
 ) {
@@ -211,8 +211,8 @@ pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     for child in &mut el_vdom.children {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
-            Node::Text(child_text) => attach_text_node(child_text, &el_ws),
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, app),
+            Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
     }
@@ -221,7 +221,7 @@ pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
+pub fn attach_el_and_children<Ms, Mdl, ElC: View<Ms>>(
     el_vdom: &mut El<Ms>,
     parent: &web_sys::Node,
     app: &App<Ms, Mdl, ElC>, // To avoid inferring type for Mdl.
@@ -237,7 +237,7 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     // Append the element
 
     // todo: This can occur with raw html elements, but am unsur eof the cause.
-    match parent.append_child(&el_ws) {
+    match parent.append_child(el_ws) {
         Ok(_) => {}
         Err(_) => {
             crate::log("Minor problem with html element (append)");
@@ -248,15 +248,15 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
     for child in &mut el_vdom.children {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, &el_ws, app),
-            Node::Text(child_text) => attach_text_node(child_text, &el_ws),
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, app),
+            Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
     }
 
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
-        (mount_actions.actions)(&el_ws);
+        (mount_actions.actions)(el_ws);
         //        if let Some(message) = mount_actions.message.clone() {
         //            app.update(message);
         //        }
