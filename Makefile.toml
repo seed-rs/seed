@@ -172,12 +172,12 @@ description = "Build with wasm-pack"
 workspace = false
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
 command = "wasm-pack"
-args = ["build", "--target", "no-modules", "--out-name", "package", "--dev"]
+args = ["build", "--target", "web", "--out-name", "package", "--dev"]
 
 [tasks.default_build_release]
 extend = "default_build"
 description = "Build with wasm-pack in release mode"
-args = ["build", "--target", "no-modules", "--out-name", "package", "--release"]
+args = ["build", "--target", "web", "--out-name", "package", "--release"]
 
 [tasks.default_start]
 description = "Build and start microserver"

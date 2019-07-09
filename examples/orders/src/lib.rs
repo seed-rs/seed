@@ -92,7 +92,7 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     ]
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn start() {
     seed::App::build(Model::default(), update, view)
         .finish()

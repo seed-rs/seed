@@ -140,7 +140,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
     ]
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn render() {
     let app = seed::App::build(Model::default(), update, view)
         .finish()

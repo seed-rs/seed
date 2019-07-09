@@ -18,7 +18,7 @@ install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V
 command = "wasm-pack"
 args = [
     "build",
-    "--target", "no-modules",
+    "--target", "web",
     "--out-name", "package",
     "--dev",
     "--",
@@ -30,7 +30,7 @@ extend = "build_client"
 description = "Build client in release mode"
 args = [
     "build",
-    "--target", "no-modules",
+    "--target", "web",
     "--out-name", "package",
     "--release",
     "--",

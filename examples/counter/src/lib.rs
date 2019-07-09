@@ -103,7 +103,7 @@ fn view(model: &Model) -> El<Msg> {
     ]
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn render() {
     seed::App::build(Model::default(), update, view)
         .finish()
