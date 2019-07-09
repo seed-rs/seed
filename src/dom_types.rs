@@ -651,7 +651,7 @@ make_tags! {
     Style => "style", View => "view",
 
     // A custom placeholder tag, for internal use
-    PlaceHolder => "placeholder"
+    Placeholder => "placeholder"
 }
 
 pub trait View<Ms: 'static> {
