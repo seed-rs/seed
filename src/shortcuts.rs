@@ -25,6 +25,7 @@ macro_rules! element {
                     macro_rules! $Tag {
                         ( $d($d part:expr),* $d(,)? ) => {
                             {
+                                #[allow(unused_mut)]
                                 let mut el = El::empty($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
                                 $crate::dom_types::Node::Element(el)
@@ -48,6 +49,7 @@ macro_rules! element_svg {
                     macro_rules! $Tag {
                         ( $d($d part:expr),* $d(,)? ) => {
                             {
+                                #[allow(unused_mut)]
                                 let mut el = El::empty_svg($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
                                 $crate::dom_types::Node::Element(el)
