@@ -175,7 +175,7 @@ fn view_wheel(wheel_x: f64, car: &Car) -> El<Msg> {
     }]
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn render() {
     let app = seed::App::build(Model::default(), update, view)
         .window_events(|_| {

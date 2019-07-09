@@ -13,15 +13,10 @@
   </head>
   <body>
     <section id="app"></section>
-    <script src="/pkg/package.js"></script>
-    <script>
-      const { start } = wasm_bindgen;
-      function run() {
-        start();
-      }
-      wasm_bindgen("/pkg/package_bg.wasm")
-        .then(run)
-        .catch(console.error);
+    <script type="module">
+      // https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html
+      import init from './pkg/package.js';
+      init('./pkg/package_bg.wasm');
     </script>
   </body>
 </html>

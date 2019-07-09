@@ -93,7 +93,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
     ]
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn start() {
     let app = App::build(Model::default(), update, view)
         // `trigger_update_handler` is necessary,

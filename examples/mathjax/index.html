@@ -25,24 +25,12 @@
     <title>Linear algebra identities</title>
 
 </head>
-<body>
-<section id="app"></section>
-
-<script src='pkg/package.js'></script>
-
-<script>
-    // the `wasm_bindgen` global is set to the exports of the Rust module
-    const { render } = wasm_bindgen;
-    // we'll defer our execution until the wasm is ready to go
-    function run() {
-        render();
-    }
-    // here we tell bindgen the path to the wasm file so it can run
-    // initialization and return to us a promise when it's done
-    wasm_bindgen('pkg/package_bg.wasm')
-        .then(run)
-        .catch(console.error);
-</script>
-
-</body>
+    <body>
+        <section id="app"></section>
+        <script type="module">
+            // https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html
+            import init from './pkg/package.js';
+            init('./pkg/package_bg.wasm');
+        </script>
+    </body>
 </html>

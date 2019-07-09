@@ -48,7 +48,7 @@ fn view(model: &Model) -> El<Msg> {
     ]
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn render() {
     seed::App::build(Model::default(), update, view)
         // `trigger_update_handler` processes JS event
