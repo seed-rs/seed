@@ -843,20 +843,14 @@ pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
     // confusion with web_sys::Element.
-
-    // Core attributes that correspond to the DOM element.
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
     pub listeners: Vec<Listener<Ms>>,
     pub children: Vec<Node<Ms>>,
-
     /// The actual web element/node
     pub node_ws: Option<web_sys::Node>,
-
     pub namespace: Option<Namespace>,
-
-    // Lifecycle hooks
     pub hooks: LifecycleHooks<Ms>,
 }
 
@@ -971,6 +965,7 @@ impl<Ms> El<Ms> {
         el
     }
 
+    // todo: Return El instead of Node here? (Same with from_html)
     /// Create elements from a markdown string.
     pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         let parser = pulldown_cmark::Parser::new(markdown);
@@ -985,13 +980,13 @@ impl<Ms> El<Ms> {
         // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.
         // We allow web_sys to parse into a DOM tree, then analyze the tree to create our vdom
         // element.
-        let el_ws_wrapper = util::document()
-            .create_element("div")
+        let wrapper = util::document()
+            .create_element("placeholder")
             .expect("Problem creating web-sys element");
-        el_ws_wrapper.set_inner_html(html);
+        wrapper.set_inner_html(html);
 
         let mut result = Vec::new();
-        let children = el_ws_wrapper.child_nodes();
+        let children = wrapper.child_nodes();
         for i in 0..children.length() {
             let child = children
                 .get(i)
@@ -1117,35 +1112,14 @@ pub struct DidMount<Ms> {
     pub message: Option<Ms>,
 }
 
-impl<Ms> DidMount<Ms> {
-    pub fn update2(mut self, message: Ms) -> Self {
-        self.message = Some(message);
-        self
-    }
-}
-
 pub struct DidUpdate<Ms> {
     pub actions: Box<FnMut(&web_sys::Node)>,
     pub message: Option<Ms>,
 }
 
-impl<Ms> DidUpdate<Ms> {
-    pub fn update2(mut self, message: Ms) -> Self {
-        self.message = Some(message);
-        self
-    }
-}
-
 pub struct WillUnmount<Ms> {
     pub actions: Box<FnMut(&web_sys::Node)>,
     pub message: Option<Ms>,
-}
-
-impl<Ms> WillUnmount<Ms> {
-    pub fn update2(mut self, message: Ms) -> Self {
-        self.message = Some(message);
-        self
-    }
 }
 
 /// A constructor for `DidMount`, to be used in the API

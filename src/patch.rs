@@ -352,7 +352,6 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>>(
                         .node_ws
                         .as_ref()
                         .expect("new_node_ws missing when patching Empty to Text");
-
                     websys_bridge::insert_node(new_node_ws, parent, next_node);
                     new_text.node_ws.as_ref()
                 }
@@ -369,7 +368,9 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>>(
                         parent,
                     );
 
-                    add_el_helper(new_el, parent, next_node, mailbox);
+                    // Passing next_node here instead of `None` causes
+                    // panics.
+                    add_el_helper(new_el, parent, None, mailbox);
                     new_el.node_ws.as_ref()
                 }
                 Node::Empty => {

@@ -360,49 +360,49 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
         1 => {
             // Element node
-            let el_ws = node
+            let node_ws = node
                 .dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element");
 
             // Result of tag_name is all caps, but tag From<String> expects lower.
             // Probably is more pure to match by xlmns attribute instead.
-            let mut result = match el_ws.tag_name().to_lowercase().as_ref() {
-                "svg" => El::empty_svg(el_ws.tag_name().to_lowercase().into()),
-                _ => El::empty(el_ws.tag_name().to_lowercase().into()),
+            let mut el = match node_ws.tag_name().to_lowercase().as_ref() {
+                "svg" => El::empty_svg(node_ws.tag_name().to_lowercase().into()),
+                _ => El::empty(node_ws.tag_name().to_lowercase().into()),
             };
 
             // Populate attributes
             let mut attrs = dom_types::Attrs::empty();
-            el_ws
+            node_ws
                 .get_attribute_names()
                 .for_each(&mut |attr_name, _, _| {
                     let attr_name2 = attr_name
                         .as_string()
                         .expect("problem converting attr to string");
-                    if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
+                    if let Some(attr_val) = node_ws.get_attribute(&attr_name2) {
                         attrs.add(attr_name2.into(), attr_val);
                     }
                 });
-            result.attrs = attrs;
+            el.attrs = attrs;
 
-            if let Some(ns) = el_ws.namespace_uri() {
+            if let Some(ns) = node_ws.namespace_uri() {
                 // Prevent attaching a `xlmns` attribute to normal HTML elements.
                 if ns != "http://www.w3.org/1999/xhtml" {
-                    result.namespace = Some(ns.into());
+                    el.namespace = Some(ns.into());
                 }
             }
 
-            let children = el_ws.child_nodes();
+            let children = node_ws.child_nodes();
             for i in 0..children.length() {
                 let child = children
                     .get(i)
                     .expect("Can't find child in raw html element.");
 
                 if let Some(child_vdom) = node_from_ws(&child) {
-                    result.children.push(child_vdom);
+                    el.children.push(child_vdom);
                 }
             }
-            Some(Node::Element(result))
+            Some(Node::Element(el))
         }
         3 => Some(Node::Text(Text::new(
             node.text_content().expect("Can't find text"),
@@ -424,12 +424,10 @@ pub(crate) fn insert_node(
         Some(n) => {
             parent
                 .insert_before(node, Some(&n))
-                .expect("Problem adding element to replace previously empty one");
+                .expect("Problem inserting node");
         }
         None => {
-            parent
-                .append_child(node)
-                .expect("Problem adding element to replace previously empty one");
+            parent.append_child(node).expect("Problem inserting node");
         }
     };
 }
