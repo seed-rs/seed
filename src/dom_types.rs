@@ -1055,12 +1055,6 @@ impl<Ms> El<Ms> {
         self
     }
 
-    /// Add a new listener
-    pub fn add_listener(mut self, listener: Listener<Ms>) -> Self {
-        self.listeners.push(listener);
-        self
-    }
-
     /// Add a text node to the element. (ie between the HTML tags).
     pub fn add_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
         self.children.push(Node::Text(Text::new(text)));
