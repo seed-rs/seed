@@ -8,7 +8,7 @@ use crate::{
 use core::convert::AsRef;
 use indexmap::IndexMap;
 use pulldown_cmark;
-use std::fmt;
+use std::{borrow::Cow, fmt};
 use web_sys;
 
 pub trait MessageMapper<Ms, OtherMs> {
@@ -119,17 +119,30 @@ impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(El::new_text(self))
+        el.children.push(Node::Text(Text::new(self.to_string())))
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(self)
+        el.children.push(Node::Element(self))
     }
 }
 
 impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
+    fn update(self, el: &mut El<Ms>) {
+        el.children
+            .append(&mut self.into_iter().map(Node::Element).collect());
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Node<Ms> {
+    fn update(self, el: &mut El<Ms>) {
+        el.children.push(self)
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
         el.children.append(&mut self);
     }
@@ -139,12 +152,6 @@ impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
 impl<Ms> UpdateEl<El<Ms>> for Tag {
     fn update(self, el: &mut El<Ms>) {
         el.tag = self;
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for Optimize {
-    fn update(self, el: &mut El<Ms>) {
-        el.optimizations.push(self)
     }
 }
 
@@ -347,11 +354,24 @@ make_styles! {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
     // We use an IndexMap instead of HashMap here, and in Style, to preserve order.
-    pub vals: IndexMap<At, String>,
+    pub vals: IndexMap<At, Cow<'static, str>>,
+}
+
+/// Create an HTML-compatible string representation
+impl fmt::Display for Attrs {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let string = self
+            .vals
+            .iter()
+            .map(|(k, v)| format!("{}=\"{}\"", k.as_str(), v))
+            .collect::<Vec<_>>()
+            .join(" ");
+        write!(f, "{}", string)
+    }
 }
 
 impl Attrs {
-    pub const fn new(vals: IndexMap<At, String>) -> Self {
+    pub const fn new(vals: IndexMap<At, Cow<'static, str>>) -> Self {
         Self { vals }
     }
 
@@ -363,24 +383,15 @@ impl Attrs {
 
     /// Convenience function. Ideal when there's one id, and no other attrs.
     /// Generally called with the id! macro.
-    pub fn from_id(name: &str) -> Self {
+    pub fn from_id(name: impl Into<Cow<'static, str>>) -> Self {
         let mut result = Self::empty();
-        result.add(At::Id, name);
+        result.add(At::Id, name.into());
         result
     }
 
-    /// Create an HTML-compatible string representation
-    pub fn to_string(&self) -> String {
-        self.vals
-            .iter()
-            .map(|(k, v)| format!("{}=\"{}\"", k.as_str(), v))
-            .collect::<Vec<_>>()
-            .join(" ")
-    }
-
     /// Add a new key, value pair
-    pub fn add(&mut self, key: At, val: &str) {
-        self.vals.insert(key, val.to_string());
+    pub fn add(&mut self, key: At, val: impl Into<Cow<'static, str>>) {
+        self.vals.insert(key, val.into());
     }
 
     /// Add multiple values for a single attribute. Useful for classes.
@@ -389,10 +400,16 @@ impl Attrs {
             key,
             items
                 .iter()
-                .filter_map(|item| if item.is_empty() { None } else { Some(*item) })
+                .filter_map(|item| {
+                    if item.is_empty() {
+                        None
+                    } else {
+                        #[allow(clippy::useless_asref)]
+                        Some(item.as_ref())
+                    }
+                })
                 .collect::<Vec<&str>>()
-                .join(" ")
-                .as_str(),
+                .join(" "),
         );
     }
 
@@ -401,7 +418,7 @@ impl Attrs {
         for (other_key, other_value) in other.vals {
             match self.vals.get_mut(&other_key) {
                 Some(original_value) => {
-                    Self::merge_attribute_values(&other_key, original_value, other_value);
+                    Self::merge_attribute_values(&other_key, original_value.to_mut(), other_value);
                 }
                 None => {
                     self.vals.insert(other_key, other_value);
@@ -410,13 +427,17 @@ impl Attrs {
         }
     }
 
-    fn merge_attribute_values(key: &At, original_value: &mut String, other_value: String) {
+    fn merge_attribute_values(
+        key: &At,
+        original_value: &mut String,
+        other_value: impl Into<Cow<'static, str>>,
+    ) {
         match key {
             At::Class => {
                 original_value.push(' ');
-                original_value.push_str(&other_value);
+                original_value.push_str(other_value.into().as_ref());
             }
-            _ => *original_value = other_value,
+            _ => *original_value = other_value.into().to_string(),
         }
     }
 }
@@ -426,11 +447,11 @@ impl Attrs {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {
     // todo enum for key?
-    pub vals: IndexMap<String, String>,
+    pub vals: IndexMap<Cow<'static, str>, Cow<'static, str>>,
 }
 
 impl Style {
-    pub const fn new(vals: IndexMap<String, String>) -> Self {
+    pub const fn new(vals: IndexMap<Cow<'static, str>, Cow<'static, str>>) -> Self {
         Self { vals }
     }
 
@@ -440,8 +461,8 @@ impl Style {
         }
     }
 
-    pub fn add(&mut self, key: &str, val: &str) {
-        self.vals.insert(key.to_string(), val.to_string());
+    pub fn add(&mut self, key: impl Into<Cow<'static, str>>, val: impl Into<Cow<'static, str>>) {
+        self.vals.insert(key.into(), val.into());
     }
 
     /// Combine with another Style; if there's a conflict, use the other one.
@@ -450,11 +471,11 @@ impl Style {
     }
 }
 
-impl ToString for Style {
-    /// Output style as a string, as would be set in the DOM as the attribute value
-    /// for 'style'. Eg: "display: flex; font-size: 1.5em"
-    fn to_string(&self) -> String {
-        if self.vals.keys().len() > 0 {
+/// Output style as a string, as would be set in the DOM as the attribute value
+/// for 'style'. Eg: "display: flex; font-size: 1.5em"
+impl fmt::Display for Style {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let string = if self.vals.keys().len() > 0 {
             self.vals
                 .iter()
                 .map(|(k, v)| format!("{}:{}", k, v))
@@ -462,7 +483,8 @@ impl ToString for Style {
                 .join(";")
         } else {
             String::new()
-        }
+        };
+        write!(f, "{}", string)
     }
 }
 
@@ -514,10 +536,6 @@ macro_rules! make_tags {
 // - https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 // Grouped here by category on Mozilla's pages, linked above.
 make_tags! {
-    // -------- Custom Tags -------- //
-
-    Empty => "empty",
-
     // -------- Standard HTML Tags -------- //
 
     Address => "address", Article => "article", Aside => "aside", Footer => "footer",
@@ -630,37 +648,192 @@ make_tags! {
     // Uncategorized elements
     ClipPath => "clipPath", ColorProfile => "color-profile", Cursor => "cursor", Filter => "filter",
     ForeignObject => "foreignObject", HatchPath => "hatchpath", MeshPatch => "meshpatch", MeshRow => "meshrow",
-    Style => "style", View => "view"
+    Style => "style", View => "view",
+
+    // A custom placeholder tag, for internal use
+    Placeholder => "placeholder"
 }
 
-/// WIP that marks elements in ways to improve diffing and rendering efficiency.
-#[derive(Copy, Clone, Debug)]
-pub enum Optimize {
-    Key(u32),
-    // Helps correctly match children, prevening unecessary rerenders
-    Static, // unimplemented, and possibly unecessary
+pub trait View<Ms: 'static> {
+    fn els(self) -> Vec<Node<Ms>>;
 }
 
-pub trait ElContainer<Ms: 'static> {
-    fn els(self) -> Vec<El<Ms>>;
-}
-
-impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
-    type SelfWithOtherMs = Vec<El<OtherMs>>;
-    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
-        self.into_iter().map(|el| el.map_message(f)).collect()
+impl<Ms> View<Ms> for El<Ms> {
+    fn els(self) -> Vec<Node<Ms>> {
+        vec![Node::Element(self)]
     }
 }
 
-impl<Ms> ElContainer<Ms> for El<Ms> {
-    fn els(self) -> Vec<El<Ms>> {
+impl<Ms> View<Ms> for Vec<El<Ms>> {
+    fn els(self) -> Vec<Node<Ms>> {
+        self.into_iter().map(Node::Element).collect()
+    }
+}
+
+impl<Ms: 'static> View<Ms> for Node<Ms> {
+    fn els(self) -> Vec<Node<Ms>> {
         vec![self]
     }
 }
 
-impl<Ms> ElContainer<Ms> for Vec<El<Ms>> {
-    fn els(self) -> Vec<El<Ms>> {
+impl<Ms: 'static> View<Ms> for Vec<Node<Ms>> {
+    fn els(self) -> Vec<Node<Ms>> {
         self
+    }
+}
+
+/// For representing text nodes.
+#[derive(Clone, Debug)]
+pub struct Text {
+    pub text: Cow<'static, str>,
+    pub node_ws: Option<web_sys::Node>,
+}
+
+impl PartialEq for Text {
+    fn eq(&self, other: &Self) -> bool {
+        self.text == other.text
+    }
+}
+
+impl Text {
+    pub fn new(text: impl Into<Cow<'static, str>>) -> Self {
+        Self {
+            text: text.into(),
+            node_ws: None,
+        }
+    }
+}
+
+/// An component in our virtual DOM. Related to, but different from
+/// [DOM Nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType)
+#[derive(Clone, Debug, PartialEq)]
+pub enum Node<Ms: 'static> {
+    Element(El<Ms>),
+    //    Svg(El<Ms>),  // May be best to handle using namespace field on El
+    Text(Text),
+    Empty,
+}
+
+impl<Ms> Node<Ms> {
+    fn is_text(&self) -> bool {
+        if let Node::Text(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn new_text(text: impl Into<Cow<'static, str>>) -> Self {
+        Node::Text(Text::new(text))
+    }
+
+    /// See `El::from_markdown`
+    pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
+        El::from_markdown(markdown)
+    }
+
+    /// See `El::from_html`
+    pub fn from_html(html: &str) -> Vec<Node<Ms>> {
+        El::from_html(html)
+    }
+
+    /// See `El::add_child`
+    pub fn add_child(self, node: Node<Ms>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_child(node))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_attr`
+    pub fn add_attr(
+        self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<Cow<'static, str>>,
+    ) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_attr(key, val))
+        } else {
+            self
+        }
+    }
+
+    /// /// See `El::add_class``
+    pub fn add_class(self, name: impl Into<Cow<'static, str>>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_class(name))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_style`
+    pub fn add_style(
+        self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<Cow<'static, str>>,
+    ) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_style(key, val))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_listener`
+    pub fn add_listener(self, listener: Listener<Ms>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_listener(listener))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::add_text`
+    pub fn add_text(self, text: impl Into<Cow<'static, str>>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.add_text(text))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::replace_text`
+    pub fn replace_text(self, text: impl Into<Cow<'static, str>>) -> Self {
+        if let Node::Element(el) = self {
+            Node::Element(el.replace_text(text))
+        } else {
+            self
+        }
+    }
+
+    /// See `El::get_text`
+    pub fn get_text(&self) -> String {
+        match self {
+            Node::Element(el) => el.get_text(),
+            Node::Text(text) => text.text.to_string(),
+            _ => "".to_string(),
+        }
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
+    type SelfWithOtherMs = Node<OtherMs>;
+    /// See note on impl for El
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Node<OtherMs> {
+        match self {
+            Node::Element(el) => Node::Element(el.map_message(f)),
+            Node::Text(text) => Node::Text(text),
+            Node::Empty => Node::Empty,
+        }
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>> {
+    type SelfWithOtherMs = Vec<Node<OtherMs>>;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<Node<OtherMs>> {
+        self.into_iter().map(|node| node.map_message(f)).collect()
     }
 }
 
@@ -676,29 +849,15 @@ pub struct El<Ms: 'static> {
     pub attrs: Attrs,
     pub style: Style,
     pub listeners: Vec<Listener<Ms>>,
-    // Text is None unless this is a text node.
-    pub text: Option<String>,
-    pub children: Vec<El<Ms>>,
+    pub children: Vec<Node<Ms>>,
 
     /// The actual web element/node
-    pub el_ws: Option<web_sys::Node>,
+    pub node_ws: Option<web_sys::Node>,
 
-    // todo temp?
-    //    pub key: Option<u32>,
     pub namespace: Option<Namespace>,
-    // A unique identifier in the vdom. Useful for triggering one-off events.
-    pub ref_: Option<String>,
-
-    // control means we keep its text input (value) in sync with the model.
-    // static: bool
-    // static_to_parent: bool
-    // ancestors: Vec<u32>  // ids of parent, grandparent etc.
 
     // Lifecycle hooks
     pub hooks: LifecycleHooks<Ms>,
-    pub empty: bool,
-    // Indicates not to render anything.
-    optimizations: Vec<Optimize>,
 }
 
 type _HookFn = Box<FnMut(&web_sys::Node)>; // todo
@@ -771,20 +930,22 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
                 .into_iter()
                 .map(|l| l.map_message(f))
                 .collect(),
-            text: self.text,
             children: self
                 .children
                 .into_iter()
                 .map(|c| c.map_message(f))
                 .collect(),
-            el_ws: self.el_ws,
+            node_ws: self.node_ws,
             namespace: self.namespace,
             hooks: self.hooks.map_message(f),
-            empty: self.empty,
-            optimizations: self.optimizations,
-
-            ref_: None,
         }
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
+    type SelfWithOtherMs = Vec<El<OtherMs>>;
+    fn map_message(self, f: fn(Ms) -> OtherMs) -> Vec<El<OtherMs>> {
+        self.into_iter().map(|el| el.map_message(f)).collect()
     }
 }
 
@@ -796,27 +957,11 @@ impl<Ms> El<Ms> {
             attrs: Attrs::empty(),
             style: Style::empty(),
             listeners: Vec::new(),
-            text: None,
             children: Vec::new(),
-
-            el_ws: None,
-
+            node_ws: None,
             namespace: None,
-
-            // static: false,
-            // static_to_parent: false,
             hooks: LifecycleHooks::new(),
-            empty: false,
-            optimizations: Vec::new(),
-
-            ref_: None,
         }
-    }
-
-    pub fn new_text(text: &str) -> Self {
-        let mut result = Self::empty(Tag::Span);
-        result.text = Some(text.into());
-        result
     }
 
     /// Create an empty SVG element, specifying only the tag
@@ -827,7 +972,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Create elements from a markdown string.
-    pub fn from_markdown(markdown: &str) -> Vec<Self> {
+    pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         let parser = pulldown_cmark::Parser::new(markdown);
         let mut html_text = String::new();
         pulldown_cmark::html::push_html(&mut html_text, parser);
@@ -836,7 +981,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Create elements from an HTML string.
-    pub fn from_html(html: &str) -> Vec<Self> {
+    pub fn from_html(html: &str) -> Vec<Node<Ms>> {
         // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.
         // We allow web_sys to parse into a DOM tree, then analyze the tree to create our vdom
         // element.
@@ -852,7 +997,7 @@ impl<Ms> El<Ms> {
                 .get(i)
                 .expect("Can't find child in raw html element.");
 
-            if let Some(child_vdom) = websys_bridge::el_from_ws(&child) {
+            if let Some(child_vdom) = websys_bridge::node_from_ws(&child) {
                 result.push(child_vdom)
             }
         }
@@ -860,35 +1005,53 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new child to the element
-    pub fn add_child(mut self, element: El<Ms>) -> Self {
+    pub fn add_child(mut self, element: Node<Ms>) -> Self {
         self.children.push(element);
         self
     }
 
     /// Add an attribute (eg class, or href)
-    pub fn add_attr(mut self, key: String, val: String) -> Self {
-        self.attrs.vals.insert(key.into(), val);
+    pub fn add_attr(
+        mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<Cow<'static, str>>,
+    ) -> Self {
+        self.attrs
+            .vals
+            .insert(key.into().as_ref().into(), val.into());
         self
     }
 
     /// Add a class. May be cleaner than `add_attr`
-    pub fn add_class(mut self, name: &str) -> Self {
+    pub fn add_class(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        let name = name.into();
         self.attrs
             .vals
             .entry(At::Class)
             .and_modify(|v| {
+                let v = v.to_mut();
                 if !v.is_empty() {
                     *v += " ";
                 }
-                *v += name;
+                *v += name.as_ref();
             })
-            .or_insert(name.into());
+            .or_insert(name);
         self
     }
 
     /// Add a new style (eg display, or height)
-    pub fn add_style(mut self, key: String, val: String) -> Self {
-        self.style.vals.insert(key, val);
+    pub fn add_style(
+        mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<Cow<'static, str>>,
+    ) -> Self {
+        self.style.vals.insert(key.into(), val.into());
+        self
+    }
+
+    /// Add a new listener
+    pub fn add_listener(mut self, listener: Listener<Ms>) -> Self {
+        self.listeners.push(listener);
         self
     }
 
@@ -899,93 +1062,28 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a text node to the element. (ie between the HTML tags).
-    pub fn add_text(mut self, text: &str) -> Self {
-        // todo: Allow text to be impl ToString?
-        self.children.push(El::new_text(text));
+    pub fn add_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
+        self.children.push(Node::Text(Text::new(text)));
         self
     }
 
     /// Replace the element's text.
     /// Removes all text nodes from element, then adds the new one.
-    pub fn replace_text(mut self, text: &str) -> Self {
-        self.children = self
-            .children
-            .into_iter()
-            .filter(|c| c.text.is_none())
-            .collect();
-
-        self.children.push(El::new_text(text));
+    pub fn replace_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
+        self.children.retain(|node| !node.is_text());
+        self.children.push(Node::new_text(text));
         self
-    }
-
-    /// Shortcut for finding the key, if one exists
-    pub fn key(&self) -> Option<u32> {
-        for o in &self.optimizations {
-            if let Optimize::Key(key) = o {
-                return Some(*key);
-            }
-        }
-        None
-    }
-
-    /// Output the HTML of this node, including all its children, recursively.
-    fn _html(&self) -> String {
-        let text = self.text.clone().unwrap_or_default();
-
-        let opening = String::from("<")
-            + self.tag.as_str()
-            + &self.attrs.to_string()
-            + " style=\""
-            + &self.style.to_string()
-            + ">\n";
-
-        let inner = self
-            .children
-            .iter()
-            .fold(String::new(), |result, child| result + &child._html());
-
-        let closing = String::from("\n</") + self.tag.as_str() + ">";
-
-        opening + &text + &inner + &closing
     }
 
     // Pull text from child text nodes
     pub fn get_text(&self) -> String {
-        let mut result = String::new();
-
-        for child in &self.children {
-            if let Some(text) = &child.text {
-                result += text;
-            }
-        }
-
-        result
-    }
-
-    /// Call f(&mut el) for this El and each of its descendants
-    pub fn walk_tree_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut Self),
-    {
-        // This inner function is required to avoid recursive compilation errors having to do
-        // with the generic trait bound on F.
-        fn walk_tree_mut_inner<Ms, F>(el: &mut El<Ms>, f: &mut F)
-        where
-            F: FnMut(&mut El<Ms>),
-        {
-            f(el);
-
-            for child in &mut el.children {
-                walk_tree_mut_inner(child, f);
-            }
-        }
-
-        walk_tree_mut_inner(self, &mut f);
-    }
-
-    /// Set the ref
-    pub fn ref_<S: ToString>(&mut self, ref_: &S) {
-        self.ref_ = Some(ref_.to_string());
+        self.children
+            .iter()
+            .filter_map(|child| match child {
+                Node::Text(text_node) => Some(text_node.text.to_string()),
+                _ => None,
+            })
+            .collect()
     }
 }
 
@@ -997,17 +1095,13 @@ impl<Ms> Clone for El<Ms> {
             tag: self.tag.clone(),
             attrs: self.attrs.clone(),
             style: self.style.clone(),
-            text: self.text.clone(),
-            children: self.children.clone(),
-            //            key: self.key,
-            el_ws: self.el_ws.clone(),
+            // todo: Put this back - removed during troubleshooting Node change
+            //            children: self.children.clone(),
+            children: Vec::new(),
+            node_ws: self.node_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
             hooks: LifecycleHooks::new(),
-            empty: self.empty,
-            optimizations: self.optimizations.clone(),
-
-            ref_: self.ref_.clone(),
         }
     }
 }
@@ -1019,11 +1113,8 @@ impl<Ms> PartialEq for El<Ms> {
         self.tag == other.tag
             && self.attrs == other.attrs
             && self.style == other.style
-            && self.text == other.text
             && self.listeners == other.listeners
             && self.namespace == other.namespace
-            && self.empty == other.empty
-            && self.ref_ == other.ref_
     }
 }
 
@@ -1099,48 +1190,52 @@ pub mod tests {
 
     use crate as seed;
     // required for macros to work.
-    use crate::vdom;
+    use crate::{patch, vdom};
     use std::collections::HashSet;
     use wasm_bindgen::{JsCast, JsValue};
-    use web_sys::{Element, Node};
+    use web_sys::Element;
 
     #[derive(Debug)]
     enum Msg {}
 
     struct Model {}
 
-    fn create_app() -> seed::App<Msg, Model, El<Msg>> {
-        seed::App::build(Model {}, |_, _, _| (), |_| seed::empty())
+    fn create_app() -> seed::App<Msg, Model, Node<Msg>> {
+        seed::App::build(Model {}, |_, _, _| (), |_| div![])
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()
     }
 
-    fn el_to_websys(mut el: El<Msg>) -> Node {
+    fn el_to_websys(mut node: Node<Msg>) -> web_sys::Node {
         let document = crate::util::document();
         let parent = document.create_element("div").unwrap();
         let app = create_app();
 
-        vdom::patch(
+        patch::patch(
             &document,
             seed::empty(),
-            &mut el,
+            &mut node,
             &parent,
             None,
             &vdom::Mailbox::new(|_: Msg| {}),
             &app,
         );
 
-        el.el_ws.unwrap()
+        if let Node::Element(el) = node {
+            el.node_ws.unwrap()
+        } else {
+            panic!("not an El node")
+        }
     }
 
     /// Assumes Node is an Element
-    fn get_node_html(node: &Node) -> String {
+    fn get_node_html(node: &web_sys::Node) -> String {
         node.dyn_ref::<Element>().unwrap().outer_html()
     }
 
     /// Assumes Node is an Element
-    fn get_node_attrs(node: &Node) -> IndexMap<String, String> {
+    fn get_node_attrs(node: &web_sys::Node) -> IndexMap<String, String> {
         let element = node.dyn_ref::<Element>().unwrap();
         element
             .get_attribute_names()

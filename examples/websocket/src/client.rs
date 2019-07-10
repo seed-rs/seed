@@ -53,7 +53,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
     }
 }
 
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
         h1!["seed websocket example"],
         if model.connected {
@@ -116,7 +116,7 @@ fn register_handlers(ws: &web_sys::WebSocket) {
 
 fn register_message_listener<ElC>(ws: web_sys::WebSocket, app: &App<Msg, Model, ElC>)
 where
-    ElC: ElContainer<Msg> + 'static,
+    ElC: View<Msg> + 'static,
 {
     app.add_message_listener(move |msg| {
         if let Msg::Send(msg) = msg {

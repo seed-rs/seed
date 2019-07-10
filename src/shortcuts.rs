@@ -25,9 +25,10 @@ macro_rules! element {
                     macro_rules! $Tag {
                         ( $d($d part:expr),* $d(,)? ) => {
                             {
+                                #[allow(unused_mut)]
                                 let mut el = El::empty($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
-                                el
+                                $crate::dom_types::Node::Element(el)
                             }
                         };
                     }
@@ -48,9 +49,10 @@ macro_rules! element_svg {
                     macro_rules! $Tag {
                         ( $d($d part:expr),* $d(,)? ) => {
                             {
+                                #[allow(unused_mut)]
                                 let mut el = El::empty_svg($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
-                                el
+                                $crate::dom_types::Node::Element(el)
                             }
                         };
                     }
@@ -148,7 +150,7 @@ element_svg! {
 #[macro_export]
 macro_rules! empty {
     () => {
-        $crate::empty()
+        $crate::dom_types::Node::Empty
     };
 }
 
@@ -162,14 +164,15 @@ macro_rules! raw {
 #[macro_export]
 macro_rules! md {
     ($md:expr) => {
-        El::from_markdown($md)
+        let el = El::from_markdown($md)
+        $crate::dom_types::Node::Element(el)
     };
 }
 
 #[macro_export]
 macro_rules! plain {
     ($text:expr) => {
-        El::new_text($text)
+        $crate::dom_types::Node::new_text($text)
     };
 }
 
@@ -179,7 +182,7 @@ macro_rules! custom {
         {
             let mut el = El::empty($crate::dom_types::Tag::Custom("missingtagname".into()));
             $ ( $part.update(&mut el); )*
-            el
+            $crate::dom_types::Node::Element(el)
         }
     };
 }
@@ -193,7 +196,7 @@ macro_rules! attrs {
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
-                vals.insert($key.into(), $value.to_string());
+                vals.insert($key.into(), $value.to_string().into());
             )*
             $crate::dom_types::Attrs::new(vals)
         }
@@ -241,7 +244,7 @@ macro_rules! style {
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
-                vals.insert(String::from($key), $value.to_string());
+                vals.insert($key.into(), $value.to_string().into());
             )*
             $crate::dom_types::Style::new(vals)
         }

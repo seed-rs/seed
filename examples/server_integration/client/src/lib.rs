@@ -53,7 +53,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 
 // View
 
-fn view(model: &Model) -> impl ElContainer<Msg> {
+fn view(model: &Model) -> impl View<Msg> {
     let examples = vec![
         // example_a
         view_example_introduction(example_a::TITLE, example_a::DESCRIPTION),
@@ -78,7 +78,7 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     ]
     .into_iter()
     .flatten()
-    .collect::<Vec<El<Msg>>>();
+    .collect::<Vec<Node<Msg>>>();
 
     div![
         style! {
@@ -90,7 +90,7 @@ fn view(model: &Model) -> impl ElContainer<Msg> {
     ]
 }
 
-fn view_example_introduction(title: &str, description: &str) -> Vec<El<Msg>> {
+fn view_example_introduction(title: &str, description: &str) -> Vec<Node<Msg>> {
     vec![
         hr![],
         h2![title],

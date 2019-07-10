@@ -107,7 +107,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
 
 // View
 
-fn view(model: &Model) -> El<Msg> {
+fn view(model: &Model) -> Node<Msg> {
     // scene container + sky
     div![
         style! {
@@ -129,7 +129,7 @@ fn view(model: &Model) -> El<Msg> {
     ]
 }
 
-fn view_car(car: &Car) -> El<Msg> {
+fn view_car(car: &Car) -> Node<Msg> {
     div![
         // car container
         style! {
@@ -162,7 +162,7 @@ fn view_car(car: &Car) -> El<Msg> {
     ]
 }
 
-fn view_wheel(wheel_x: f64, car: &Car) -> El<Msg> {
+fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
     let wheel_radius = car.height * 0.4;
     div![style! {
         "top" => unit!(car.height * 0.55, px);

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.0
+- `ElContainer`, imported in prelude, renamed to `View`. (Breaking)
+- Internal refactor of `El`: Now wrapped in `Node`, along with
+`Empty` and `Text`. Creation macros return `Node(Element)`. (Breaking)
+- Added more SVG element macros
+- Several minor bux fixes
+
 ## v0.3.7
 - `routes` now accepts `Url` instead of `&Url` (Breaking)
 - Improvements to fetch API

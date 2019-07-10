@@ -1,9 +1,9 @@
 //! This file contains interactions with `web_sys`.
-use wasm_bindgen::JsCast;
-
 use crate::dom_types;
-use crate::dom_types::{El, ElContainer};
-use crate::vdom::App;
+use crate::dom_types::{El, Node, Text};
+
+use wasm_bindgen::JsCast;
+use web_sys::Document;
 
 /// Add a shim to make check logic more natural than the DOM handles it.
 fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
@@ -28,7 +28,7 @@ fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
     }
     // todo DRY! Massive dry between checked and auto, and in autofocus.
     // https://www.w3schools.com/tags/att_autofocus.asp
-    //todo needs to work for other type sof input!
+    //todo needs to work for other types of input!
     else if at == "autofocus" {
         if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
             //            autofocus_helper(input)
@@ -122,6 +122,30 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
         .expect("Problem setting style");
 }
 
+/// Recursively create `web_sys::Node`s, and place them in the vdom Nodes' fields.
+pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>)
+where
+    Ms: 'static,
+{
+    match node {
+        Node::Element(el) => {
+            el.node_ws = Some(make_websys_el(el, document));
+            for mut child in &mut el.children {
+                assign_ws_nodes(document, &mut child);
+            }
+        }
+        Node::Text(text) => {
+            text.node_ws = Some(
+                document
+                    .create_text_node(&text.text)
+                    .dyn_into::<web_sys::Node>()
+                    .expect("Problem casting Text as Node."),
+            );
+        }
+        Node::Empty => (),
+    }
+}
+
 /// Create and return a `web_sys` Element from our virtual-dom `El`. The `web_sys`
 /// Element is a close analog to JS/DOM elements.
 ///
@@ -129,22 +153,19 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 /// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
-    // A simple text node.
-    if let Some(text) = &el_vdom.text {
-        return document.create_text_node(text).into();
-    }
-
-    // Create the DOM-analog element; it won't render until attached to something.
+pub(crate) fn make_websys_el<Ms>(
+    el_vdom: &mut El<Ms>,
+    document: &web_sys::Document,
+) -> web_sys::Node {
     let tag = el_vdom.tag.as_str();
 
     let el_ws = match el_vdom.namespace {
         Some(ref ns) => document
             .create_element_ns(Some(ns.as_str()), tag)
-            .expect("Problem creating web-sys El"),
+            .expect("Problem creating web-sys element with namespace"),
         None => document
             .create_element(tag)
-            .expect("Problem creating web-sys El"),
+            .expect("Problem creating web-sys element"),
     };
 
     for (at, val) in &el_vdom.attrs.vals {
@@ -164,49 +185,52 @@ pub fn make_websys_el<Ms>(el_vdom: &mut El<Ms>, document: &web_sys::Document) ->
         set_style(&el_ws, &el_vdom.style)
     }
 
-    // Don't attach listeners here,
     el_ws.into()
 }
 
-/// Similar to `attach_el_and_children`, but assumes we've already attached the parent.
-pub fn attach_children<Ms, Mdl, ElC: ElContainer<Ms>>(
-    el_vdom: &mut El<Ms>,
-    app: &App<Ms, Mdl, ElC>,
-) {
+/// Similar to `attach_el_and_children`, but for text nodes
+pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
+    let node_ws = text.node_ws.take().expect("Missing websys node for Text");
+    parent
+        .append_child(&node_ws)
+        .expect("Problem appending text node");
+    text.node_ws.replace(node_ws);
+}
+
+/// Similar to `attach_el_and_children`, but without attaching the elemnt. Useful for
+/// patching, where we want to insert the element at a specific place.
+pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
     let el_ws = el_vdom
-        .el_ws
-        .take()
-        .expect("Missing websys el in attach children");
-
+        .node_ws
+        .as_ref()
+        .expect("Missing websys el in attach_children");
+    // appending the its children to the el_ws
     for child in &mut el_vdom.children {
-        attach_el_and_children(child, &el_ws, app)
+        match child {
+            // Raise the active level once per recursion.
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
+            Node::Text(child_text) => attach_text_node(child_text, el_ws),
+            Node::Empty => (),
+        }
     }
-
-    el_vdom.el_ws.replace(el_ws);
 }
 
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
-    el_vdom: &mut El<Ms>,
-    parent: &web_sys::Node,
-    app: &App<Ms, Mdl, ElC>,
-) {
+pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
 
-    // Don't render if we're dealing with an empty element.
-    if el_vdom.empty {
-        return;
-    }
-
-    let el_ws = el_vdom.el_ws.take().expect("Missing websys el");
+    let el_ws = el_vdom
+        .node_ws
+        .as_ref()
+        .expect("Missing websys el in attach_el_and_children");
 
     // Append the element
 
     // todo: This can occur with raw html elements, but am unsur eof the cause.
-    match parent.append_child(&el_ws) {
+    match parent.append_child(el_ws) {
         Ok(_) => {}
         Err(_) => {
             crate::log("Minor problem with html element (append)");
@@ -215,20 +239,21 @@ pub fn attach_el_and_children<Ms, Mdl, ElC: ElContainer<Ms>>(
 
     // appending the its children to the el_ws
     for child in &mut el_vdom.children {
-        // Raise the active level once per recursion.
-        attach_el_and_children(child, &el_ws, app)
+        match child {
+            // Raise the active level once per recursion.
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
+            Node::Text(child_text) => attach_text_node(child_text, el_ws),
+            Node::Empty => (),
+        }
     }
 
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
-        (mount_actions.actions)(&el_ws);
+        (mount_actions.actions)(el_ws);
         //        if let Some(message) = mount_actions.message.clone() {
         //            app.update(message);
         //        }
     }
-
-    // Replace the web_sys el
-    el_vdom.el_ws.replace(el_ws);
 }
 
 /// Recursively remove all children.
@@ -274,12 +299,6 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                         .expect("Removing an attribute"),
                     None => crate::error("Minor error on html element (setting attrs)"),
                 }
-
-                //                old_el_ws
-                //                    .dyn_ref::<web_sys::Element>()
-                //                    .expect("Problem casting Node as Element while removing an attribute")
-                //                    .remove_attribute(name.as_str())
-                //                    .expect("Removing an attribute");
             }
         }
     }
@@ -288,15 +307,6 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
         set_style(old_el_ws, &new.style)
-    }
-
-    // Patch text
-    if old.text != new.text {
-        // We need to change from Option<String> to Option<&str>
-        match new.text.clone() {
-            Some(text) => old_el_ws.set_text_content(Some(&text)),
-            None => old_el_ws.set_text_content(None),
-        }
     }
 }
 
@@ -346,7 +356,7 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 
 /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
 /// and markdown strings. Includes children, recursively added.
-pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
+pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
         1 => {
             // Element node
@@ -370,7 +380,7 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
                         .as_string()
                         .expect("problem converting attr to string");
                     if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
-                        attrs.add(attr_name2.into(), &attr_val);
+                        attrs.add(attr_name2.into(), attr_val);
                     }
                 });
             result.attrs = attrs;
@@ -388,16 +398,50 @@ pub fn el_from_ws<Ms>(node: &web_sys::Node) -> Option<El<Ms>> {
                     .get(i)
                     .expect("Can't find child in raw html element.");
 
-                if let Some(child_vdom) = el_from_ws(&child) {
+                if let Some(child_vdom) = node_from_ws(&child) {
                     result.children.push(child_vdom);
                 }
             }
-            Some(result)
+            Some(Node::Element(result))
         }
-        3 => Some(El::new_text(&node.text_content().expect("Can't find text"))),
+        3 => Some(Node::Text(Text::new(
+            node.text_content().expect("Can't find text"),
+        ))),
         _ => {
             crate::error("Unexpected node type found from raw html");
             None
         }
     }
+}
+
+/// Insert a new node into the specified part of the DOM tree.
+pub(crate) fn insert_node(
+    node: &web_sys::Node,
+    parent: &web_sys::Node,
+    next: Option<web_sys::Node>,
+) {
+    match next {
+        Some(n) => {
+            parent
+                .insert_before(node, Some(&n))
+                .expect("Problem adding element to replace previously empty one");
+        }
+        None => {
+            parent
+                .append_child(node)
+                .expect("Problem adding element to replace previously empty one");
+        }
+    };
+}
+
+pub(crate) fn remove_node(node: &web_sys::Node, parent: &web_sys::Node) {
+    parent
+        .remove_child(node)
+        .expect("Problem removing old el_ws when updating to empty");
+}
+
+pub(crate) fn replace_child(new: &web_sys::Node, old: &web_sys::Node, parent: &web_sys::Node) {
+    parent
+        .replace_child(new, old)
+        .expect("Problem replacing element");
 }

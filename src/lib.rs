@@ -7,7 +7,7 @@ pub use crate::{
     fetch::{Method, Request},
     routing::{push_route, Url},
     util::{body, document, error, history, log, update, window},
-    vdom::{find_el, App},
+    vdom::App,
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -20,6 +20,7 @@ pub mod dom_types;
 pub mod events;
 pub mod fetch;
 mod next_tick;
+mod patch;
 pub mod routing;
 pub mod storage;
 mod util;
@@ -31,11 +32,8 @@ pub mod gloo_timers;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub fn empty<Ms>() -> dom_types::El<Ms> {
-    // The tag doesn't matter here, but this seems semantically appropriate.
-    let mut el = dom_types::El::empty(dom_types::Tag::Empty);
-    el.empty = true;
-    el
+pub const fn empty<Ms>() -> dom_types::Node<Ms> {
+    dom_types::Node::Empty
 }
 
 /// A high-level wrapper for `web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0`:
@@ -79,8 +77,7 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
-            did_mount, did_update, will_unmount, At, El, ElContainer, MessageMapper, Optimize::Key,
-            Tag, UpdateEl,
+            did_mount, did_update, will_unmount, At, El, MessageMapper, Node, Tag, UpdateEl, View,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
@@ -138,7 +135,7 @@ pub mod tests {
             }
         }
 
-        fn view(_model: &Model) -> Vec<El<Msg>> {
+        fn view(_model: &Model) -> Vec<Node<Msg>> {
             vec![div!["Hello world"]]
         }
 

@@ -209,7 +209,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
 
 // View
 
-fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
+fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> Node<Msg> {
     let mut att = attrs! {};
     if item.completed {
         att.add(At::Class, "completed");
@@ -240,12 +240,12 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> El<Msg> {
                 )),
             ]
         } else {
-            seed::empty()
+            empty![]
         }
     ]
 }
 
-fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
+fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> Node<Msg> {
     li![a![
         attrs! {
             At::Class => if visible == highlighter {"selected"} else {""}
@@ -256,7 +256,7 @@ fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> El<Msg> {
     ]]
 }
 
-fn footer(model: &Model) -> El<Msg> {
+fn footer(model: &Model) -> Node<Msg> {
     let optional_s = if model.todos.len() == 1 { "" } else { "s" };
 
     let clear_button = if model.completed_count() > 0 {
@@ -287,11 +287,11 @@ fn footer(model: &Model) -> El<Msg> {
 }
 
 // Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn view(model: &Model) -> Vec<El<Msg>> {
+fn view(model: &Model) -> impl View<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
-    let todo_els: Vec<El<Msg>> = model
+    let todo_els: Vec<Node<Msg>> = model
         .todos
         .clone()
         .into_iter()
