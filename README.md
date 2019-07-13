@@ -25,7 +25,7 @@ And cargo-make: `cargo install --force cargo-make`
 ## The theoretical minimum
 
 To start, clone [the quickstart repo](https://github.com/David-OConnor/seed-quickstart):
-`git clone https://github.com/david-oconnor/seed-quickstart.git`,
+`git clone https://github.com/david-oconnor/seed-quickstart.git`, install wasm-pack `cargo install wasm-pack`, 
 run `cargo make all` in a terminal to build the app, and `cargo make serve` to start a dev server
 on `127.0.0.0:8000`. If you'd like the compiler automatically check and recompile when you 
 make changes, run `cargo make watch` instead of `cargo make all`.
