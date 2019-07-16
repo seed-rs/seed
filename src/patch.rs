@@ -2,7 +2,7 @@
 //! a subset of the `vdom` module.
 
 use crate::{
-    dom_types::{self, El, Node, View},
+    dom_types::{self, AtValue, El, Node, View},
     events::{self, Listener},
     vdom::{App, Mailbox},
     websys_bridge,
@@ -86,14 +86,15 @@ where
         || el.tag == dom_types::Tag::TextArea
     {
         let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
-            let checked_bool = match checked.as_ref() {
-                "true" => true,
-                "false" => false,
-                _ => panic!("checked must be true or false."),
-            };
-            events::Listener::new_control_check(checked_bool)
+            events::Listener::new_control_check(match checked {
+                AtValue::Some(_) => true,
+                _ => false,
+            })
         } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
-            events::Listener::new_control(control_val.to_string())
+            events::Listener::new_control(match control_val {
+                AtValue::Some(value) => value.clone(),
+                _ => "".into(),
+            })
         } else {
             // If Value is not specified, force the field to be blank.
             events::Listener::new_control("".to_string())

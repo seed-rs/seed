@@ -74,7 +74,10 @@ pub fn view(model: &Model) -> impl View<Msg> {
         message,
         input![
             input_ev(Ev::Input, Msg::NewMessageChanged),
-            attrs! {At::Value => model.new_message}
+            attrs! {
+                At::Value => model.new_message,
+                At::AutoFocus => AtValue::None,
+            }
         ],
         button![simple_ev(Ev::Click, Msg::SendRequest), "Send message"],
     ]

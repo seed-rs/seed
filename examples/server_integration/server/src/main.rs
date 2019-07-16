@@ -36,6 +36,11 @@ fn delayed_response(
         .and_then(move |()| Ok(format!("Delay was set to {}ms.", delay)))
 }
 
+#[post("form")]
+fn form() -> impl Future<Item = (), Error = tokio_timer::Error> {
+    tokio_timer::sleep(time::Duration::from_millis(2_000)).and_then(move |()| Ok(()))
+}
+
 struct State {
     count_actor: Addr<CountActor>,
 }
@@ -53,7 +58,8 @@ fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api/")
                     .service(send_message)
-                    .service(delayed_response),
+                    .service(delayed_response)
+                    .service(form),
             )
             .service(Files::new("/public", "./client/public"))
             .service(Files::new("/pkg", "./client/pkg"))

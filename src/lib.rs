@@ -77,7 +77,8 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
-            did_mount, did_update, will_unmount, At, El, MessageMapper, Node, Tag, UpdateEl, View,
+            did_mount, did_update, will_unmount, AsAtValue, At, AtValue, CSSValue, El,
+            MessageMapper, Node, Tag, UpdateEl, View,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
@@ -90,7 +91,6 @@ pub mod prelude {
         vdom::{call_update, Orders},
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
-
     pub use wasm_bindgen::prelude::*;
 }
 

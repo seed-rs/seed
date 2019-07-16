@@ -9,6 +9,7 @@ mod example_a;
 mod example_b;
 mod example_c;
 mod example_d;
+mod example_e;
 
 // Model
 
@@ -18,6 +19,7 @@ struct Model {
     example_b: example_b::Model,
     example_c: example_c::Model,
     example_d: example_d::Model,
+    example_e: example_e::Model,
 }
 
 // Update
@@ -28,6 +30,7 @@ enum Msg {
     ExampleB(example_b::Msg),
     ExampleC(example_c::Msg),
     ExampleD(example_d::Msg),
+    ExampleE(example_e::Msg),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
@@ -47,6 +50,10 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         Msg::ExampleD(msg) => {
             *orders = call_update(example_d::update, msg, &mut model.example_d)
                 .map_message(Msg::ExampleD);
+        }
+        Msg::ExampleE(msg) => {
+            *orders = call_update(example_e::update, msg, &mut model.example_e)
+                .map_message(Msg::ExampleE);
         }
     }
 }
@@ -75,6 +82,11 @@ fn view(model: &Model) -> impl View<Msg> {
         example_d::view(&model.example_d)
             .els()
             .map_message(Msg::ExampleD),
+        // example_e
+        view_example_introduction(example_e::TITLE, example_e::DESCRIPTION),
+        example_e::view(&model.example_e)
+            .els()
+            .map_message(Msg::ExampleE),
     ]
     .into_iter()
     .flatten()

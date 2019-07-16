@@ -935,7 +935,7 @@ pub mod tests {
                 &parent,
                 &mailbox,
                 vdom,
-                div![button![attrs! { At::Disabled => false }]],
+                div![button![attrs! { At::Disabled => false.as_at_value() }]],
                 &app,
             );
 
@@ -955,7 +955,7 @@ pub mod tests {
                 &parent,
                 &mailbox,
                 vdom,
-                div![button![attrs! { At::Disabled => true }]],
+                div![button![attrs! { At::Disabled => true.as_at_value() }]],
                 &app,
             );
 
@@ -969,7 +969,7 @@ pub mod tests {
                 button
                     .get_attribute("disabled")
                     .expect("button hasn't got attribute `disabled`!"),
-                "true"
+                ""
             );
 
             // And remove attribute `disabled`
@@ -978,7 +978,7 @@ pub mod tests {
                 &parent,
                 &mailbox,
                 vdom,
-                div![button![attrs! { At::Disabled => false }]],
+                div![button![attrs! { At::Disabled => false.as_at_value() }]],
                 &app,
             );
 
