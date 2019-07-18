@@ -1,6 +1,7 @@
 use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
+use serde::Serialize;
 use std::mem;
 
 pub const TITLE: &str = "Example E";
@@ -13,33 +14,32 @@ fn get_request_url() -> String {
 
 // Model
 
+#[derive(Serialize, Default)]
+pub struct Form {
+    text: String,
+    checked: bool,
+}
+
 pub enum Model {
-    ReadyToSubmit(String),
-    WaitingForResponse(String),
+    ReadyToSubmit(Form),
+    WaitingForResponse(Form),
 }
 
 impl Default for Model {
     fn default() -> Self {
-        Model::ReadyToSubmit("".into())
+        Model::ReadyToSubmit(Form::default())
     }
 }
 
 impl Model {
-    fn text(&self) -> &str {
+    fn form(&self) -> &Form {
         match self {
-            Model::ReadyToSubmit(text) | Model::WaitingForResponse(text) => text,
+            Model::ReadyToSubmit(form) | Model::WaitingForResponse(form) => form,
         }
     }
-    fn text_mut(&mut self) -> &mut String {
+    fn form_mut(&mut self) -> &mut Form {
         match self {
-            Model::ReadyToSubmit(text) | Model::WaitingForResponse(text) => text,
-        }
-    }
-    fn set_text(&mut self, text: String) {
-        match self {
-            Model::ReadyToSubmit(old_text) | Model::WaitingForResponse(old_text) => {
-                *old_text = text
-            }
+            Model::ReadyToSubmit(form) | Model::WaitingForResponse(form) => form,
         }
     }
 }
@@ -49,31 +49,31 @@ impl Model {
 #[derive(Clone)]
 pub enum Msg {
     TextChanged(String),
+    CheckedChanged,
     FormSubmitted,
     ServerResponded(fetch::ResponseResult<()>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
     match msg {
-        Msg::TextChanged(text) => model.set_text(text),
-
+        Msg::TextChanged(text) => model.form_mut().text = text,
+        Msg::CheckedChanged => toggle(&mut model.form_mut().checked),
         Msg::FormSubmitted => {
-            let text = take(model.text_mut());
-            orders.perform_cmd(send_request(&text));
-            *model = Model::WaitingForResponse(text);
+            let form = take(model.form_mut());
+            orders.perform_cmd(send_request(&form));
+            *model = Model::WaitingForResponse(form);
         }
-
-        Msg::ServerResponded(Ok(_)) => *model = Model::ReadyToSubmit("".into()),
-
-        Msg::ServerResponded(Err(_)) => *model = Model::ReadyToSubmit(take(model.text_mut())),
+        Msg::ServerResponded(Ok(_)) => {
+            *model = Model::ReadyToSubmit(Form::default());
+        }
+        Msg::ServerResponded(Err(_)) => *model = Model::ReadyToSubmit(take(model.form_mut())),
     }
 }
 
-#[allow(clippy::ptr_arg)]
-fn send_request(text: &String) -> impl Future<Item = Msg, Error = Msg> {
+fn send_request(form: &Form) -> impl Future<Item = Msg, Error = Msg> {
     fetch::Request::new(get_request_url())
         .method(fetch::Method::Post)
-        .send_json(text)
+        .send_json(form)
         .fetch(|fetch_object| Msg::ServerResponded(fetch_object.response()))
 }
 
@@ -81,11 +81,15 @@ fn take<T: Default>(source: &mut T) -> T {
     mem::replace(source, T::default())
 }
 
+fn toggle(value: &mut bool) {
+    *value = !*value
+}
+
 // View
 
 pub fn view(model: &Model) -> impl View<Msg> {
     let btn_disabled = match model {
-        Model::ReadyToSubmit(text) if !text.is_empty() => false,
+        Model::ReadyToSubmit(form) if !form.text.is_empty() => false,
         _ => true,
     };
 
@@ -96,7 +100,14 @@ pub fn view(model: &Model) -> impl View<Msg> {
         }),
         input![
             input_ev(Ev::Input, Msg::TextChanged),
-            attrs! {At::Value => model.text()}
+            attrs! {At::Value => model.form().text}
+        ],
+        input![
+            simple_ev(Ev::Click, Msg::CheckedChanged),
+            attrs! {
+                At::Type => "checkbox",
+                At::Checked => model.form().checked.as_at_value(),
+            }
         ],
         button![
             style! {

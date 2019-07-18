@@ -233,16 +233,25 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
             }
 
             // We handle value in the vdom using attributes, but the DOM needs
-            // to use set_value.
-            if let dom_types::At::Value = key {
-                match new_val {
+            // to use set_value or set_checked.
+            match key {
+                dom_types::At::Value => match new_val {
                     AtValue::Some(new_val) => {
                         crate::util::set_value(old_el_ws, new_val);
                     }
                     AtValue::None | AtValue::Ignored => {
                         crate::util::set_value(old_el_ws, "");
                     }
-                }
+                },
+                dom_types::At::Checked => match new_val {
+                    AtValue::Some(_) | AtValue::None => {
+                        crate::util::set_checked(old_el_ws, true).unwrap_or_else(crate::error);
+                    }
+                    AtValue::Ignored => {
+                        crate::util::set_checked(old_el_ws, false).unwrap_or_else(crate::error);
+                    }
+                },
+                _ => (),
             }
         }
         // Remove attributes that aren't in the new vdom.

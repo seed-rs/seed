@@ -61,6 +61,9 @@ pub fn request_animation_frame(
 /// Simplify getting the value of input elements; required due to the need to cast
 /// from general nodes/elements to `HTML_Elements`.
 pub fn get_value(target: &web_sys::EventTarget) -> String {
+    // @TODO support more elements (in get_value and set_value)?
+    // @TODO (https://docs.rs/web-sys/0.3.25/web_sys/struct.HtmlMenuItemElement.html?search=set_value)
+    // @TODO return Result / panic?
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         return input.value();
     }
@@ -84,6 +87,31 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlSelectElement>() {
         return input.set_value(value);
     }
+}
+
+/// Similar to `get_value`
+#[allow(dead_code)]
+pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, &'static str> {
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+        return Ok(input.checked());
+    }
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
+        return Ok(input.checked());
+    }
+    Err("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `get_checked`.")
+}
+
+/// Similar to `set_value`.
+pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'static str> {
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
+        input.set_checked(value);
+        return Ok(());
+    }
+    if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
+        input.set_checked(value);
+        return Ok(());
+    }
+    Err("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `set_checked`.")
 }
 
 // todo: Unable to get this convenience function working
