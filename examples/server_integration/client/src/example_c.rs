@@ -88,7 +88,10 @@ pub fn view(model: &Model) -> impl View<Msg> {
         ],
         Status::RequestAborted => vec![
             view_response_data_result(&model.response_data_result),
-            button![attrs! {At::Disabled => false}, "Request aborted"],
+            button![
+                attrs! {At::Disabled => false.as_at_value()},
+                "Request aborted"
+            ],
         ],
     }
 }

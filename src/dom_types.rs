@@ -11,6 +11,10 @@ use pulldown_cmark;
 use std::{borrow::Cow, fmt};
 use web_sys;
 
+pub use values::*;
+
+pub mod values;
+
 pub trait MessageMapper<Ms, OtherMs> {
     type SelfWithOtherMs;
     fn map_message(self, f: fn(Ms) -> OtherMs) -> Self::SelfWithOtherMs;
@@ -346,15 +350,13 @@ make_styles! {
    BackgroundImage => "background-image", BackgroundPosition => "background-position", BackgroundRepeat => "background-repeat",
    Border => "border", BorderBottom => "border-bottom", BorderBottomColor => "border-bottom-color",
    BorderBottomStyle => "border-bottom-style", BorderBottomWidth => "border-bottom-width", BorderColor => "border-color"
-
-
 }
 
 /// A thinly-wrapped `HashMap` holding DOM attributes
 #[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
     // We use an IndexMap instead of HashMap here, and in Style, to preserve order.
-    pub vals: IndexMap<At, Cow<'static, str>>,
+    pub vals: IndexMap<At, AtValue>,
 }
 
 /// Create an HTML-compatible string representation
@@ -363,7 +365,11 @@ impl fmt::Display for Attrs {
         let string = self
             .vals
             .iter()
-            .map(|(k, v)| format!("{}=\"{}\"", k.as_str(), v))
+            .filter_map(|(k, v)| match v {
+                AtValue::Ignored => None,
+                AtValue::None => Some(k.as_str().to_string()),
+                AtValue::Some(value) => Some(format!("{}=\"{}\"", k.as_str(), value)),
+            })
             .collect::<Vec<_>>()
             .join(" ");
         write!(f, "{}", string)
@@ -371,7 +377,7 @@ impl fmt::Display for Attrs {
 }
 
 impl Attrs {
-    pub const fn new(vals: IndexMap<At, Cow<'static, str>>) -> Self {
+    pub const fn new(vals: IndexMap<At, AtValue>) -> Self {
         Self { vals }
     }
 
@@ -383,14 +389,14 @@ impl Attrs {
 
     /// Convenience function. Ideal when there's one id, and no other attrs.
     /// Generally called with the id! macro.
-    pub fn from_id(name: impl Into<Cow<'static, str>>) -> Self {
+    pub fn from_id(name: impl Into<AtValue>) -> Self {
         let mut result = Self::empty();
         result.add(At::Id, name.into());
         result
     }
 
     /// Add a new key, value pair
-    pub fn add(&mut self, key: At, val: impl Into<Cow<'static, str>>) {
+    pub fn add(&mut self, key: At, val: impl Into<AtValue>) {
         self.vals.insert(key, val.into());
     }
 
@@ -398,7 +404,7 @@ impl Attrs {
     pub fn add_multiple(&mut self, key: At, items: &[&str]) {
         self.add(
             key,
-            items
+            &items
                 .iter()
                 .filter_map(|item| {
                     if item.is_empty() {
@@ -418,7 +424,7 @@ impl Attrs {
         for (other_key, other_value) in other.vals {
             match self.vals.get_mut(&other_key) {
                 Some(original_value) => {
-                    Self::merge_attribute_values(&other_key, original_value.to_mut(), other_value);
+                    Self::merge_attribute_values(&other_key, original_value, other_value);
                 }
                 None => {
                     self.vals.insert(other_key, other_value);
@@ -429,15 +435,17 @@ impl Attrs {
 
     fn merge_attribute_values(
         key: &At,
-        original_value: &mut String,
-        other_value: impl Into<Cow<'static, str>>,
+        mut original_value: &mut AtValue,
+        mut other_value: AtValue,
     ) {
-        match key {
-            At::Class => {
-                original_value.push(' ');
-                original_value.push_str(other_value.into().as_ref());
+        match (key, &mut original_value, &mut other_value) {
+            (At::Class, AtValue::Some(original), AtValue::Some(other)) => {
+                if !original.is_empty() {
+                    original.push(' ');
+                }
+                original.push_str(other);
             }
-            _ => *original_value = other_value.into().to_string(),
+            (..) => *original_value = other_value,
         }
     }
 }
@@ -447,11 +455,11 @@ impl Attrs {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {
     // todo enum for key?
-    pub vals: IndexMap<Cow<'static, str>, Cow<'static, str>>,
+    pub vals: IndexMap<Cow<'static, str>, CSSValue>,
 }
 
 impl Style {
-    pub const fn new(vals: IndexMap<Cow<'static, str>, Cow<'static, str>>) -> Self {
+    pub const fn new(vals: IndexMap<Cow<'static, str>, CSSValue>) -> Self {
         Self { vals }
     }
 
@@ -461,7 +469,7 @@ impl Style {
         }
     }
 
-    pub fn add(&mut self, key: impl Into<Cow<'static, str>>, val: impl Into<Cow<'static, str>>) {
+    pub fn add(&mut self, key: impl Into<Cow<'static, str>>, val: impl Into<CSSValue>) {
         self.vals.insert(key.into(), val.into());
     }
 
@@ -478,7 +486,10 @@ impl fmt::Display for Style {
         let string = if self.vals.keys().len() > 0 {
             self.vals
                 .iter()
-                .map(|(k, v)| format!("{}:{}", k, v))
+                .filter_map(|(k, v)| match v {
+                    CSSValue::Ignored => None,
+                    CSSValue::Some(value) => Some(format!("{}:{}", k, value)),
+                })
                 .collect::<Vec<_>>()
                 .join(";")
         } else {
@@ -747,11 +758,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_attr`
-    pub fn add_attr(
-        self,
-        key: impl Into<Cow<'static, str>>,
-        val: impl Into<Cow<'static, str>>,
-    ) -> Self {
+    pub fn add_attr(self, key: impl Into<Cow<'static, str>>, val: impl Into<AtValue>) -> Self {
         if let Node::Element(el) = self {
             Node::Element(el.add_attr(key, val))
         } else {
@@ -769,11 +776,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_style`
-    pub fn add_style(
-        self,
-        key: impl Into<Cow<'static, str>>,
-        val: impl Into<Cow<'static, str>>,
-    ) -> Self {
+    pub fn add_style(self, key: impl Into<Cow<'static, str>>, val: impl Into<CSSValue>) -> Self {
         if let Node::Element(el) = self {
             Node::Element(el.add_style(key, val))
         } else {
@@ -1006,11 +1009,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add an attribute (eg class, or href)
-    pub fn add_attr(
-        mut self,
-        key: impl Into<Cow<'static, str>>,
-        val: impl Into<Cow<'static, str>>,
-    ) -> Self {
+    pub fn add_attr(mut self, key: impl Into<Cow<'static, str>>, val: impl Into<AtValue>) -> Self {
         self.attrs
             .vals
             .insert(key.into().as_ref().into(), val.into());
@@ -1023,14 +1022,16 @@ impl<Ms> El<Ms> {
         self.attrs
             .vals
             .entry(At::Class)
-            .and_modify(|v| {
-                let v = v.to_mut();
-                if !v.is_empty() {
-                    *v += " ";
+            .and_modify(|at_value| match at_value {
+                AtValue::Some(v) => {
+                    if !v.is_empty() {
+                        *v += " ";
+                    }
+                    *v += name.as_ref();
                 }
-                *v += name.as_ref();
+                _ => *at_value = AtValue::Some(name.clone().into_owned()),
             })
-            .or_insert(name);
+            .or_insert(AtValue::Some(name.into_owned()));
         self
     }
 
@@ -1038,7 +1039,7 @@ impl<Ms> El<Ms> {
     pub fn add_style(
         mut self,
         key: impl Into<Cow<'static, str>>,
-        val: impl Into<Cow<'static, str>>,
+        val: impl Into<CSSValue>,
     ) -> Self {
         self.style.vals.insert(key.into(), val.into());
         self

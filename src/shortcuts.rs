@@ -196,7 +196,8 @@ macro_rules! attrs {
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
-                vals.insert($key.into(), $value.to_string().into());
+                // And cases like `true.as_attr_value()` or `AtValue::Ignored`.
+                vals.insert($key.into(), (&$value).into());
             )*
             $crate::dom_types::Attrs::new(vals)
         }
@@ -244,7 +245,8 @@ macro_rules! style {
             $(
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
-                vals.insert($key.into(), $value.to_string().into());
+                // And cases like `CSSValue::Ignored`.
+                vals.insert($key.into(), (&$value).into());
             )*
             $crate::dom_types::Style::new(vals)
         }

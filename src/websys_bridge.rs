@@ -1,117 +1,9 @@
 //! This file contains interactions with `web_sys`.
 use crate::dom_types;
-use crate::dom_types::{El, Node, Text};
+use crate::dom_types::{AtValue, El, Node, Text};
 
 use wasm_bindgen::JsCast;
 use web_sys::Document;
-
-/// Add a shim to make check logic more natural than the DOM handles it.
-fn set_attr_shim(el_ws: &web_sys::Node, at: &dom_types::At, val: &str) {
-    // set_special means we don't set the attribute normally.
-    let mut set_special = false;
-    let at = at.as_str();
-
-    if at == "checked" {
-        let input_el = el_ws.dyn_ref::<web_sys::HtmlInputElement>();
-        if let Some(el) = input_el {
-            match val {
-                "true" => {
-                    el.set_checked(true);
-                }
-                "false" => {
-                    el.set_checked(false);
-                }
-                _ => (),
-            }
-            set_special = true;
-        }
-    }
-    // todo DRY! Massive dry between checked and auto, and in autofocus.
-    // https://www.w3schools.com/tags/att_autofocus.asp
-    //todo needs to work for other types of input!
-    else if at == "autofocus" {
-        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlInputElement>() {
-            //            autofocus_helper(input)
-            match val {
-                "true" => {
-                    input.set_autofocus(true);
-                }
-                "false" => {
-                    input.set_autofocus(false);
-                }
-                _ => (),
-            }
-            set_special = true;
-        }
-        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-            //             autofocus_helper(input)
-            match val {
-                "true" => {
-                    input.set_autofocus(true);
-                }
-                "false" => {
-                    input.set_autofocus(false);
-                }
-                _ => (),
-            }
-            set_special = true;
-        }
-        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlSelectElement>() {
-            //             autofocus_helper(input)
-            match val {
-                "true" => {
-                    input.set_autofocus(true);
-                }
-                "false" => {
-                    input.set_autofocus(false);
-                }
-                _ => (),
-            }
-            set_special = true;
-        }
-        if let Some(input) = el_ws.dyn_ref::<web_sys::HtmlButtonElement>() {
-            //             autofocus_helper(input)
-            match val {
-                "true" => {
-                    input.set_autofocus(true);
-                }
-                "false" => {
-                    input.set_autofocus(false);
-                }
-                _ => (),
-            }
-            set_special = true;
-        }
-    }
-    // A disabled value of anything, including "", means disabled. To make not disabled,
-    // the disabled attr can't be present.
-    // Without this shim, setting At::Disabled => false still disables the field.
-    else if at == "disabled" && val == "false" {
-        match el_ws.node_type() {
-            // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
-            1 => el_ws
-                .dyn_ref::<web_sys::Element>()
-                .expect("Problem casting Node as Element while removing the attribute `disabled`")
-                .remove_attribute(at)
-                .expect("Problem removing the atrribute `disabled`."),
-            _ => crate::error("Found non el node while removing attribute `disabled`."),
-        }
-        set_special = true;
-    }
-
-    if !set_special {
-        match el_ws.node_type() {
-            // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
-            1 => el_ws
-                .dyn_ref::<web_sys::Element>()
-                .expect("Problem casting Node as Element while setting an attribute")
-                .set_attribute(at, val)
-                .expect("Problem setting an atrribute."),
-            3 => crate::error("Trying to set attr on text node. Bug?"),
-            _ => crate::error("Found non el/text node."),
-        }
-    }
-}
 
 /// Convenience function to reduce repetition
 fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
@@ -146,6 +38,48 @@ where
     }
 }
 
+fn node_to_element(el_ws: &web_sys::Node) -> Result<&web_sys::Element, &'static str> {
+    if let web_sys::Node::ELEMENT_NODE = el_ws.node_type() {
+        el_ws
+            .dyn_ref::<web_sys::Element>()
+            .ok_or("Problem casting Node as Element")
+    } else {
+        Err("Node isn't Element!")
+    }
+}
+
+fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue) {
+    match at_value {
+        AtValue::Some(value) => {
+            node_to_element(el_ws)
+                .and_then(|element| {
+                    element
+                        .set_attribute(at.as_str(), value)
+                        .map_err(|_| "Problem setting an atrribute.")
+                })
+                .unwrap_or_else(crate::error);
+        }
+        AtValue::None => {
+            node_to_element(el_ws)
+                .and_then(|element| {
+                    element
+                        .set_attribute(at.as_str(), "")
+                        .map_err(|_| "Problem setting an atrribute.")
+                })
+                .unwrap_or_else(crate::error);
+        }
+        AtValue::Ignored => {
+            node_to_element(el_ws)
+                .and_then(|element| {
+                    element
+                        .remove_attribute(at.as_str())
+                        .map_err(|_| "Problem removing an atrribute.")
+                })
+                .unwrap_or_else(crate::error);
+        }
+    }
+}
+
 /// Create and return a `web_sys` Element from our virtual-dom `El`. The `web_sys`
 /// Element is a close analog to JS/DOM elements.
 ///
@@ -168,8 +102,8 @@ pub(crate) fn make_websys_el<Ms>(
             .expect("Problem creating web-sys element"),
     };
 
-    for (at, val) in &el_vdom.attrs.vals {
-        set_attr_shim(&el_ws, at, val);
+    for (at, attr_value) in &el_vdom.attrs.vals {
+        set_attr_value(&el_ws, at, attr_value);
     }
     if let Some(ns) = &el_vdom.namespace {
         el_ws
@@ -247,6 +181,18 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
         }
     }
 
+    // @TODO handle also other Auto* attributes?
+    if let Some(at_value) = el_vdom.attrs.vals.get(&dom_types::At::AutoFocus) {
+        match at_value {
+            AtValue::Some(_) | AtValue::None => el_ws
+                .dyn_ref::<web_sys::HtmlElement>()
+                .expect("Problem casting Node as HtmlElement while focusing")
+                .focus()
+                .expect("Problem focusing to an element."),
+            AtValue::Ignored => (),
+        }
+    }
+
     // Perform side-effects specified for mounting.
     if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
         (mount_actions.actions)(el_ws);
@@ -278,15 +224,34 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                 Some(old_val) => {
                     // The value's different
                     if old_val != new_val {
-                        set_attr_shim(old_el_ws, key, new_val);
+                        set_attr_value(old_el_ws, key, new_val);
                     }
                 }
-                None => set_attr_shim(old_el_ws, key, new_val),
+                None => {
+                    set_attr_value(old_el_ws, key, new_val);
+                }
             }
+
             // We handle value in the vdom using attributes, but the DOM needs
-            // to use set_value.
-            if key == &dom_types::At::Value {
-                crate::util::set_value(old_el_ws, new_val);
+            // to use set_value or set_checked.
+            match key {
+                dom_types::At::Value => match new_val {
+                    AtValue::Some(new_val) => {
+                        crate::util::set_value(old_el_ws, new_val);
+                    }
+                    AtValue::None | AtValue::Ignored => {
+                        crate::util::set_value(old_el_ws, "");
+                    }
+                },
+                dom_types::At::Checked => match new_val {
+                    AtValue::Some(_) | AtValue::None => {
+                        crate::util::set_checked(old_el_ws, true).unwrap_or_else(crate::error);
+                    }
+                    AtValue::Ignored => {
+                        crate::util::set_checked(old_el_ws, false).unwrap_or_else(crate::error);
+                    }
+                },
+                _ => (),
             }
         }
         // Remove attributes that aren't in the new vdom.
@@ -358,7 +323,7 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 /// and markdown strings. Includes children, recursively added.
 pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
-        1 => {
+        web_sys::Node::ELEMENT_NODE => {
             // Element node
             let node_ws = node
                 .dyn_ref::<web_sys::Element>()
@@ -380,7 +345,7 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
                         .as_string()
                         .expect("problem converting attr to string");
                     if let Some(attr_val) = node_ws.get_attribute(&attr_name2) {
-                        attrs.add(attr_name2.into(), attr_val);
+                        attrs.add(attr_name2.into(), &attr_val);
                     }
                 });
             el.attrs = attrs;
@@ -404,7 +369,7 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
             }
             Some(Node::Element(el))
         }
-        3 => Some(Node::Text(Text::new(
+        web_sys::Node::TEXT_NODE => Some(Node::Text(Text::new(
             node.text_content().expect("Can't find text"),
         ))),
         _ => {

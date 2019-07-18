@@ -223,7 +223,11 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> Node<Msg> {
         div![
             class!["view"],
             input![
-                attrs! {At::Class => "toggle", At::Type => "checkbox", At::Checked => item.completed; },
+                attrs! {
+                   At::Class => "toggle",
+                   At::Type => "checkbox",
+                   At::Checked => item.completed.as_at_value()
+                },
                 simple_ev(Ev::Click, Msg::Toggle(posit))
             ],
             label![simple_ev(Ev::DblClick, Msg::EditItem(posit)), item.title],
@@ -312,8 +316,8 @@ fn view(model: &Model) -> impl View<Msg> {
             class!["main"],
             input![
                 attrs! {
-                    At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox";
-                    At::Checked => model.active_count() == 0
+                    At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox",
+                    At::Checked => (model.active_count() == 0).as_at_value(),
                 },
                 simple_ev(Ev::Click, Msg::ToggleAll)
             ],
