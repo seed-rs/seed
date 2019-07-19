@@ -6,7 +6,8 @@ use std::mem;
 
 pub const TITLE: &str = "Example E";
 pub const DESCRIPTION: &str =
-    "Write something and click button 'Submit`. It sends form to the server and server returns 200 OK with 2 seconds delay.";
+    "Write something and click button 'Submit`. See console.log for more info. \
+     It sends form to the server and server returns 200 OK with 2 seconds delay.";
 
 fn get_request_url() -> String {
     "/api/form".into()
@@ -50,7 +51,7 @@ impl Model {
 pub enum Msg {
     TextChanged(String),
     CheckedChanged,
-    FormSubmitted,
+    FormSubmitted(String),
     ServerResponded(fetch::ResponseResult<()>),
 }
 
@@ -58,15 +59,20 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
     match msg {
         Msg::TextChanged(text) => model.form_mut().text = text,
         Msg::CheckedChanged => toggle(&mut model.form_mut().checked),
-        Msg::FormSubmitted => {
+        Msg::FormSubmitted(id) => {
             let form = take(model.form_mut());
             orders.perform_cmd(send_request(&form));
             *model = Model::WaitingForResponse(form);
+            log!("Form with id", id, "submitted.");
         }
         Msg::ServerResponded(Ok(_)) => {
             *model = Model::ReadyToSubmit(Form::default());
+            log!("Form processed successfully.");
         }
-        Msg::ServerResponded(Err(_)) => *model = Model::ReadyToSubmit(take(model.form_mut())),
+        Msg::ServerResponded(Err(fail_reason)) => {
+            *model = Model::ReadyToSubmit(take(model.form_mut()));
+            error!("Request failed!", fail_reason);
+        }
     }
 }
 
@@ -93,10 +99,11 @@ pub fn view(model: &Model) -> impl View<Msg> {
         _ => true,
     };
 
+    let form_id = "A_FORM".to_string();
     form![
-        raw_ev(Ev::Submit, |event| {
+        raw_ev(Ev::Submit, move |event| {
             event.prevent_default();
-            Msg::FormSubmitted
+            Msg::FormSubmitted(form_id)
         }),
         input![
             input_ev(Ev::Input, Msg::TextChanged),

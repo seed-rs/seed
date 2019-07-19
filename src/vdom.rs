@@ -50,10 +50,10 @@ impl<Ms> From<Ms> for Effect<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Effect<Ms> {
     type SelfWithOtherMs = Effect<OtherMs>;
-    fn map_message(self, f: fn(Ms) -> OtherMs) -> Effect<OtherMs> {
+    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Effect<OtherMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::Cmd(cmd) => Effect::Cmd(Box::new(cmd.map(f).map_err(f))),
+            Effect::Cmd(cmd) => Effect::Cmd(Box::new(cmd.map(f.clone()).map_err(f))),
         }
     }
 }
@@ -81,13 +81,13 @@ impl<Ms> Default for Orders<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Orders<Ms> {
     type SelfWithOtherMs = Orders<OtherMs>;
-    fn map_message(self, f: fn(Ms) -> OtherMs) -> Orders<OtherMs> {
+    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Orders<OtherMs> {
         Orders {
             should_render: self.should_render,
             effects: self
                 .effects
                 .into_iter()
-                .map(|effect| effect.map_message(f))
+                .map(|effect| effect.map_message(f.clone()))
                 .collect(),
         }
     }

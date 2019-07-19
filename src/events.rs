@@ -3,6 +3,7 @@
 
 use crate::{dom_types::MessageMapper, util};
 
+use enclose::enclose;
 use serde::de::DeserializeOwned;
 use std::{fmt, mem};
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -374,21 +375,21 @@ impl<Ms> PartialEq for Listener<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Listener<Ms> {
     type SelfWithOtherMs = Listener<OtherMs>;
-    fn map_message(self, f: fn(Ms) -> OtherMs) -> Listener<OtherMs> {
+    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Listener<OtherMs> {
         Listener {
             trigger: self.trigger,
-            handler: self.handler.map(|mut eh| {
+            handler: self.handler.map(enclose!((f) |mut eh| {
                 Box::new(move |event| {
                     let m = (*eh)(event);
-                    (f)(m)
+                    (f.clone())(m)
                 }) as EventHandler<OtherMs>
-            }),
+            })),
             closure: self.closure,
             control_val: self.control_val,
             control_checked: self.control_checked,
 
             category: self.category,
-            message: None,
+            message: self.message.map(f),
         }
     }
 }
@@ -396,13 +397,16 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Listener<Ms> 
 /// Create an event that passes a String of field text, for fast input handling.
 pub fn input_ev<Ms, T: ToString + Copy>(
     trigger: T,
-    mut handler: impl FnMut(String) -> Ms + 'static,
+    handler: impl FnOnce(String) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
-        if let Some(target) = event.target() {
-            return handler(util::get_value(&target));
-        }
-        handler(String::new())
+        let value = event
+            .target()
+            .as_ref()
+            .map(util::get_value)
+            .unwrap_or_default();
+
+        (handler.clone())(value)
     };
 
     Listener::new(
@@ -445,10 +449,10 @@ pub fn input_ev<Ms, T: ToString + Copy>(
 /// to items like `key_code`() and key().
 pub fn keyboard_ev<Ms: Clone, T: ToString + Copy>(
     trigger: T,
-    mut handler: impl FnMut(web_sys::KeyboardEvent) -> Ms + 'static,
+    handler: impl FnOnce(web_sys::KeyboardEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
-        handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
+        (handler.clone())(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
     };
     Listener::new(
         &trigger.to_string(),
@@ -461,10 +465,10 @@ pub fn keyboard_ev<Ms: Clone, T: ToString + Copy>(
 /// See `keyboard_ev`
 pub fn mouse_ev<Ms: Clone, T: ToString + Copy>(
     trigger: T,
-    mut handler: impl FnMut(web_sys::MouseEvent) -> Ms + 'static,
+    handler: impl FnOnce(web_sys::MouseEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
-        handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
+        (handler.clone())(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
     };
     Listener::new(
         &trigger.to_string(),
@@ -477,10 +481,10 @@ pub fn mouse_ev<Ms: Clone, T: ToString + Copy>(
 /// See `keyboard_ev`
 pub fn pointer_ev<Ms, T: ToString + Copy>(
     trigger: T,
-    mut handler: impl FnMut(web_sys::PointerEvent) -> Ms + 'static,
+    handler: impl FnOnce(web_sys::PointerEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
-        handler(event.dyn_ref::<web_sys::PointerEvent>().unwrap().clone())
+        (handler.clone())(event.dyn_ref::<web_sys::PointerEvent>().unwrap().clone())
     };
     Listener::new(
         &trigger.to_string(),
@@ -494,9 +498,9 @@ pub fn pointer_ev<Ms, T: ToString + Copy>(
 /// event-handling
 pub fn raw_ev<Ms, T: ToString + Copy>(
     trigger: T,
-    mut handler: impl FnMut(web_sys::Event) -> Ms + 'static,
+    handler: impl FnOnce(web_sys::Event) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
-    let closure = move |event: web_sys::Event| handler(event);
+    let closure = move |event: web_sys::Event| (handler.clone())(event);
     Listener::new(
         &trigger.to_string(),
         Some(Box::new(closure)),
@@ -526,10 +530,10 @@ where
 /// Create an event that passes a `web_sys::CustomEvent`, allowing easy access
 /// to detail() and then trigger update
 pub fn trigger_update_ev<Ms: Clone>(
-    mut handler: impl FnMut(web_sys::CustomEvent) -> Ms + 'static,
+    handler: impl FnOnce(web_sys::CustomEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
-        handler(event.dyn_ref::<web_sys::CustomEvent>().unwrap().clone())
+        (handler.clone())(event.dyn_ref::<web_sys::CustomEvent>().unwrap().clone())
     };
     Listener::new(
         UPDATE_TRIGGER_EVENT_ID,
