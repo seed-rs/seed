@@ -15,12 +15,7 @@ use web_sys::{Document, Window};
 pub(crate) fn attach_listeners<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
     if let Some(el_ws) = el.node_ws.as_ref() {
         for listener in &mut el.listeners {
-            // todo ideally we unify attach as one method
-            if listener.control_val.is_some() || listener.control_checked.is_some() {
-                listener.attach_control(el_ws);
-            } else {
-                listener.attach(el_ws, mailbox.clone());
-            }
+            listener.attach(el_ws, mailbox.clone());
         }
     }
     for child in &mut el.children {
@@ -180,11 +175,7 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>>(
     // Note that unlike the attach_listeners function, this only attaches for the current
     // element.
     for listener in &mut new.listeners {
-        if listener.control_val.is_some() || listener.control_checked.is_some() {
-            listener.attach_control(&old_el_ws);
-        } else {
-            listener.attach(&old_el_ws, mailbox.clone());
-        }
+        listener.attach(&old_el_ws, mailbox.clone());
     }
 
     let num_children_in_both = old.children.len().min(new.children.len());

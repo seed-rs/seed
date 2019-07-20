@@ -1,6 +1,8 @@
 use actix::prelude::*;
 use actix_files::{Files, NamedFile};
+use actix_multipart::{Multipart, MultipartError};
 use actix_web::{get, post, web, App, HttpServer};
+use std::fmt::Write;
 use std::time;
 use tokio_timer;
 
@@ -37,8 +39,36 @@ fn delayed_response(
 }
 
 #[post("form")]
-fn form() -> impl Future<Item = (), Error = tokio_timer::Error> {
-    tokio_timer::sleep(time::Duration::from_millis(2_000)).and_then(move |()| Ok(()))
+fn form(form: Multipart) -> impl Future<Item = String, Error = MultipartError> {
+    form.map(|field| {
+        // get field name
+        let name = field
+            .content_disposition()
+            .and_then(|cd| cd.get_name().map(ToString::to_string))
+            .expect("Can't get field name!");
+
+        field
+            // get field value stream
+            .fold(Vec::new(), |mut value, bytes| -> Result<Vec<u8>, MultipartError> {
+                for byte in bytes {
+                    value.push(byte)
+                }
+                Ok(value)
+            })
+            .map(|value| String::from_utf8_lossy(&value).into_owned())
+            // add name into stream
+            .map(move |value| (name, value))
+            .into_stream()
+    })
+    .flatten()
+    .fold(
+        String::new(),
+        |mut output, (name, value)| -> Result<String, MultipartError> {
+            writeln!(&mut output, "{}: {}", name, value).unwrap();
+            writeln!(&mut output, "___________________").unwrap();
+            Ok(output)
+        },
+    )
 }
 
 struct State {
