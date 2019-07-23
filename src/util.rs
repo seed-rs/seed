@@ -11,7 +11,7 @@ pub type RequestAnimationFrameTime = f64;
 
 pub struct RequestAnimationFrameHandle {
     request_id: i32,
-    _closure: Closure<FnMut(RequestAnimationFrameTime)>,
+    _closure: Closure<dyn FnMut(RequestAnimationFrameTime)>,
 }
 
 impl Drop for RequestAnimationFrameHandle {
@@ -46,7 +46,7 @@ pub fn history() -> web_sys::History {
 
 /// Request the animation frame.
 pub fn request_animation_frame(
-    f: Closure<FnMut(RequestAnimationFrameTime)>,
+    f: Closure<dyn FnMut(RequestAnimationFrameTime)>,
 ) -> RequestAnimationFrameHandle {
     let request_id = window()
         .request_animation_frame(f.as_ref().unchecked_ref())
@@ -179,13 +179,13 @@ pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'s
 /// Prevent repetition when wrapping closures.
 pub trait ClosureNew<T> {
     #[allow(clippy::new_ret_no_self)]
-    fn new(inner: impl FnMut(T) + 'static) -> Closure<FnMut(T)>
+    fn new(inner: impl FnMut(T) + 'static) -> Closure<dyn FnMut(T)>
     where
         T: wasm_bindgen::convert::FromWasmAbi + 'static;
 }
 impl<T> ClosureNew<T> for Closure<T> {
     #[allow(clippy::new_ret_no_self)]
-    fn new(inner: impl FnMut(T) + 'static) -> Closure<FnMut(T)>
+    fn new(inner: impl FnMut(T) + 'static) -> Closure<dyn FnMut(T)>
     where
         T: wasm_bindgen::convert::FromWasmAbi + 'static,
     {

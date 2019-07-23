@@ -145,10 +145,10 @@ type UpdateFn<Ms, Mdl> = fn(Ms, &mut Mdl, &mut Orders<Ms>);
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
 type RoutesFn<Ms> = fn(routing::Url) -> Ms;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<events::Listener<Ms>>;
-type MsgListeners<Ms> = Vec<Box<Fn(&Ms)>>;
+type MsgListeners<Ms> = Vec<Box<dyn Fn(&Ms)>>;
 
 pub struct Mailbox<Message: 'static> {
-    func: Rc<Fn(Message)>,
+    func: Rc<dyn Fn(Message)>,
 }
 
 impl<Ms> Mailbox<Ms> {
@@ -173,7 +173,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 
 // TODO: Examine what needs to be ref cells, rcs etc
 
-type StoredPopstate = RefCell<Option<Closure<FnMut(Event)>>>;
+type StoredPopstate = RefCell<Option<Closure<dyn FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 pub struct AppData<Ms: 'static, Mdl> {
@@ -500,7 +500,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static> App<Ms, Mdl, ElC> {
                 s.rerender_vdom();
                 s.data.scheduled_render_handle.borrow_mut().take();
             }))
-                as Box<FnMut(util::RequestAnimationFrameTime)>);
+                as Box<dyn FnMut(util::RequestAnimationFrameTime)>);
 
             *scheduled_render_handle = Some(util::request_animation_frame(cb));
         }
@@ -680,9 +680,9 @@ pub trait _DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
 }
 
 pub trait DomElLifecycle {
-    fn did_mount(self) -> Option<Box<FnMut(&Element)>>;
-    fn did_update(self) -> Option<Box<FnMut(&Element)>>;
-    fn will_unmount(self) -> Option<Box<FnMut(&Element)>>;
+    fn did_mount(self) -> Option<Box<dyn FnMut(&Element)>>;
+    fn did_update(self) -> Option<Box<dyn FnMut(&Element)>>;
+    fn will_unmount(self) -> Option<Box<dyn FnMut(&Element)>>;
 }
 
 // todo add back once you sort out how to handle with Node

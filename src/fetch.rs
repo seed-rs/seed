@@ -466,8 +466,8 @@ impl Request {
         // @TODO: once await/async stabilized, refactor + delete Box
         self.fetch(identity)
             .then(|fetch_object_result| {
-                let mut output_future: Box<
-                    Future<Item = FetchObject<String>, Error = FetchObject<String>>,
+                let output_future: Box<
+                    dyn Future<Item = FetchObject<String>, Error = FetchObject<String>>,
                 >;
 
                 let fetch_object: FetchObject<()> = fetch_object_result.unwrap();
