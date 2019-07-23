@@ -14,7 +14,7 @@ use wasm_bindgen::JsCast;
 #[must_use = "timeouts cancel on drop; either call `forget` or `drop` explicitly"]
 pub struct Timeout {
     id: Option<i32>,
-    closure: Option<Closure<FnMut()>>,
+    closure: Option<Closure<dyn FnMut()>>,
 }
 
 impl Drop for Timeout {
@@ -98,7 +98,7 @@ impl Timeout {
     /// }
     /// # fn nevermind() -> bool { true }
     /// ```
-    pub fn cancel(mut self) -> Closure<FnMut()> {
+    pub fn cancel(mut self) -> Closure<dyn FnMut()> {
         self.closure.take().unwrap_throw()
     }
 }
@@ -112,7 +112,7 @@ impl Timeout {
 #[must_use = "intervals cancel on drop; either call `forget` or `drop` explicitly"]
 pub struct Interval {
     id: Option<i32>,
-    closure: Option<Closure<FnMut()>>,
+    closure: Option<Closure<dyn FnMut()>>,
 }
 
 impl Drop for Interval {
@@ -139,7 +139,7 @@ impl Interval {
     where
         F: 'static + FnMut(),
     {
-        let closure = Closure::wrap(Box::new(callback) as Box<FnMut()>);
+        let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
 
         let id = set_interval(
             closure.as_ref().unchecked_ref::<js_sys::Function>(),
@@ -194,7 +194,7 @@ impl Interval {
     /// }
     /// # fn nevermind() -> bool { true }
     /// ```
-    pub fn cancel(mut self) -> Closure<FnMut()> {
+    pub fn cancel(mut self) -> Closure<dyn FnMut()> {
         self.closure.take().unwrap_throw()
     }
 }
