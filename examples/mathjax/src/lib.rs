@@ -182,9 +182,13 @@ e^{-\mathbf{A}} = \mathbf{B} + [\mathbf{A}, \mathbf{B}]"
     ]
 }
 
+// Init
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(Model::default(), |_, _, _| (), view)
-        .finish()
-        .run();
+    seed::App::build(init, |_, _, _| (), view).finish().run();
 }

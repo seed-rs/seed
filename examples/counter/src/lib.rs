@@ -34,7 +34,7 @@ enum Msg {
 }
 
 /// The sole source of updating the model
-fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => model.count += 1,
         Msg::Decrement => model.count -= 1,
@@ -105,7 +105,7 @@ fn view(model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(|_, _| Model::default(), update, view)
         .finish()
         .run();
 }

@@ -132,7 +132,7 @@ fn edit_submit(posit: usize, model: &mut Model) {
     }
 }
 
-fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     model.sync_storage(); // Doing it here will miss the most recent update...
 
     // todo has some bugs.
@@ -361,7 +361,7 @@ fn routes(url: seed::Url) -> Msg {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(|_, _| Model::default(), update, view)
         .routes(routes)
         .finish()
         .run();

@@ -132,7 +132,7 @@ command = "wasm-pack"
 args = ["test", "--firefox", "--", "--lib", "${@}"]
 
 [tasks.test_one_h]
-description = "Run a single test in headless Firefox. Ex 'cargo make test_one my_test'"
+description = "Run a single test in headless Firefox. Ex 'cargo make test_one_h my_test'"
 clear = true
 workspace = false
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }

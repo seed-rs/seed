@@ -1,6 +1,7 @@
 use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
+use std::borrow::Cow;
 
 pub const TITLE: &str = "Example D";
 pub const DESCRIPTION: &str =
@@ -9,7 +10,7 @@ pub const DESCRIPTION: &str =
 
 const TIMEOUT: u32 = 2000;
 
-fn get_request_url() -> String {
+fn get_request_url() -> impl Into<Cow<'static, str>> {
     let response_delay_ms: u32 = 2500;
     format!("/api/delayed-response/{}", response_delay_ms)
 }
@@ -48,7 +49,7 @@ pub enum Msg {
     Fetched(fetch::FetchObject<()>),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
             model.status = Status::WaitingForResponse(TimeoutStatus::Enabled);
@@ -102,8 +103,8 @@ pub fn view(model: &Model) -> impl View<Msg> {
     }
 }
 
-fn view_fail_reason(fail_reason: &fetch::FailReason, status: &Status) -> Vec<Node<Msg>> {
-    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception)) =
+fn view_fail_reason(fail_reason: &fetch::FailReason<()>, status: &Status) -> Vec<Node<Msg>> {
+    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception), _) =
         fail_reason
     {
         if dom_exception.name() == "AbortError" {

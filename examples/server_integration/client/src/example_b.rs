@@ -2,14 +2,15 @@ use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
 use serde::Deserialize;
+use std::borrow::Cow;
 
 pub const TITLE: &str = "Example B";
 pub const DESCRIPTION: &str =
     "Click button 'Try to Fetch JSON' to send request to non-existent endpoint.
     Server will return 404 with empty body and Serde then fail to decode body into predefined JSON.";
 
-fn get_request_url() -> String {
-    "/api/non-existent-endpoint".into()
+fn get_request_url() -> impl Into<Cow<'static, str>> {
+    "/api/non-existent-endpoint"
 }
 
 // Model
@@ -32,7 +33,7 @@ pub enum Msg {
     Fetched(fetch::FetchResult<ExpectedResponseData>),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
             orders.skip().perform_cmd(send_request());

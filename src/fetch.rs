@@ -5,7 +5,7 @@ use futures::{future, Future};
 use crate::gloo_timers::callback::Timeout;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json;
-use std::{cell::RefCell, collections::HashMap, convert::identity, fmt::Debug, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, collections::HashMap, convert::identity, rc::Rc};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
@@ -17,10 +17,10 @@ pub type DomException = web_sys::DomException;
 // ---------- Aliases ----------
 
 /// Return type for `FetchObject.response()`.
-pub type ResponseResult<T> = Result<Response<T>, FailReason>;
+pub type ResponseResult<T> = Result<Response<T>, FailReason<T>>;
 
 /// Return type for `FetchObject.response_data()`.
-pub type ResponseDataResult<T> = Result<T, FailReason>;
+pub type ResponseDataResult<T> = Result<T, FailReason<T>>;
 
 /// Type for `FetchObject.result`.
 #[allow(clippy::module_name_repetitions)]
@@ -29,40 +29,44 @@ pub type FetchResult<T> = Result<ResponseWithDataResult<T>, RequestError>;
 /// Type for `ResponseWithDataResult.data`.
 pub type DataResult<T> = Result<T, DataError>;
 
+type Json = String;
+
 // ---------- FetchObject ----------
 
 #[derive(Debug, Clone)]
 /// Return type for `Request.fetch*` methods.
 #[allow(clippy::module_name_repetitions)]
-pub struct FetchObject<T: Debug> {
+pub struct FetchObject<T> {
     pub request: Request,
     pub result: FetchResult<T>,
 }
 
-impl<T: Debug> FetchObject<T> {
+impl<T> FetchObject<T> {
     /// Get successful `Response` (status code 100-399) or `FailReason`.
     pub fn response(self) -> ResponseResult<T> {
         let response = match self.result {
             // `request_error` means that request was aborted, timed out, there was network error etc.
-            Err(request_error) => return Err(FailReason::RequestError(request_error)),
-            Ok(response) => response,
+            Err(ref request_error) => {
+                return Err(FailReason::RequestError(request_error.clone(), self))
+            }
+            Ok(ref response) => response,
         };
 
         if response.status.is_error() {
             // Response status code is in range 400-599.
-            return Err(FailReason::Status(response.status));
+            return Err(FailReason::Status(response.status.clone(), self));
         }
 
-        let data = match response.data {
+        if let Err(ref data_error) = response.data {
             // Converting body data to required type (String, JSON...) failed.
-            Err(data_error) => return Err(FailReason::DataError(data_error)),
-            Ok(data) => data,
-        };
+            return Err(FailReason::DataError(data_error.clone(), self));
+        }
 
+        let response = self.result.unwrap();
         Ok(Response {
             raw: response.raw,
             status: response.status,
-            data,
+            data: response.data.unwrap(),
         })
     }
 
@@ -75,10 +79,11 @@ impl<T: Debug> FetchObject<T> {
 // ---------- Fails ----------
 
 #[derive(Debug, Clone)]
-pub enum FailReason {
-    RequestError(RequestError),
-    Status(Status),
-    DataError(DataError),
+// @TODO use https://github.com/rust-lang-nursery/failure?
+pub enum FailReason<T> {
+    RequestError(RequestError, FetchObject<T>),
+    Status(Status, FetchObject<T>),
+    DataError(DataError, FetchObject<T>),
 }
 
 #[derive(Debug, Clone)]
@@ -89,7 +94,7 @@ pub enum RequestError {
 #[derive(Debug, Clone)]
 pub enum DataError {
     DomException(web_sys::DomException),
-    SerdeError(Rc<serde_json::Error>),
+    SerdeError(Rc<serde_json::Error>, Json),
 }
 
 // ---------- RequestController ----------
@@ -279,7 +284,7 @@ impl Default for Method {
 /// struct, and are intended to be used chained together.
 #[derive(Debug, Clone, Default)]
 pub struct Request {
-    url: String,
+    url: Cow<'static, str>,
     headers: HashMap<String, String>,
     method: Method,
     body: Option<JsValue>,
@@ -297,9 +302,9 @@ pub struct Request {
 impl Request {
     // ------ PUBLIC ------
 
-    pub fn new(url: String) -> Self {
+    pub fn new(url: impl Into<Cow<'static, str>>) -> Self {
         Self {
-            url,
+            url: url.into(),
             ..Self::default()
         }
     }
@@ -466,7 +471,7 @@ impl Request {
         // @TODO: once await/async stabilized, refactor + delete Box
         self.fetch(identity)
             .then(|fetch_object_result| {
-                let output_future: Box<
+                let mut output_future: Box<
                     dyn Future<Item = FetchObject<String>, Error = FetchObject<String>>,
                 >;
 
@@ -554,7 +559,7 @@ impl Request {
         f: impl FnOnce(FetchObject<T>) -> U,
     ) -> impl Future<Item = U, Error = U>
     where
-        T: DeserializeOwned + Debug + 'static,
+        T: DeserializeOwned + 'static,
         U: 'static,
     {
         // @TODO: once await/async stabilized, refactor
@@ -590,7 +595,10 @@ impl Request {
                                         result: Ok(ResponseWithDataResult {
                                             raw: response.raw,
                                             status: response.status,
-                                            data: Err(DataError::SerdeError(Rc::new(serde_error))),
+                                            data: Err(DataError::SerdeError(
+                                                Rc::new(serde_error),
+                                                text,
+                                            )),
                                         }),
                                     }),
                                     Ok(value) => future::ok(FetchObject::<T> {
@@ -609,7 +617,7 @@ impl Request {
             })
             .then(
                 |fetch_object_result: Result<FetchObject<T>, FetchObject<T>>| {
-                    Ok(f(fetch_object_result.unwrap()))
+                    Ok(f(fetch_object_result.unwrap_or_else(identity)))
                 },
             )
     }
@@ -620,7 +628,7 @@ impl Request {
         f: impl FnOnce(ResponseDataResult<T>) -> U,
     ) -> impl Future<Item = U, Error = U>
     where
-        T: DeserializeOwned + Debug + 'static,
+        T: DeserializeOwned + 'static,
         U: 'static,
     {
         self.fetch_json(|fetch_object| f(fetch_object.response_data()))

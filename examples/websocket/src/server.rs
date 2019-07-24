@@ -8,17 +8,6 @@ struct Server {
 }
 
 impl Handler for Server {
-    fn on_request(&mut self, req: &Request) -> Result<(Response)> {
-        match req.resource() {
-            "/ws" => Response::from_request(req),
-            _ => Ok(Response::new(
-                200,
-                "OK",
-                b"Websocket server is running".to_vec(),
-            )),
-        }
-    }
-
     // Handle messages recieved in the websocket (in this case, only on /ws)
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let client_id: usize = self.out.token().into();
@@ -39,6 +28,17 @@ impl Handler for Server {
         .into();
         // Broadcast to all connections
         self.out.broadcast(server_msg)
+    }
+
+    fn on_request(&mut self, req: &Request) -> Result<(Response)> {
+        match req.resource() {
+            "/ws" => Response::from_request(req),
+            _ => Ok(Response::new(
+                200,
+                "OK",
+                b"Websocket server is running".to_vec(),
+            )),
+        }
     }
 }
 

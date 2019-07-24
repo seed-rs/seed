@@ -1,6 +1,7 @@
 use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
+use std::borrow::Cow;
 use std::mem;
 use wasm_bindgen::JsCast;
 use web_sys::{
@@ -13,8 +14,8 @@ pub const TITLE: &str = "Example E";
 pub const DESCRIPTION: &str =
     "Fill form and click 'Submit` button. Server echoes the form back. See console log for more info.";
 
-fn get_request_url() -> String {
-    "/api/form".into()
+fn get_request_url() -> impl Into<Cow<'static, str>> {
+    "/api/form"
 }
 
 // Model
@@ -81,7 +82,7 @@ pub enum Msg {
     ServerResponded(fetch::ResponseDataResult<String>),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::TitleChanged(title) => model.form_mut().title = title,
         Msg::DescriptionChanged(description) => model.form_mut().description = description,

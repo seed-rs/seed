@@ -1,13 +1,14 @@
 use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
+use std::borrow::Cow;
 
 pub const TITLE: &str = "Example C";
 pub const DESCRIPTION: &str =
     "Click button 'Send request` to send request to endpoint with configurable delay.
     Click again to abort request.";
 
-fn get_request_url() -> String {
+fn get_request_url() -> impl Into<Cow<'static, str>> {
     let response_delay_ms: u32 = 2000;
     format!("/api/delayed-response/{}", response_delay_ms)
 }
@@ -42,7 +43,7 @@ pub enum Msg {
     Fetched(fetch::ResponseDataResult<String>),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
             model.status = Status::WaitingForResponse;
@@ -106,8 +107,8 @@ fn view_response_data_result(
     }
 }
 
-fn view_fail_reason(fail_reason: &fetch::FailReason) -> Node<Msg> {
-    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception)) =
+fn view_fail_reason(fail_reason: &fetch::FailReason<String>) -> Node<Msg> {
+    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception), _) =
         fail_reason
     {
         if dom_exception.name() == "AbortError" {

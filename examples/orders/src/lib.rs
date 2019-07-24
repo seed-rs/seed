@@ -28,7 +28,7 @@ enum Msg {
     TimeoutError,
 }
 
-fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Greet => {
             model.greet_clicked = true;
@@ -94,7 +94,7 @@ fn view(model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(|_, _| Model::default(), update, view)
         .finish()
         .run();
 }

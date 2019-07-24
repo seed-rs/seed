@@ -89,7 +89,8 @@ fn main() -> std::io::Result<()> {
                 web::scope("/api/")
                     .service(send_message)
                     .service(delayed_response)
-                    .service(form),
+                    .service(form)
+                    .default_service(web::route().to(web::HttpResponse::NotFound)),
             )
             .service(Files::new("/public", "./client/public"))
             .service(Files::new("/pkg", "./client/pkg"))
