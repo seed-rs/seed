@@ -42,7 +42,7 @@ pub const fn empty<Ms>() -> dom_types::Node<Ms> {
 /// * [WASM bindgen closures](https://rustwasm.github.io/wasm-bindgen/examples/closures.html)
 /// * [`web_sys` Window](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Window.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval)
-pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
+pub fn set_interval(handler: Box<dyn Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
     util::window()
         .set_interval_with_callback_and_timeout_and_arguments_0(
@@ -58,7 +58,7 @@ pub fn set_interval(handler: Box<Fn()>, timeout: i32) {
 ///
 /// # References
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Wemb/API/WindowOrWorkerGlobalScope/setTimeout)
-pub fn set_timeout(handler: Box<Fn()>, timeout: i32) {
+pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
     let callback = Closure::wrap(handler as Box<dyn Fn()>);
     util::window()
         .set_timeout_with_callback_and_timeout_and_arguments_0(

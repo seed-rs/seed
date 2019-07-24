@@ -121,7 +121,7 @@ make_events! {
     TriggerUpdate => "triggerupdate"
 }
 
-type EventHandler<Ms> = Box<FnMut(web_sys::Event) -> Ms>;
+type EventHandler<Ms> = Box<dyn FnMut(web_sys::Event) -> Ms>;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Category {
@@ -140,7 +140,7 @@ pub struct Listener<Ms> {
     // Handler describes how to handle the event, and is used to generate the closure.
     pub handler: Option<EventHandler<Ms>>,
     // We store closure here so we can detach it later.
-    pub closure: Option<Closure<FnMut(web_sys::Event)>>,
+    pub closure: Option<Closure<dyn FnMut(web_sys::Event)>>,
     // Control listeners prevent input on controlled input elements, and
     // are not assoicated with a message.
     pub control_val: Option<String>,
@@ -225,7 +225,7 @@ impl<Ms> Listener<Ms> {
         let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
             let msg = handler(event);
             mailbox.send(msg);
-        }) as Box<FnMut(web_sys::Event) + 'static>);
+        }) as Box<dyn FnMut(web_sys::Event) + 'static>);
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(

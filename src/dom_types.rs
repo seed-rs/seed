@@ -859,7 +859,7 @@ pub struct El<Ms: 'static> {
     pub hooks: LifecycleHooks<Ms>,
 }
 
-type _HookFn = Box<FnMut(&web_sys::Node)>; // todo
+type _HookFn = Box<dyn FnMut(&web_sys::Node)>; // todo
 
 pub struct LifecycleHooks<Ms> {
     pub did_mount: Option<DidMount<Ms>>,
@@ -1113,17 +1113,17 @@ impl<Ms> PartialEq for El<Ms> {
 }
 
 pub struct DidMount<Ms> {
-    pub actions: Box<FnMut(&web_sys::Node)>,
+    pub actions: Box<dyn FnMut(&web_sys::Node)>,
     pub message: Option<Ms>,
 }
 
 pub struct DidUpdate<Ms> {
-    pub actions: Box<FnMut(&web_sys::Node)>,
+    pub actions: Box<dyn FnMut(&web_sys::Node)>,
     pub message: Option<Ms>,
 }
 
 pub struct WillUnmount<Ms> {
-    pub actions: Box<FnMut(&web_sys::Node)>,
+    pub actions: Box<dyn FnMut(&web_sys::Node)>,
     pub message: Option<Ms>,
 }
 

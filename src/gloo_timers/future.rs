@@ -118,7 +118,7 @@ impl Future for TimeoutFuture {
 pub struct IntervalStream {
     millis: u32,
     id: Option<i32>,
-    closure: Closure<FnMut()>,
+    closure: Closure<dyn FnMut()>,
     inner: mpsc::UnboundedReceiver<()>,
 }
 
@@ -148,7 +148,7 @@ impl IntervalStream {
         let (sender, receiver) = mpsc::unbounded();
         let closure = Closure::wrap(Box::new(move || {
             sender.unbounded_send(()).unwrap();
-        }) as Box<FnMut()>);
+        }) as Box<dyn FnMut()>);
 
         IntervalStream {
             millis,
