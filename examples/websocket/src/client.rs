@@ -30,7 +30,7 @@ enum Msg {
     EditChange(String),
 }
 
-fn update(msg: Msg, mut model: &mut Model, orders: &mut Orders<Msg>) {
+fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Connected => {
             model.connected = true;
@@ -95,7 +95,7 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    let app = App::build(Model::default(), update, view)
+    let app = App::build(|_,_| Model::default(), update, view)
         // `trigger_update_handler` is necessary,
         // because we want to process `seed::update(..)` calls.
         .window_events(|_| vec![trigger_update_handler()])
@@ -130,41 +130,41 @@ where
 // ------ HANDLERS -------
 
 fn register_handler_on_open(ws: &web_sys::WebSocket) {
-    let on_open = Closure::wrap(Box::new(move |_| {
+    let on_open = Closure::new(move |_: JsValue| {
         log!("WebSocket connection is open now");
         seed::update(Msg::Connected);
-    }) as Box<FnMut(JsValue)>);
+    });
 
     ws.set_onopen(Some(on_open.as_ref().unchecked_ref()));
     on_open.forget();
 }
 
 fn register_handler_on_close(ws: &web_sys::WebSocket) {
-    let on_close = Closure::wrap(Box::new(|_| {
+    let on_close = Closure::new(|_: JsValue| {
         log!("WebSocket connection was closed");
-    }) as Box<FnMut(JsValue)>);
+    });
 
     ws.set_onclose(Some(on_close.as_ref().unchecked_ref()));
     on_close.forget();
 }
 
 fn register_handler_on_message(ws: &web_sys::WebSocket) {
-    let on_message = Closure::wrap(Box::new(move |ev: MessageEvent| {
+    let on_message = Closure::new(move |ev: MessageEvent| {
         log!("Client received a message");
         let txt = ev.data().as_string().unwrap();
         let json: json::ServerMessage = serde_json::from_str(&txt).unwrap();
         log!("- text message: ", &txt);
         seed::update(Msg::ServerMessage(json));
-    }) as Box<FnMut(MessageEvent)>);
+    });
 
     ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
     on_message.forget();
 }
 
 fn register_handler_on_error(ws: &web_sys::WebSocket) {
-    let on_error = Closure::wrap(Box::new(|_| {
+    let on_error = Closure::new(|_: JsValue| {
         log!("Error");
-    }) as Box<FnMut(JsValue)>);
+    });
 
     ws.set_onerror(Some(on_error.as_ref().unchecked_ref()));
     on_error.forget();

@@ -28,7 +28,7 @@ enum Msg {
     KeyPressed(web_sys::KeyboardEvent),
 }
 
-fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::ToggleWatching => model.watching = !model.watching,
         Msg::UpdateCoords(ev) => model.coords = (ev.screen_x(), ev.screen_y()),
@@ -83,7 +83,7 @@ fn window_events(model: &Model) -> Vec<Listener<Msg>> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(|_, _| Model::default(), update, view)
         .window_events(window_events)
         .finish()
         .run();

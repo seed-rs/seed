@@ -127,10 +127,7 @@ fn get_search() -> String {
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
-pub fn initial<Ms>(update: impl Fn(Ms), routes: fn(Url) -> Ms)
-where
-    Ms: 'static,
-{
+pub fn initial_url() -> Url {
     let raw_path = get_path();
     let path_ref: Vec<&str> = raw_path.split('/').collect();
     let path: Vec<String> = path_ref.into_iter().map(ToString::to_string).collect();
@@ -147,14 +144,12 @@ where
         _ => Some(raw_search),
     };
 
-    let url = Url {
+    Url {
         path,
         hash,
         search,
         title: None,
-    };
-
-    update(routes(url));
+    }
 }
 
 fn remove_first(s: &str) -> Option<&str> {
@@ -256,7 +251,7 @@ pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) ->
 where
     Ms: 'static,
 {
-    let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
+    let closure = Closure::new(move |event: web_sys::Event| {
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
             .and_then(|el| el.closest("[href]").ok())
@@ -267,23 +262,27 @@ where
                 _ => Some(href_el)
             })
             .and_then(|href_el| href_el.get_attribute("href"))
-            .and_then(|href| {
-                href.chars().next()
-                    .map(|first_char| (href, first_char))
-            })
-            // The first character being / indicates a rel link, which is what
+            // The first character being / or empty href indicates a rel link, which is what
             // we're intercepting.
-            // todo: Handle other cases that imply a relative link.
-            // todo: I think not having anything, eg no http/www implies
-            // todo rel link as well.
-            .and_then(|(href, first_char)| if first_char == '/' { Some(href) } else { None })
+            // @TODO: Resolve it properly, see Elm implementation:
+            // @TODO: https://github.com/elm/browser/blob/9f52d88b424dd12cab391195d5b090dd4639c3b0/src/Elm/Kernel/Browser.js#L157
+            .and_then(|href| {
+                if href.is_empty() || href.starts_with('/') {
+                    Some(href)
+                } else {
+                    None
+                }
+            })
             .map(|href| {
                 event.prevent_default(); // Prevent page refresh
-                // Route internally based on href's value
-                let url = push_route(Url::from(href));
-                update(routes(url));
+                // @TODO should be empty href ignored?
+                if !href.is_empty() {
+                    // Route internally based on href's value
+                    let url = push_route(Url::from(href));
+                    update(routes(url));
+                }
             });
-    }) as Box<dyn FnMut(web_sys::Event) + 'static>);
+    });
 
     (util::document().as_ref() as &web_sys::EventTarget)
         .add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())

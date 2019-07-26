@@ -164,8 +164,7 @@ macro_rules! raw {
 #[macro_export]
 macro_rules! md {
     ($md:expr) => {
-        let el = El::from_markdown($md)
-        $crate::dom_types::Node::Element(el)
+        El::from_markdown($md)
     };
 }
 

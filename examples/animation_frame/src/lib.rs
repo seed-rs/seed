@@ -2,7 +2,6 @@
 extern crate seed;
 use rand::prelude::*;
 use seed::prelude::*;
-use serde::{Deserialize, Serialize};
 
 // Model
 
@@ -56,30 +55,25 @@ struct Model {
 
 // Update
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy)]
 enum Msg {
-    Init,
     SetViewportWidth,
     NextAnimationStep,
     OnAnimationFrame(RequestAnimationFrameTime),
 }
 
-fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Init => {
-            orders
-                .send_msg(Msg::SetViewportWidth)
-                .send_msg(Msg::NextAnimationStep)
-                .skip();
-        }
         Msg::SetViewportWidth => {
             model.viewport_width = f64::from(seed::body().client_width());
             orders.skip();
         }
         Msg::NextAnimationStep => {
-            let cb = Closure::wrap(Box::new(|time| {
-                seed::update(Msg::OnAnimationFrame(time));
-            }) as Box<FnMut(RequestAnimationFrameTime)>);
+            let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
+
+            let cb = Closure::new(move |time| {
+                app.update(msg_mapper(Msg::OnAnimationFrame(time)));
+            });
 
             model.request_animation_frame_handle = Some(request_animation_frame(cb));
             orders.skip();
@@ -175,18 +169,19 @@ fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
     }]
 }
 
+// Init
+
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders
+        .send_msg(Msg::SetViewportWidth)
+        .send_msg(Msg::NextAnimationStep);
+    Model::default()
+}
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    let app = seed::App::build(Model::default(), update, view)
-        .window_events(|_| {
-            vec![
-                // we want to use `seed::update(...)`
-                trigger_update_handler(),
-                simple_ev(Ev::Resize, Msg::SetViewportWidth),
-            ]
-        })
+    seed::App::build(init, update, view)
+        .window_events(|_| vec![simple_ev(Ev::Resize, Msg::SetViewportWidth)])
         .finish()
         .run();
-
-    app.update(Msg::Init);
 }

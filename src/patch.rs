@@ -111,13 +111,13 @@ where
     }
 }
 
-fn patch_el<'a, Ms, Mdl, ElC: View<Ms>>(
+fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC>,
+    app: &App<Ms, Mdl, ElC, GMs>,
 ) -> Option<&'a web_sys::Node> {
     if old != *new {
         // At this step, we already assume we have the right element - either
@@ -280,14 +280,14 @@ fn add_el_helper<Ms>(
 
 /// Routes patching through different channels, depending on the Node variant
 /// of old and new.
-pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>>(
+pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     document: &Document,
     old: Node<Ms>,
     new: &'a mut Node<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC>,
+    app: &App<Ms, Mdl, ElC, GMs>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // We go through each combination of new and old variants to determine how to patch.

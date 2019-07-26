@@ -1,7 +1,10 @@
 //! This module contains code related to event handling; ie things that update the dom, related to
 //! `web_sys::Event`
 
-use crate::{dom_types::MessageMapper, util};
+use crate::{
+    dom_types::MessageMapper,
+    util::{self, ClosureNew},
+};
 
 use enclose::enclose;
 use serde::de::DeserializeOwned;
@@ -222,10 +225,10 @@ impl<Ms> Listener<Ms> {
     {
         let mut handler = self.handler.take().expect("Can't find old handler");
         // This is the closure ran when a DOM element has an user defined callback
-        let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
+        let closure = Closure::new(move |event: web_sys::Event| {
             let msg = handler(event);
             mailbox.send(msg);
-        }) as Box<dyn FnMut(web_sys::Event) + 'static>);
+        });
 
         (el_ws.as_ref() as &web_sys::EventTarget)
             .add_event_listener_with_callback(

@@ -33,27 +33,22 @@ enum Msg {
     ExampleE(example_e::Msg),
 }
 
-fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::ExampleA(msg) => {
-            *orders = call_update(example_a::update, msg, &mut model.example_a)
-                .map_message(Msg::ExampleA);
+            example_a::update(msg, &mut model.example_a, &mut orders.proxy(Msg::ExampleA));
         }
         Msg::ExampleB(msg) => {
-            *orders = call_update(example_b::update, msg, &mut model.example_b)
-                .map_message(Msg::ExampleB);
+            example_b::update(msg, &mut model.example_b, &mut orders.proxy(Msg::ExampleB));
         }
         Msg::ExampleC(msg) => {
-            *orders = call_update(example_c::update, msg, &mut model.example_c)
-                .map_message(Msg::ExampleC);
+            example_c::update(msg, &mut model.example_c, &mut orders.proxy(Msg::ExampleC));
         }
         Msg::ExampleD(msg) => {
-            *orders = call_update(example_d::update, msg, &mut model.example_d)
-                .map_message(Msg::ExampleD);
+            example_d::update(msg, &mut model.example_d, &mut orders.proxy(Msg::ExampleD));
         }
         Msg::ExampleE(msg) => {
-            *orders = call_update(example_e::update, msg, &mut model.example_e)
-                .map_message(Msg::ExampleE);
+            example_e::update(msg, &mut model.example_e, &mut orders.proxy(Msg::ExampleE));
         }
     }
 }
@@ -112,7 +107,7 @@ fn view_example_introduction(title: &str, description: &str) -> Vec<Node<Msg>> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(|_, _| Model::default(), update, view)
         .finish()
         .run();
 }

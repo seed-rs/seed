@@ -27,7 +27,7 @@ enum Msg {
     Tick(String),
 }
 
-fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::ClockEnabled => log!("Clock enabled"),
         Msg::Tick(time) => model.time_from_js = Some(time),
@@ -50,7 +50,7 @@ fn view(model: &Model) -> Node<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(Model::default(), update, view)
+    seed::App::build(|_,_| Model::default(), update, view)
         // `trigger_update_handler` processes JS event
         // and forwards it to `update` function.
         .window_events(|_| vec![trigger_update_handler()])

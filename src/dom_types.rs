@@ -1174,7 +1174,7 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> seed::App<Msg, Model, Node<Msg>> {
-        seed::App::build(Model {}, |_, _, _| (), |_| div![])
+        seed::App::build(|_,_| Model {}, |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()

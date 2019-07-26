@@ -68,7 +68,7 @@ pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> 
         };
         ($element:ty, $result_callback:expr) => {
             if let Some(input) = target.dyn_ref::<$element>() {
-                return ($result_callback(input)).map(|_| input.value().to_string());
+                return $result_callback(input).map(|_| input.value().to_string());
             }
         };
     }
@@ -106,7 +106,7 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'sta
         };
         ($element:ty, $value_result_callback:expr) => {
             if let Some(input) = target.dyn_ref::<$element>() {
-                return ($value_result_callback(input)).map(|value| input.set_value(value));
+                return $value_result_callback(input).map(|value| input.set_value(value));
             }
         };
     }
@@ -173,8 +173,7 @@ pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'s
     Err("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `set_checked`.")
 }
 
-// @TODO: (1) Replace `Closure::wrap` in codebase with `Closure::new` (inspiration in `routing.rs`)
-// @TODO: (2) Delete once `Closure::new` is stable
+// @TODO: Delete once `Closure::new` is stable
 // https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
 /// Prevent repetition when wrapping closures.
 pub trait ClosureNew<T> {

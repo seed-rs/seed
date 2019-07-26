@@ -20,6 +20,7 @@ pub mod dom_types;
 pub mod events;
 pub mod fetch;
 mod next_tick;
+pub mod orders;
 mod patch;
 pub mod routing;
 pub mod storage;
@@ -35,6 +36,8 @@ pub mod gloo_timers;
 pub const fn empty<Ms>() -> dom_types::Node<Ms> {
     dom_types::Node::Empty
 }
+
+// @TODO remove `set_interval` and `set_timeout`? Alternative from `gloo` should be used instead.
 
 /// A high-level wrapper for `web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0`:
 ///
@@ -84,11 +87,15 @@ pub mod prelude {
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
             Ev,
         },
+        orders::Orders,
+        routing::Url,
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
-        util::{request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime},
-        vdom::{call_update, Orders},
+        util::{
+            request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
+            RequestAnimationFrameTime,
+        },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
     pub use wasm_bindgen::prelude::*;
@@ -111,7 +118,7 @@ pub mod tests {
         use crate::{
             dom_types::{El, UpdateEl},
             events::mouse_ev,
-            vdom::Orders,
+            orders::Orders,
         };
 
         struct Model {
@@ -129,7 +136,7 @@ pub mod tests {
             Increment,
         }
 
-        fn update(msg: Msg, model: &mut Model, _: &mut Orders<Msg>) {
+        fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             match msg {
                 Msg::Increment => model.val += 1,
             }
@@ -149,7 +156,7 @@ pub mod tests {
 
         #[wasm_bindgen]
         pub fn render() {
-            seed::App::build(Model::default(), update, view)
+            seed::App::build(|_, _| Model::default(), update, view)
                 .mount("body")
                 .routes(routes)
                 .window_events(window_events)

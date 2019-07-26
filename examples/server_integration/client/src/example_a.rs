@@ -1,6 +1,7 @@
 use futures::Future;
 use seed::fetch;
 use seed::prelude::*;
+use std::borrow::Cow;
 
 use shared;
 
@@ -9,8 +10,8 @@ pub const DESCRIPTION: &str = "Write something into input and click on 'Send mes
     Message will be send to server and then it wil be returned with ordinal number.
     Ordinal number is incremented by server with each request.";
 
-fn get_request_url() -> String {
-    "/api/send-message".into()
+fn get_request_url() -> impl Into<Cow<'static, str>> {
+    "/api/send-message"
 }
 
 // Model
@@ -30,7 +31,7 @@ pub enum Msg {
     Fetched(fetch::ResponseDataResult<shared::SendMessageResponseBody>),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::NewMessageChanged(message) => {
             model.new_message = message;

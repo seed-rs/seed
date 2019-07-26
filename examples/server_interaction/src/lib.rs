@@ -58,31 +58,21 @@ impl Default for Model {
 
 #[derive(Clone)]
 enum Msg {
-    FetchRepositoryInfo,
     RepositoryInfoFetched(fetch::ResponseDataResult<Branch>),
     SendMessage,
     MessageSent(fetch::ResponseDataResult<SendMessageResponseBody>),
-    OnFetchError {
-        label: &'static str,
-        fail_reason: fetch::FailReason,
-    },
 }
 
-fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::FetchRepositoryInfo => {
-            orders.skip().perform_cmd(fetch_repository_info());
-        }
-
         Msg::RepositoryInfoFetched(Ok(branch)) => model.branch = branch,
 
         Msg::RepositoryInfoFetched(Err(fail_reason)) => {
-            orders
-                .send_msg(Msg::OnFetchError {
-                    label: "Fetching repository info failed",
-                    fail_reason,
-                })
-                .skip();
+            error!(format!(
+                "Fetch error - Fetching repository info failed - {:#?}",
+                fail_reason
+            ));
+            orders.skip();
         }
 
         Msg::SendMessage => {
@@ -95,23 +85,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut Orders<Msg>) {
         }
 
         Msg::MessageSent(Err(fail_reason)) => {
-            orders
-                .send_msg(Msg::OnFetchError {
-                    label: "Sending message failed",
-                    fail_reason,
-                })
-                .skip();
-        }
-
-        Msg::OnFetchError { label, fail_reason } => {
-            error!(format!("Fetch error - {} - {:#?}", label, fail_reason));
+            error!(format!(
+                "Fetch error - Sending message failed - {:#?}",
+                fail_reason
+            ));
             orders.skip();
         }
     }
 }
 
 fn fetch_repository_info() -> impl Future<Item = Msg, Error = Msg> {
-    Request::new(REPOSITORY_URL.into()).fetch_json_data(Msg::RepositoryInfoFetched)
+    Request::new(REPOSITORY_URL).fetch_json_data(Msg::RepositoryInfoFetched)
 }
 
 fn send_message() -> impl Future<Item = Msg, Error = Msg> {
@@ -121,7 +105,7 @@ fn send_message() -> impl Future<Item = Msg, Error = Msg> {
         message: "I wanna be like Iron Man".into(),
     };
 
-    Request::new(CONTACT_URL.into())
+    Request::new(CONTACT_URL)
         .method(Method::Post)
         .send_json(&message)
         .fetch_json_data(Msg::MessageSent)
@@ -129,10 +113,12 @@ fn send_message() -> impl Future<Item = Msg, Error = Msg> {
 
 fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
+        md!["# Repo info"].remove(0),
         div![format!(
-            "Repo info: Name: {}, SHA: {}",
+            "Name: {}, SHA: {}",
             model.branch.name, model.branch.commit.sha
         )],
+        raw!["<hr>"].remove(0),
         button![
             simple_ev(Ev::Click, Msg::SendMessage),
             "Send an urgent message (see console log)"
@@ -140,11 +126,14 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
     ]
 }
 
+// Init
+
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders.perform_cmd(fetch_repository_info());
+    Model::default()
+}
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    let app = seed::App::build(Model::default(), update, view)
-        .finish()
-        .run();
-
-    app.update(Msg::FetchRepositoryInfo);
+    seed::App::build(init, update, view).finish().run();
 }
