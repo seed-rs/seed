@@ -4,8 +4,17 @@
 - `ElContainer`, imported in prelude, renamed to `View`. (Breaking)
 - Internal refactor of `El`: Now wrapped in `Node`, along with
 `Empty` and `Text`. Creation macros return `Node(Element)`. (Breaking)
+- Changed the way special attributes like `disabled`, `autofocus`, and
+`checked` are handled (Breaking)
+- `MessageMapper` now accepts closures
+- `Orders` is a trait now instead of a struct. (Breaking)
+- Significant changes to MessageMapper
+- Orders has new methods, `clone_app` and `msg_mapper` which can allow access to app instance.
 - Added more SVG element macros
 - Several minor bux fixes
+- Examples updated to reflect these changes
+- Improvements to Fetch API, especially regarding error handling
+and deserialization
 
 ## v0.3.7
 - `routes` now accepts `Url` instead of `&Url` (Breaking)
@@ -31,6 +40,8 @@ especially for animations
 - Styles no longer implicitly add `px`. Added `unit!` macro in its place
 - `Map` can now be used directly in elements, without needing to annotate type and collect 
 (ie for child `Elements`, and `Listener`s)
+- Significant changes to MessageMapper
+- Orders hs new methods, `clone_app` and `msg_mapper` that allow access to app instance.
 - Fixed a bug where `empty` elements at the top-level were rendering in the wrong order
 - Added an `empty!` macro, which is similar to `seed::empty`
 - Attributes and style now retain order

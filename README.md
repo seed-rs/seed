@@ -26,7 +26,7 @@ And cargo-make: `cargo install --force cargo-make`
 
 To start, clone [the quickstart repo](https://github.com/David-OConnor/seed-quickstart):
 `git clone https://github.com/david-oconnor/seed-quickstart.git`,
-run `cargo make all` in a terminal to build the app, and `cargo make serve` to start a dev server
+run `cargo make build` in a terminal to build the app, and `cargo make serve` to start a dev server
 on `127.0.0.0:8000`. If you'd like the compiler automatically check and recompile when you 
 make changes, run `cargo make watch` instead of `cargo make all`.
 
@@ -122,7 +122,7 @@ enum Msg {
 }
 
 /// How we update the model
-fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _orders: &mut Orders<Msg>) {
     match msg {
         Msg::Increment => model.count += 1,
         Msg::Decrement => model.count -= 1,
@@ -182,7 +182,7 @@ fn view(model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(|_,_| Model::default(), update, view)
+    seed::App::build(Model::default(), update, view)
         .finish()
         .run();
 }
@@ -192,7 +192,7 @@ For a truly minimimal example, see [lib.rs in the quickstart repo](https://githu
 
 ## Building and running
 
-To build your app, run `cargo make all`, and to host on a dev server, run `cargo make serve`.
+To build your app, run `cargo make build`, and to host on a dev server, run `cargo make serve`.
 
 For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/MartinKavik/seed-quickstart-webpack).
 
