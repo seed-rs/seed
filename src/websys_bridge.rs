@@ -155,7 +155,6 @@ pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
 pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
-
     let el_ws = el_vdom
         .node_ws
         .as_ref()
@@ -163,12 +162,9 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
 
     // Append the element
 
-    // todo: This can occur with raw html elements, but am unsur eof the cause.
-    match parent.append_child(el_ws) {
-        Ok(_) => {}
-        Err(_) => {
-            crate::log("Minor problem with html element (append)");
-        }
+    // todo: This error can occur with raw html elements, but am unsure of the cause.
+    if parent.append_child(el_ws).is_err() {
+        crate::error("Minor problem with html element (append)");
     }
 
     // appending the its children to the el_ws

@@ -45,7 +45,7 @@ macro_rules! make_events {
                           $event => Ev::$event_camel,
                     ) +
                     _ => {
-                        crate::log(&format!("Can't find this event: {}", event));
+                        crate::error(&format!("Can't find this event: {}", event));
                         Ev::Click
                     }
                 }
@@ -59,7 +59,7 @@ macro_rules! make_events {
                           $event => Ev::$event_camel,
                     ) +
                     _ => {
-                        crate::log(&format!("Can't find this event: {}", event));
+                        crate::error(&format!("Can't find this event: {}", event));
                         Ev::Click
                     }
                 }
