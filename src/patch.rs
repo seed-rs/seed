@@ -147,7 +147,6 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
                 let old_ws = old.node_ws.as_ref().expect("Missing websys el");
                 (unmount_actions.actions)(old_ws);
             }
-
             websys_bridge::attach_el_and_children(new, parent);
 
             let new_ws = new.node_ws.as_ref().expect("Missing websys el");

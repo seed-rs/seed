@@ -311,7 +311,7 @@ macro_rules! make_styles {
                           $st => St::$st_camel,
                     ) +
                     _ => {
-                        crate::log(&format!("Can't find this attribute: {}", st));
+                        crate::error(&format!("Can't find this attribute: {}", st));
                         St::Background
                     }
                 }
@@ -324,7 +324,7 @@ macro_rules! make_styles {
                           $st => St::$st_camel,
                     ) +
                     _ => {
-                        crate::log(&format!("Can't find this attribute: {}", st));
+                        crate::error(&format!("Can't find this attribute: {}", st));
                         St::Background
                     }
                 }

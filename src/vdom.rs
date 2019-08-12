@@ -553,8 +553,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
 
         for child_new in new_children_iter {
-            // todo probably remove
-            //            websys_bridge::assign_ws_nodes(&self.cfg.document, child_new);
+            websys_bridge::assign_ws_nodes(&self.cfg.document, child_new);
             match child_new {
                 Node::Element(child_new_el) => {
                     // We ran out of old children to patch; create new ones.
