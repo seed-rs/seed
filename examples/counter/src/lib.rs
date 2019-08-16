@@ -47,9 +47,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 /// A simple component.
 fn success_level(clicks: i32) -> Node<Msg> {
     let descrip = match clicks {
-        0...5 => "Not very many 🙁",
-        6...9 => "I got my first real six-string 😐",
-        10...11 => "Spinal Tap 🙂",
+        0..=5 => "Not very many 🙁",
+        6..=9 => "I got my first real six-string 😐",
+        10..=11 => "Spinal Tap 🙂",
         _ => "Double pendulum 🙃",
     };
     p![descrip]
