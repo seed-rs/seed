@@ -6,26 +6,56 @@ use seed::prelude::*;
 
 // Model
 
+#[derive(Default)]
 struct Model {
-    pub val: i32,
-}
-
-impl Default for Model {
-    fn default() -> Self {
-        Self { val: 0 }
-    }
+    pub show_description: bool,
 }
 
 // Msg
 
-#[derive(Clone)]
-struct Msg;
+#[derive(Clone, Copy)]
+enum Msg {
+    ToggleDescription,
+}
+
+// Update
+
+fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+    match msg {
+        Msg::ToggleDescription => model.show_description = !model.show_description,
+    }
+}
 
 // View
 
-fn definition(description: &str, def: &str) -> Node<Msg> {
-    // todo: Could add $$ here.
-    div![h5![description], span![format!("$${}$$", def)],]
+fn math_tex(expression: &str) -> Node<Msg> {
+    custom![Tag::Custom("math-tex".into()), expression]
+}
+
+fn definition(description: &str, def: &str, index: usize) -> Node<Msg> {
+    div![
+        style! {
+            "display" => "flex",
+            "align-items" => "baseline",
+            "flex-wrap" => "wrap",
+            "justify-content" => "space-between",
+            "background-color" => {
+                if index % 2 == 1 {
+                    CSSValue::Some("aliceblue".into())
+                } else {
+                    CSSValue::Ignored
+                }
+            },
+            "padding" => px(0) + " " + &px(8)
+        },
+        h5![
+            style! {
+                "margin-right" => px(20),
+            },
+            description
+        ],
+        math_tex(def),
+    ]
 }
 
 fn _dirac_3(left: &str, middle: &str, right: &str) -> String {
@@ -35,142 +65,146 @@ fn _dirac_3(left: &str, middle: &str, right: &str) -> String {
     )
 }
 
-fn view(_: &Model) -> impl View<Msg> {
-    vec![
+fn view(model: &Model) -> impl View<Msg> {
+    div![
+        style!{
+            "max-width" => px(750),
+            "margin" => "auto",
+        },
         h1!["Linear algebra cheatsheet"],
         p!["Intent: Provide a quick reference of definitions and identities that 
         are useful in formal, symbolic linear algebra"],
-        section![
-            h2!["A description of terms"],
-            div![
-                style!{
-                    // "display" => "grid";
-                    // "grid"
-                    },
-                    ul![
-                        li![r"$\mathbf{A}$, or $\mathbf{B}$, or $\mathbf{C}$ : Matrices"],
-                        li![r"$\mathbf{T}$, or $\mathbf{S}$ : Arbitrary operators"],
-                        li![r"$a$ or $b$ or $c$ or $d$: Arbitrary vectors"],
-                        li![r"$α$ or $β$ : Arbitrary constants"], // todo maybe change these
-                        li![r"$i$, $j$, or $k$ : Basis vectors"],
-                    ]
-            ]
+
+        button![
+            format!("{} description", if model.show_description { "Hide" } else { "Show"}),
+            simple_ev(Ev::Click, Msg::ToggleDescription),
         ],
 
+        if model.show_description {
+            section![
+                h2!["A description of terms"],
+                div![
+                    ul![
+                        li![math_tex(r"\mathbf{A}, \mathbf{B} \text{ or } \mathbf{C} : \text{Matrices}")],
+                        li![math_tex(r"\mathbf{T} \text{ or } \mathbf{S} : \text{Arbitrary operators}")],
+                        li![math_tex(r"\mathbf{a}, \mathbf{b}, \mathbf{c} \text{ or } \mathbf{d} : \text{Arbitrary vectors}")],
+                        li![math_tex(r"\mathbf{α} \text{ or } \mathbf{β} : \text{Arbitrary constants}")],
+                        li![math_tex(r"\mathbf{i}, \mathbf{j} \text{ or } \mathbf{k} : \text{Basis vectors}")],
+                    ]
+                ]
+            ]
+        } else {
+            empty![]
+        },
+
         section![
-            definition(
-                "When dividing by an operator on the right, move it to the right",
-                r"\mathbf{A} = \mathbf{B}\mathbf{C}\mathbf{D} \rightarrow \mathbf{A}\mathbf{D}^{-1} = \mathbf{B}\mathbf{C}"
-            ),
-            definition(
-                "When dividing by an operator on the left, move it to the left",
-                r"\mathbf{A} = \mathbf{B}\mathbf{C}\mathbf{D} \rightarrow \mathbf{B}^{-1}\mathbf{A} = \mathbf{C}\mathbf{D}"
-            ),
-            definition(
-                "Dagger associativity",
-                r"(\mathbf{S T})^\dagger = \mathbf{T}^\dagger \mathbf{S}^\dagger"
-            ),
-            definition(
-                "Dagger commuting",
-                r"(\mathbf{T})^\dagger (a b) = a \mathbf{T})^\dagger b"
-            ),
-            definition(
-                "Determinant associativity",
-                r"det(\mathbf{S T}) = det(\mathbf{T}) det(\mathbf{S})"
-            ),
-            definition(
-                "Definition of matrix multiplication", 
-                r"C_{ij} = \sum_k A_{ik} B_{kj}"
-            ),
-            definition(
-                "Definition of unit matrix", 
-                r"\mathbf{1A} = \mathbf{A1} = \mathbf{A}"
-            ),
-            definition(
-                "Definition of inverse matrix", 
-                r"\mathbf{A}^{-1} \mathbf{A} = \mathbf{A} \mathbf{A}^{-1} = \mathbf{1}"
-            ),
-            definition(
-                "The most general operator",
-                r"\mathbf{T} = \lvert e_i \rangle (\mathbf{T})_{ij} \langle e j \rvert",
-            ),
-            definition(
-                "",
-                // todo fix this one
-                r"\langle a \lvert T \rvert b \rangle = \langle T^\dagger \lvert a \rvert b \rangle"
-            ),
-            definition(
-                "",
-                // todo fix this one
-                r"\langle a \lvert T^\dagger \rvert c \rangle = \langle c \lvert T \rvert a \rangle^*"
-            ),
-            definition(
-                "Swapping bras and kets conjugates",
-                r"\langle a \vert b \rangle = \langle b \vert a \rangle^*"
-            ),
-            definition(
-                "A statement of basis completeness",
-                r"\mathbb{1} = \sum_i \lvert i \rangle \langle i \rvert"
-            ),
-            definition(
-                "Delta functions in Dirac notation",
-                r"\delta_{i, j} = \langle i \vert j \rangle"
-            ),
-            definition(
-                "A property of Trace",
-                r"tr(\mathbf{AB}) = tr(\mathbf{BA})"
-            ),
-            definition(
-                "Subtraction in Dirac notation",
-                r"\langle b \lvert \mathbf{T} \rvert a \rangle - \langle b \lvert \mathbf{S} \rvert a \rangle =
-\mathbf{T} - \mathbf{S} \langle b \vert a \rangle "
-            ),
-            definition(
-                "Dirac notation as integrals",
-                r"\int dx a^*(x) \mathbf{T} b(x) = \langle a \lvert \mathbf{T} \rvert b \rangle"
-            ),
-            definition(
-                "Dirac notation as integrals continued",
-                r"\int dx a^*(x) b(x) = \langle a \vert b \rangle"
-            ),
-            definition(
-                "Sum and delta manipulation",
-                r"O_{ji} \sum_j \delta_{kj} = O_{ki}"
-            ),
-            definition(
-                "Functions in dirac notation",
-                r"\langle x \vert a \rangle = a(x)"
-            ),
-            definition(
-                "A delta equivalence",
-                r"\langle \mathbf{A_\alpha} \vert \mathbf{A_\beta} \rangle = \delta_{\alpha \beta}"
-            ),
+            vec![
+                (
+                    "When dividing by an operator on the right, move it to the right",
+                    r"\mathbf{A} = \mathbf{B}\mathbf{C}\mathbf{D} \rightarrow \mathbf{A}\mathbf{D}^{-1} = \mathbf{B}\mathbf{C}"
+                ),
+                (
+                    "When dividing by an operator on the left, move it to the left",
+                    r"\mathbf{A} = \mathbf{B}\mathbf{C}\mathbf{D} \rightarrow \mathbf{B}^{-1}\mathbf{A} = \mathbf{C}\mathbf{D}"
+                ),
+                (
+                    "Dagger associativity",
+                    r"(\mathbf{S T})^\dagger = \mathbf{T}^\dagger \mathbf{S}^\dagger"
+                ),
+                (
+                    "Dagger commuting",
+                    r"(\mathbf{T})^\dagger (a b) = a \mathbf{T})^\dagger b"
+                ),
+                (
+                    "Determinant associativity",
+                    r"det(\mathbf{S T}) = det(\mathbf{T}) det(\mathbf{S})"
+                ),
+                (
+                    "Definition of matrix multiplication",
+                    r"C_{ij} = \sum_k A_{ik} B_{kj}"
+                ),
+                (
+                    "Definition of unit matrix",
+                    r"\mathbf{1A} = \mathbf{A1} = \mathbf{A}"
+                ),
+                (
+                    "Definition of inverse matrix",
+                    r"\mathbf{A}^{-1} \mathbf{A} = \mathbf{A} \mathbf{A}^{-1} = \mathbf{1}"
+                ),
+                (
+                    "The most general operator",
+                    r"\mathbf{T} = \lvert e_i \rangle (\mathbf{T})_{ij} \langle e j \rvert",
+                ),
+                (
+                    "Swapping bras and kets conjugates",
+                    r"\langle a \vert b \rangle = \langle b \vert a \rangle^*"
+                ),
+                (
+                    "A statement of basis completeness",
+                    r"\mathbb{1} = \sum_i \lvert i \rangle \langle i \rvert"
+                ),
+                (
+                    "Delta functions in Dirac notation",
+                    r"\delta_{i, j} = \langle i \vert j \rangle"
+                ),
+                (
+                    "A property of Trace",
+                    r"tr(\mathbf{AB}) = tr(\mathbf{BA})"
+                ),
+                (
+                    "Subtraction in Dirac notation",
+                    r"\langle b \lvert \mathbf{T} \rvert a \rangle - \langle b \lvert \mathbf{S} \rvert a \rangle =
+                      \mathbf{T} - \mathbf{S} \langle b \vert a \rangle "
+                ),
+                (
+                    "Dirac notation as integrals",
+                    r"\int dx a^*(x) \mathbf{T} b(x) = \langle a \lvert \mathbf{T} \rvert b \rangle"
+                ),
+                (
+                    "Dirac notation as integrals continued",
+                    r"\int dx a^*(x) b(x) = \langle a \vert b \rangle"
+                ),
+                (
+                    "Sum and delta manipulation",
+                    r"O_{ji} \sum_j \delta_{kj} = O_{ki}"
+                ),
+                (
+                    "Functions in dirac notation",
+                    r"\langle x \vert a \rangle = a(x)"
+                ),
+                (
+                    "A delta equivalence",
+                    r"\langle \mathbf{A_\alpha} \vert \mathbf{A_\beta} \rangle = \delta_{\alpha \beta}"
+                ),
+            ].into_iter().enumerate().map(|(i, (description, def))| definition(description, def, i))
         ],
+
 
         section![
             h2!["Special properties"],
-            definition(
-                "Hermitian matrix: Self-adjoint",
-                r"\mathbf{A}^\dagger = \mathbf{A}"
-            ),
-            definition(
-                "Unitary matrix: Inverse is its adjoint",
-                r"\mathbf{A}^\dagger = \mathbf{A}^{-1}"
-            ),
-            definition(
-                "An orthonormal function",
-                r"\langle \mathbf{A} \vert \mathbf{A} \rangle = \mathbb{1}"
-            ),
-            definition(
-                "A property if a certain commutation rule applies",
-                r"[[\mathbf{A}, \mathbf{B}], \mathbf{A}] = 0 → e^{\mathbf{A}} \mathbf{B}
-e^{-\mathbf{A}} = \mathbf{B} + [\mathbf{A}, \mathbf{B}]"
-            ),
-            definition(
-                "Functions in dirac notation",
-                r"f_p(x) = \langle x \vert p \rangle"
-            ),
-
+            vec![
+                (
+                    "Hermitian matrix: Self-adjoint",
+                    r"\mathbf{A}^\dagger = \mathbf{A}"
+                ),
+                (
+                    "Unitary matrix: Inverse is its adjoint",
+                    r"\mathbf{A}^\dagger = \mathbf{A}^{-1}"
+                ),
+                (
+                    "An orthonormal function",
+                    r"\langle \mathbf{A} \vert \mathbf{A} \rangle = \mathbb{1}"
+                ),
+                (
+                    "A property if a certain commutation rule applies",
+                    r"[[\mathbf{A}, \mathbf{B}], \mathbf{A}] = 0 → e^{\mathbf{A}} \mathbf{B}
+                      e^{-\mathbf{A}} = \mathbf{B} + [\mathbf{A}, \mathbf{B}]"
+                ),
+                (
+                    "Functions in dirac notation",
+                    r"f_p(x) = \langle x \vert p \rangle"
+                ),
+            ].into_iter().enumerate().map(|(i, (description, def))| definition(description, def, i))
         ],
 
         footer![
@@ -190,5 +224,5 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(init, |_, _, _| (), view).finish().run();
+    seed::App::build(init, update, view).finish().run();
 }
