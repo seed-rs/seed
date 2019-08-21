@@ -1,6 +1,6 @@
 # Release Checklist
 
-This is a list of steps to complete when making a new release
+This is a list of steps to complete when making a new release.
 
 1. Review the commit and PR history since last release. Ensure that all relevant
 changes are included in `CHANGELOG.md`, and that breaking changes
@@ -10,8 +10,10 @@ for updating the homepage are available [here](https://github.com/David-OConnor/
 1. Ensure the [quickstart repo](https://github.com/David-Oconnor/seed-quickstart) is updated
 to reflect API changes, and the new version
 1. Ensure the version listed in `Cargo.toml` is updated
-1. Run `cargo make verify`, to ensure tests pass, and `clippy` / `fmt` are run
+1. Update Rust tools: `rustup update`
+1. Run `cargo make verify` to ensure tests pass, and `clippy` / `fmt` are run
 1. Commit and push the repo
+1. Check that CI pipeline passed
 1. Run `cargo package`
 1. Run `cargo publish`
 1. Add a release on [Github](https://github.com/David-OConnor/seed/releases), following the format of previous releases
