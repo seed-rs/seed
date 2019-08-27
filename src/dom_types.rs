@@ -749,66 +749,67 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_child`
-    pub fn add_child(self, node: Node<Ms>) -> Self {
+    pub fn add_child(&mut self, node: Node<Ms>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_child(node))
-        } else {
-            self
+            el.add_child(node);
         }
+        self
     }
 
     /// See `El::add_attr`
-    pub fn add_attr(self, key: impl Into<Cow<'static, str>>, val: impl Into<AtValue>) -> Self {
+    pub fn add_attr(
+        &mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<AtValue>,
+    ) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_attr(key, val))
-        } else {
-            self
+            el.add_attr(key, val);
         }
+        self
     }
 
     /// /// See `El::add_class``
-    pub fn add_class(self, name: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_class(name))
-        } else {
-            self
+            el.add_class(name);
         }
+        self
     }
 
     /// See `El::add_style`
-    pub fn add_style(self, key: impl Into<Cow<'static, str>>, val: impl Into<CSSValue>) -> Self {
+    pub fn add_style(
+        &mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<CSSValue>,
+    ) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_style(key, val))
-        } else {
-            self
+            el.add_style(key, val);
         }
+        self
     }
 
     /// See `El::add_listener`
-    pub fn add_listener(self, listener: Listener<Ms>) -> Self {
+    pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_listener(listener))
-        } else {
-            self
+            el.add_listener(listener);
         }
+        self
     }
 
     /// See `El::add_text`
-    pub fn add_text(self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_text(text))
-        } else {
-            self
+            el.add_text(text);
         }
+        self
     }
 
     /// See `El::replace_text`
-    pub fn replace_text(self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn replace_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.replace_text(text))
-        } else {
-            self
+            el.replace_text(text);
         }
+        self
     }
 
     /// See `El::get_text`
@@ -1007,13 +1008,17 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new child to the element
-    pub fn add_child(mut self, element: Node<Ms>) -> Self {
+    pub fn add_child(&mut self, element: Node<Ms>) -> &mut Self {
         self.children.push(element);
         self
     }
 
     /// Add an attribute (eg class, or href)
-    pub fn add_attr(mut self, key: impl Into<Cow<'static, str>>, val: impl Into<AtValue>) -> Self {
+    pub fn add_attr(
+        &mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<AtValue>,
+    ) -> &mut Self {
         self.attrs
             .vals
             .insert(key.into().as_ref().into(), val.into());
@@ -1021,7 +1026,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a class. May be cleaner than `add_attr`
-    pub fn add_class(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
         let name = name.into();
         self.attrs
             .vals
@@ -1041,29 +1046,29 @@ impl<Ms> El<Ms> {
 
     /// Add a new style (eg display, or height)
     pub fn add_style(
-        mut self,
+        &mut self,
         key: impl Into<Cow<'static, str>>,
         val: impl Into<CSSValue>,
-    ) -> Self {
+    ) -> &mut Self {
         self.style.vals.insert(key.into(), val.into());
         self
     }
 
     /// Add a new listener
-    pub fn add_listener(mut self, listener: Listener<Ms>) -> Self {
+    pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
         self.listeners.push(listener);
         self
     }
 
     /// Add a text node to the element. (ie between the HTML tags).
-    pub fn add_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         self.children.push(Node::Text(Text::new(text)));
         self
     }
 
     /// Replace the element's text.
     /// Removes all text nodes from element, then adds the new one.
-    pub fn replace_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn replace_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         self.children.retain(|node| !node.is_text());
         self.children.push(Node::new_text(text));
         self
@@ -1288,21 +1293,20 @@ pub mod tests {
     /// Tests that multiple class attributes are handled correctly
     #[wasm_bindgen_test]
     pub fn merge_classes() {
-        let node = el_to_websys(
-            a![
-                class!["", "cls_1", "cls_2"],
-                class!["cls_3", "", ""],
-                attrs![
-                    At::Class => "cls_4 cls_5";
-                ],
-                class![
-                    "cls_6"
-                    "cls_7" => false
-                    "cls_8" => 1 == 1
-                ]
+        let mut e = a![
+            class!["", "cls_1", "cls_2"],
+            class!["cls_3", "", ""],
+            attrs![
+                At::Class => "cls_4 cls_5";
+            ],
+            class![
+                "cls_6"
+                "cls_7" => false
+                "cls_8" => 1 == 1
             ]
-            .add_class("cls_9"),
-        );
+        ];
+        e.add_class("cls_9");
+        let node = el_to_websys(e);
 
         let mut expected = IndexMap::new();
         expected.insert(
@@ -1354,8 +1358,9 @@ pub mod tests {
     pub fn replace_text() {
         let expected = "<div><span>bbb</span>xxx</div>";
 
-        let node =
-            el_to_websys(div!["aaa", span!["bbb"], plain!["ccc"], "ddd"].replace_text("xxx"));
+        let mut e = div!["aaa", span!["bbb"], plain!["ccc"], "ddd"];
+        e.replace_text("xxx");
+        let node = el_to_websys(e);
 
         assert_eq!(expected, get_node_html(&node));
     }
