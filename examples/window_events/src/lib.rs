@@ -41,8 +41,8 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 /// This func demonstrates use of custom element tags, and the class! and
 /// id! convenience macros
 fn misc_demo() -> Node<Msg> {
-    let custom_el = El::empty(Tag::Custom("mytag".into())).add_text(""); // Demo of add_text.
-
+    let mut custom_el = El::empty(Tag::Custom("mytag".into()));
+    custom_el.add_text(""); // Demo of add_text.
     let mut attributes = attrs! {};
     attributes.add_multiple(At::Class, &["a-modicum-of", "hardly-any"]);
 
