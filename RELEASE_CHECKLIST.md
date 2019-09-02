@@ -11,7 +11,7 @@ for updating the homepage are available [here](https://github.com/David-OConnor/
 to reflect API changes, and the new version
 1. Ensure the version listed in `Cargo.toml` is updated
 1. Update Rust tools: `rustup update`
-1. Run `cark make make_styles` to synchronize `St` enum variants with valid CSS styles
+1. Run `cargo make populate_styles` to synchronize `St` enum variants with valid CSS styles
 1. Run `cargo make verify` to ensure tests pass, and `clippy` / `fmt` are run
 1. Commit and push the repo
 1. Check that CI pipeline passed

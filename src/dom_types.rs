@@ -2,6 +2,7 @@
 //! These are the types used internally by our virtual dom.
 
 use crate::{
+    dom_entity_names::styles::St,
     events::{self, Listener},
     util, websys_bridge,
 };
@@ -380,12 +381,11 @@ impl Attrs {
 /// and has a different semantic meaning.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {
-    // todo enum for key?
-    pub vals: IndexMap<Cow<'static, str>, CSSValue>,
+    pub vals: IndexMap<St, CSSValue>,
 }
 
 impl Style {
-    pub const fn new(vals: IndexMap<Cow<'static, str>, CSSValue>) -> Self {
+    pub const fn new(vals: IndexMap<St, CSSValue>) -> Self {
         Self { vals }
     }
 
@@ -395,7 +395,7 @@ impl Style {
         }
     }
 
-    pub fn add(&mut self, key: impl Into<Cow<'static, str>>, val: impl Into<CSSValue>) {
+    pub fn add(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) {
         self.vals.insert(key.into(), val.into());
     }
 
@@ -414,7 +414,7 @@ impl fmt::Display for Style {
                 .iter()
                 .filter_map(|(k, v)| match v {
                     CSSValue::Ignored => None,
-                    CSSValue::Some(value) => Some(format!("{}:{}", k, value)),
+                    CSSValue::Some(value) => Some(format!("{}:{}", k.as_str(), value)),
                 })
                 .collect::<Vec<_>>()
                 .join(";")
@@ -702,7 +702,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_style`
-    pub fn add_style(self, key: impl Into<Cow<'static, str>>, val: impl Into<CSSValue>) -> Self {
+    pub fn add_style(self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
         if let Node::Element(el) = self {
             Node::Element(el.add_style(key, val))
         } else {
@@ -966,11 +966,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new style (eg display, or height)
-    pub fn add_style(
-        mut self,
-        key: impl Into<Cow<'static, str>>,
-        val: impl Into<CSSValue>,
-    ) -> Self {
+    pub fn add_style(mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
         self.style.vals.insert(key.into(), val.into());
         self
     }

@@ -3,6 +3,14 @@
 # https://github.com/rust-lang/rustup.rs/blob/d35f94183601a81489bce025c2abc35cd395c909/src/toolchain.rs#L296
 RUST_RECURSION_COUNT = "0"
 
+# ---- SCRIPTS ----
+
+[tasks.populate_styles]
+description = "Populate styles"
+workspace = false
+command = "cargo"
+args = ["script", "./scripts/populate_styles.rs"]
+
 # ---- GENERAL ----
 
 [tasks.verify]

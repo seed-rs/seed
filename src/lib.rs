@@ -15,6 +15,8 @@ use wasm_bindgen::{closure::Closure, JsCast};
 #[macro_use]
 pub mod shortcuts;
 
+pub mod dom_entity_names;
+
 pub mod css_units;
 pub mod dom_types;
 pub mod events;
@@ -22,10 +24,8 @@ pub mod fetch;
 mod next_tick;
 pub mod orders;
 mod patch;
-mod populate_styles;
 pub mod routing;
 pub mod storage;
-mod styles;
 mod util;
 mod vdom;
 mod websys_bridge;
@@ -81,6 +81,7 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 pub mod prelude {
     pub use crate::{
         css_units::*,
+        dom_entity_names::styles::St,
         dom_types::{
             did_mount, did_update, will_unmount, AsAtValue, At, AtValue, CSSValue, El,
             MessageMapper, Node, Tag, UpdateEl, View,
@@ -94,7 +95,6 @@ pub mod prelude {
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
-        styles::St,
         util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
