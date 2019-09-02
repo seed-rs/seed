@@ -22,8 +22,10 @@ pub mod fetch;
 mod next_tick;
 pub mod orders;
 mod patch;
+mod populate_styles;
 pub mod routing;
 pub mod storage;
+mod styles;
 mod util;
 mod vdom;
 mod websys_bridge;
@@ -92,6 +94,7 @@ pub mod prelude {
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
+        styles::St,
         util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,

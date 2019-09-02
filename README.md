@@ -27,8 +27,8 @@ And cargo-make: `cargo install --force cargo-make`
 To start, clone [the quickstart repo](https://github.com/David-OConnor/seed-quickstart):
 `git clone https://github.com/david-oconnor/seed-quickstart.git`,
 run `cargo make build` in a terminal to build the app, and `cargo make serve` to start a dev server
-on `127.0.0.0:8000`. If you'd like the compiler automatically check and recompile when you 
-make changes, run `cargo make watch` instead of `cargo make all`.
+on `127.0.0.0:8000`. If you'd like the compiler to automatically check and recompile when you 
+make changes, run `cargo make watch` instead of `cargo make build`.
 
 
 ## A little deeper
@@ -150,9 +150,9 @@ fn view(model: &Model) -> impl View<Msg> {
 
     // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style!{
-            "display" => "flex";
-            "flex-direction" => "column";
-            "text-align" => "center"
+            St::Display => "flex";
+            St::FlexDirection => "column";
+            St::TextAlign => "center"
     };
 
     div![ outer_style,
@@ -160,9 +160,9 @@ fn view(model: &Model) -> impl View<Msg> {
         div![
             style!{
                 // Example of conditional logic in a style.
-                "color" => if model.count > 4 {"purple"} else {"gray"};
-                "border" => "2px solid #004422"; 
-                "padding" => unit!(20, px);
+                St::Color => if model.count > 4 {"purple"} else {"gray"};
+                St::Border => "2px solid #004422"; 
+                St::Padding => unit!(20, px);
             },
             // We can use normal Rust code and comments in the view.
             h3![ format!("{} {}{} so far", model.count, model.what_we_count, plural) ],
@@ -170,7 +170,7 @@ fn view(model: &Model) -> impl View<Msg> {
             button![ simple_ev(Ev::Click, Msg::Decrement), "-" ],
 
             // Optionally-displaying an element
-            if model.count >= 10 { h2![ style!{"padding" => px(50)}, "Nice!" ] } else { empty![] }
+            if model.count >= 10 { h2![ style!{St::Padding => px(50)}, "Nice!" ] } else { empty![] }
         ],
         success_level(model.count),  // Incorporating a separate component
 

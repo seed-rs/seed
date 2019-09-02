@@ -17,6 +17,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.2.45" # NOTE: keep in sync with wasm-bindgen version
+reqwest = "^0.9.20" # For populating styles
 
 [dependencies]
 console_error_panic_hook = "^0.1.6"
