@@ -95,7 +95,7 @@ fn view(model: &Model) -> impl View<Msg> {
             },
         ],
         success_level(model.count), // Incorporating a separate component
-        h3!["What are we counting?"z],
+        h3!["What are we counting?"],
         input![
             attrs! {At::Value => model.what_we_count},
             input_ev(Ev::Input, Msg::ChangeWWC),
