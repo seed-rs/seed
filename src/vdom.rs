@@ -203,19 +203,19 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
         self
     }
 
-    /// Register a function which maps URLs to messages
+    /// Registers a function which maps URLs to messages.
     pub fn routes(mut self, routes: RoutesFn<Ms>) -> Self {
         self.routes = Some(routes);
         self
     }
 
-    /// Register a function which maps window events to messages
+    /// Registers a function which decides how window events will be handled.
     pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
         self.window_events = Some(evts);
         self
     }
 
-    /// Register a sink function
+    /// Registers a sink function.
     ///
     /// The sink function is a function which can update the model based
     /// on global messages. Consider to use a sink function when a
@@ -225,7 +225,10 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
         self
     }
 
-    /// Turn this AppBuilder into an App which is ready to run.
+    /// Turn this [`AppBuilder`] into an [`App`] which is ready to run.
+    ///
+    /// [`AppBuilder`]: struct.AppBuilder.html
+    /// [`App`]: struct.App.html
     pub fn finish(mut self) -> App<Ms, Mdl, ElC, GMs> {
         if self.mount_point.is_none() {
             self = self.mount("app")
