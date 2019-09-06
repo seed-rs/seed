@@ -5,6 +5,11 @@ RUST_RECURSION_COUNT = "0"
 
 # ---- SCRIPTS ----
 
+[tasks.populate_all]
+description = "Populate styles, tags, attributes, etc."
+workspace = false
+dependencies = ["populate_styles"]
+
 [tasks.populate_styles]
 description = "Populate styles"
 workspace = false
