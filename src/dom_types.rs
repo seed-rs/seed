@@ -2,6 +2,7 @@
 //! These are the types used internally by our virtual dom.
 
 use crate::{
+    dom_entity_names::styles::St,
     events::{self, Listener},
     util, websys_bridge,
 };
@@ -355,80 +356,6 @@ make_attrs! {
     Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "viewBox", Fill => "fill"
 }
 
-/// Similar to tag population.
-/// // Tod: DRY with At (almost identical), Ev, and similar to Tag.
-macro_rules! make_styles {
-    // Create shortcut macros for any element; populate these functions in this module.
-    { $($st_camel:ident => $st:expr),+ } => {
-
-        /// The St enum restricts element-creation to only valid styles.
-        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-        pub enum St {
-            $(
-                $st_camel,
-            )+
-            Custom(String)
-        }
-
-        impl St {
-            pub fn as_str(&self) -> &str {
-                match self {
-                    $ (
-                        St::$st_camel => $st,
-                    ) +
-                    St::Custom(val) => &val
-                }
-            }
-        }
-
-        impl From<&str> for St {
-            fn from(st: &str) -> Self {
-                match st {
-                    $ (
-                          $st => St::$st_camel,
-                    ) +
-                    _ => {
-                        crate::error(&format!("Can't find this attribute: {}", st));
-                        St::Background
-                    }
-                }
-            }
-        }
-        impl From<String> for St {
-            fn from(st: String) -> Self {
-                match st.as_ref() {
-                    $ (
-                          $st => St::$st_camel,
-                    ) +
-                    _ => {
-                        crate::error(&format!("Can't find this attribute: {}", st));
-                        St::Background
-                    }
-                }
-            }
-        }
-
-    }
-}
-
-// todo finish and implement this.
-// Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference
-// Most common: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Properties_Reference
-make_styles! {
-   AdditiveSymbols => "additive-symbols", AlignContent => "align-content", AlignItems => "align-items",
-   AlignSelf => "align-self", All => "all", Angle => "angle", Animation => "animation", AnimationDelay => "animation-delay",
-   AnimationDirection => "animation-direction", AnimationDuration => "animation-duration",
-
-   AnimationFillMode => "animation-fill-mode", AnimationIterationCount => "animation-iteration-count",
-   AnimationName => "animation-name", AnimationPlayState => "animation-play-state",
-
-   // Most common
-   Background => "background", BackgroundAttachment => "background-attachment", BackgroundColor => "background-color",
-   BackgroundImage => "background-image", BackgroundPosition => "background-position", BackgroundRepeat => "background-repeat",
-   Border => "border", BorderBottom => "border-bottom", BorderBottomColor => "border-bottom-color",
-   BorderBottomStyle => "border-bottom-style", BorderBottomWidth => "border-bottom-width", BorderColor => "border-color"
-}
-
 /// A thinly-wrapped `HashMap` holding DOM attributes
 #[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
@@ -531,12 +458,11 @@ impl Attrs {
 /// and has a different semantic meaning.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {
-    // todo enum for key?
-    pub vals: IndexMap<Cow<'static, str>, CSSValue>,
+    pub vals: IndexMap<St, CSSValue>,
 }
 
 impl Style {
-    pub const fn new(vals: IndexMap<Cow<'static, str>, CSSValue>) -> Self {
+    pub const fn new(vals: IndexMap<St, CSSValue>) -> Self {
         Self { vals }
     }
 
@@ -546,7 +472,7 @@ impl Style {
         }
     }
 
-    pub fn add(&mut self, key: impl Into<Cow<'static, str>>, val: impl Into<CSSValue>) {
+    pub fn add(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) {
         self.vals.insert(key.into(), val.into());
     }
 
@@ -565,7 +491,7 @@ impl fmt::Display for Style {
                 .iter()
                 .filter_map(|(k, v)| match v {
                     CSSValue::Ignored => None,
-                    CSSValue::Some(value) => Some(format!("{}:{}", k, value)),
+                    CSSValue::Some(value) => Some(format!("{}:{}", k.as_str(), value)),
                 })
                 .collect::<Vec<_>>()
                 .join(";")
@@ -854,11 +780,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_style`
-    pub fn add_style(
-        &mut self,
-        key: impl Into<Cow<'static, str>>,
-        val: impl Into<CSSValue>,
-    ) -> &mut Self {
+    pub fn add_style(self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
         if let Node::Element(el) = self {
             el.add_style(key, val);
         }
@@ -1122,11 +1044,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new style (eg display, or height)
-    pub fn add_style(
-        &mut self,
-        key: impl Into<Cow<'static, str>>,
-        val: impl Into<CSSValue>,
-    ) -> &mut Self {
+    pub fn add_style(mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
         self.style.vals.insert(key.into(), val.into());
         self
     }
