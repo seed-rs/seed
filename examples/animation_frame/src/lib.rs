@@ -105,19 +105,19 @@ fn view(model: &Model) -> Node<Msg> {
     // scene container + sky
     div![
         style! {
-          "overflow" => "hidden";
-          "width" => unit!(100, %);
-          "position" => "relative";
-          "height" => unit!(170, px);
-          "background-color" => "deepskyblue";
+          St::Overflow => "hidden";
+          St::Width => unit!(100, %);
+          St::Position => "relative";
+          St::Height => unit!(170, px);
+          St::BackgroundColor => "deepskyblue";
         },
         // road
         div![style! {
-            "width" => unit!(100, %);
-            "height" => unit!(20, px);
-            "bottom" => 0;
-            "background-color" => "darkgray";
-            "position" => "absolute";
+            St::Width => unit!(100, %);
+            St::Height => unit!(20, px);
+            St::Bottom => 0;
+            St::BackgroundColor => "darkgray";
+            St::Position => "absolute";
         }],
         view_car(&model.car)
     ]
@@ -127,29 +127,29 @@ fn view_car(car: &Car) -> Node<Msg> {
     div![
         // car container
         style! {
-            "width" => unit!(car.width, px);
-            "height" => unit!(car.height, px);
-            "top" => unit!(car.y, px);
-            "left" => unit!(car.x, px);
-            "position" => "absolute";
+            St::Width => unit!(car.width, px);
+            St::Height => unit!(car.height, px);
+            St::Top => unit!(car.y, px);
+            St::Left => unit!(car.x, px);
+            St::Position => "absolute";
         },
         // windows
         div![style! {
-            "background-color" => "rgb(255,255,255,0.5)";
-            "left" => unit!(car.width * 0.25, px);
-            "width" => unit!(car.width * 0.5, px);
-            "height" => unit!(car.height * 0.6, px);
-            "border-radius" => unit!(9999, px);
-            "position" => "absolute";
+            St::BackgroundColor => "rgb(255,255,255,0.5)";
+            St::Left => unit!(car.width * 0.25, px);
+            St::Width => unit!(car.width * 0.5, px);
+            St::Height => unit!(car.height * 0.6, px);
+            St::BorderRadius => unit!(9999, px);
+            St::Position => "absolute";
         }],
         // body
         div![style! {
-            "top" => unit!(car.height * 0.35, px);
-            "background-color" => car.color;
-            "width" => unit!(car.width, px);
-            "height" => unit!(car.height * 0.5, px);
-            "border-radius" => unit!(9999, px);
-            "position" => "absolute";
+            St::Top => unit!(car.height * 0.35, px);
+            St::BackgroundColor => car.color;
+            St::Width => unit!(car.width, px);
+            St::Height => unit!(car.height * 0.5, px);
+            St::BorderRadius => unit!(9999, px);
+            St::Position => "absolute";
         }],
         view_wheel(car.width * 0.15, car),
         view_wheel(car.width * 0.6, car)
@@ -159,13 +159,13 @@ fn view_car(car: &Car) -> Node<Msg> {
 fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
     let wheel_radius = car.height * 0.4;
     div![style! {
-        "top" => unit!(car.height * 0.55, px);
-        "left" => unit!(wheel_x, px);
-        "background-color" => "black";
-        "width" => unit!(wheel_radius, px);
-        "height" => unit!(wheel_radius, px);
-        "border-radius" => unit!(9999, px);
-        "position" => "absolute";
+        St::Top => unit!(car.height * 0.55, px);
+        St::Left => unit!(wheel_x, px);
+        St::BackgroundColor => "black";
+        St::Width => unit!(wheel_radius, px);
+        St::Height => unit!(wheel_radius, px);
+        St::BorderRadius => unit!(9999, px);
+        St::Position => "absolute";
     }]
 }
 

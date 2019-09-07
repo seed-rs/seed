@@ -35,22 +35,22 @@ fn math_tex(expression: &str) -> Node<Msg> {
 fn definition(description: &str, def: &str, index: usize) -> Node<Msg> {
     div![
         style! {
-            "display" => "flex",
-            "align-items" => "baseline",
-            "flex-wrap" => "wrap",
-            "justify-content" => "space-between",
-            "background-color" => {
+            St::Display => "flex",
+            St::AlignItems => "baseline",
+            St::FlexWrap => "wrap",
+            St::JustifyContent => "space-between",
+            St::BackgroundColor => {
                 if index % 2 == 1 {
                     CSSValue::Some("aliceblue".into())
                 } else {
                     CSSValue::Ignored
                 }
             },
-            "padding" => px(0) + " " + &px(8)
+            St::Padding => px(0) + " " + &px(8)
         },
         h5![
             style! {
-                "margin-right" => px(20),
+                St::MarginRight => px(20),
             },
             description
         ],
@@ -68,8 +68,8 @@ fn _dirac_3(left: &str, middle: &str, right: &str) -> String {
 fn view(model: &Model) -> impl View<Msg> {
     div![
         style!{
-            "max-width" => px(750),
-            "margin" => "auto",
+            St::MaxWidth => px(750),
+            St::Margin => "auto",
         },
         h1!["Linear algebra cheatsheet"],
         p!["Intent: Provide a quick reference of definitions and identities that 

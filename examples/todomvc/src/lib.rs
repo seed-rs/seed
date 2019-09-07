@@ -255,7 +255,7 @@ fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> Node<Msg>
             At::Class => if visible == highlighter {"selected"} else {""}
             At::Href => "/".to_string() + &highlighter.to_string()
         },
-        style! {"cursor" => "pointer"},
+        style! {St::Cursor => "pointer"},
         text
     ]]
 }

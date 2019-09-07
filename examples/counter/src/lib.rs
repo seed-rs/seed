@@ -63,9 +63,9 @@ fn view(model: &Model) -> impl View<Msg> {
 
     // Attrs, Style, Events, and children may be defined separately.
     let outer_style = style! {
-            "display" => "flex",
-            "flex-direction" => "column",
-            "text-align" => "center",
+            St::Display => "flex",
+            St::FlexDirection => "column",
+            St::TextAlign => "center",
     };
 
     div![
@@ -74,9 +74,9 @@ fn view(model: &Model) -> impl View<Msg> {
         div![
             style! {
                 // Example of conditional logic in a style.
-                "color" => if model.count > 4 {"purple"} else {"gray"};
-                "border" => "2px solid #004422";
-                "padding" => unit!(20, px);
+                St::Color => if model.count > 4 {"purple"} else {"gray"};
+                St::Border => "2px solid #004422";
+                St::Padding => unit!(20, px);
             },
             // We can use normal Rust code and comments in the view.
             h3![text, did_update(|_| log!("This shows when we increment"))],
@@ -85,7 +85,7 @@ fn view(model: &Model) -> impl View<Msg> {
             // Optionally-displaying an element, and lifecycle hooks
             if model.count >= 10 {
                 h2![
-                    style! {"padding" => px(50)},
+                    style! {St::Padding => px(50)},
                     "Nice!",
                     did_mount(|_| log!("This shows when clicks reach 10")),
                     will_unmount(|_| log!("This shows when clicks drop below 10")),
