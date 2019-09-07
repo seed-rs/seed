@@ -137,13 +137,14 @@ fn toggle(value: &mut bool) {
 
 // View
 
-fn view_form_field(label: Node<Msg>, control: Node<Msg>) -> Node<Msg> {
+fn view_form_field(mut label: Node<Msg>, control: Node<Msg>) -> Node<Msg> {
+    label.add_style("margin-right", unit!(7, px));
     div![
         style! {
           "margin-bottom" => unit!(7, px),
           "display" => "flex",
         },
-        label.add_style("margin-right", unit!(7, px)),
+        label,
         control
     ]
 }

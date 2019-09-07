@@ -203,21 +203,32 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
         self
     }
 
+    /// Registers a function which maps URLs to messages.
     pub fn routes(mut self, routes: RoutesFn<Ms>) -> Self {
         self.routes = Some(routes);
         self
     }
 
+    /// Registers a function which decides how window events will be handled.
     pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
         self.window_events = Some(evts);
         self
     }
 
+    /// Registers a sink function.
+    ///
+    /// The sink function is a function which can update the model based
+    /// on global messages. Consider to use a sink function when a
+    /// submodule needs to trigger changes in other modules.
     pub fn sink(mut self, sink: SinkFn<Ms, Mdl, ElC, GMs>) -> Self {
         self.sink = Some(sink);
         self
     }
 
+    /// Turn this [`AppBuilder`] into an [`App`] which is ready to run.
+    ///
+    /// [`AppBuilder`]: struct.AppBuilder.html
+    /// [`App`]: struct.App.html
     pub fn finish(mut self) -> App<Ms, Mdl, ElC, GMs> {
         if self.mount_point.is_none() {
             self = self.mount("app")

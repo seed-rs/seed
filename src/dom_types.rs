@@ -274,7 +274,84 @@ make_attrs! {
     AutoReverse => "autoReverse", Azimuth => "azimumth", BaseFrequency => "baseFrequency", BaselineShift => "baseline-shift",
     BaseProfile => "baseProfile", Bbox => "bbox", Begin => "begin", Bias => "bias", By => "by",
     CalcMode => "calcMode", CapHeight => "cap-height", Clip => "clip",
-    // todo fill in rest from link above.
+    ClipPathUnits => "clipPathUnits", ClipPath => "clip-path", ClipRule => "clip-rule",
+    ColorInterpolation => "color-interpolation", ColorInterpolationFilters => "color-interpolation-filters",
+    ColorProfile => "color-profile", ColorRendering => "color-rendering", ContentScriptType => "contentScriptType",
+    ContentStyleType => "contentStyleType", Cursor => "cursor", Cx => "cx",
+    Cy => "cy", Decelerate => "decelerate",
+    Descent => "descent", DiffuseConstant => "diffuseConstant", Direction => "direction",
+    Display => "display", Divisor => "divisor", DominantBaseline => "dominant-baseline",
+    Dur => "dur", Dx => "dx", Dy => "dy",
+    EdgeMode => "edgeMode", Elevation => "elevation", EnableBackground => "enable-background",
+    End => "end", Exponent => "exponent", ExternalResourcesRequired => "externalResourcesRequired",
+    FillOpacity => "fill-opacity", FillRule => "fill-rule",
+    Filter => "filter", FilterRes => "filterRes", FilterUnits => "filterUnits",
+    FloodColor => "flood-color", FloodOpacity => "flood-opacity", FontFamily => "font-family",
+    FontSize => "font-size", FontSizeAdjust => "font-size-adjust", FontStretch => "font-stretch",
+    FontStyle => "font-style", FontVariant => "font-variant", FontWeight => "font-weight",
+    Format => "format", From => "from", Fr => "fr",
+    Fx => "fx", Fy => "fy", G1 => "g1",
+    G2 => "g2", GlyphName => "glyph-name", GlyphOrientationHorizontal => "glyph-orientation-horizontal",
+    GlyphOrientationVertical => "glyph-orientation-vertical", GlyphRef => "glyphRef", GradientTransform => "gradientTransform",
+    GradientUnits => "gradientUnits", Hanging => "hanging",
+    HorizAdvX => "horiz-adv-x",
+    HorizOriginX => "horiz-origin-x", Ideographic => "ideographic",
+    ImageRendering => "image-rendering", In => "in", In2 => "in2",
+    Intercept => "intercept", K => "k", K1 => "k1",
+    K2 => "k2", K3 => "k3", K4 => "k4",
+    KernelMatrix => "kernelMatrix", KernelUnitLength => "kernelUnitLength", Kerning => "kerning",
+    KeyPoints => "keyPoints", KeySplines => "keySplines", KeyTimes => "keyTimes",
+    LengthAdjust => "lengthAdjust", LetterSpacing => "letter-spacing",
+    LightingColor => "lighting-color", LimitingConeAngle => "limitingConeAngle", Local => "local",
+    MarkerEnd => "marker-end", MarkerMid => "marker-mid", MarkerStart => "marker-start",
+    MarkerHeight => "markerHeight", MarkerUnits => "markerUnits", MarkerWidth => "markerWidth",
+    Mask => "mask", MaskContentUnits => "maskContentUnits", MaskUnits => "maskUnits",
+    Mathematical => "mathematical",
+    Mode => "mode",
+    NumOctaves => "numOctaves", Offset => "offset",
+    Opacity => "opacity", Operator => "operator", Order => "order",
+    Orient => "orient", Orientation => "orientation", Origin => "origin",
+    Overflow => "overflow", OverlinePosition => "overline-position", OverlineThickness => "overline-thickness",
+    Panose1 => "panose-1", PaintOrder => "paint-order",
+    PathLength => "pathLength", PatternContentUnits => "patternContentUnits", PatternTransform => "patternTransform",
+    PatternUnits => "patternUnits", Ping => "ping", PointerEvents => "pointer-events",
+    Points => "points", PointsAtX => "pointsAtX", PointsAtY => "pointsAtY",
+    PointsAtZ => "pointsAtZ", PreserveAlpha => "preserveAlpha", PreserveAspectRatio => "preserveAspectRatio",
+    PrimitiveUnits => "primitiveUnits", R => "r", Radius => "radius",
+    ReferrerPolicy => "referrerPolicy", RefX => "refX", RefY => "refY",
+    RenderingIntent => "rendering-intent", RepeatCount => "repeatCount",
+    RepeatDur => "repeatDur", RequiredExtensions => "requiredExtensions", RequiredFeatures => "requiredFeatures",
+    Restart => "restart", Result => "result", Rotate => "rotate",
+    Rx => "rx", Ry => "ry", Scale => "scale",
+    Seed => "seed", ShapeRendering => "shape-rendering", Slope => "slope",
+    Spacing => "spacing", SpecularConstant => "specularConstant", SpecularExponent => "specularExponent",
+    Speed => "speed", SpreadMethod => "spreadMethod", StartOffset => "startOffset",
+    StdDeviation => "stdDeviation", Stemh => "stemh", Stemv => "stemv",
+    StitchTiles => "stitchTiles", StopColor => "stop-color", StopOpacity => "stop-opacity",
+    StrikethroughPosition => "strikethrough-position", StrikethroughThickness => "strikethrough-thickness", String => "string",
+    Stroke => "stroke", StrokeDashArray => "stroke-dasharray", StrokeDashOffset => "stroke-dashoffset",
+    StrokeLinecap => "stroke-linecap", StrokeLineJoin => "stroke-linejoin", StrokeMiterLimit => "stroke-miterlimit",
+    StrokeOpacity => "stroke-opacity", StrokeWidth => "stroke-width",
+    SurfaceScale => "surfaceScale", SystemLanguage => "systemLanguage",
+    TableValues => "tableValues", TargetX => "targetX",
+    TargetY => "targetY", TextAnchor => "text-anchor", TextDecoration => "text-decoration",
+    TextRendering => "text-rendering", TextLength => "textLength", To => "to",
+    Transform => "transform", U1 => "u1",
+    U2 => "u2", UnderlinePosition => "underline-position", UnderlineThickness => "underline-thickness",
+    Unicode => "unicode", UnicodeBidi => "unicode-bidi", UnicodeRange => "unicode-range",
+    UnitsPerEm => "units-per-em", VAlphabetic => "v-alphabetic", VHanging => "v-hanging",
+    VIdeographic => "v-ideographic", VMathematical => "v-mathematical", Values => "values",
+    VectorEffect => "vector-effect", Version => "version", VertAdvY => "vert-adv-y",
+    VertOriginX => "vert-origin-x", VertOriginY => "vert-origin-y",
+    ViewTarget => "viewTarget", Visibility => "visibility",
+    Widths => "widths", WordSpacing => "word-spacing", WritingMode => "writing-mode",
+    X => "x", XHeight => "x-height", X1 => "x1",
+    X2 => "x2", XchannelSelector => "xChannelSelector", XlinkActuate => "xlink:actuate",
+    XlinkArcrole => "xlink:arcrole", XlinkHref => "xlink:href", XlinkRole => "xlink:role",
+    XlinkShow => "xlink:show", XlinkTitle => "xlink:title", XlinkType => "xlink:type",
+    XmlBase => "xml:base", XmlLang => "xml:lang", XmlSpace => "xml:space",
+    Y => "y", Y1 => "y1", Y2 => "y2",
+    YchannelSelector => "yChannelSelector", Z => "z", ZoomAndPan => "zoomAndPan",
 
     Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "viewBox", Fill => "fill"
 }
@@ -675,66 +752,63 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_child`
-    pub fn add_child(self, node: Node<Ms>) -> Self {
+    pub fn add_child(&mut self, node: Node<Ms>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_child(node))
-        } else {
-            self
+            el.add_child(node);
         }
+        self
     }
 
     /// See `El::add_attr`
-    pub fn add_attr(self, key: impl Into<Cow<'static, str>>, val: impl Into<AtValue>) -> Self {
+    pub fn add_attr(
+        &mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<AtValue>,
+    ) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_attr(key, val))
-        } else {
-            self
+            el.add_attr(key, val);
         }
+        self
     }
 
     /// /// See `El::add_class``
-    pub fn add_class(self, name: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_class(name))
-        } else {
-            self
+            el.add_class(name);
         }
+        self
     }
 
     /// See `El::add_style`
     pub fn add_style(self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_style(key, val))
-        } else {
-            self
+            el.add_style(key, val);
         }
+        self
     }
 
     /// See `El::add_listener`
-    pub fn add_listener(self, listener: Listener<Ms>) -> Self {
+    pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_listener(listener))
-        } else {
-            self
+            el.add_listener(listener);
         }
+        self
     }
 
     /// See `El::add_text`
-    pub fn add_text(self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.add_text(text))
-        } else {
-            self
+            el.add_text(text);
         }
+        self
     }
 
     /// See `El::replace_text`
-    pub fn replace_text(self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn replace_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
-            Node::Element(el.replace_text(text))
-        } else {
-            self
+            el.replace_text(text);
         }
+        self
     }
 
     /// See `El::get_text`
@@ -933,13 +1007,17 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new child to the element
-    pub fn add_child(mut self, element: Node<Ms>) -> Self {
+    pub fn add_child(&mut self, element: Node<Ms>) -> &mut Self {
         self.children.push(element);
         self
     }
 
     /// Add an attribute (eg class, or href)
-    pub fn add_attr(mut self, key: impl Into<Cow<'static, str>>, val: impl Into<AtValue>) -> Self {
+    pub fn add_attr(
+        &mut self,
+        key: impl Into<Cow<'static, str>>,
+        val: impl Into<AtValue>,
+    ) -> &mut Self {
         self.attrs
             .vals
             .insert(key.into().as_ref().into(), val.into());
@@ -947,7 +1025,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a class. May be cleaner than `add_attr`
-    pub fn add_class(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
         let name = name.into();
         self.attrs
             .vals
@@ -972,20 +1050,20 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new listener
-    pub fn add_listener(mut self, listener: Listener<Ms>) -> Self {
+    pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
         self.listeners.push(listener);
         self
     }
 
     /// Add a text node to the element. (ie between the HTML tags).
-    pub fn add_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn add_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         self.children.push(Node::Text(Text::new(text)));
         self
     }
 
     /// Replace the element's text.
     /// Removes all text nodes from element, then adds the new one.
-    pub fn replace_text(mut self, text: impl Into<Cow<'static, str>>) -> Self {
+    pub fn replace_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
         self.children.retain(|node| !node.is_text());
         self.children.push(Node::new_text(text));
         self
@@ -1210,21 +1288,20 @@ pub mod tests {
     /// Tests that multiple class attributes are handled correctly
     #[wasm_bindgen_test]
     pub fn merge_classes() {
-        let node = el_to_websys(
-            a![
-                class!["", "cls_1", "cls_2"],
-                class!["cls_3", "", ""],
-                attrs![
-                    At::Class => "cls_4 cls_5";
-                ],
-                class![
-                    "cls_6"
-                    "cls_7" => false
-                    "cls_8" => 1 == 1
-                ]
+        let mut e = a![
+            class!["", "cls_1", "cls_2"],
+            class!["cls_3", "", ""],
+            attrs![
+                At::Class => "cls_4 cls_5";
+            ],
+            class![
+                "cls_6"
+                "cls_7" => false
+                "cls_8" => 1 == 1
             ]
-            .add_class("cls_9"),
-        );
+        ];
+        e.add_class("cls_9");
+        let node = el_to_websys(e);
 
         let mut expected = IndexMap::new();
         expected.insert(
@@ -1276,8 +1353,9 @@ pub mod tests {
     pub fn replace_text() {
         let expected = "<div><span>bbb</span>xxx</div>";
 
-        let node =
-            el_to_websys(div!["aaa", span!["bbb"], plain!["ccc"], "ddd"].replace_text("xxx"));
+        let mut e = div!["aaa", span!["bbb"], plain!["ccc"], "ddd"];
+        e.replace_text("xxx");
+        let node = el_to_websys(e);
 
         assert_eq!(expected, get_node_html(&node));
     }
