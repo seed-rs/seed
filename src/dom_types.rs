@@ -780,7 +780,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_style`
-    pub fn add_style(self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
+    pub fn add_style(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> &mut Self {
         if let Node::Element(el) = self {
             el.add_style(key, val);
         }
@@ -1044,7 +1044,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Add a new style (eg display, or height)
-    pub fn add_style(mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> Self {
+    pub fn add_style(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> &mut Self {
         self.style.vals.insert(key.into(), val.into());
         self
     }
