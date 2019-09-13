@@ -26,7 +26,7 @@ gloo-timers = "^0.1.0"
 indexmap = "^1.0.2"
 js-sys = "0.3.27"
 pulldown-cmark = "^0.5.2"
-serde = { versiong = "^1.0.92", features = ['derive'] }
+serde = { version = "^1.0.92", features = ['derive'] }
 serde_json = "^1.0.39"
 # NOTE: keep in sync with wasm-bindgen-test version
 wasm-bindgen = {version = "0.2.50", features = ["serde-serialize"]}
