@@ -16,26 +16,24 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.2.45" # NOTE: keep in sync with wasm-bindgen version
+wasm-bindgen-test = "0.2.50" # NOTE: keep in sync with wasm-bindgen version
 
 [dependencies]
 console_error_panic_hook = "^0.1.6"
-enclose = "1.1.6"
+enclose = "^1.1.6"
 futures = "^0.1.27"
-# Can't use repo with a release.
-#gloo-timers = { path = "vendor/gloo_timers", features = ["futures"] }
-#gloo-timers = { git = "https://github.com/rustwasm/gloo", features = ["futures"] }
-indexmap = "1.0.2"
-js-sys = "0.3.22"
+gloo-timers = "^0.1.0"
+indexmap = "^1.0.2"
+js-sys = "0.3.27"
 pulldown-cmark = "^0.5.2"
 serde = { version = "^1.0.92", features = ['derive'] }
 serde_json = "^1.0.39"
 # NOTE: keep in sync with wasm-bindgen-test version
-wasm-bindgen = {version = "0.2.45", features = ["serde-serialize"]}
-wasm-bindgen-futures = "^0.3.22"
+wasm-bindgen = {version = "0.2.50", features = ["serde-serialize"]}
+wasm-bindgen-futures = "0.3.22"
 
 [dependencies.web-sys]
-version = "0.3.22"
+version = "0.3.27"
 features = [
     "AbortController",
     "AbortSignal",
@@ -105,5 +103,4 @@ exclude = [
     # it has own workspace
     "examples/server_integration",
     "examples/server_interaction_detailed",
-    "vendor/gloo_timers",  # temporary until released
 ]

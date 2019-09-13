@@ -5,7 +5,7 @@ extern crate seed;
 
 use futures::prelude::*;
 // todo: crate:: here is temporary, until gloo_timers is published.
-use seed::gloo_timers::future::TimeoutFuture;
+use gloo_timers::future::TimeoutFuture;
 use seed::prelude::*;
 
 // Model

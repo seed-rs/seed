@@ -30,9 +30,6 @@ mod util;
 mod vdom;
 mod websys_bridge;
 
-// todo temporary: To allow `cargo publish` to work with the unreleased Gloo crate
-pub mod gloo_timers;
-
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
 pub const fn empty<Ms>() -> dom_types::Node<Ms> {
