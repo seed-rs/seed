@@ -1,8 +1,7 @@
 //! High-level interface for `web_sys` HTTP requests.
 
 use futures::{future, Future};
-// todo: crate:: here is temporary, until gloo_timers is published.
-use crate::gloo_timers::callback::Timeout;
+use gloo_timers::callback::Timeout;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json;
 use std::{borrow::Cow, cell::RefCell, collections::HashMap, convert::identity, rc::Rc};
