@@ -58,7 +58,7 @@ type InitFn<Ms, Mdl, ElC, GMs> =
 type UpdateFn<Ms, Mdl, ElC, GMs> = fn(Ms, &mut Mdl, &mut OrdersContainer<Ms, Mdl, ElC, GMs>);
 type SinkFn<Ms, Mdl, ElC, GMs> = fn(GMs, &mut Mdl, &mut OrdersContainer<Ms, Mdl, ElC, GMs>);
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
-type RoutesFn<Ms> = fn(routing::Url) -> Ms;
+type RoutesFn<Ms> = fn(routing::Url) -> Option<Ms>;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<events::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<dyn Fn(&Ms)>>;
 

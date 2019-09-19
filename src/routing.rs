@@ -215,7 +215,7 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 pub fn setup_popstate_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     update_ps_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
-    routes: fn(Url) -> Ms,
+    routes: fn(Url) -> Option<Ms>,
 ) where
     Ms: 'static,
 {
@@ -234,7 +234,10 @@ pub fn setup_popstate_listener<Ms>(
                 Url::new(empty)
             }
         };
-        update(routes(url));
+        // Only update when requested for an update by the user.
+        if let Some(routing_msg) = routes(url) {
+            update(routing_msg);
+        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -247,7 +250,7 @@ pub fn setup_popstate_listener<Ms>(
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 #[allow(clippy::option_map_unit_fn)]
-pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) -> Ms)
+pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) -> Option<Ms>)
 where
     Ms: 'static,
 {
@@ -274,12 +277,18 @@ where
                 }
             })
             .map(|href| {
-                event.prevent_default(); // Prevent page refresh
                 // @TODO should be empty href ignored?
-                if !href.is_empty() {
-                    // Route internally based on href's value
-                    let url = push_route(Url::from(href));
-                    update(routes(url));
+                if href.is_empty() {
+                    event.prevent_default(); // Prevent page refresh
+                } else {
+                    // Only update when requested for an update by the user.
+                    let url = clean_url(Url::from(href));
+                    if let Some(redirect_msg) = routes(url.clone()) {
+                        // Route internally, overriding the default history
+                        push_route(url);
+                        event.prevent_default(); // Prevent page refresh
+                        update(redirect_msg);
+                    }
                 }
             });
     });

@@ -150,8 +150,8 @@ pub mod tests {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 
-        fn routes(_url: seed::Url) -> Msg {
-            Msg::Increment
+        fn routes(_url: seed::Url) -> Option<Msg> {
+            Some(Msg::Increment)
         }
 
         #[wasm_bindgen]
