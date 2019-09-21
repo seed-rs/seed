@@ -351,12 +351,12 @@ fn view(model: &Model) -> impl View<Msg> {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn routes(url: seed::Url) -> Msg {
-    match url.path.get(0).map(String::as_str) {
+fn routes(url: seed::Url) -> Option<Msg> {
+    Some(match url.path.get(0).map(String::as_str) {
         Some("active") => Msg::ChangeVisibility(Visible::Active),
         Some("completed") => Msg::ChangeVisibility(Visible::Completed),
         _ => Msg::ChangeVisibility(Visible::All),
-    }
+    })
 }
 
 #[wasm_bindgen(start)]
