@@ -157,7 +157,7 @@ pub mod tests {
 
         #[wasm_bindgen]
         pub fn render() {
-            seed::App::build(|_, _| Model::default(), update, view)
+            seed::App::build(|_, _| Init::new(Model::default()), update, view)
                 .mount("body")
                 .routes(routes)
                 .window_events(window_events)

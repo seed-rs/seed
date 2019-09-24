@@ -73,17 +73,26 @@ pub enum UrlHandling {
 
 /// Used as a flexible wrapper for the init function.
 pub struct Init<Mdl> {
-//    init: InitFn<Ms, Mdl, ElC, GMs>,
+    //    init: InitFn<Ms, Mdl, ElC, GMs>,
     model: Mdl,
     url_handling: UrlHandling,
 }
 
 impl<Mdl> Init<Mdl> {
-    pub fn new(model: Mdl, url_handling: UrlHandling) -> Self {
-        Self {model, url_handling}
+    pub const fn new(model: Mdl) -> Self {
+        Self {
+            model,
+            url_handling: UrlHandling::PassToRoutes,
+        }
+    }
+
+    pub const fn new_with_url_handling(model: Mdl, url_handling: UrlHandling) -> Self {
+        Self {
+            model,
+            url_handling,
+        }
     }
 }
-
 
 pub struct Mailbox<Message: 'static> {
     func: Rc<dyn Fn(Message)>,
@@ -275,9 +284,8 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
                 if let Some(r) = self.routes {
                     (self.update)(r(url).unwrap(), &mut init.model, &mut initial_orders);
                 }
-
-            },
-            Nothing => (),
+            }
+            UrlHandling::Nothing => (),
         };
 
         app.cfg.initial_orders.replace(Some(initial_orders));
@@ -762,7 +770,7 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> App<Msg, Model, Node<Msg>> {
-        App::build(|_,_| Model {}, |_, _, _| (), |_| seed::empty())
+        App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()
@@ -1417,10 +1425,10 @@ pub mod tests {
         }
 
         let app = App::build(
-            |_, _| Model {
+            |_, _| Init::new(Model {
                 test_value_sender: Some(test_value_sender),
                 ..Default::default()
-            },
+            }),
             update,
             |_| seed::empty(),
         )

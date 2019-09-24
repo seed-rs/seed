@@ -50,7 +50,7 @@ fn view(model: &Model) -> Node<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(|_,_| Model::default(), update, view)
+    seed::App::build(|_,_| Init::new(Model::default()), update, view)
         // `trigger_update_handler` processes JS event
         // and forwards it to `update` function.
         .window_events(|_| vec![trigger_update_handler()])

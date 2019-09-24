@@ -218,8 +218,8 @@ fn view(model: &Model) -> impl View<Msg> {
 
 // Init
 
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    Model::default()
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Init<Model> {
+    Init::new(Model::default())
 }
 
 #[wasm_bindgen(start)]
