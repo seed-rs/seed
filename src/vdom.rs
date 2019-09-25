@@ -1425,10 +1425,12 @@ pub mod tests {
         }
 
         let app = App::build(
-            |_, _| Init::new(Model {
-                test_value_sender: Some(test_value_sender),
-                ..Default::default()
-            }),
+            |_, _| {
+                Init::new(Model {
+                    test_value_sender: Some(test_value_sender),
+                    ..Default::default()
+                })
+            },
             update,
             |_| seed::empty(),
         )

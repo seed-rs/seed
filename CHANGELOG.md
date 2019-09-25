@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.4.2
+- Added an `Init` struct, which can help with initial routing (Breaking)
+
 ## v0.4.1
 - Added more SVG `At` variants
 - Added the `St` enum, for style keys; similar to `At`
