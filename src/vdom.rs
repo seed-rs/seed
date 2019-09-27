@@ -67,7 +67,7 @@ type MsgListeners<Ms> = Vec<Box<dyn Fn(&Ms)>>;
 /// Used for handling initial routing.
 pub enum UrlHandling {
     PassToRoutes,
-    Nothing,
+    None,
     // todo: Expand later, as-required
 }
 
@@ -285,7 +285,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
                     (self.update)(r(url).unwrap(), &mut init.model, &mut initial_orders);
                 }
             }
-            UrlHandling::Nothing => (),
+            UrlHandling::None => (),
         };
 
         app.cfg.initial_orders.replace(Some(initial_orders));
