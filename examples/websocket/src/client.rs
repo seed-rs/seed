@@ -95,7 +95,7 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    let app = App::build(|_,_| Model::default(), update, view)
+    let app = App::build(|_,_| Init::new(Model::default()), update, view)
         // `trigger_update_handler` is necessary,
         // because we want to process `seed::update(..)` calls.
         .window_events(|_| vec![trigger_update_handler()])

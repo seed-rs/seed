@@ -48,7 +48,7 @@ pub enum Model {
 
 impl Default for Model {
     fn default() -> Self {
-        Model::ReadyToSubmit(Form {
+        Self::ReadyToSubmit(Form {
             title: "I'm title".into(),
             description: "I'm description".into(),
             file: None,
@@ -60,12 +60,12 @@ impl Default for Model {
 impl Model {
     fn form(&self) -> &Form {
         match self {
-            Model::ReadyToSubmit(form) | Model::WaitingForResponse(form) => form,
+            Self::ReadyToSubmit(form) | Self::WaitingForResponse(form) => form,
         }
     }
     fn form_mut(&mut self) -> &mut Form {
         match self {
-            Model::ReadyToSubmit(form) | Model::WaitingForResponse(form) => form,
+            Self::ReadyToSubmit(form) | Self::WaitingForResponse(form) => form,
         }
     }
 }

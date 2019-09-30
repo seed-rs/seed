@@ -53,14 +53,46 @@ pub enum ShouldRender {
     Skip,
 }
 
+//type InitFn<Ms, Mdl, ElC, GMs> =
+//    Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Mdl>;
 type InitFn<Ms, Mdl, ElC, GMs> =
-    Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Mdl>;
+    Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
 type UpdateFn<Ms, Mdl, ElC, GMs> = fn(Ms, &mut Mdl, &mut OrdersContainer<Ms, Mdl, ElC, GMs>);
 type SinkFn<Ms, Mdl, ElC, GMs> = fn(GMs, &mut Mdl, &mut OrdersContainer<Ms, Mdl, ElC, GMs>);
 type ViewFn<Mdl, ElC> = fn(&Mdl) -> ElC;
 type RoutesFn<Ms> = fn(routing::Url) -> Option<Ms>;
 type WindowEvents<Ms, Mdl> = fn(&Mdl) -> Vec<events::Listener<Ms>>;
 type MsgListeners<Ms> = Vec<Box<dyn Fn(&Ms)>>;
+
+/// Used for handling initial routing.
+pub enum UrlHandling {
+    PassToRoutes,
+    None,
+    // todo: Expand later, as-required
+}
+
+/// Used as a flexible wrapper for the init function.
+pub struct Init<Mdl> {
+    //    init: InitFn<Ms, Mdl, ElC, GMs>,
+    model: Mdl,
+    url_handling: UrlHandling,
+}
+
+impl<Mdl> Init<Mdl> {
+    pub const fn new(model: Mdl) -> Self {
+        Self {
+            model,
+            url_handling: UrlHandling::PassToRoutes,
+        }
+    }
+
+    pub const fn new_with_url_handling(model: Mdl, url_handling: UrlHandling) -> Self {
+        Self {
+            model,
+            url_handling,
+        }
+    }
+}
 
 pub struct Mailbox<Message: 'static> {
     func: Rc<dyn Fn(Message)>,
@@ -244,10 +276,20 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
         );
 
         let mut initial_orders = OrdersContainer::new(app.clone());
-        let model = (self.init)(routing::initial_url(), &mut initial_orders);
+        let mut init = (self.init)(routing::initial_url(), &mut initial_orders);
+
+        match init.url_handling {
+            UrlHandling::PassToRoutes => {
+                let url = routing::initial_url();
+                if let Some(r) = self.routes {
+                    (self.update)(r(url).unwrap(), &mut init.model, &mut initial_orders);
+                }
+            }
+            UrlHandling::None => (),
+        };
 
         app.cfg.initial_orders.replace(Some(initial_orders));
-        app.data.model.replace(Some(model));
+        app.data.model.replace(Some(init.model));
 
         app
     }
@@ -257,7 +299,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GM
 /// repetitive sequences of parameters.
 impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn build(
-        init: impl FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Mdl + 'static,
+        init: impl FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
         view: ViewFn<Mdl, ElC>,
     ) -> AppBuilder<Ms, Mdl, ElC, GMs> {
@@ -728,7 +770,7 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> App<Msg, Model, Node<Msg>> {
-        App::build(|_,_| Model {}, |_, _, _| (), |_| seed::empty())
+        App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()
@@ -1383,9 +1425,11 @@ pub mod tests {
         }
 
         let app = App::build(
-            |_, _| Model {
-                test_value_sender: Some(test_value_sender),
-                ..Default::default()
+            |_, _| {
+                Init::new(Model {
+                    test_value_sender: Some(test_value_sender),
+                    ..Default::default()
+                })
             },
             update,
             |_| seed::empty(),

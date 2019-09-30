@@ -39,17 +39,9 @@ If not using the quickstart repo, create an Html file with a body that contains 
 
 ```html
 <section id="app"></section>
-
-<script src="/pkg/package.js"></script>
-
-<script>
-  const { render } = wasm_bindgen;
-  function run() {
-    render();
-  }
-  wasm_bindgen("/pkg/package_bg.wasm")
-    .then(run)
-    .catch(console.error);
+<script type="module">
+    import init from '/pkg/package.js';
+    init('/pkg/package_bg.wasm');
 </script>
 ```
 
@@ -74,9 +66,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.3.4"
-wasm-bindgen = "^0.2.38"
-web-sys = "^0.3.6"
+seed = "^0.4.1"
+wasm-bindgen = "^0.2.50"
 ```
 
 ## A short example
@@ -205,6 +196,10 @@ run `cargo make start example_name`, where you replace `example_name` with the e
 Some examples also require to run API server in another terminal window - `cargo make start_server example_name`.
 
 When server(s) are running, open [127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+
+## Resources
+- [Awesome-seed-rs](https://github.com/MartinKavik/awesome-seed-rs): A curated list of resources
+- [Seed Realworld](https://github.com/MartinKavik/seed-rs-realworld): A detailed realworld example site
 
 # About
 

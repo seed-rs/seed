@@ -171,11 +171,11 @@ fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
 
 // Init
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
     orders
         .send_msg(Msg::SetViewportWidth)
         .send_msg(Msg::NextAnimationStep);
-    Model::default()
+    Init::new(Model::default())
 }
 
 #[wasm_bindgen(start)]

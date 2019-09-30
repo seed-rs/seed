@@ -107,7 +107,7 @@ fn view_example_introduction(title: &str, description: &str) -> Vec<Node<Msg>> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::build(|_, _| Model::default(), update, view)
+    seed::App::build(|_, _| Init::new(Model::default()), update, view)
         .finish()
         .run();
 }

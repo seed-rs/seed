@@ -128,9 +128,9 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
 
 // Init
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
     orders.perform_cmd(fetch_repository_info());
-    Model::default()
+    Init::new(Model::default())
 }
 
 #[wasm_bindgen(start)]

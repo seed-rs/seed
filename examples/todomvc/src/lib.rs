@@ -20,9 +20,9 @@ enum Visible {
 impl ToString for Visible {
     fn to_string(&self) -> String {
         match self {
-            Visible::All => "".into(),
-            Visible::Active => "active".into(),
-            Visible::Completed => "completed".into(),
+            Self::All => "".into(),
+            Self::Active => "active".into(),
+            Self::Completed => "completed".into(),
         }
     }
 }
@@ -361,7 +361,7 @@ fn routes(url: seed::Url) -> Option<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(|_, _| Model::default(), update, view)
+    seed::App::build(|_, _| Init::new(Model::default()), update, view)
         .routes(routes)
         .finish()
         .run();

@@ -36,7 +36,7 @@ pub enum Status {
 
 impl Default for Status {
     fn default() -> Self {
-        Status::ReadyToSendRequest
+        Self::ReadyToSendRequest
     }
 }
 
