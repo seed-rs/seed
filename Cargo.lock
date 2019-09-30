@@ -127,6 +127,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "drop"
+version = "0.1.0"
+dependencies = [
+ "seed 0.4.1",
+ "wasm-bindgen 0.2.50 (registry+https://github.com/rust-lang/crates.io-index)",
+ "web-sys 0.3.27 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "enclose"
 version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
