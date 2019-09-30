@@ -13,11 +13,11 @@ struct Model {
 
 // Init
 
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    Model {
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Init<Model> {
+    Init::new(Model {
         drop_zone_active: false,
         drop_zone_content: "Drop files here".to_owned(),
-    }
+    })
 }
 
 // Update
