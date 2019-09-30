@@ -87,6 +87,7 @@ features = [
 members = [
     "examples/animation_frame",
     "examples/counter",
+    "examples/drop",
     # "examples/homepage",   # isn't Rust project
     "examples/mathjax",
     "examples/orders",
