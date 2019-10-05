@@ -12,7 +12,7 @@ use web_sys::{Document, Window};
 
 /// Recursively attach all event-listeners. Run this after creating elements.
 /// The associated `web_sys` nodes must be assigned prior to running this.
-pub(crate) fn attach_listeners<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
+pub(crate) fn attach_listeners<Ms: Clone>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
     if let Some(el_ws) = el.node_ws.as_ref() {
         for listener in &mut el.listeners {
             listener.attach(el_ws, mailbox.clone());
@@ -26,7 +26,7 @@ pub(crate) fn attach_listeners<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
 }
 
 /// Recursively detach event-listeners. Run this before patching.
-pub(crate) fn detach_listeners<Ms>(el: &mut El<Ms>) {
+pub(crate) fn detach_listeners<Ms: Clone>(el: &mut El<Ms>) {
     if let Some(el_ws) = el.node_ws.as_ref() {
         for listener in &mut el.listeners {
             listener.detach(el_ws);
@@ -41,7 +41,7 @@ pub(crate) fn detach_listeners<Ms>(el: &mut El<Ms>) {
 
 /// We reattach all listeners, as with normal Els, since we have no
 /// way of diffing them.
-pub(crate) fn setup_window_listeners<Ms>(
+pub(crate) fn setup_window_listeners<Ms: Clone>(
     window: &Window,
     old: &mut Vec<Listener<Ms>>,
     new: &mut Vec<Listener<Ms>>,
@@ -57,7 +57,11 @@ pub(crate) fn setup_window_listeners<Ms>(
 }
 
 /// Remove a node from the vdom and `web_sys` DOM.
-pub(crate) fn remove_node<Ms>(node: &web_sys::Node, parent: &web_sys::Node, el_vdom: &mut El<Ms>) {
+pub(crate) fn remove_node<Ms: Clone>(
+    node: &web_sys::Node,
+    parent: &web_sys::Node,
+    el_vdom: &mut El<Ms>,
+) {
     websys_bridge::remove_node(node, parent);
 
     if let Some(unmount_actions) = &mut el_vdom.hooks.will_unmount {
@@ -72,7 +76,7 @@ pub(crate) fn remove_node<Ms>(node: &web_sys::Node, parent: &web_sys::Node, el_v
 /// model; don't let them get out of sync from typing or other events, which can occur if a change
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
 /// Handle controlled inputs: Ie force sync with the model.
-fn setup_input_listener<Ms>(el: &mut El<Ms>)
+fn setup_input_listener<Ms: Clone>(el: &mut El<Ms>)
 where
     Ms: 'static,
 {
@@ -99,7 +103,7 @@ where
 }
 
 /// Recursively sets up input listeners
-pub(crate) fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
+pub(crate) fn setup_input_listeners<Ms: Clone>(el_vdom: &mut El<Ms>)
 where
     Ms: 'static,
 {
@@ -111,7 +115,7 @@ where
     }
 }
 
-fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
+fn patch_el<'a, Ms: Clone, Mdl, ElC: View<Ms>, GMs>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
@@ -193,7 +197,7 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     new.node_ws.as_ref()
 }
 
-pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
+pub(crate) fn patch_els<'a, Ms: Clone, Mdl, ElC, GMs, OI, NI>(
     document: &Document,
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, ElC, GMs>,
@@ -278,7 +282,7 @@ pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
 }
 
 // Reduces code repetition
-fn add_el_helper<Ms>(
+fn add_el_helper<Ms: Clone>(
     new: &mut El<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
@@ -302,7 +306,7 @@ fn add_el_helper<Ms>(
 
 /// Routes patching through different channels, depending on the Node variant
 /// of old and new.
-pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
+pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: View<Ms>, GMs>(
     document: &Document,
     old: Node<Ms>,
     new: &'a mut Node<Ms>,

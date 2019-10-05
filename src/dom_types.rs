@@ -67,100 +67,100 @@ pub trait UpdateEl<T> {
     fn update(self, el: &mut T);
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Attrs {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Attrs {
     fn update(self, el: &mut El<Ms>) {
         el.attrs.merge(self);
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for &Attrs {
+impl<Ms: Clone> UpdateEl<El<Ms>> for &Attrs {
     fn update(self, el: &mut El<Ms>) {
         el.attrs.merge(self.clone());
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Style {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self);
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for &Style {
+impl<Ms: Clone> UpdateEl<El<Ms>> for &Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self.clone());
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Listener<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Listener<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.listeners.push(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
         el.listeners.append(&mut self);
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for DidMount<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for DidMount<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.hooks.did_mount = Some(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for DidUpdate<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for DidUpdate<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.hooks.did_update = Some(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.hooks.will_unmount = Some(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for &str {
+impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
     // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(Node::Text(Text::new(self.to_string())))
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for El<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.children.push(Node::Element(self))
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
         el.children
             .append(&mut self.into_iter().map(Node::Element).collect());
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Node<Ms> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Node<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.children.push(self)
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
         el.children.append(&mut self);
     }
 }
 
 /// This is intended only to be used for the custom! element macro.
-impl<Ms> UpdateEl<El<Ms>> for Tag {
+impl<Ms: Clone> UpdateEl<El<Ms>> for Tag {
     fn update(self, el: &mut El<Ms>) {
         el.tag = self;
     }
 }
 
-impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
+impl<Ms: Clone, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
 where
     I: Iterator,
     U: UpdateEl<El<Ms>>,
@@ -668,29 +668,29 @@ make_tags! {
     Placeholder => "placeholder"
 }
 
-pub trait View<Ms: 'static> {
+pub trait View<Ms: 'static + Clone> {
     fn els(self) -> Vec<Node<Ms>>;
 }
 
-impl<Ms> View<Ms> for El<Ms> {
+impl<Ms: Clone> View<Ms> for El<Ms> {
     fn els(self) -> Vec<Node<Ms>> {
         vec![Node::Element(self)]
     }
 }
 
-impl<Ms> View<Ms> for Vec<El<Ms>> {
+impl<Ms: Clone> View<Ms> for Vec<El<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
         self.into_iter().map(Node::Element).collect()
     }
 }
 
-impl<Ms: 'static> View<Ms> for Node<Ms> {
+impl<Ms: 'static + Clone> View<Ms> for Node<Ms> {
     fn els(self) -> Vec<Node<Ms>> {
         vec![self]
     }
 }
 
-impl<Ms: 'static> View<Ms> for Vec<Node<Ms>> {
+impl<Ms: 'static + Clone> View<Ms> for Vec<Node<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
         self
     }
@@ -721,14 +721,14 @@ impl Text {
 /// An component in our virtual DOM. Related to, but different from
 /// [DOM Nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType)
 #[derive(Clone, Debug, PartialEq)]
-pub enum Node<Ms: 'static> {
+pub enum Node<Ms: 'static + Clone> {
     Element(El<Ms>),
     //    Svg(El<Ms>),  // May be best to handle using namespace field on El
     Text(Text),
     Empty,
 }
 
-impl<Ms> Node<Ms> {
+impl<Ms: Clone> Node<Ms> {
     fn is_text(&self) -> bool {
         if let Node::Text(_) = self {
             true
@@ -821,7 +821,7 @@ impl<Ms> Node<Ms> {
     }
 }
 
-impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
+impl<Ms: 'static + Clone, OtherMs: 'static + Clone> MessageMapper<Ms, OtherMs> for Node<Ms> {
     type SelfWithOtherMs = Node<OtherMs>;
     /// See note on impl for El
     fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Node<OtherMs> {
@@ -833,7 +833,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
     }
 }
 
-impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>> {
+impl<Ms: 'static + Clone, OtherMs: 'static + Clone> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>> {
     type SelfWithOtherMs = Vec<Node<OtherMs>>;
     fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Vec<Node<OtherMs>> {
         self.into_iter()
@@ -844,7 +844,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>>
 
 /// An component in our virtual DOM.
 #[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
-pub struct El<Ms: 'static> {
+pub struct El<Ms: 'static + Clone> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
     // confusion with web_sys::Element.
@@ -909,7 +909,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for LifecycleHook
     }
 }
 
-impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
+impl<Ms: 'static + Clone, OtherMs: 'static + Clone> MessageMapper<Ms, OtherMs> for El<Ms> {
     type SelfWithOtherMs = El<OtherMs>;
     /// Maps an element's message to have another message.
     ///
@@ -941,7 +941,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
     }
 }
 
-impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
+impl<Ms: 'static + Clone, OtherMs: 'static + Clone> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
     type SelfWithOtherMs = Vec<El<OtherMs>>;
     fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Vec<El<OtherMs>> {
         self.into_iter()
@@ -950,7 +950,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
     }
 }
 
-impl<Ms> El<Ms> {
+impl<Ms: Clone> El<Ms> {
     /// Create an empty element, specifying only the tag
     pub fn empty(tag: Tag) -> Self {
         Self {
@@ -1083,15 +1083,13 @@ impl<Ms> El<Ms> {
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
 /// closures within listeners or lifestyle hooks, so we omit them.
-impl<Ms> Clone for El<Ms> {
+impl<Ms: Clone> Clone for El<Ms> {
     fn clone(&self) -> Self {
         Self {
             tag: self.tag.clone(),
             attrs: self.attrs.clone(),
             style: self.style.clone(),
-            // todo: Put this back - removed during troubleshooting Node change
-            //            children: self.children.clone(),
-            children: Vec::new(),
+            children: self.children.clone(),
             node_ws: self.node_ws.clone(),
             listeners: Vec::new(),
             namespace: self.namespace.clone(),
@@ -1100,7 +1098,7 @@ impl<Ms> Clone for El<Ms> {
     }
 }
 
-impl<Ms> PartialEq for El<Ms> {
+impl<Ms: Clone> PartialEq for El<Ms> {
     fn eq(&self, other: &Self) -> bool {
         // todo Again, note that the listeners check only checks triggers.
         // Don't check children.
@@ -1168,7 +1166,7 @@ pub mod tests {
     use wasm_bindgen::{JsCast, JsValue};
     use web_sys::Element;
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug)]
     enum Msg {}
 
     struct Model {}
