@@ -320,15 +320,23 @@ macro_rules! style {
 //
 //}
 
+pub fn wrap_debug<T>(object: T) -> dbg::WrapDebug<T> {
+    dbg::WrapDebug(object)
+}
+
 /// A convenience function for logging to the web browser's console.  We use
 /// a macro to supplement the log function to allow multiple inputs.
+///
+/// NOTE: `log!` also accepts entities which don't implement `Debug` on `nightly` Rust.
+/// It's useful because you don't have to add `Debug` bound to many places - implementation for
+/// logged entity is enough.
 #[macro_export]
 macro_rules! log {
     { $($expr:expr),* $(,)? } => {
         {
             let mut formatted_exprs = Vec::new();
             $(
-                formatted_exprs.push(format!("{:#?}", $expr));
+                formatted_exprs.push(format!("{:#?}", $crate::shortcuts::wrap_debug(&$expr)));
             )*
             $crate::shortcuts::log_1(
                 &formatted_exprs
@@ -351,7 +359,7 @@ macro_rules! error {
         {
             let mut formatted_exprs = Vec::new();
             $(
-                formatted_exprs.push(format!("{:#?}", $expr));
+                formatted_exprs.push(format!("{:#?}", $crate::shortcuts::wrap_debug(&$expr)));
             )*
             $crate::shortcuts::error_1(
                 &formatted_exprs
