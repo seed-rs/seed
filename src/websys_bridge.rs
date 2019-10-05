@@ -15,7 +15,7 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
 }
 
 /// Recursively create `web_sys::Node`s, and place them in the vdom Nodes' fields.
-pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>)
+pub(crate) fn assign_ws_nodes<Ms: Clone>(document: &Document, node: &mut Node<Ms>)
 where
     Ms: 'static,
 {
@@ -57,7 +57,9 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                         .set_attribute(at.as_str(), value)
                         .map_err(|_| "Problem setting an atrribute.")
                 })
-                .unwrap_or_else(|err| { crate::error(err); });
+                .unwrap_or_else(|err| {
+                    crate::error(err);
+                });
         }
         AtValue::None => {
             node_to_element(el_ws)
@@ -66,7 +68,9 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                         .set_attribute(at.as_str(), "")
                         .map_err(|_| "Problem setting an atrribute.")
                 })
-                .unwrap_or_else(|err| { crate::error(err); });
+                .unwrap_or_else(|err| {
+                    crate::error(err);
+                });
         }
         AtValue::Ignored => {
             node_to_element(el_ws)
@@ -75,7 +79,9 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                         .remove_attribute(at.as_str())
                         .map_err(|_| "Problem removing an atrribute.")
                 })
-                .unwrap_or_else(|err| { crate::error(err); });
+                .unwrap_or_else(|err| {
+                    crate::error(err);
+                });
         }
     }
 }
@@ -87,7 +93,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
 /// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub(crate) fn make_websys_el<Ms>(
+pub(crate) fn make_websys_el<Ms: Clone>(
     el_vdom: &mut El<Ms>,
     document: &web_sys::Document,
 ) -> web_sys::Node {
@@ -133,7 +139,7 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
 
 /// Similar to `attach_el_and_children`, but without attaching the elemnt. Useful for
 /// patching, where we want to insert the element at a specific place.
-pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
+pub fn attach_children<Ms: Clone>(el_vdom: &mut El<Ms>) {
     let el_ws = el_vdom
         .node_ws
         .as_ref()
@@ -152,7 +158,7 @@ pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
+pub fn attach_el_and_children<Ms: Clone>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
     let el_ws = el_vdom
@@ -169,13 +175,10 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
 
     // appending the its children to the el_ws
     for child in &mut el_vdom.children {
-        log!(child);
         match child {
             // Raise the active level once per recursion.
             Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
-            Node::Text(child_text) => {
-                attach_text_node(child_text, el_ws)
-            },
+            Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
     }
@@ -193,7 +196,7 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
     }
 }
 
-fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
+fn set_default_element_state<Ms: Clone>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
     // @TODO handle also other Auto* attributes?
     // Set focus because of attribute "autofocus"
     if let Some(at_value) = el_vdom.attrs.vals.get(&dom_types::At::AutoFocus) {
@@ -226,7 +229,7 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
+pub fn patch_el_details<Ms: Clone>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
     // Perform side-effects specified for updating
     if let Some(update_actions) = &mut new.hooks.did_update {
         (update_actions.actions)(old_el_ws) // todo
@@ -259,7 +262,9 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                 },
                 _ => Ok(()),
             }
-            .unwrap_or_else(|err| { crate::error(err); })
+            .unwrap_or_else(|err| {
+                crate::error(err);
+            })
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
@@ -269,7 +274,9 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                     Some(el) => el
                         .remove_attribute(name.as_str())
                         .expect("Removing an attribute"),
-                    None => { crate::error("Minor error on html element (setting attrs)"); },
+                    None => {
+                        crate::error("Minor error on html element (setting attrs)");
+                    }
                 }
             }
         }
@@ -328,7 +335,7 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 
 /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
 /// and markdown strings. Includes children, recursively added.
-pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
+pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
         web_sys::Node::ELEMENT_NODE => {
             // Element node

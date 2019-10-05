@@ -5,8 +5,8 @@ use std::{collections::VecDeque, convert::identity, rc::Rc};
 
 // ------ Orders ------
 
-pub trait Orders<Ms: 'static, GMs = ()> {
-    type AppMs: 'static;
+pub trait Orders<Ms: 'static + Clone, GMs = ()> {
+    type AppMs: 'static + Clone;
     type Mdl: 'static;
     type ElC: View<Self::AppMs> + 'static;
 
@@ -19,7 +19,7 @@ pub trait Orders<Ms: 'static, GMs = ()> {
     ///    child::update(child_msg, &mut model.child, &mut orders.proxy(Msg::Child));
     ///}
     /// ```
-    fn proxy<ChildMs: 'static>(
+    fn proxy<ChildMs: 'static + Clone>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
     ) -> OrdersProxy<ChildMs, Self::AppMs, Self::Mdl, Self::ElC, GMs>;
@@ -80,13 +80,13 @@ pub trait Orders<Ms: 'static, GMs = ()> {
 // ------ OrdersContainer ------
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = ()> {
+pub struct OrdersContainer<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs = ()> {
     pub(crate) should_render: ShouldRender,
     pub(crate) effects: VecDeque<Effect<Ms, GMs>>,
     app: App<Ms, Mdl, ElC, GMs>,
 }
 
-impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
+impl<Ms: Clone, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
     pub fn new(app: App<Ms, Mdl, ElC, GMs>) -> Self {
         Self {
             should_render: ShouldRender::Render,
@@ -96,7 +96,7 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
     }
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
+impl<Ms: 'static + Clone, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
     for OrdersContainer<Ms, Mdl, ElC, GMs>
 {
     type AppMs = Ms;
@@ -104,7 +104,7 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
     type ElC = ElC;
 
     #[allow(clippy::redundant_closure)]
-    fn proxy<ChildMs: 'static>(
+    fn proxy<ChildMs: 'static + Clone>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
     ) -> OrdersProxy<ChildMs, Ms, Mdl, ElC, GMs> {
@@ -167,12 +167,19 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 // ------ OrdersProxy ------
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersProxy<'a, Ms, AppMs: 'static, Mdl: 'static, ElC: View<AppMs>, GMs: 'static = ()> {
+pub struct OrdersProxy<
+    'a,
+    Ms: Clone,
+    AppMs: 'static + Clone,
+    Mdl: 'static,
+    ElC: View<AppMs>,
+    GMs: 'static = (),
+> {
     orders_container: &'a mut OrdersContainer<AppMs, Mdl, ElC, GMs>,
     f: Rc<dyn Fn(Ms) -> AppMs>,
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs>, GMs>
+impl<'a, Ms: 'static + Clone, AppMs: 'static + Clone, Mdl, ElC: View<AppMs>, GMs>
     OrdersProxy<'a, Ms, AppMs, Mdl, ElC, GMs>
 {
     pub fn new(
@@ -186,14 +193,14 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs>, GMs>
     }
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orders<Ms, GMs>
-    for OrdersProxy<'a, Ms, AppMs, Mdl, ElC, GMs>
+impl<'a, Ms: 'static + Clone, AppMs: 'static + Clone, Mdl, ElC: View<AppMs> + 'static, GMs>
+    Orders<Ms, GMs> for OrdersProxy<'a, Ms, AppMs, Mdl, ElC, GMs>
 {
     type AppMs = AppMs;
     type Mdl = Mdl;
     type ElC = ElC;
 
-    fn proxy<ChildMs: 'static>(
+    fn proxy<ChildMs: 'static + Clone>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
     ) -> OrdersProxy<ChildMs, AppMs, Mdl, ElC, GMs> {

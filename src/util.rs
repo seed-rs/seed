@@ -193,14 +193,31 @@ impl<T> ClosureNew<T> for Closure<T> {
 
 /// Convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
+#[cfg(use_nightly)]
 pub fn log<T>(object: T) -> T {
     web_sys::console::log_1(&format!("{:#?}", dbg::WrapDebug(&object)).into());
     object
 }
 
+/// Convenience function for logging to the web browser's console.  See also
+/// the log! macro, which is more flexible.
+#[cfg(not(use_nightly))]
+pub fn log<T: std::fmt::Debug>(object: T) -> T {
+    web_sys::console::log_1(&format!("{:#?}", &object).into());
+    object
+}
+
 /// Similar to log, but for errors.
+#[cfg(use_nightly)]
 pub fn error<T>(object: T) -> T {
     web_sys::console::error_1(&format!("{:#?}", dbg::WrapDebug(&object)).into());
+    object
+}
+
+/// Similar to log, but for errors.
+#[cfg(not(use_nightly))]
+pub fn error<T: std::fmt::Debug>(object: T) -> T {
+    web_sys::console::error_1(&format!("{:#?}", &object).into());
     object
 }
 
@@ -228,4 +245,3 @@ where
         .dispatch_event(&event)
         .expect("Error: TriggerUpdate - dispatch)event failed!");
 }
-

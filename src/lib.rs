@@ -32,7 +32,7 @@ mod websys_bridge;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub const fn empty<Ms>() -> dom_types::Node<Ms> {
+pub fn empty<Ms: Clone>() -> dom_types::Node<Ms> {
     dom_types::Node::Empty
 }
 

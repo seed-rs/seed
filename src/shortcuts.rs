@@ -27,7 +27,9 @@ macro_rules! element {
                             {
                                 #[allow(unused_mut)]
                                 let mut el = El::empty($crate::dom_types::Tag::$Tag_camel);
-                                $d ( $d part.update(&mut el); )*
+                                $d (
+                                    $d part.update(&mut el);
+                                )*
                                 $crate::dom_types::Node::Element(el)
                             }
                         };
@@ -320,8 +322,14 @@ macro_rules! style {
 //
 //}
 
+#[cfg(use_nightly)]
 pub fn wrap_debug<T>(object: T) -> dbg::WrapDebug<T> {
     dbg::WrapDebug(object)
+}
+
+#[cfg(not(use_nightly))]
+pub fn wrap_debug<T: std::fmt::Debug>(object: T) -> T {
+    object
 }
 
 /// A convenience function for logging to the web browser's console.  We use
