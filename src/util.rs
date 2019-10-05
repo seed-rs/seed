@@ -2,7 +2,6 @@
 //! This module is decoupled / independent.
 
 use crate::events;
-use std::fmt;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use web_sys;
@@ -194,13 +193,15 @@ impl<T> ClosureNew<T> for Closure<T> {
 
 /// Convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
-pub fn log<D: fmt::Debug>(text: D) {
-    web_sys::console::log_1(&format!("{:#?}", &text).into());
+pub fn log<T>(object: T) -> T {
+    web_sys::console::log_1(&format!("{:#?}", dbg::WrapDebug(&object)).into());
+    object
 }
 
 /// Similar to log, but for errors.
-pub fn error<D: fmt::Debug>(text: D) {
-    web_sys::console::error_1(&format!("{:#?}", &text).into());
+pub fn error<T>(object: T) -> T {
+    web_sys::console::error_1(&format!("{:#?}", dbg::WrapDebug(&object)).into());
+    object
 }
 
 /// Trigger update function.
@@ -227,3 +228,4 @@ where
         .dispatch_event(&event)
         .expect("Error: TriggerUpdate - dispatch)event failed!");
 }
+

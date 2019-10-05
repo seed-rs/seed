@@ -8,7 +8,7 @@ use web_sys::{self, DragEvent, Event, FileList};
 
 struct Model {
     drop_zone_active: bool,
-    drop_zone_content: String,
+    drop_zone_content: Vec<Node<Msg>>,
 }
 
 // Init
@@ -16,13 +16,15 @@ struct Model {
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Init<Model> {
     Init::new(Model {
         drop_zone_active: false,
-        drop_zone_content: "Drop files here".to_owned(),
+        drop_zone_content: vec![
+            div!["Drop files here"],
+        ]
     })
 }
 
 // Update
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum Msg {
     DragEnter,
     DragOver,
@@ -45,7 +47,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 
             model.drop_zone_content = files
                 .iter()
-                .map(|file| format!("<div>{}</div>", file.name()))
+                .map(|file| div![file.name()])
                 .collect();
         }
     }
@@ -74,6 +76,7 @@ macro_rules! stop_and_prevent {
 }
 
 fn view(model: &Model) -> impl View<Msg> {
+    log!("DROP EXAMPLE", model.drop_zone_content);
     div![
         style![
             St::Height => px(200),
@@ -113,8 +116,7 @@ fn view(model: &Model) -> impl View<Msg> {
                 // we don't want to fire `DragLeave` when we are dragging over drop-zone children
                 St::PointerEvents => "none",
             },
-            // @TODO: Cannot use elements (Nodes) saved in Model - Seed's bug?
-            raw!(&model.drop_zone_content)
+            model.drop_zone_content.clone()
         ]
     ]
 }

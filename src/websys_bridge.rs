@@ -57,7 +57,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                         .set_attribute(at.as_str(), value)
                         .map_err(|_| "Problem setting an atrribute.")
                 })
-                .unwrap_or_else(crate::error);
+                .unwrap_or_else(|err| { crate::error(err); });
         }
         AtValue::None => {
             node_to_element(el_ws)
@@ -66,7 +66,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                         .set_attribute(at.as_str(), "")
                         .map_err(|_| "Problem setting an atrribute.")
                 })
-                .unwrap_or_else(crate::error);
+                .unwrap_or_else(|err| { crate::error(err); });
         }
         AtValue::Ignored => {
             node_to_element(el_ws)
@@ -75,7 +75,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                         .remove_attribute(at.as_str())
                         .map_err(|_| "Problem removing an atrribute.")
                 })
-                .unwrap_or_else(crate::error);
+                .unwrap_or_else(|err| { crate::error(err); });
         }
     }
 }
@@ -169,10 +169,13 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
 
     // appending the its children to the el_ws
     for child in &mut el_vdom.children {
+        log!(child);
         match child {
             // Raise the active level once per recursion.
             Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
-            Node::Text(child_text) => attach_text_node(child_text, el_ws),
+            Node::Text(child_text) => {
+                attach_text_node(child_text, el_ws)
+            },
             Node::Empty => (),
         }
     }
@@ -256,7 +259,7 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                 },
                 _ => Ok(()),
             }
-            .unwrap_or_else(crate::error)
+            .unwrap_or_else(|err| { crate::error(err); })
         }
         // Remove attributes that aren't in the new vdom.
         for name in old.attrs.vals.keys() {
@@ -266,7 +269,7 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
                     Some(el) => el
                         .remove_attribute(name.as_str())
                         .expect("Removing an attribute"),
-                    None => crate::error("Minor error on html element (setting attrs)"),
+                    None => { crate::error("Minor error on html element (setting attrs)"); },
                 }
             }
         }
