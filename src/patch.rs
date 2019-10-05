@@ -126,7 +126,7 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
 
         // If the tag's different, we must redraw the element and its children; there's
         // no way to patch one element type into another.
-        // TODO: forcing a rerender for differnet listeners is inefficient
+        // TODO: forcing a rerender for different listeners is inefficient
         // TODO:, but I'm not sure how to patch them.
 
         // Assume all listeners have been removed from the old el_ws (if any), and the
@@ -177,10 +177,36 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
         listener.attach(&old_el_ws, mailbox.clone());
     }
 
-    let num_children_in_both = old.children.len().min(new.children.len());
-    let mut old_children_iter = old.children.into_iter();
-    let mut new_children_iter = new.children.iter_mut();
+    let old_children_iter = old.children.into_iter();
+    let new_children_iter = new.children.iter_mut();
 
+    patch_els(
+        document,
+        mailbox,
+        app,
+        &old_el_ws,
+        old_children_iter,
+        new_children_iter,
+    );
+
+    new.node_ws = Some(old_el_ws);
+    new.node_ws.as_ref()
+}
+
+pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
+    document: &Document,
+    mailbox: &Mailbox<Ms>,
+    app: &App<Ms, Mdl, ElC, GMs>,
+    old_el_ws: &web_sys::Node,
+    old_children_iter: OI,
+    new_children_iter: NI,
+) where
+    ElC: View<Ms>,
+    OI: ExactSizeIterator<Item = Node<Ms>>,
+    NI: ExactSizeIterator<Item = &'a mut Node<Ms>>,
+{
+    let mut old_children_iter = old_children_iter.peekable();
+    let mut new_children_iter = new_children_iter.peekable();
     let mut last_visited_node: Option<web_sys::Node> = None;
 
     // TODO: Lines below commented out, because they were breaking `lifecycle_hooks` test
@@ -192,7 +218,7 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
 
     // Not using .zip() here to make sure we don't miss any of the children when one array is
     // longer than the other.
-    for _i in 0..num_children_in_both {
+    while let (Some(_), Some(_)) = (old_children_iter.peek(), new_children_iter.peek()) {
         let child_old = old_children_iter.next().unwrap();
         let child_new = new_children_iter.next().unwrap();
 
@@ -202,7 +228,7 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
             document,
             child_old,
             child_new,
-            &old_el_ws,
+            old_el_ws,
             match last_visited_node.as_ref() {
                 Some(node) => node.next_sibling(),
                 None => old_el_ws.first_child(),
@@ -222,11 +248,11 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
 
         match child_new {
             Node::Element(child_new_el) => {
-                websys_bridge::attach_el_and_children(child_new_el, &old_el_ws);
+                websys_bridge::attach_el_and_children(child_new_el, old_el_ws);
                 attach_listeners(child_new_el, mailbox);
             }
             Node::Text(child_new_text) => {
-                websys_bridge::attach_text_node(child_new_text, &old_el_ws);
+                websys_bridge::attach_text_node(child_new_text, old_el_ws);
             }
             Node::Empty => (),
         }
@@ -238,20 +264,17 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
         match child {
             Node::Element(mut child_el) => {
                 let child_ws = child_el.node_ws.take().expect("Missing child el_ws");
-                remove_node(&child_ws, &old_el_ws, &mut child_el);
+                remove_node(&child_ws, old_el_ws, &mut child_el);
                 child_el.node_ws.replace(child_ws);
             }
             Node::Text(mut child_text) => {
                 let child_ws = child_text.node_ws.take().expect("Missing child node_ws");
-                websys_bridge::remove_node(&child_ws, &old_el_ws);
+                websys_bridge::remove_node(&child_ws, old_el_ws);
                 child_text.node_ws.replace(child_ws);
             }
             Node::Empty => (),
         }
     }
-
-    new.node_ws = Some(old_el_ws);
-    new.node_ws.as_ref()
 }
 
 // Reduces code repetition

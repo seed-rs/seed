@@ -577,65 +577,14 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         // We'll get a runtime panic if any are left un-removed.
         patch::detach_listeners(&mut old);
 
-        // todo much of the code below is copied from the patch fn (DRY). The issue driving
-        // todo this lies with the patch fn's `parent` parameter.
-        let num_children_in_both = old.children.len().min(new.children.len());
-        let mut old_children_iter = old.children.into_iter();
-        let mut new_children_iter = new.children.iter_mut();
-
-        let mut last_visited_node: Option<web_sys::Node> = None;
-
-        for _i in 0..num_children_in_both {
-            let child_old = old_children_iter.next().unwrap();
-            let child_new = new_children_iter.next().unwrap();
-
-            if let Some(new_el_ws) = patch::patch(
-                &self.cfg.document,
-                child_old,
-                child_new,
-                &self.cfg.mount_point,
-                match last_visited_node.as_ref() {
-                    Some(node) => node.next_sibling(),
-                    None => self.cfg.mount_point.first_child(),
-                },
-                &self.mailbox(),
-                &self.clone(),
-            ) {
-                last_visited_node = Some(new_el_ws.clone());
-            }
-        }
-
-        for child_new in new_children_iter {
-            websys_bridge::assign_ws_nodes(&self.cfg.document, child_new);
-            match child_new {
-                Node::Element(child_new_el) => {
-                    // We ran out of old children to patch; create new ones.
-                    websys_bridge::attach_el_and_children(child_new_el, &self.cfg.mount_point);
-                    patch::attach_listeners(child_new_el, &self.mailbox());
-                }
-                Node::Text(child_new_text) => {
-                    websys_bridge::attach_text_node(child_new_text, &self.cfg.mount_point);
-                }
-                Node::Empty => (),
-            }
-        }
-
-        // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-        for child in old_children_iter {
-            match child {
-                Node::Element(mut child_el) => {
-                    let child_ws = child_el.node_ws.take().expect("Missing child el_ws");
-                    //                    patch::remove_node(&child_ws, &old_el_ws, &mut child_el);  // todo put back node refactor
-                    child_el.node_ws.replace(child_ws);
-                }
-                Node::Text(mut child_text) => {
-                    let child_ws = child_text.node_ws.take().expect("Missing child node_ws");
-                    //                    websys_bridge::remove_node(&child_ws, &old_el_ws);  todo put back Node refac
-                    child_text.node_ws.replace(child_ws);
-                }
-                Node::Empty => (),
-            }
-        }
+        patch::patch_els(
+            &self.cfg.document,
+            &self.mailbox(),
+            &self.clone(),
+            &self.cfg.mount_point,
+            old.children.into_iter(),
+            new.children.iter_mut(),
+        );
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next time.
