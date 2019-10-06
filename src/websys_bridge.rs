@@ -333,8 +333,139 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
         .expect("Unable to cast as a mouse event")
 }
 
-/// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
-/// and markdown strings. Includes children, recursively added.
+/// Create a vdom node from a `web_sys::Element`. See [`node_from_ws`]. Additionally used when
+/// bootstrapping seed on the mount point.
+pub fn el_from_ws_element<Ms: Clone>(ws: &web_sys::Element) -> El<Ms> {
+    // Result of tag_name is all caps, but tag From<String> expects lower.
+    // Probably is more pure to match by xlmns attribute instead.
+    let mut el = match ws.tag_name().to_lowercase().as_ref() {
+        "svg" => El::empty_svg(ws.tag_name().to_lowercase().into()),
+        _ => El::empty(ws.tag_name().to_lowercase().into()),
+    };
+
+    // Populate attributes
+    let mut attrs = dom_types::Attrs::empty();
+    ws
+        .get_attribute_names()
+        .for_each(&mut |attr_name, _, _| {
+            let attr_name2 = attr_name
+                .as_string()
+                .expect("problem converting attr to string");
+            if let Some(attr_val) = ws.get_attribute(&attr_name2) {
+                attrs.add(attr_name2.into(), &attr_val);
+            }
+        });
+    el.attrs = attrs;
+
+    // todo This is the same list in `shortcuts::element_svg!`.
+    // todo: Fix this repetition: Use `/scripts/populate_tags.rs`
+    // todo to consolodate these lists.
+    let svg_tags = [
+        "line",
+        "rect",
+        "circle",
+        "ellipse",
+        "polygon",
+        "polyline",
+        "mesh",
+        "path",
+        "defs",
+        "g",
+        "marker",
+        "mask",
+        "pattern",
+        "svg",
+        "switch",
+        "symbol",
+        "unknown",
+        "linear_gradient",
+        "radial_gradient",
+        "mesh_gradient",
+        "stop",
+        "image",
+        "r#use",
+        "altGlyph",
+        "altGlyphDef",
+        "altGlyphItem",
+        "glyph",
+        "glyphRef",
+        "textPath",
+        "text",
+        "tref",
+        "tspan",
+        "clipPath",
+        "cursor",
+        "filter",
+        "foreignObject",
+        "hathpath",
+        "meshPatch",
+        "meshRow",
+        "view",
+        "colorProfile",
+        "animage",
+        "animateColor",
+        "animateMotion",
+        "animateTransform",
+        "discard",
+        "mpath",
+        "set",
+        "desc",
+        "metadata",
+        "title",
+        "feBlend",
+        "feColorMatrix",
+        "feComponentTransfer",
+        "feComposite",
+        "feConvolveMatrix",
+        "feDiffuseLighting",
+        "feDisplacementMap",
+        "feDropShadow",
+        "feFlood",
+        "feFuncA",
+        "feFuncB",
+        "feFuncG",
+        "feFuncR",
+        "feGaussianBlur",
+        "feImage",
+        "feMerge",
+        "feMergews",
+        "feMorphology",
+        "feOffset",
+        "feSpecularLighting",
+        "feTile",
+        "feTurbulence",
+        "font",
+        "hkern",
+        "vkern",
+        "hatch",
+        "solidcolor",
+    ];
+
+    if svg_tags.contains(&ws.tag_name().to_lowercase().as_str()) {
+        el.namespace = Some(Namespace::Svg);
+    }
+
+    if let Some(ns) = ws.namespace_uri() {
+        // Prevent attaching a `xlmns` attribute to normal HTML elements.
+        if ns != "http://www.w3.org/1999/xhtml" {
+            el.namespace = Some(ns.into());
+        }
+    }
+
+    let children = ws.child_nodes();
+    for i in 0..children.length() {
+        let child = children
+            .get(i)
+            .expect("Can't find child in raw html element.");
+
+        if let Some(child_vdom) = node_from_ws(&child) {
+            el.children.push(child_vdom);
+        }
+    }
+    el
+}
+/// Create a vdom node from a `web_sys::Node`. Used in creating elements from html and markdown
+/// strings. Includes children, recursively added.
 pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
         web_sys::Node::ELEMENT_NODE => {
@@ -343,133 +474,7 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
                 .dyn_ref::<web_sys::Element>()
                 .expect("Problem casting Node as Element");
 
-            // Result of tag_name is all caps, but tag From<String> expects lower.
-            // Probably is more pure to match by xlmns attribute instead.
-            let mut el = match node_ws.tag_name().to_lowercase().as_ref() {
-                "svg" => El::empty_svg(node_ws.tag_name().to_lowercase().into()),
-                _ => El::empty(node_ws.tag_name().to_lowercase().into()),
-            };
-
-            // Populate attributes
-            let mut attrs = dom_types::Attrs::empty();
-            node_ws
-                .get_attribute_names()
-                .for_each(&mut |attr_name, _, _| {
-                    let attr_name2 = attr_name
-                        .as_string()
-                        .expect("problem converting attr to string");
-                    if let Some(attr_val) = node_ws.get_attribute(&attr_name2) {
-                        attrs.add(attr_name2.into(), &attr_val);
-                    }
-                });
-            el.attrs = attrs;
-
-            // todo This is the same list in `shortcuts::element_svg!`.
-            // todo: Fix this repetition: Use `/scripts/populate_tags.rs`
-            // todo to consolodate these lists.
-            let svg_tags = [
-                "line",
-                "rect",
-                "circle",
-                "ellipse",
-                "polygon",
-                "polyline",
-                "mesh",
-                "path",
-                "defs",
-                "g",
-                "marker",
-                "mask",
-                "pattern",
-                "svg",
-                "switch",
-                "symbol",
-                "unknown",
-                "linear_gradient",
-                "radial_gradient",
-                "mesh_gradient",
-                "stop",
-                "image",
-                "r#use",
-                "altGlyph",
-                "altGlyphDef",
-                "altGlyphItem",
-                "glyph",
-                "glyphRef",
-                "textPath",
-                "text",
-                "tref",
-                "tspan",
-                "clipPath",
-                "cursor",
-                "filter",
-                "foreignObject",
-                "hathpath",
-                "meshPatch",
-                "meshRow",
-                "view",
-                "colorProfile",
-                "animage",
-                "animateColor",
-                "animateMotion",
-                "animateTransform",
-                "discard",
-                "mpath",
-                "set",
-                "desc",
-                "metadata",
-                "title",
-                "feBlend",
-                "feColorMatrix",
-                "feComponentTransfer",
-                "feComposite",
-                "feConvolveMatrix",
-                "feDiffuseLighting",
-                "feDisplacementMap",
-                "feDropShadow",
-                "feFlood",
-                "feFuncA",
-                "feFuncB",
-                "feFuncG",
-                "feFuncR",
-                "feGaussianBlur",
-                "feImage",
-                "feMerge",
-                "feMergeNode",
-                "feMorphology",
-                "feOffset",
-                "feSpecularLighting",
-                "feTile",
-                "feTurbulence",
-                "font",
-                "hkern",
-                "vkern",
-                "hatch",
-                "solidcolor",
-            ];
-
-            if svg_tags.contains(&node_ws.tag_name().to_lowercase().as_str()) {
-                el.namespace = Some(Namespace::Svg);
-            }
-
-            if let Some(ns) = node_ws.namespace_uri() {
-                // Prevent attaching a `xlmns` attribute to normal HTML elements.
-                if ns != "http://www.w3.org/1999/xhtml" {
-                    el.namespace = Some(ns.into());
-                }
-            }
-
-            let children = node_ws.child_nodes();
-            for i in 0..children.length() {
-                let child = children
-                    .get(i)
-                    .expect("Can't find child in raw html element.");
-
-                if let Some(child_vdom) = node_from_ws(&child) {
-                    el.children.push(child_vdom);
-                }
-            }
-            Some(Node::Element(el))
+            Some(Node::Element(el_from_ws_element(node_ws)))
         }
         web_sys::Node::TEXT_NODE => Some(Node::Text(Text::new(
             node.text_content().expect("Can't find text"),
