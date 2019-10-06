@@ -370,49 +370,73 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         }
     }
 
-    /// App initialization: Collect its fundamental components, setup, and perform
-    /// an initial render.
-    pub fn run(self) -> Self {
-        self.process_cmd_and_msg_queue(
-            self.cfg
-                .initial_orders
-                .replace(None)
-                .expect("initial_orders should be set in AppBuilder::finish")
-                .effects,
-        );
-        // Our initial render. Can't initialize in new due to mailbox() requiring self.
-        // "new" name is for consistency with `update` function.
-        // this section parent is a placeholder, so we can iterate over children
-        // in a way consistent with patching code.
-        let mut new = El::empty(dom_types::Tag::Section);
-        new.children = (self.cfg.view)(self.data.model.borrow().as_ref().unwrap()).els();
+    /// Bootstrap the dom with the vdom by taking over all children of the mount point and
+    /// replacing them with the vdom.
+    fn bootstrap_vdom(&self) -> El<Ms> {
+        let mut new = {
+            // Construct the vdom from the root element. Subsequently strip the workspace so that we
+            // can recreate it later. There could be missing nodes here.
+            // TODO: Optimize by utilizing a patching strategy instead of recreating the workspace
+            // TODO: nodes.
+            let mut dom_nodes = websys_bridge::el_from_ws_element(&self.cfg.mount_point);
+            dom_nodes.strip_ws_nodes();
 
+            // Replace the root dom with a placeholder tag and move the children from the root element
+            // to the newly created root. Uses `Placeholder` to mimic update logic.
+            let mut new = El::empty(dom_types::Tag::Placeholder);
+            new.children = dom_nodes.children;
+            new
+        };
+
+        // Setup listeners
         self.setup_window_listeners();
         patch::setup_input_listeners(&mut new);
         patch::attach_listeners(&mut new, &self.mailbox());
 
+        // Recreate the needed nodes.
+        // TODO: Refer the TODO at the beginning of the function.
         let mut new_node = Node::Element(new);
-
         websys_bridge::assign_ws_nodes(&util::document(), &mut new_node);
+        let mut new = new_node
+            .el()
+            .expect("`El` placed into `Node::Element` `new_node` is no longer an `El`.");
 
-        if let Node::Element(mut new) = new_node {
-            // Attach all top-level elements to the mount point: This is where our initial render occurs.
-            for child in &mut new.children {
-                match child {
-                    Node::Element(child_el) => {
-                        websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
-                        patch::attach_listeners(child_el, &self.mailbox());
-                    }
-                    Node::Text(top_child_text) => {
-                        websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
-                    }
-                    Node::Empty => (),
+        // Remove all old elements, and replace them with out newly created elements - we have
+        // effectively taken over the original DOM and now have free reign over the mount_point.
+        // Attach all top-level elements to the mount point: This is where our initial render
+        // occurs.
+        while let Some(child) = self.cfg.mount_point.first_child() {
+            self.cfg
+                .mount_point
+                .remove_child(&child)
+                .expect("No problem removing node from parent.");
+        }
+        for child in &mut new.children {
+            match child {
+                Node::Element(child_el) => {
+                    websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
+                    patch::attach_listeners(child_el, &self.mailbox());
                 }
+                Node::Text(top_child_text) => {
+                    websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
+                }
+                Node::Empty => (),
             }
-            self.data.main_el_vdom.replace(Some(new));
         }
 
-        // Update the state on page load, based
+        new
+    }
+    /// App initialization: Collect its fundamental components, setup, and perform
+    /// an initial render.
+    pub fn run(self) -> Self {
+        // Our initial render. Can't initialize in new due to mailbox() requiring self.
+        // "new" name is for consistency with `update` function.
+
+        // Bootstrap the vdom with the dom's state. No need to do a full render, sinc executing
+        // initial_orders should do this.
+        self.data.main_el_vdom.replace(Some(self.bootstrap_vdom()));
+
+        // Setup routes handling. Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
         if let Some(routes) = *self.data.routes.borrow() {
             routing::setup_popstate_listener(
@@ -431,6 +455,19 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
             );
             routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
         }
+
+        // Since everything's been set up, run the initial update. This will trigger the initial
+        // render as per normal for seed behavior. -- Executed here to ensure that all state has
+        // been initialized with a bootstrap version. The bootstrap will be replaced after first
+        // render.
+        self.process_cmd_and_msg_queue(
+            self.cfg
+                .initial_orders
+                .replace(None)
+                .expect("initial_orders should be set in AppBuilder::finish")
+                .effects,
+        );
+
         self
     }
 
