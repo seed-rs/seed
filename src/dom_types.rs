@@ -717,6 +717,12 @@ impl Text {
             node_ws: None,
         }
     }
+    pub fn get_text(&self) -> String {
+        self.text.to_string()
+    }
+    pub fn strip_ws_nodes(&mut self) {
+        self.node_ws.take();
+    }
 }
 
 /// An component in our virtual DOM. Related to, but different from
@@ -729,19 +735,8 @@ pub enum Node<Ms: 'static + Clone> {
     Empty,
 }
 
+// Mappers for `El` manipulations.
 impl<Ms: Clone> Node<Ms> {
-    fn is_text(&self) -> bool {
-        if let Node::Text(_) = self {
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn new_text(text: impl Into<Cow<'static, str>>) -> Self {
-        Node::Text(Text::new(text))
-    }
-
     /// See `El::from_markdown`
     pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         El::from_markdown(markdown)
@@ -766,58 +761,139 @@ impl<Ms: Clone> Node<Ms> {
         key: impl Into<Cow<'static, str>>,
         val: impl Into<AtValue>,
     ) -> &mut Self {
-        if let Node::Element(el) = self {
+        self.map_el_in_place(move |el| {
             el.add_attr(key, val);
-        }
-        self
+        })
     }
 
-    /// /// See `El::add_class``
+    /// See `El::add_class``
     pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
-        if let Node::Element(el) = self {
+        self.map_el_in_place(move |el| {
             el.add_class(name);
-        }
-        self
+        })
     }
 
     /// See `El::add_style`
     pub fn add_style(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> &mut Self {
-        if let Node::Element(el) = self {
+        self.map_el_in_place(move |el| {
             el.add_style(key, val);
-        }
-        self
+        })
     }
 
     /// See `El::add_listener`
     pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
-        if let Node::Element(el) = self {
+        self.map_el_in_place(move |el| {
             el.add_listener(listener);
-        }
-        self
+        })
     }
 
     /// See `El::add_text`
     pub fn add_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
-        if let Node::Element(el) = self {
+        self.map_el_in_place(move |el| {
             el.add_text(text);
-        }
-        self
+        })
     }
 
     /// See `El::replace_text`
     pub fn replace_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
-        if let Node::Element(el) = self {
+        self.map_el_in_place(move |el| {
             el.replace_text(text);
-        }
-        self
+        })
     }
 
     /// See `El::get_text`
     pub fn get_text(&self) -> String {
+        self.map_or_else_ref(El::get_text, Text::get_text, "".to_owned())
+    }
+}
+// Workspace manipulations.
+impl<Ms: Clone> Node<Ms> {
+    pub(crate) fn strip_ws_nodes(&mut self) -> &mut Self {
+        self.map_in_place(El::strip_ws_nodes, Text::strip_ws_nodes)
+    }
+}
+// Convenience methods for `Node` a la `Result` and `Option`.
+impl<Ms: Clone> Node<Ms> {
+    pub fn new_text(text: impl Into<Cow<'static, str>>) -> Self {
+        Node::Text(Text::new(text))
+    }
+
+    pub fn is_text(&self) -> bool {
+        if let Node::Text(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+    pub fn is_el(&self) -> bool {
+        if let Node::Element(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        if let Node::Empty = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn el(self) -> Result<El<Ms>, Option<Text>> {
         match self {
-            Node::Element(el) => el.get_text(),
-            Node::Text(text) => text.text.to_string(),
-            _ => "".to_string(),
+            Node::Element(el) => Ok(el),
+            node => Err(if let Node::Text(text) = node {
+                Some(text)
+            } else {
+                None
+            }),
+        }
+    }
+    pub fn text(self) -> Result<Text, Option<El<Ms>>> {
+        match self {
+            Node::Text(text) => Ok(text),
+            node => Err(if let Node::Element(el) = node {
+                Some(el)
+            } else {
+                None
+            }),
+        }
+    }
+    pub fn empty(self) -> Result<(), Self> {
+        match self {
+            Node::Empty => Ok(()),
+            node => Err(node),
+        }
+    }
+
+    fn map_in_place<TMap, EMap>(&mut self, el_map: EMap, text_map: TMap) -> &mut Self
+    where
+        TMap: FnOnce(&mut Text),
+        EMap: FnOnce(&mut El<Ms>),
+    {
+        match self {
+            Self::Element(el) => el_map(el),
+            Self::Text(text) => text_map(text),
+            Self::Empty => (),
+        }
+        self
+    }
+    fn map_el_in_place<EMap>(&mut self, el_map: EMap) -> &mut Self
+    where
+        EMap: FnOnce(&mut El<Ms>),
+    {
+        self.map_in_place(el_map, |_| ())
+    }
+    fn map_or_else_ref<T, TMap, EMap>(&self, el_map: EMap, text_map: TMap, default: T) -> T
+    where
+        TMap: FnOnce(&Text) -> T,
+        EMap: FnOnce(&El<Ms>) -> T,
+    {
+        match self {
+            Self::Element(el) => el_map(el),
+            Self::Text(text) => text_map(text),
+            _ => default,
         }
     }
 }
@@ -858,6 +934,14 @@ pub struct El<Ms: 'static + Clone> {
     pub node_ws: Option<web_sys::Node>,
     pub namespace: Option<Namespace>,
     pub hooks: LifecycleHooks<Ms>,
+}
+impl<Ms: Clone> El<Ms> {
+    pub(crate) fn strip_ws_nodes(&mut self) {
+        self.node_ws.take();
+        for child in &mut self.children {
+            child.strip_ws_nodes();
+        }
+    }
 }
 
 type _HookFn = Box<dyn FnMut(&web_sys::Node)>; // todo
@@ -1070,7 +1154,7 @@ impl<Ms: Clone> El<Ms> {
         self
     }
 
-    // Pull text from child text nodes
+    /// Pull text from child text nodes
     pub fn get_text(&self) -> String {
         self.children
             .iter()
