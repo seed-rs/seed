@@ -143,6 +143,7 @@ where
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
+    takeover_mount: bool,
     pub update: UpdateFn<Ms, Mdl, ElC, GMs>,
     pub sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
@@ -205,6 +206,7 @@ pub struct AppBuilder<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs> {
     sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
     mount_point: Option<Element>,
+    takeover_mount: bool,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
@@ -234,6 +236,18 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, 
         let _ = util::document().query_selector("html");
 
         self.mount_point = Some(mount_point.element());
+        self
+    }
+
+    /// Allows for the [`App`] to takeover all the children of the mount point. The default
+    /// behavior is that the [`App`] ignores the children and leaves them in place. The new
+    /// behavior can be useful if SSR is implemented.
+    ///
+    /// As of right now, nodes found in the root will be destroyed and recreated once. This can
+    /// cause duplicated scripts, css, and other tags that should not otherwise be duplicated.
+    /// Unrecognized tags are also converted into spans, so take note.
+    pub fn takeover_mount(mut self, should_takeover: bool) -> Self {
+        self.takeover_mount = should_takeover;
         self
     }
 
@@ -273,6 +287,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, 
             self.sink,
             self.view,
             self.mount_point.unwrap(),
+            self.takeover_mount,
             self.routes,
             self.window_events,
         );
@@ -316,6 +331,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
             view,
             sink: None,
             mount_point: None,
+            takeover_mount: false,
             routes: None,
             window_events: None,
         }
@@ -327,6 +343,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
         view: ViewFn<Mdl, ElC>,
         mount_point: Element,
+        takeover_mount: bool,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
@@ -337,6 +354,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
             cfg: Rc::new(AppCfg {
                 document,
                 mount_point,
+                takeover_mount,
                 update,
                 sink,
                 view,
@@ -371,46 +389,60 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
     }
 
     /// Bootstrap the dom with the vdom by taking over all children of the mount point and
-    /// replacing them with the vdom.
+    /// replacing them with the vdom if requested. Will otherwise ignore the original children of
+    /// the mount point.
     fn bootstrap_vdom(&self) -> El<Ms> {
-        let mut new = {
-            // Construct the vdom from the root element. Subsequently strip the workspace so that we
-            // can recreate it later. There could be missing nodes here.
-            // TODO: Optimize by utilizing a patching strategy instead of recreating the workspace
+        let mut new = El::empty(dom_types::Tag::Placeholder);
+
+        // Map the DOM's elements onto the virtual DOM if requested to takeover.
+        if self.cfg.takeover_mount {
+            // Construct a vdom from the root element. Subsequently strip the workspace so that we
+            // can recreate it later - this is a kind of simple way to avoid missing nodes (but
+            // not entirely correct).
+            // TODO: 1) Optimize by utilizing a patching strategy instead of recreating the workspace
             // TODO: nodes.
+            // TODO: 2) Watch out for elements that should not be recreated, such as script nodes,
+            // TODO: and other, similar things. For now, leave the warning in the builder's
+            // TODO: documentation.
             let mut dom_nodes = websys_bridge::el_from_ws_element(&self.cfg.mount_point);
             dom_nodes.strip_ws_nodes();
 
             // Replace the root dom with a placeholder tag and move the children from the root element
             // to the newly created root. Uses `Placeholder` to mimic update logic.
-            let mut new = El::empty(dom_types::Tag::Placeholder);
             new.children = dom_nodes.children;
-            new
-        };
+        }
 
         // Setup listeners
         self.setup_window_listeners();
         patch::setup_input_listeners(&mut new);
         patch::attach_listeners(&mut new, &self.mailbox());
 
-        // Recreate the needed nodes.
-        // TODO: Refer the TODO at the beginning of the function.
-        let mut new_node = Node::Element(new);
-        websys_bridge::assign_ws_nodes(&util::document(), &mut new_node);
-        let mut new = new_node
-            .el()
-            .expect("`El` placed into `Node::Element` `new_node` is no longer an `El`.");
+        // Recreate the needed nodes. Only do this if requested to takeover the mount point.
+        let mut new = if self.cfg.takeover_mount {
+            // TODO: Refer the TODO at the beginning of the function.
+            let mut new_node = Node::Element(new);
+            websys_bridge::assign_ws_nodes(&util::document(), &mut new_node);
+            let new = new_node
+                .el()
+                .expect("`El` placed into `Node::Element` `new_node` is no longer an `El`.");
 
-        // Remove all old elements, and replace them with out newly created elements - we have
-        // effectively taken over the original DOM and now have free reign over the mount_point.
-        // Attach all top-level elements to the mount point: This is where our initial render
-        // occurs.
-        while let Some(child) = self.cfg.mount_point.first_child() {
-            self.cfg
-                .mount_point
-                .remove_child(&child)
-                .expect("No problem removing node from parent.");
-        }
+            // Remove all old elements. We'll swap them out with the newly created elements later.
+            // That maneuver will effectively allow us to remove everything in the mount and thus
+            // takeover the mount point.
+            while let Some(child) = self.cfg.mount_point.first_child() {
+                self.cfg
+                    .mount_point
+                    .remove_child(&child)
+                    .expect("No problem removing node from parent.");
+            }
+
+            new
+        } else {
+            new
+        };
+
+        // Attach any children that may have been added. This is left outside in case we decide to
+        // add any default nodes in the future.
         for child in &mut new.children {
             match child {
                 Node::Element(child_el) => {
@@ -424,8 +456,10 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
             }
         }
 
+        // Finally return the bootstrapped version of the virtual DOM.
         new
     }
+
     /// App initialization: Collect its fundamental components, setup, and perform
     /// an initial render.
     pub fn run(self) -> Self {
