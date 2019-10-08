@@ -494,7 +494,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         // render as per normal for seed behavior. -- Executed here to ensure that all state has
         // been initialized with a bootstrap version. The bootstrap will be replaced after first
         // render.
-        self.process_cmd_and_msg_queue(
+        self.process_cmd_and_msg_queue_with_forced_render(
             self.cfg
                 .initial_orders
                 .replace(None)
@@ -528,6 +528,10 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         self.process_cmd_and_msg_queue(queue);
     }
 
+    pub fn process_cmd_and_msg_queue_with_forced_render(&self, queue: VecDeque<Effect<Ms, GMs>>) {
+        self.process_cmd_and_msg_queue(queue);
+        self.rerender_vdom();
+    }
     pub fn process_cmd_and_msg_queue(&self, mut queue: VecDeque<Effect<Ms, GMs>>) {
         while let Some(effect) = queue.pop_front() {
             match effect {
