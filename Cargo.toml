@@ -104,6 +104,7 @@ members = [
 #    "examples/server_interaction_detailed",  # has own workspace
     "examples/todomvc",
     "examples/update_from_js",
+    "examples/user_media",
     "examples/websocket",
     "examples/window_events",
 ]
