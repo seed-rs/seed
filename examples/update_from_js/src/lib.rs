@@ -1,37 +1,60 @@
 #[macro_use]
 extern crate seed;
 use seed::prelude::*;
-use serde::Deserialize;
+use futures::future;
+use futures::prelude::*;
+use enclose::enc;
 
 // Model
 
+#[derive(Default)]
 struct Model {
     time_from_js: Option<String>,
 }
 
-impl Default for Model {
-    fn default() -> Self {
-        Self { time_from_js: None }
-    }
+// Init
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Init<Model> {
+    Init::new(Model::default())
 }
 
 // Update
 
-// We trigger update only from JS land
-#[allow(dead_code)]
-// `Deserialize` is required for receiving messages from JS land
-// (see `trigger_update_handler`)
-#[derive(Clone, Deserialize)]
+#[derive(Clone)]
 enum Msg {
-    ClockEnabled,
+    JsReady(bool),
     Tick(String),
+    NoOp,
 }
 
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::ClockEnabled => log!("Clock enabled"),
+        Msg::JsReady(ready) => {
+            if ready {
+                log!("JS ready!");
+                // We don't want to create recursive calls between Rust and JS,
+                // because our closures (see `create_closures_for_js` below) close `App` clones
+                // - app panics if JS tries to call `update` function,
+                // while we are still in `update` function.
+                // We break the recursive chain with the simple future.
+                //
+                // _Note:_ Create an issue in Seed's repo if this solution is not usable for you,
+                // we can find another one or try to integrate some locks.
+                orders.perform_cmd(wrap_in_future(|| enableClock()));
+            } else {
+                log!("JS is NOT ready!");
+            }
+        }
         Msg::Tick(time) => model.time_from_js = Some(time),
+        Msg::NoOp => ()
     }
+}
+
+fn wrap_in_future(f: impl FnOnce()) -> impl Future<Item = Msg, Error = Msg> {
+    future::ok::<(), ()>(()).then(|_| {
+        f();
+        Ok(Msg::NoOp)
+    })
 }
 
 // View
@@ -48,18 +71,45 @@ fn view(model: &Model) -> Node<Msg> {
     ]
 }
 
-#[wasm_bindgen(start)]
-pub fn render() {
-    seed::App::build(|_,_| Init::new(Model::default()), update, view)
-        // `trigger_update_handler` processes JS event
-        // and forwards it to `update` function.
-        .window_events(|_| vec![trigger_update_handler()])
+// Start
+
+#[wasm_bindgen]
+// `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
+pub fn start() -> Box<[JsValue]> {
+    let app = seed::App::build(init, update, view)
         .finish()
         .run();
 
-    // call JS function `enableClock` from `clock.js`
-    enableClock();
+    create_closures_for_js(&app)
 }
+
+fn create_closures_for_js(app: &seed::App<Msg, Model, Node<Msg>>) -> Box<[JsValue]> {
+    let js_ready = wrap_in_permanent_closure(enc!((app) move |ready| {
+        app.update(Msg::JsReady(ready))
+    }));
+
+    let tick = wrap_in_permanent_closure(enc!((app) move |time| {
+        app.update(Msg::Tick(time))
+    }));
+
+    vec![js_ready, tick].into_boxed_slice()
+}
+
+fn wrap_in_permanent_closure<T>(f: impl FnMut(T) + 'static) -> JsValue
+    where
+        T: wasm_bindgen::convert::FromWasmAbi + 'static,
+{
+    // `Closure::new` isn't in `stable` Rust (yet) - it's a custom implementation from Seed.
+    // If you need more flexibility, use `Closure::wrap`.
+    let closure = Closure::new(f);
+    let closure_as_js_value = closure.as_ref().clone();
+    // `forget` leaks `Closure` - we should use it only when
+    // we want to call given `Closure` more than once.
+    closure.forget();
+    closure_as_js_value
+}
+
+// Javascript functions
 
 #[wasm_bindgen]
 extern "C" {
