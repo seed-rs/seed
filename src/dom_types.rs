@@ -130,26 +130,29 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for El<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(Node::Element(self))
+        el.add_child(Node::Element(self));
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<El<Ms>> {
     fn update(self, el: &mut El<Ms>) {
-        el.children
-            .append(&mut self.into_iter().map(Node::Element).collect());
+        for added in self.into_iter().map(Node::Element) {
+            el.add_child(added);
+        }
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for Node<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.children.push(self)
+        el.add_child(self);
     }
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
-    fn update(mut self, el: &mut El<Ms>) {
-        el.children.append(&mut self);
+    fn update(self, el: &mut El<Ms>) {
+        for added in self {
+            el.add_child(added);
+        }
     }
 }
 
@@ -1008,6 +1011,13 @@ impl<Ms: Clone> El<Ms> {
 
     /// Add a new child to the element
     pub fn add_child(&mut self, element: Node<Ms>) -> &mut Self {
+        let mut element = element;
+        // Let children inherit the `Svg` namespace from parents.
+        if self.namespace == Some(Namespace::Svg) {
+            if let Node::Element(el) = &mut element {
+                el.namespace = Some(Namespace::Svg)
+            }
+        }
         self.children.push(element);
         self
     }
