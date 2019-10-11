@@ -115,7 +115,7 @@ element_svg! {
     // SVG gradient elements
     linear_gradient => LinearGradient; radial_gradient => RadialGradient; mesh_gradient => MeshGradient;
     stop => Stop;
-    // SVG gradphics elements
+    // SVG graphics elements
     image => Image;
     // SVG graphics referencing elements
     r#use => Use;
@@ -146,7 +146,6 @@ element_svg! {
     // todo many font elements with hyphen issue
     // SVG Paint sever elements
     hatch => Hatch; solidcolor => SolidColor
-
 }
 
 #[macro_export]
