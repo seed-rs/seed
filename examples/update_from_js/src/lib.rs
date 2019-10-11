@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate seed;
-use seed::prelude::*;
+use enclose::enc;
 use futures::future;
 use futures::prelude::*;
-use enclose::enc;
+use seed::prelude::*;
 
 // Model
 
@@ -40,13 +40,13 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 //
                 // _Note:_ Create an issue in Seed's repo if this solution is not usable for you,
                 // we can find another one or try to integrate some locks.
-                orders.perform_cmd(wrap_in_future(|| enableClock()));
+                orders.perform_cmd(wrap_in_future(enableClock));
             } else {
                 log!("JS is NOT ready!");
             }
         }
         Msg::Tick(time) => model.time_from_js = Some(time),
-        Msg::NoOp => ()
+        Msg::NoOp => (),
     }
 }
 
@@ -76,9 +76,7 @@ fn view(model: &Model) -> Node<Msg> {
 #[wasm_bindgen]
 // `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
 pub fn start() -> Box<[JsValue]> {
-    let app = seed::App::build(init, update, view)
-        .finish()
-        .run();
+    let app = seed::App::build(init, update, view).finish().run();
 
     create_closures_for_js(&app)
 }
@@ -96,8 +94,8 @@ fn create_closures_for_js(app: &seed::App<Msg, Model, Node<Msg>>) -> Box<[JsValu
 }
 
 fn wrap_in_permanent_closure<T>(f: impl FnMut(T) + 'static) -> JsValue
-    where
-        T: wasm_bindgen::convert::FromWasmAbi + 'static,
+where
+    T: wasm_bindgen::convert::FromWasmAbi + 'static,
 {
     // `Closure::new` isn't in `stable` Rust (yet) - it's a custom implementation from Seed.
     // If you need more flexibility, use `Closure::wrap`.

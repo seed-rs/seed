@@ -2,6 +2,7 @@
 
 //#![deny(missing_docs)]
 #![allow(clippy::use_self, clippy::single_match_else)]
+#![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
 
 pub use crate::{
     fetch::{Method, Request},
