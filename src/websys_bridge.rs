@@ -1,6 +1,6 @@
 //! This file contains interactions with `web_sys`.
 use crate::dom_types;
-use crate::dom_types::{AtValue, El, Node, Text};
+use crate::dom_types::{AtValue, El, Node, Text, Namespace};
 
 use wasm_bindgen::JsCast;
 use web_sys::Document;
@@ -363,6 +363,18 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
                     }
                 });
             el.attrs = attrs;
+
+            // todo etc
+            let svg_tags = vec![
+                "svg", "circle", "line", "rect"
+            ];
+            let svg_tags: Vec<String> = svg_tags.into_iter().map(|t| t.to_string()).collect();
+
+            crate::log(&node_ws.tag_name());
+            if svg_tags.contains(&node_ws.tag_name().to_lowercase()) {
+                crate::log(&format!("Found one!: {}", &node_ws.tag_name()));
+                el.namespace = Some(Namespace::Svg);
+            }
 
             if let Some(ns) = node_ws.namespace_uri() {
                 // Prevent attaching a `xlmns` attribute to normal HTML elements.

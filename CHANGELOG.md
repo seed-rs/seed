@@ -2,6 +2,9 @@
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
+- Fixed a bug with children being absent from cloned elements
+- Improved debugging
+- Fixed a namespace bug with adding children to `Svg` elements
 
 ## v0.4.1
 - Added more SVG `At` variants

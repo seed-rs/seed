@@ -68,7 +68,10 @@ fn view(model: &Model) -> impl View<Msg> {
             St::TextAlign => "center",
     };
 
+    let a = svg![El::from_html(r#"<rect x="5" y="5" width="20" height="20"></rect>"#)];
+
     div![
+        a,
         outer_style,
         h1!["The Grand Total"],
         div![
