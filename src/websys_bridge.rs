@@ -370,9 +370,7 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
             ];
             let svg_tags: Vec<String> = svg_tags.into_iter().map(|t| t.to_string()).collect();
 
-            crate::log(&node_ws.tag_name());
             if svg_tags.contains(&node_ws.tag_name().to_lowercase()) {
-                crate::log(&format!("Found one!: {}", &node_ws.tag_name()));
                 el.namespace = Some(Namespace::Svg);
             }
 
