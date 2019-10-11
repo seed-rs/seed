@@ -1,6 +1,6 @@
 //! This file contains interactions with `web_sys`.
 use crate::dom_types;
-use crate::dom_types::{AtValue, El, Node, Text, Namespace};
+use crate::dom_types::{AtValue, El, Namespace, Node, Text};
 
 use wasm_bindgen::JsCast;
 use web_sys::Document;
@@ -364,11 +364,90 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
                 });
             el.attrs = attrs;
 
-            // todo etc
-            let svg_tags = vec![
-                "svg", "circle", "line", "rect"
-            ];
-            let svg_tags: Vec<String> = svg_tags.into_iter().map(|t| t.to_string()).collect();
+            // This is the same list in `shortcuts::element_svg!`.
+            let svg_tags: Vec<String> = vec![
+                "line",
+                "rect",
+                "circle",
+                "ellipse",
+                "polygon",
+                "polyline",
+                "mesh",
+                "path",
+                "defs",
+                "g",
+                "marker",
+                "mask",
+                "pattern",
+                "svg",
+                "switch",
+                "symbol",
+                "unknown",
+                "linear_gradient",
+                "radial_gradient",
+                "mesh_gradient",
+                "stop",
+                "image",
+                "r#use",
+                "altGlyph",
+                "altGlyphDef",
+                "altGlyphItem",
+                "glyph",
+                "glyphRef",
+                "textPath",
+                "text",
+                "tref",
+                "tspan",
+                "clipPath",
+                "cursor",
+                "filter",
+                "foreignObject",
+                "hathpath",
+                "meshPatch",
+                "meshRow",
+                "view",
+                "colorProfile",
+                "animage",
+                "animateColor",
+                "animateMotion",
+                "animateTransform",
+                "discard",
+                "mpath",
+                "set",
+                "desc",
+                "metadata",
+                "title",
+                "feBlend",
+                "feColorMatrix",
+                "feComponentTransfer",
+                "feComposite",
+                "feConvolveMatrix",
+                "feDiffuseLighting",
+                "feDisplacementMap",
+                "feDropShadow",
+                "feFlood",
+                "feFuncA",
+                "feFuncB",
+                "feFuncG",
+                "feFuncR",
+                "feGaussianBlur",
+                "feImage",
+                "feMerge",
+                "feMergeNode",
+                "feMorphology",
+                "feOffset",
+                "feSpecularLighting",
+                "feTile",
+                "feTurbulence",
+                "font",
+                "hkern",
+                "vkern",
+                "hatch",
+                "solidcolor",
+            ]
+            .into_iter()
+            .map(|t| t.to_string())
+            .collect();
 
             if svg_tags.contains(&node_ws.tag_name().to_lowercase()) {
                 el.namespace = Some(Namespace::Svg);
