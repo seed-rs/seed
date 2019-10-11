@@ -364,7 +364,9 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
                 });
             el.attrs = attrs;
 
-            // This is the same list in `shortcuts::element_svg!`.
+            // todo This is the same list in `shortcuts::element_svg!`.
+            // todo: Fix this repetition: Use `/scripts/populate_tags.rs`
+            // todo to consolodate these lists.
             let svg_tags = [
                 "line",
                 "rect",
