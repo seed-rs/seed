@@ -1,7 +1,7 @@
 ## Update from JS example
 
-How to trigger `update` function by events fired outside of App instance.
-Also you'll see how to call JS functions from Rust.
+How to trigger `update` function from Javascript world.
+You'll also see how to call JS functions from Rust.
 
 ---
 
