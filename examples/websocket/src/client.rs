@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate seed;
 
+use js_sys::Function;
 use seed::{prelude::*, App};
 use wasm_bindgen::JsCast;
-use js_sys::Function;
 use web_sys::{MessageEvent, WebSocket};
 
 mod json;
@@ -27,9 +27,9 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
     let ws = WebSocket::new(WS_URL).unwrap();
 
     register_ws_handler(WebSocket::set_onopen, Msg::Connected, &ws, orders);
-    register_ws_handler(WebSocket::set_onclose, Msg::Closed, &ws, orders, );
-    register_ws_handler( WebSocket::set_onmessage, Msg::ServerMessage, &ws, orders,);
-    register_ws_handler( WebSocket::set_onerror, Msg::Error, &ws, orders,);
+    register_ws_handler(WebSocket::set_onclose, Msg::Closed, &ws, orders);
+    register_ws_handler(WebSocket::set_onmessage, Msg::ServerMessage, &ws, orders);
+    register_ws_handler(WebSocket::set_onerror, Msg::Error, &ws, orders);
 
     Init::new(Model {
         ws,
@@ -41,10 +41,14 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
     })
 }
 
-fn register_ws_handler<T, F>(ws_cb_setter: fn(&WebSocket, Option<&Function>), msg: F, ws: &WebSocket, orders: &mut impl Orders<Msg>)
-    where
-        T: wasm_bindgen::convert::FromWasmAbi + 'static,
-        F: Fn(T)->Msg + 'static
+fn register_ws_handler<T, F>(
+    ws_cb_setter: fn(&WebSocket, Option<&Function>),
+    msg: F,
+    ws: &WebSocket,
+    orders: &mut impl Orders<Msg>,
+) where
+    T: wasm_bindgen::convert::FromWasmAbi + 'static,
+    F: Fn(T) -> Msg + 'static,
 {
     let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
 
@@ -150,8 +154,5 @@ fn view(model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    App::build(init, update, view)
-        .finish()
-        .run();
+    App::build(init, update, view).finish().run();
 }
-
