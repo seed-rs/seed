@@ -365,7 +365,7 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
             el.attrs = attrs;
 
             // This is the same list in `shortcuts::element_svg!`.
-            let svg_tags: Vec<String> = vec![
+            let svg_tags = [
                 "line",
                 "rect",
                 "circle",
@@ -444,12 +444,9 @@ pub fn node_from_ws<Ms: Clone>(node: &web_sys::Node) -> Option<Node<Ms>> {
                 "vkern",
                 "hatch",
                 "solidcolor",
-            ]
-            .into_iter()
-            .map(|t| t.to_string())
-            .collect();
+            ];
 
-            if svg_tags.contains(&node_ws.tag_name().to_lowercase()) {
+            if svg_tags.contains(&node_ws.tag_name().to_lowercase().as_str()) {
                 el.namespace = Some(Namespace::Svg);
             }
 
