@@ -23,6 +23,7 @@ ws = { version = "0.8.1", optional = true }
 #client
 seed = { path = "../../", optional = true }
 wasm-bindgen = { version = "^0.2.45", optional = true }
+js-sys = "0.3.28"
 [dependencies.web-sys]
 version = "^0.3.22"
 features = ["WebSocket", "MessageEvent"]

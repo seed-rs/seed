@@ -12,6 +12,7 @@ use std::{fmt, mem};
 use wasm_bindgen::{closure::Closure, JsCast};
 pub type Event = web_sys::Event;
 
+#[deprecated]
 pub const UPDATE_TRIGGER_EVENT_ID: &str = "triggerupdate";
 
 /// Similar to tag population.
@@ -121,6 +122,7 @@ make_events! {
 
     Input => "input",
 
+    // deprecated, @TODO: remove
     TriggerUpdate => "triggerupdate"
 }
 
@@ -399,6 +401,7 @@ where
 
 /// Create an event that passes a `web_sys::CustomEvent`, allowing easy access
 /// to detail() and then trigger update
+#[deprecated]
 pub fn trigger_update_ev<Ms: Clone>(
     handler: impl FnOnce(web_sys::CustomEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
@@ -427,6 +430,7 @@ pub(crate) fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
 //}
 
 /// Trigger update function from outside of App
+#[deprecated]
 pub fn trigger_update_handler<Ms: Clone + DeserializeOwned>() -> Listener<Ms> {
     trigger_update_ev(|ev| {
         ev.detail()

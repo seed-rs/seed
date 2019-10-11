@@ -225,6 +225,9 @@ pub fn error<T: std::fmt::Debug>(object: T) -> T {
 /// It requires Msg to be (De)serializable
 /// and to register `trigger_update_handler` in `window_events`.
 /// Consider to use [`App::update`](struct.App.html#method.update) if you have access to the [`App`](struct.App.html) instance.
+///
+/// _Note_: Function is `deprecated`. See examples `update_from_js`, `websocket` and `animation_frame` for alternatives.
+#[deprecated]
 pub fn update<Ms>(msg: Ms)
 where
     Ms: Clone + 'static + serde::Serialize,

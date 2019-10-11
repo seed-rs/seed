@@ -435,9 +435,6 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
     /// We re-render the virtual DOM on every change, but (attempt to) only change
     /// the actual DOM, via web_sys, when we need.
     /// The model stored in inner is the old model; updated_model is a newly-calculated one.
-    ///
-    /// If you have no access to the [`App`](struct.App.html) instance you can use
-    /// alternatively the [`seed::update`](fn.update.html) function.
     pub fn update(&self, message: Ms) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
         queue.push_front(message.into());
