@@ -8,6 +8,7 @@ use web_sys;
 
 pub type RequestAnimationFrameTime = f64;
 
+#[must_use]
 pub struct RequestAnimationFrameHandle {
     request_id: i32,
     _closure: Closure<dyn FnMut(RequestAnimationFrameTime)>,
