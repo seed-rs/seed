@@ -227,13 +227,12 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, 
     /// mount(seed::body().querySelector("section").unwrap().unwrap())
     /// ```
     pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
-        self.mount_point = Some(mount_point.element());
-        self
-    }
+        // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
+        // https://github.com/David-OConnor/seed/issues/241
+        // https://bugs.webkit.org/show_bug.cgi?id=202881
+        let _ = util::document().query_selector("html");
 
-    #[deprecated(since = "0.3.3", note = "please use `mount` instead")]
-    pub fn mount_el(mut self, el: Element) -> Self {
-        self.mount_point = Some(el);
+        self.mount_point = Some(mount_point.element());
         self
     }
 
