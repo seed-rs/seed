@@ -122,9 +122,21 @@ impl<Ms: Clone> UpdateEl<El<Ms>> for WillUnmount<Ms> {
 }
 
 impl<Ms: Clone> UpdateEl<El<Ms>> for &str {
-    // This, or some other mechanism seems to work for String too... note sure why.
     fn update(self, el: &mut El<Ms>) {
         el.children.push(Node::Text(Text::new(self.to_string())))
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for &String {
+    fn update(self, el: &mut El<Ms>) {
+        el.children.push(Node::Text(Text::new(self.clone())))
+    }
+}
+
+impl<Ms: Clone> UpdateEl<El<Ms>> for String {
+    // This, or some other mechanism seems to work for String too... note sure why.
+    fn update(self, el: &mut El<Ms>) {
+        el.children.push(Node::Text(Text::new(self)))
     }
 }
 
