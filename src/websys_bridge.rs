@@ -345,16 +345,14 @@ pub fn el_from_ws_element<Ms: Clone>(ws: &web_sys::Element) -> El<Ms> {
 
     // Populate attributes
     let mut attrs = dom_types::Attrs::empty();
-    ws
-        .get_attribute_names()
-        .for_each(&mut |attr_name, _, _| {
-            let attr_name2 = attr_name
-                .as_string()
-                .expect("problem converting attr to string");
-            if let Some(attr_val) = ws.get_attribute(&attr_name2) {
-                attrs.add(attr_name2.into(), &attr_val);
-            }
-        });
+    ws.get_attribute_names().for_each(&mut |attr_name, _, _| {
+        let attr_name2 = attr_name
+            .as_string()
+            .expect("problem converting attr to string");
+        if let Some(attr_val) = ws.get_attribute(&attr_name2) {
+            attrs.add(attr_name2.into(), &attr_val);
+        }
+    });
     el.attrs = attrs;
 
     // todo This is the same list in `shortcuts::element_svg!`.
