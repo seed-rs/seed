@@ -530,14 +530,15 @@ macro_rules! make_tags {
             }
         }
 
-        impl From<String> for Tag {
-            fn from(tag: String) -> Self {
+        impl<'a, T: Into<Cow<'a, str>>> From<T> for Tag {
+            fn from(tag: T) -> Self {
+                let tag: Cow<'a, str> = tag.into();
                 match tag.as_ref() {
                     $ (
                           $tag => Tag::$tag_camel,
                     ) +
                     _ => {
-                        Tag::Span
+                        Tag::Custom(tag.to_string())
                     }
                 }
             }
