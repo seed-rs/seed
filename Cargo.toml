@@ -52,6 +52,7 @@ features = [
     "Element",
     "Event",
     "EventTarget",
+    "HashChangeEvent",
     "Headers",
     "History",
     "HtmlElement",
