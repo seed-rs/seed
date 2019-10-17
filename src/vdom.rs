@@ -128,6 +128,7 @@ pub struct AppData<Ms: 'static + Clone, Mdl> {
     pub model: RefCell<Option<Mdl>>,
     main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
+    pub hashchange_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     window_listeners: RefCell<Vec<events::Listener<Ms>>>,
     msg_listeners: RefCell<MsgListeners<Ms>>,
@@ -345,6 +346,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
                 // This is filled for the first time in run()
                 main_el_vdom: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
+                hashchange_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
                 window_listeners: RefCell::new(Vec::new()),
                 msg_listeners: RefCell::new(Vec::new()),
@@ -415,6 +417,13 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
                 enclose!((self => s) move |msg| s.update(msg)),
                 enclose!((self => s) move |closure| {
                     s.data.popstate_closure.replace(Some(closure));
+                }),
+                routes,
+            );
+            routing::setup_hashchange_listener(
+                enclose!((self => s) move |msg| s.update(msg)),
+                enclose!((self => s) move |closure| {
+                    s.data.hashchange_closure.replace(Some(closure));
                 }),
                 routes,
             );
