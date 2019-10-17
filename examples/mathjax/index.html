@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -10,19 +11,19 @@
 
     <link rel="stylesheet" type="text/css" href="style.css">
 
-    <!--    https://github.com/janmarthedal/math-tex   -->
-    <script type="text/javascript" src="/public/math-tex-controller.js"></script>
-    <script type="text/javascript" src="/public/math-tex.js"></script>
-
     <title>Linear algebra identities</title>
 
 </head>
-    <body>
-        <section id="app"></section>
-        <script type="module">
-            // https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html
-            import init from '/pkg/package.js';
-            init('/pkg/package_bg.wasm');
-        </script>
-    </body>
+
+<body>
+    <section id="app"></section>
+    <script type="module">
+        // https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html
+        import init from '/pkg/package.js';
+        init('/pkg/package_bg.wasm');
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module" async src="/public/math-tex.js"></script>
+</body>
+
 </html>
