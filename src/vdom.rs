@@ -25,7 +25,7 @@ mod alias;
 mod builder;
 
 pub use alias::*;
-pub use builder::{Builder as AppBuilder, Init, Initializer, UrlHandling};
+pub use builder::{BootstrapBehavior, Builder as AppBuilder, Init, Initializer, UrlHandling};
 
 pub enum Effect<Ms, GMs> {
     Msg(Ms),
@@ -106,12 +106,12 @@ where
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
-    takeover_mount: bool,
     pub update: UpdateFn<Ms, Mdl, ElC, GMs>,
     pub sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
     initial_orders: RefCell<Option<OrdersContainer<Ms, Mdl, ElC, GMs>>>,
+    bootstrap_behavior: RefCell<Option<BootstrapBehavior>>,
 }
 
 pub struct App<Ms: Clone, Mdl, ElC, GMs = ()>
@@ -154,7 +154,6 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
         view: ViewFn<Mdl, ElC>,
         mount_point: Element,
-        takeover_mount: bool,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
     ) -> Self {
@@ -165,12 +164,12 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
             cfg: Rc::new(AppCfg {
                 document,
                 mount_point,
-                takeover_mount,
                 update,
                 sink,
                 view,
                 window_events,
                 initial_orders: RefCell::new(None),
+                bootstrap_behavior: RefCell::new(None),
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(None),
@@ -203,10 +202,11 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
     /// replacing them with the vdom if requested. Will otherwise ignore the original children of
     /// the mount point.
     fn bootstrap_vdom(&self) -> El<Ms> {
+        let bootstrap_behavior = *self.cfg.bootstrap_behavior.borrow();
         let mut new = El::empty(dom_types::Tag::Placeholder);
 
         // Map the DOM's elements onto the virtual DOM if requested to takeover.
-        if self.cfg.takeover_mount {
+        if bootstrap_behavior == Some(BootstrapBehavior::Takeover) {
             // Construct a vdom from the root element. Subsequently strip the workspace so that we
             // can recreate it later - this is a kind of simple way to avoid missing nodes (but
             // not entirely correct).
@@ -229,7 +229,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         patch::attach_listeners(&mut new, &self.mailbox());
 
         // Recreate the needed nodes. Only do this if requested to takeover the mount point.
-        let mut new = if self.cfg.takeover_mount {
+        let mut new = if bootstrap_behavior == Some(BootstrapBehavior::Takeover) {
             // TODO: Refer the TODO at the beginning of the function.
             let mut new_node = Node::Element(new);
             websys_bridge::assign_ws_nodes(&util::document(), &mut new_node);
@@ -271,6 +271,17 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         new
     }
 
+    fn initial_update(&self) {
+        let queue = self
+            .cfg
+            .initial_orders
+            .replace(None)
+            .expect("initial_orders should be set in AppBuilder::finish")
+            .effects;
+        self.process_cmd_and_msg_queue(queue);
+        self.rerender_vdom();
+    }
+
     /// App initialization: Collect its fundamental components, setup, and perform
     /// an initial render.
     pub fn run(self) -> Self {
@@ -305,13 +316,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         // render as per normal for seed behavior. -- Executed here to ensure that all state has
         // been initialized with a bootstrap version. The bootstrap will be replaced after first
         // render.
-        self.process_cmd_and_msg_queue_with_forced_render(
-            self.cfg
-                .initial_orders
-                .replace(None)
-                .expect("initial_orders should be set in AppBuilder::finish")
-                .effects,
-        );
+        self.initial_update();
 
         self
     }
@@ -339,10 +344,6 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
         self.process_cmd_and_msg_queue(queue);
     }
 
-    pub fn process_cmd_and_msg_queue_with_forced_render(&self, queue: VecDeque<Effect<Ms, GMs>>) {
-        self.process_cmd_and_msg_queue(queue);
-        self.rerender_vdom();
-    }
     pub fn process_cmd_and_msg_queue(&self, mut queue: VecDeque<Effect<Ms, GMs>>) {
         while let Some(effect) = queue.pop_front() {
             match effect {

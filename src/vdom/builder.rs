@@ -10,35 +10,44 @@ use crate::{
 pub trait Initializer<Ms: Clone + 'static, Mdl, ElC: View<Ms>, GMs> {
     fn into_init(
         self,
-        routing_method: routing::Url,
+        url: routing::Url,
         orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> Init<Mdl>;
 }
 impl<Ms: Clone + 'static, Mdl, ElC: View<Ms>, GMs, F> Initializer<Ms, Mdl, ElC, GMs> for F
 where
-    F: FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
+    F: for<'r, 'a> FnOnce(routing::Url, &'a mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
 {
     fn into_init(
         self,
-        routing_method: routing::Url,
+        url: routing::Url,
         orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> Init<Mdl> {
-        self(routing_method, orders)
+        self(url, orders)
     }
 }
 
 /// Used for handling initial routing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UrlHandling {
     PassToRoutes,
     None,
     // todo: Expand later, as-required
 }
 
+/// Used for determining behavior at startup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BootstrapBehavior {
+    Takeover,
+    Append,
+}
+
 /// Used as a flexible wrapper for the init function.
 pub struct Init<Mdl> {
     //    init: InitFn<Ms, Mdl, ElC, GMs>,
-    model: Mdl,
-    url_handling: UrlHandling,
+    pub model: Mdl,
+    pub url_handling: UrlHandling,
+    pub bootstrap_behavior: BootstrapBehavior,
 }
 
 impl<Mdl> Init<Mdl> {
@@ -46,6 +55,7 @@ impl<Mdl> Init<Mdl> {
         Self {
             model,
             url_handling: UrlHandling::PassToRoutes,
+            bootstrap_behavior: BootstrapBehavior::Append,
         }
     }
 
@@ -53,6 +63,7 @@ impl<Mdl> Init<Mdl> {
         Self {
             model,
             url_handling,
+            bootstrap_behavior: BootstrapBehavior::Append,
         }
     }
 }
@@ -104,7 +115,6 @@ pub struct Builder<
     sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
     mount_point: Option<Element>,
-    takeover_mount: bool,
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
@@ -112,14 +122,17 @@ pub struct Builder<
 impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static, I: Initializer<Ms, Mdl, ElC, GMs>>
     Builder<Ms, Mdl, ElC, GMs, I>
 {
-    pub fn new(init: I, update: UpdateFn<Ms, Mdl, ElC, GMs>, view: ViewFn<Mdl, ElC>) -> Self {
+    pub(super) fn new(
+        init: I,
+        update: UpdateFn<Ms, Mdl, ElC, GMs>,
+        view: ViewFn<Mdl, ElC>,
+    ) -> Self {
         Self {
             init,
             update,
             view,
             sink: None,
             mount_point: None,
-            takeover_mount: false,
             routes: None,
             window_events: None,
         }
@@ -155,18 +168,6 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static, I: Initializer<Ms, M
     #[deprecated(since = "0.3.3", note = "please use `mount` instead")]
     pub fn mount_el(mut self, el: Element) -> Self {
         self.mount_point = Some(el);
-        self
-    }
-
-    /// Allows for the [`App`] to takeover all the children of the mount point. The default
-    /// behavior is that the [`App`] ignores the children and leaves them in place. The new
-    /// behavior can be useful if SSR is implemented.
-    ///
-    /// As of right now, nodes found in the root will be destroyed and recreated once. This can
-    /// cause duplicated scripts, css, and other tags that should not otherwise be duplicated.
-    /// Unrecognized tags are also converted into spans, so take note.
-    pub fn takeover_mount(mut self, should_takeover: bool) -> Self {
-        self.takeover_mount = should_takeover;
         self
     }
 
@@ -206,7 +207,6 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static, I: Initializer<Ms, M
             self.sink,
             self.view,
             self.mount_point.unwrap(),
-            self.takeover_mount,
             self.routes,
             self.window_events,
         );
@@ -229,6 +229,9 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static, I: Initializer<Ms, M
         };
 
         app.cfg.initial_orders.replace(Some(initial_orders));
+        app.cfg
+            .bootstrap_behavior
+            .replace(Some(init.bootstrap_behavior));
         app.data.model.replace(Some(init.model));
 
         app
