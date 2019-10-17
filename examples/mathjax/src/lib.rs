@@ -29,7 +29,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 // View
 
 fn math_tex(expression: &str) -> Node<Msg> {
-    custom![Tag::Custom("math-tex".into()), expression]
+    custom![Tag::from("math-tex"), expression]
 }
 
 fn definition(description: &str, def: &str, index: usize) -> Node<Msg> {

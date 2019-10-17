@@ -180,8 +180,15 @@ macro_rules! plain {
 macro_rules! custom {
     ( $($part:expr),* $(,)? ) => {
         {
-            let mut el = El::empty($crate::dom_types::Tag::Custom("missingtagname".into()));
+            let default_tag_name = "missing-tag-name";
+            let mut el = El::empty($crate::dom_types::Tag::from(default_tag_name));
             $ ( $part.update(&mut el); )*
+
+            if let $crate::dom_types::Tag::Custom(tag_name) = &el.tag {
+                let tag_changed = tag_name != default_tag_name;
+                assert!(tag_changed, "Tag has not been set in `custom!` element. Add e.g. `Tag::from(\"code-block\")`.");
+            }
+
             $crate::dom_types::Node::Element(el)
         }
     };
