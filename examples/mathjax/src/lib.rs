@@ -29,7 +29,13 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 // View
 
 fn math_tex(expression: &str) -> Node<Msg> {
-    custom![Tag::from("math-tex"), expression]
+    custom![
+        Tag::from("math-tex"),
+        style! {
+            St::Display => "none",
+        },
+        expression,
+    ]
 }
 
 fn definition(description: &str, def: &str, index: usize) -> Node<Msg> {
@@ -85,11 +91,14 @@ fn view(model: &Model) -> impl View<Msg> {
                 h2!["A description of terms"],
                 div![
                     ul![
-                        li![math_tex(r"\mathbf{A}, \mathbf{B} \text{ or } \mathbf{C} : \text{Matrices}")],
-                        li![math_tex(r"\mathbf{T} \text{ or } \mathbf{S} : \text{Arbitrary operators}")],
-                        li![math_tex(r"\mathbf{a}, \mathbf{b}, \mathbf{c} \text{ or } \mathbf{d} : \text{Arbitrary vectors}")],
-                        li![math_tex(r"\mathbf{α} \text{ or } \mathbf{β} : \text{Arbitrary constants}")],
-                        li![math_tex(r"\mathbf{i}, \mathbf{j} \text{ or } \mathbf{k} : \text{Basis vectors}")],
+                        style!{
+                            St::ListStyle => "none",
+                        },
+                        li![math_tex(r"\mathbf{A}, \mathbf{B} \text{ or } \mathbf{C} \text{  .....  } \text{Matrices}")],
+                        li![math_tex(r"\mathbf{T} \text{ or } \mathbf{S} \text{  .....  } \text{Arbitrary operators}")],
+                        li![math_tex(r"\mathbf{a}, \mathbf{b}, \mathbf{c} \text{ or } \mathbf{d} \text{  .....  } \text{Arbitrary vectors}")],
+                        li![math_tex(r"\mathbf{α} \text{ or } \mathbf{β} \text{  .....  } \text{Arbitrary constants}")],
+                        li![math_tex(r"\mathbf{i}, \mathbf{j} \text{ or } \mathbf{k} \text{  .....  } \text{Basis vectors}")],
                     ]
                 ]
             ]
