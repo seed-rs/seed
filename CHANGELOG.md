@@ -2,14 +2,14 @@
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
-- Changed `Tag::Custom` to `Tag::from` (Breaking)
+- updated `Tag::from()` to accept more input types
 - Improved error-handling
-- Macro custom! checks if you set tag, and panics when you forget.
+- Macro `custom!` checks if you set tag, and panics when you forget
 - Fixed a bug with children being absent from cloned elements
 - Improved debugging
-- Added a routing listener for changed hash.
+- Added a routing listener for changed hash
 - Fixed a namespace bug with adding children to `Svg` elements
-- Fixed a bug affecting Safari.
+- Fixed a bug affecting Safari
 
 ## v0.4.1
 - Added more SVG `At` variants

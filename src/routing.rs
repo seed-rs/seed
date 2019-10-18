@@ -26,7 +26,7 @@ mod util {
 
 /// Contains all information used in pushing and handling routes.
 /// Based on [React-Reason's router](https://github.com/reasonml/reason-react/blob/master/docs/router.md).
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Url {
     pub path: Vec<String>,
     pub search: Option<String>,
@@ -74,14 +74,62 @@ impl Url {
 }
 
 impl From<String> for Url {
-    // todo: Include hash and search.
     fn from(s: String) -> Self {
+        // This could be done more elegantly with regex, but adding it as a dependency
+        // causes a big increase in WASM size.
         let mut path: Vec<String> = s.split('/').map(ToString::to_string).collect();
-        path.remove(0); // Remove a leading empty string.
+        if let Some(first) = path.get(0) {
+            if first.is_empty() {
+                path.remove(0); // Remove a leading empty string.
+            }
+        }
+
+        // We assume hash and search terms are at the end of the path, and hash comes before search.
+        let last = path.pop();
+
+        let mut last_path = String::new();
+        let mut hash = String::new();
+        let mut search = String::new();
+
+        if let Some(l) = last {
+            let mut in_hash = false;
+            let mut in_search = false;
+            for c in l.chars() {
+                if c == '#' {
+                    in_hash = true;
+                    in_search = false;
+                    continue;
+                }
+
+                if c == '?' {
+                    in_hash = false;
+                    in_search = true;
+                    continue;
+                }
+
+                if in_hash {
+                    hash.push(c);
+                } else if in_search {
+                    search.push(c);
+                } else {
+                    last_path.push(c);
+                }
+            }
+        }
+
+        // Re-add the pre-`#` and pre-`?` part of the path.
+        if !last_path.is_empty() {
+            path.push(last_path);
+        }
+
         Self {
             path,
-            hash: None,
-            search: None,
+            hash: if hash.is_empty() { None } else { Some(hash) },
+            search: if search.is_empty() {
+                None
+            } else {
+                Some(search)
+            },
             title: None,
         }
     }
@@ -234,6 +282,7 @@ pub fn setup_popstate_listener<Ms>(
                 Url::new(empty)
             }
         };
+
         // Only update when requested for an update by the user.
         if let Some(routing_msg) = routes(url) {
             update(routing_msg);
@@ -326,4 +375,48 @@ where
         .expect("Problem setting up link interceptor");
 
     closure.forget(); // todo: Can we store the closure somewhere to avoid using forget?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_url_simple() {
+        let expected = Url {
+            path: vec!["path1".into(), "path2".into()],
+            hash: None,
+            search: None,
+            title: None,
+        };
+
+        let actual: Url = "/path1/path2".to_string().into();
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn parse_url_with_hash_search() {
+        let expected = Url {
+            path: vec!["path".into()],
+            hash: Some("hash".into()),
+            search: Some("sea=rch".into()),
+            title: None,
+        };
+
+        let actual: Url = "/path/#hash?sea=rch".to_string().into();
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn parse_url_with_hash_only() {
+        let expected = Url {
+            path: vec!["path".into()],
+            hash: Some("hash".into()),
+            search: None,
+            title: None,
+        };
+
+        let actual: Url = "/path/#hash".to_string().into();
+        assert_eq!(expected, actual)
+    }
 }
