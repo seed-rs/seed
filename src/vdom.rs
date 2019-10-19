@@ -40,10 +40,13 @@ impl<Ms, GMs> From<Ms> for Effect<Ms, GMs> {
 }
 impl<Ms: 'static, OtherMs: 'static, GMs> MessageMapper<Ms, OtherMs> for Effect<Ms, GMs> {
     type SelfWithOtherMs = Effect<OtherMs, GMs>;
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Effect<OtherMs, GMs> {
+    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static) -> Effect<OtherMs, GMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::Cmd(cmd) => Effect::Cmd(Box::new(cmd.map(f.clone()).map_err(f))),
+            Effect::Cmd(cmd) => Effect::Cmd(Box::new(cmd.then(move |res| match res {
+                Ok(msg) => Ok(f(msg)),
+                Err(msg) => Err(f(msg)),
+            }))),
             Effect::GMsg(g_msg) => Effect::GMsg(g_msg),
             Effect::GCmd(g_cmd) => Effect::GCmd(g_cmd),
         }
@@ -86,7 +89,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<dyn FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct AppData<Ms: 'static + Clone, Mdl> {
+pub struct AppData<Ms: 'static, Mdl> {
     // Model is in a RefCell here so we can modify it in self.update().
     pub model: RefCell<Option<Mdl>>,
     main_el_vdom: RefCell<Option<El<Ms>>>,
@@ -98,7 +101,7 @@ pub struct AppData<Ms: 'static + Clone, Mdl> {
     scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
 }
 
-pub struct AppCfg<Ms: Clone, Mdl, ElC, GMs>
+pub struct AppCfg<Ms, Mdl, ElC, GMs>
 where
     Ms: 'static,
     Mdl: 'static,
@@ -114,7 +117,7 @@ where
     bootstrap_behavior: RefCell<Option<BootstrapBehavior>>,
 }
 
-pub struct App<Ms: Clone, Mdl, ElC, GMs = ()>
+pub struct App<Ms, Mdl, ElC, GMs = ()>
 where
     Ms: 'static,
     Mdl: 'static,
@@ -126,9 +129,7 @@ where
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug
-    for App<Ms, Mdl, ElC, GMs>
-{
+impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms, Mdl, ElC, GMs> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -136,7 +137,7 @@ impl<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn build<I: FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>(
         init: I,
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
@@ -519,7 +520,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
     }
 }
 
-impl<Ms: Clone, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
     fn clone(&self) -> Self {
         Self {
             cfg: Rc::clone(&self.cfg),
@@ -550,7 +551,7 @@ pub trait _DomEl<Ms>: Sized + PartialEq + DomElLifecycle {
     type At: _Attrs;
     type St: _Style;
     type Ls: _Listener<Ms>;
-    type Tx: PartialEq + ToString + Clone + Default;
+    type Tx: PartialEq + ToString + Default;
 
     // Fields
     fn tag(self) -> Self::Tg;
@@ -609,7 +610,7 @@ pub mod tests {
 
     wasm_bindgen_test_configure!(run_in_browser);
 
-    #[derive(Clone, Debug)]
+    #[derive(Debug)]
     enum Msg {}
 
     struct Model {}
@@ -1260,7 +1261,6 @@ pub mod tests {
             counters: Counters,
             test_value_sender: Option<futures::sync::oneshot::Sender<Counters>>,
         }
-        #[derive(Clone)]
         enum Msg {
             MessageReceived,
             CommandPerformed,

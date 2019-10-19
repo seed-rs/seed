@@ -7,14 +7,14 @@ use crate::{
     vdom::{alias::*, App},
 };
 
-pub trait Initializer<Ms: Clone + 'static, Mdl, ElC: View<Ms>, GMs> {
+pub trait Initializer<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     fn into_init(
         self,
         url: routing::Url,
         orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> Init<Mdl>;
 }
-impl<Ms: Clone + 'static, Mdl, ElC: View<Ms>, GMs, F> Initializer<Ms, Mdl, ElC, GMs> for F
+impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> Initializer<Ms, Mdl, ElC, GMs> for F
 where
     F: for<'r, 'a> FnOnce(routing::Url, &'a mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
 {
@@ -103,13 +103,8 @@ impl MountPoint for web_sys::HtmlElement {
 }
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
-pub struct Builder<
-    Ms: 'static + Clone,
-    Mdl: 'static,
-    ElC: View<Ms>,
-    GMs,
-    I: Initializer<Ms, Mdl, ElC, GMs>,
-> {
+pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs, I: Initializer<Ms, Mdl, ElC, GMs>>
+{
     init: I,
     update: UpdateFn<Ms, Mdl, ElC, GMs>,
     sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
@@ -119,7 +114,7 @@ pub struct Builder<
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static, I: Initializer<Ms, Mdl, ElC, GMs>>
+impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static, I: Initializer<Ms, Mdl, ElC, GMs>>
     Builder<Ms, Mdl, ElC, GMs, I>
 {
     pub(super) fn new(
