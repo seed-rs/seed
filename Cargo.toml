@@ -39,6 +39,7 @@ wasm-bindgen-futures = "0.3.22"
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug
 dbg = "1.0.4"
+url = "2.1.0"
 
 [dependencies.web-sys]
 version = "0.3.27"

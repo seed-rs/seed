@@ -2,7 +2,8 @@
 
 use crate::util::ClosureNew;
 use serde::{Deserialize, Serialize};
-use std::convert::identity;
+use std::convert::{identity, TryFrom, TryInto};
+use url;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Repeated here from `seed::util`, to make this module standalone.  Once we have a Gloo module
@@ -73,65 +74,35 @@ impl Url {
     }
 }
 
-impl From<String> for Url {
-    fn from(s: String) -> Self {
-        // This could be done more elegantly with regex, but adding it as a dependency
-        // causes a big increase in WASM size.
-        let mut path: Vec<String> = s.split('/').map(ToString::to_string).collect();
-        if let Some(first) = path.get(0) {
-            if first.is_empty() {
-                path.remove(0); // Remove a leading empty string.
+impl TryFrom<&str> for Url {
+    type Error = url::ParseError;
+
+    fn try_from(url: &str) -> Result<Self, Self::Error> {
+        let parsed_url = match url::Url::parse(url) {
+            Ok(parsed_url) => parsed_url,
+            Err(url::ParseError::RelativeUrlWithoutBase) => {
+                url::Url::parse("http://dummy").unwrap().join(url)?
             }
-        }
+            Err(error) => return Err(error),
+        };
 
-        // We assume hash and search terms are at the end of the path, and hash comes before search.
-        let last = path.pop();
-
-        let mut last_path = String::new();
-        let mut hash = String::new();
-        let mut search = String::new();
-
-        if let Some(l) = last {
-            let mut in_hash = false;
-            let mut in_search = false;
-            for c in l.chars() {
-                if c == '#' {
-                    in_hash = true;
-                    in_search = false;
-                    continue;
-                }
-
-                if c == '?' {
-                    in_hash = false;
-                    in_search = true;
-                    continue;
-                }
-
-                if in_hash {
-                    hash.push(c);
-                } else if in_search {
-                    search.push(c);
-                } else {
-                    last_path.push(c);
-                }
-            }
-        }
-
-        // Re-add the pre-`#` and pre-`?` part of the path.
-        if !last_path.is_empty() {
-            path.push(last_path);
-        }
-
-        Self {
-            path,
-            hash: if hash.is_empty() { None } else { Some(hash) },
-            search: if search.is_empty() {
-                None
-            } else {
-                Some(search)
-            },
+        Ok(Self {
+            path: parsed_url
+                .path_segments()
+                .map(|segments| segments.map(ToString::to_string).collect())
+                .unwrap_or_default(),
+            hash: parsed_url.fragment().map(ToString::to_string),
+            search: parsed_url.query().map(ToString::to_string),
             title: None,
-        }
+        })
+    }
+}
+
+impl TryFrom<String> for Url {
+    type Error = url::ParseError;
+
+    fn try_from(url: String) -> Result<Self, Self::Error> {
+        Url::try_from(url.as_str())
     }
 }
 
@@ -303,7 +274,7 @@ pub fn setup_hashchange_listener<Ms>(
             .dyn_ref::<web_sys::HashChangeEvent>()
             .expect("Problem casting as hashchange event");
 
-        let url: Url = ev.new_url().into();
+        let url: Url = ev.new_url().try_into().expect("cannot parse `new_url`");
 
         if let Some(routing_msg) = routes(url) {
             update(routing_msg);
@@ -352,7 +323,7 @@ where
                     event.prevent_default(); // Prevent page refresh
                 } else {
                     // Only update when requested for an update by the user.
-                    let url = clean_url(Url::from(href));
+                    let url = clean_url(Url::try_from(href).expect("cannot parse `href`"));
                     if let Some(redirect_msg) = routes(url.clone()) {
                         // Route internally, overriding the default history
                         push_route(url);
@@ -372,9 +343,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use super::*;
 
-    #[test]
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
     fn parse_url_simple() {
         let expected = Url {
             path: vec!["path1".into(), "path2".into()],
@@ -383,11 +358,11 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path1/path2".to_string().into();
+        let actual: Url = "/path1/path2".try_into().unwrap();
         assert_eq!(expected, actual)
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn parse_url_with_hash_search() {
         let expected = Url {
             path: vec!["path".into()],
@@ -396,11 +371,11 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path/#hash?sea=rch".to_string().into();
+        let actual: Url = "/path?sea=rch#hash".try_into().unwrap();
         assert_eq!(expected, actual)
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn parse_url_with_hash_only() {
         let expected = Url {
             path: vec!["path".into()],
@@ -409,7 +384,7 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path/#hash".to_string().into();
+        let actual: Url = "/path#hash".try_into().unwrap();
         assert_eq!(expected, actual)
     }
 }
