@@ -268,25 +268,18 @@ pub fn setup_popstate_listener<Ms>(
     Ms: 'static,
 {
     let closure = Closure::new(move |ev: web_sys::Event| {
+
         let ev = ev
             .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
-        let url: Url = match ev.state().as_string() {
-            Some(state_str) => {
-                serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
-            }
-            // This might happen if we go back to a page before we started routing. (?)
-            None => {
-                let empty: Vec<String> = Vec::new();
-                Url::new(empty)
+        if let Some(state_str) = ev.state().as_string() {
+            let url: Url = serde_json::from_str(&state_str).expect("Problem deserializing popstate state");
+            // Only update when requested for an update by the user.
+            if let Some(routing_msg) = routes(url) {
+                update(routing_msg);
             }
         };
-
-        // Only update when requested for an update by the user.
-        if let Some(routing_msg) = routes(url) {
-            update(routing_msg);
-        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -328,8 +321,8 @@ pub fn setup_hashchange_listener<Ms>(
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 #[allow(clippy::option_map_unit_fn)]
 pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) -> Option<Ms>)
-where
-    Ms: 'static,
+    where
+        Ms: 'static,
 {
     let closure = Closure::new(move |event: web_sys::Event| {
         event.target()
