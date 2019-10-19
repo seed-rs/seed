@@ -749,8 +749,8 @@ impl<Ms: Clone> Node<Ms> {
 
     /// See `El::add_child`
     pub fn add_child(&mut self, node: Node<Ms>) -> &mut Self {
-        if let Node::Element(el) = self {
-            el.add_child(node);
+        if let Node::Element(e) = self {
+            e.add_child(node);
         }
         self
     }
@@ -761,55 +761,70 @@ impl<Ms: Clone> Node<Ms> {
         key: impl Into<Cow<'static, str>>,
         val: impl Into<AtValue>,
     ) -> &mut Self {
-        self.map_el_in_place(move |el| {
-            el.add_attr(key, val);
-        })
+        if let Node::Element(e) = self {
+            e.add_attr(key, val);
+        }
+        self
     }
 
     /// See `El::add_class``
     pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
-        self.map_el_in_place(move |el| {
-            el.add_class(name);
-        })
+        if let Node::Element(e) = self {
+            e.add_class(name);
+        }
+        self
     }
 
     /// See `El::add_style`
     pub fn add_style(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> &mut Self {
-        self.map_el_in_place(move |el| {
-            el.add_style(key, val);
-        })
+        if let Node::Element(e) = self {
+            e.add_style(key, val);
+        }
+        self
     }
 
     /// See `El::add_listener`
     pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
-        self.map_el_in_place(move |el| {
-            el.add_listener(listener);
-        })
+        if let Node::Element(e) = self {
+            e.add_listener(listener);
+        }
+        self
     }
 
     /// See `El::add_text`
     pub fn add_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
-        self.map_el_in_place(move |el| {
-            el.add_text(text);
-        })
+        if let Node::Element(e) = self {
+            e.add_text(text);
+        }
+        self
     }
 
     /// See `El::replace_text`
     pub fn replace_text(&mut self, text: impl Into<Cow<'static, str>>) -> &mut Self {
-        self.map_el_in_place(move |el| {
-            el.replace_text(text);
-        })
+        if let Node::Element(e) = self {
+            e.replace_text(text);
+        }
+        self
     }
 
     /// See `El::get_text`
     pub fn get_text(&self) -> String {
-        self.map_or_else_ref(El::get_text, Text::get_text, "".to_owned())
+        match self {
+            Node::Element(e) => e.get_text(),
+            Node::Text(t) => t.get_text(),
+            _ => "".to_owned(),
+        }
     }
 }
 // Workspace manipulations.
 impl<Ms: Clone> Node<Ms> {
     pub(crate) fn strip_ws_nodes(&mut self) -> &mut Self {
-        self.map_in_place(El::strip_ws_nodes, Text::strip_ws_nodes)
+        match self {
+            Node::Element(e) => e.strip_ws_nodes(),
+            Node::Text(t) => t.strip_ws_nodes(),
+            _ => (),
+        }
+        self
     }
 }
 // Convenience methods for `Node` a la `Result` and `Option`.
@@ -864,36 +879,6 @@ impl<Ms: Clone> Node<Ms> {
         match self {
             Node::Empty => Ok(()),
             node => Err(node),
-        }
-    }
-
-    fn map_in_place<TMap, EMap>(&mut self, el_map: EMap, text_map: TMap) -> &mut Self
-    where
-        TMap: FnOnce(&mut Text),
-        EMap: FnOnce(&mut El<Ms>),
-    {
-        match self {
-            Self::Element(el) => el_map(el),
-            Self::Text(text) => text_map(text),
-            Self::Empty => (),
-        }
-        self
-    }
-    fn map_el_in_place<EMap>(&mut self, el_map: EMap) -> &mut Self
-    where
-        EMap: FnOnce(&mut El<Ms>),
-    {
-        self.map_in_place(el_map, |_| ())
-    }
-    fn map_or_else_ref<T, TMap, EMap>(&self, el_map: EMap, text_map: TMap, default: T) -> T
-    where
-        TMap: FnOnce(&Text) -> T,
-        EMap: FnOnce(&El<Ms>) -> T,
-    {
-        match self {
-            Self::Element(el) => el_map(el),
-            Self::Text(text) => text_map(text),
-            _ => default,
         }
     }
 }
