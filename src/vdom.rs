@@ -908,6 +908,33 @@ pub mod tests {
         }
     }
 
+    #[wasm_bindgen_test]
+    fn els_changed_correct_order() {
+        let app = create_app();
+        let mailbox = Mailbox::new(|_msg: Msg| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = div![];
+        websys_bridge::assign_ws_nodes(&doc, &mut vdom);
+        // clone so we can keep using it after vdom is modified
+        if let Node::Element(el) = vdom.clone() {
+            let old_ws = el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            vdom = call_patch(&doc, &parent, &mailbox, vdom, div!["1", a!["2"]], &app);
+            let html_result = old_ws.clone().dyn_into::<Element>().unwrap().inner_html();
+            assert_eq!(html_result, "1<a>2</a>");
+
+            call_patch(&doc, &parent, &mailbox, vdom, div![a!["A"], "B"], &app);
+            let html_result = old_ws.dyn_into::<Element>().unwrap().inner_html();
+            assert_eq!(html_result, "<a>A</a>B");
+        } else {
+            panic!("Node not Element")
+        }
+    }
+
     /// Test if attribute `disabled` is correctly added and then removed.
     #[wasm_bindgen_test]
     fn attr_disabled() {

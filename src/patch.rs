@@ -381,14 +381,12 @@ pub(crate) fn patch<'a, Ms: Clone, Mdl, ElC: View<Ms>, GMs>(
             websys_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
+                    add_el_helper(new_el, parent, next_node, mailbox);
+
                     websys_bridge::remove_node(
                         &old_text.node_ws.expect("Can't find node from Text"),
                         parent,
                     );
-
-                    // Passing next_node here instead of `None` causes
-                    // panics.
-                    add_el_helper(new_el, parent, None, mailbox);
                     new_el.node_ws.as_ref()
                 }
                 Node::Empty => {
