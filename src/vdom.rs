@@ -284,7 +284,10 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, 
             UrlHandling::PassToRoutes => {
                 let url = routing::initial_url();
                 if let Some(r) = self.routes {
-                    (self.update)(r(url).unwrap(), &mut init.model, &mut initial_orders);
+                    if let Some(u) = r(url) {
+                        (self.update)(u, &mut init.model, &mut initial_orders);
+                    }
+
                 }
             }
             UrlHandling::None => (),
