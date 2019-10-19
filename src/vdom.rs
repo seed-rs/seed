@@ -217,7 +217,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             // TODO: and other, similar things. For now, leave the warning in the builder's
             // TODO: documentation.
             let mut dom_nodes = websys_bridge::el_from_ws_element(&self.cfg.mount_point);
-            dom_nodes.strip_ws_nodes();
+            dom_nodes.strip_own_and_children_ws_nodes();
 
             // Replace the root dom with a placeholder tag and move the children from the root element
             // to the newly created root. Uses `Placeholder` to mimic update logic.

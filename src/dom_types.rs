@@ -720,7 +720,7 @@ impl Text {
     pub fn get_text(&self) -> String {
         self.text.to_string()
     }
-    pub fn strip_ws_nodes(&mut self) {
+    pub fn strip_ws_node(&mut self) {
         self.node_ws.take();
     }
 }
@@ -827,10 +827,10 @@ impl<Ms> Node<Ms> {
 }
 // Workspace manipulations.
 impl<Ms> Node<Ms> {
-    pub(crate) fn strip_ws_nodes(&mut self) -> &mut Self {
+    pub(crate) fn strip_own_and_children_ws_nodes(&mut self) -> &mut Self {
         match self {
-            Node::Element(e) => e.strip_ws_nodes(),
-            Node::Text(t) => t.strip_ws_nodes(),
+            Node::Element(e) => e.strip_own_and_children_ws_nodes(),
+            Node::Text(t) => t.strip_ws_node(),
             _ => (),
         }
         self
@@ -930,10 +930,11 @@ pub struct El<Ms: 'static> {
     pub hooks: LifecycleHooks<Ms>,
 }
 impl<Ms> El<Ms> {
-    pub(crate) fn strip_ws_nodes(&mut self) {
+    /// Strips ws nodes in the children as well.
+    pub(crate) fn strip_own_and_children_ws_nodes(&mut self) {
         self.node_ws.take();
         for child in &mut self.children {
-            child.strip_ws_nodes();
+            child.strip_own_and_children_ws_nodes();
         }
     }
 }
