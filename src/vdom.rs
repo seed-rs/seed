@@ -287,7 +287,6 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, 
                     if let Some(u) = r(url) {
                         (self.update)(u, &mut init.model, &mut initial_orders);
                     }
-
                 }
             }
             UrlHandling::None => (),
