@@ -2,6 +2,7 @@
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
+- The `routes` function now returns an `Option<Msg>` (Breaking)
 - updated `Tag::from()` to accept more input types
 - Improved error-handling
 - Macro `custom!` checks if you set tag, and panics when you forget
