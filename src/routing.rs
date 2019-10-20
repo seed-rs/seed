@@ -372,9 +372,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use super::*;
 
-    #[test]
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
     fn parse_url_simple() {
         let expected = Url {
             path: vec!["path1".into(), "path2".into()],
@@ -387,7 +391,7 @@ mod tests {
         assert_eq!(expected, actual)
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn parse_url_with_hash_search() {
         let expected = Url {
             path: vec!["path".into()],
@@ -400,7 +404,7 @@ mod tests {
         assert_eq!(expected, actual)
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn parse_url_with_hash_only() {
         let expected = Url {
             path: vec!["path".into()],
