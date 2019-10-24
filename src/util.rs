@@ -231,7 +231,7 @@ pub fn error<T: std::fmt::Debug>(object: T) -> T {
 #[deprecated]
 pub fn update<Ms>(msg: Ms)
 where
-    Ms: Clone + 'static + serde::Serialize,
+    Ms: 'static + serde::Serialize,
 {
     let msg_as_js_value = wasm_bindgen::JsValue::from_serde(&msg)
         .expect("Error: TriggerUpdate - can't serialize given msg!");

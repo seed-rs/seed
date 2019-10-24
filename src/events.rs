@@ -319,7 +319,7 @@ pub fn input_ev<Ms, T: ToString + Copy>(
 
 /// Create an event that passes a `web_sys::KeyboardEvent`, allowing easy access
 /// to items like `key_code`() and key().
-pub fn keyboard_ev<Ms: Clone, T: ToString + Copy>(
+pub fn keyboard_ev<Ms, T: ToString + Copy>(
     trigger: T,
     handler: impl FnOnce(web_sys::KeyboardEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
@@ -335,7 +335,7 @@ pub fn keyboard_ev<Ms: Clone, T: ToString + Copy>(
 }
 
 /// See `keyboard_ev`
-pub fn mouse_ev<Ms: Clone, T: ToString + Copy>(
+pub fn mouse_ev<Ms, T: ToString + Copy>(
     trigger: T,
     handler: impl FnOnce(web_sys::MouseEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
@@ -385,7 +385,7 @@ pub fn raw_ev<Ms, T: ToString + Copy>(
 /// in favor of pointing to a message directly.
 pub fn simple_ev<Ms: Clone, T>(trigger: T, message: Ms) -> Listener<Ms>
 where
-    Ms: Clone + 'static,
+    Ms: 'static,
     T: ToString + Copy,
 {
     let msg_closure = message.clone();
@@ -402,7 +402,7 @@ where
 /// Create an event that passes a `web_sys::CustomEvent`, allowing easy access
 /// to detail() and then trigger update
 #[deprecated]
-pub fn trigger_update_ev<Ms: Clone>(
+pub fn trigger_update_ev<Ms>(
     handler: impl FnOnce(web_sys::CustomEvent) -> Ms + 'static + Clone,
 ) -> Listener<Ms> {
     let closure = move |event: web_sys::Event| {
@@ -431,7 +431,7 @@ pub(crate) fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
 
 /// Trigger update function from outside of App
 #[deprecated]
-pub fn trigger_update_handler<Ms: Clone + DeserializeOwned>() -> Listener<Ms> {
+pub fn trigger_update_handler<Ms: DeserializeOwned>() -> Listener<Ms> {
     trigger_update_ev(|ev| {
         ev.detail()
             .into_serde()

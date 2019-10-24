@@ -123,7 +123,7 @@ impl<Ms> Clone for Mailbox<Ms> {
 type StoredPopstate = RefCell<Option<Closure<dyn FnMut(Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
-pub struct AppData<Ms: 'static + Clone, Mdl> {
+pub struct AppData<Ms: 'static, Mdl> {
     // Model is in a RefCell here so we can modify it in self.update().
     pub model: RefCell<Option<Mdl>>,
     main_el_vdom: RefCell<Option<El<Ms>>>,
@@ -135,7 +135,7 @@ pub struct AppData<Ms: 'static + Clone, Mdl> {
     scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
 }
 
-pub struct AppCfg<Ms: Clone, Mdl, ElC, GMs>
+pub struct AppCfg<Ms, Mdl, ElC, GMs>
 where
     Ms: 'static,
     Mdl: 'static,
@@ -150,7 +150,7 @@ where
     initial_orders: RefCell<Option<OrdersContainer<Ms, Mdl, ElC, GMs>>>,
 }
 
-pub struct App<Ms: Clone, Mdl, ElC, GMs = ()>
+pub struct App<Ms, Mdl, ElC, GMs = ()>
 where
     Ms: 'static,
     Mdl: 'static,
@@ -162,9 +162,7 @@ where
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug
-    for App<Ms, Mdl, ElC, GMs>
-{
+impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms, Mdl, ElC, GMs> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
@@ -199,7 +197,7 @@ impl MountPoint for web_sys::HtmlElement {
 }
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
-pub struct AppBuilder<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs> {
+pub struct AppBuilder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> {
     init: InitFn<Ms, Mdl, ElC, GMs>,
     update: UpdateFn<Ms, Mdl, ElC, GMs>,
     sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
@@ -209,7 +207,7 @@ pub struct AppBuilder<Ms: 'static + Clone, Mdl: 'static, ElC: View<Ms>, GMs> {
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, ElC, GMs> {
     /// Choose the element where the application will be mounted.
     /// The default one is the element with `id` = "app".
     ///
@@ -301,7 +299,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> AppBuilder<Ms, Mdl, 
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn build(
         init: impl FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
@@ -632,7 +630,7 @@ impl<Ms: Clone, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GM
     }
 }
 
-impl<Ms: Clone, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
     fn clone(&self) -> Self {
         Self {
             cfg: Rc::clone(&self.cfg),
