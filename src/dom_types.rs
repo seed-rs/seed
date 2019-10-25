@@ -821,6 +821,14 @@ impl<Ms: Clone> Node<Ms> {
             _ => "".to_string(),
         }
     }
+
+    /// See `El::reserve_children`
+    pub fn reserve_children(&mut self, size: usize) -> &mut Self {
+        if let Node::Element(el) = self {
+            el.reserve_children(size);
+        }
+        self
+    }
 }
 
 impl<Ms: 'static + Clone, OtherMs: 'static + Clone> MessageMapper<Ms, OtherMs> for Node<Ms> {
@@ -1080,6 +1088,12 @@ impl<Ms: Clone> El<Ms> {
                 _ => None,
             })
             .collect()
+    }
+
+    /// Reserve space in the children container of the element
+    pub fn reserve_children(&mut self, size: usize) -> &mut Self {
+        self.children.reserve_exact(size);
+        self
     }
 }
 
