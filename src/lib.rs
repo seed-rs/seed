@@ -166,4 +166,39 @@ pub mod tests {
                 .run();
         }
     }
+
+    #[wasm_bindgen_test]
+    #[allow(dead_code)]
+    fn attr_disabled_initial() {
+        use crate as seed; // required for macros to work.
+        use crate::prelude::*;
+        use crate::{
+            util,
+            dom_types::{El, UpdateEl},
+            orders::Orders,
+        };
+
+        #[derive(Default)]
+        struct Model { }
+
+        #[derive(Clone)]
+        enum Msg { }
+
+        fn update(_: Msg, _: &mut Model, _: &mut impl Orders<Msg>) { }
+
+        fn view(_: &Model) -> Node<Msg> {
+            div![
+              button![attrs!{At::Disabled => false;}]
+            ]
+        }
+
+        let doc = util::document();
+        let app_el = doc.create_element("div").unwrap();
+        app_el.set_attribute("id", "app").unwrap();
+        util::body().append_child(&app_el).unwrap();
+
+        seed::App::build(|_, _| Init::new(Model::default()), update, view).finish().run();
+        let button = doc.get_elements_by_tag_name("button").item(0).unwrap();
+        assert_eq!(button.get_attribute("disabled"),None);
+    }
 }
