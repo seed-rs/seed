@@ -699,6 +699,8 @@ impl<Ms: 'static> View<Ms> for Vec<Node<Ms>> {
 }
 
 /// For representing text nodes.
+/// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Text)
+/// [web_sys reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Text.html)
 #[derive(Clone, Debug)]
 pub struct Text {
     pub text: Cow<'static, str>,
@@ -720,8 +722,9 @@ impl Text {
     }
 }
 
-/// An component in our virtual DOM. Related to, but different from
-/// [DOM Nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType)
+/// A component in our virtual DOM.
+/// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Node)
+/// [web_sys reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 #[derive(Debug, PartialEq)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
@@ -854,7 +857,9 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>>
     }
 }
 
-/// An component in our virtual DOM.
+/// A component in our virtual DOM.
+/// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Element)
+/// [web_sys reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 #[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
