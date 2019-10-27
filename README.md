@@ -200,6 +200,7 @@ When server(s) are running, open [127.0.0.1:8000](http://127.0.0.1:8000) in your
 ## Resources
 - [Awesome-seed-rs](https://github.com/MartinKavik/awesome-seed-rs): A curated list of resources
 - [Seed Realworld](https://github.com/MartinKavik/seed-rs-realworld): A detailed realworld example site
+- [Engineering Rust Web Applications](https://erwabook.com/): A book describing full-stack Rust web-development, using Seed for the frontend
 
 # About
 
