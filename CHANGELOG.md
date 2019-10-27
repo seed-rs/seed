@@ -5,6 +5,7 @@
 - The `routes` function now returns an `Option<Msg>` (Breaking)
 - updated `Tag::from()` to accept more input types
 - Fixed a bug affecting element render order
+Added a `hashchange` listener
 - Improved error-handling
 - Macro `custom!` checks if you set tag, and panics when you forget
 - Fixed a bug with children being absent from cloned elements
