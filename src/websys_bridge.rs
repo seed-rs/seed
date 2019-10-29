@@ -333,136 +333,143 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
         .expect("Unable to cast as a mouse event")
 }
 
-/// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
-/// and markdown strings. Includes children, recursively added.
-pub fn el_from_ws<Ms>(el_ws: &web_sys::Element) -> El<Ms> {
-    // Result of tag_name is all caps, but tag From<String> expects lower.
-    // Probably is more pure to match by xlmns attribute instead.
-    let mut el = match el_ws.tag_name().to_lowercase().as_ref() {
-        "svg" => El::empty_svg(el_ws.tag_name().to_lowercase().into()),
-        _ => El::empty(el_ws.tag_name().to_lowercase().into()),
-    };
+impl<Ms> From<&web_sys::Element> for El<Ms> {
+    /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
+    /// and markdown strings. Includes children, recursively added.
+    fn from(ws_el: &web_sys::Element) -> Self {
+        // Result of tag_name is all caps, but tag From<String> expects lower.
+        // Probably is more pure to match by xlmns attribute instead.
+        let mut el = match ws_el.tag_name().to_lowercase().as_ref() {
+            "svg" => El::empty_svg(ws_el.tag_name().to_lowercase().into()),
+            _ => El::empty(ws_el.tag_name().to_lowercase().into()),
+        };
 
-    // Populate attributes
-    let mut attrs = dom_types::Attrs::empty();
-    el_ws
-        .get_attribute_names()
-        .for_each(&mut |attr_name, _, _| {
-            let attr_name2 = attr_name
-                .as_string()
-                .expect("problem converting attr to string");
-            if let Some(attr_val) = el_ws.get_attribute(&attr_name2) {
-                attrs.add(attr_name2.into(), &attr_val);
+        // Populate attributes
+        let mut attrs = dom_types::Attrs::empty();
+        ws_el
+            .get_attribute_names()
+            .for_each(&mut |attr_name, _, _| {
+                let attr_name = attr_name
+                    .as_string()
+                    .expect("problem converting attr to string");
+                if let Some(attr_val) = ws_el.get_attribute(&attr_name) {
+                    attrs.add(attr_name.into(), &attr_val);
+                }
+            });
+        el.attrs = attrs;
+
+        // todo This is the same list in `shortcuts::element_svg!`.
+        // todo: Fix this repetition: Use `/scripts/populate_tags.rs`
+        // todo to consolodate these lists.
+        let svg_tags = [
+            "line",
+            "rect",
+            "circle",
+            "ellipse",
+            "polygon",
+            "polyline",
+            "mesh",
+            "path",
+            "defs",
+            "g",
+            "marker",
+            "mask",
+            "pattern",
+            "svg",
+            "switch",
+            "symbol",
+            "unknown",
+            "linear_gradient",
+            "radial_gradient",
+            "mesh_gradient",
+            "stop",
+            "image",
+            "r#use",
+            "altGlyph",
+            "altGlyphDef",
+            "altGlyphItem",
+            "glyph",
+            "glyphRef",
+            "textPath",
+            "text",
+            "tref",
+            "tspan",
+            "clipPath",
+            "cursor",
+            "filter",
+            "foreignObject",
+            "hathpath",
+            "meshPatch",
+            "meshRow",
+            "view",
+            "colorProfile",
+            "animage",
+            "animateColor",
+            "animateMotion",
+            "animateTransform",
+            "discard",
+            "mpath",
+            "set",
+            "desc",
+            "metadata",
+            "title",
+            "feBlend",
+            "feColorMatrix",
+            "feComponentTransfer",
+            "feComposite",
+            "feConvolveMatrix",
+            "feDiffuseLighting",
+            "feDisplacementMap",
+            "feDropShadow",
+            "feFlood",
+            "feFuncA",
+            "feFuncB",
+            "feFuncG",
+            "feFuncR",
+            "feGaussianBlur",
+            "feImage",
+            "feMerge",
+            "feMergeNode",
+            "feMorphology",
+            "feOffset",
+            "feSpecularLighting",
+            "feTile",
+            "feTurbulence",
+            "font",
+            "hkern",
+            "vkern",
+            "hatch",
+            "solidcolor",
+        ];
+
+        if svg_tags.contains(&ws_el.tag_name().to_lowercase().as_str()) {
+            el.namespace = Some(Namespace::Svg);
+        }
+
+        if let Some(ns) = ws_el.namespace_uri() {
+            // Prevent attaching a `xlmns` attribute to normal HTML elements.
+            if ns != "http://www.w3.org/1999/xhtml" {
+                el.namespace = Some(ns.into());
             }
-        });
-    el.attrs = attrs;
-
-    // todo This is the same list in `shortcuts::element_svg!`.
-    // todo: Fix this repetition: Use `/scripts/populate_tags.rs`
-    // todo to consolodate these lists.
-    let svg_tags = [
-        "line",
-        "rect",
-        "circle",
-        "ellipse",
-        "polygon",
-        "polyline",
-        "mesh",
-        "path",
-        "defs",
-        "g",
-        "marker",
-        "mask",
-        "pattern",
-        "svg",
-        "switch",
-        "symbol",
-        "unknown",
-        "linear_gradient",
-        "radial_gradient",
-        "mesh_gradient",
-        "stop",
-        "image",
-        "r#use",
-        "altGlyph",
-        "altGlyphDef",
-        "altGlyphItem",
-        "glyph",
-        "glyphRef",
-        "textPath",
-        "text",
-        "tref",
-        "tspan",
-        "clipPath",
-        "cursor",
-        "filter",
-        "foreignObject",
-        "hathpath",
-        "meshPatch",
-        "meshRow",
-        "view",
-        "colorProfile",
-        "animage",
-        "animateColor",
-        "animateMotion",
-        "animateTransform",
-        "discard",
-        "mpath",
-        "set",
-        "desc",
-        "metadata",
-        "title",
-        "feBlend",
-        "feColorMatrix",
-        "feComponentTransfer",
-        "feComposite",
-        "feConvolveMatrix",
-        "feDiffuseLighting",
-        "feDisplacementMap",
-        "feDropShadow",
-        "feFlood",
-        "feFuncA",
-        "feFuncB",
-        "feFuncG",
-        "feFuncR",
-        "feGaussianBlur",
-        "feImage",
-        "feMerge",
-        "feMergeNode",
-        "feMorphology",
-        "feOffset",
-        "feSpecularLighting",
-        "feTile",
-        "feTurbulence",
-        "font",
-        "hkern",
-        "vkern",
-        "hatch",
-        "solidcolor",
-    ];
-
-    if svg_tags.contains(&el_ws.tag_name().to_lowercase().as_str()) {
-        el.namespace = Some(Namespace::Svg);
-    }
-
-    if let Some(ns) = el_ws.namespace_uri() {
-        // Prevent attaching a `xlmns` attribute to normal HTML elements.
-        if ns != "http://www.w3.org/1999/xhtml" {
-            el.namespace = Some(ns.into());
         }
-    }
 
-    let children = el_ws.child_nodes();
-    for i in 0..children.length() {
-        let child = children
-            .get(i)
-            .expect("Can't find child in raw html element.");
+        let children = ws_el.child_nodes();
+        for i in 0..children.length() {
+            let child = children
+                .get(i)
+                .expect("Can't find child in raw html element.");
 
-        if let Some(child_vdom) = node_from_ws(&child) {
-            el.children.push(child_vdom);
+            if let Some(child_vdom) = node_from_ws(&child) {
+                el.children.push(child_vdom);
+            }
         }
+        el
     }
-    el
+}
+impl<Ms> From<&web_sys::Element> for Node<Ms> {
+    fn from(ws_el: &web_sys::Element) -> Node<Ms> {
+        Node::Element(ws_el.into())
+    }
 }
 
 /// Create a vdom node from a `web_sys::Node`. Used in creating elements from html
@@ -476,7 +483,7 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
                 .expect("Problem casting Node as Element");
 
             // Create the Element
-            Some(Node::Element(el_from_ws(ws_el)))
+            Some(ws_el.into())
         }
         web_sys::Node::TEXT_NODE => Some(Node::new_text(
             node.text_content().expect("Can't find text"),
