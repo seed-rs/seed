@@ -720,6 +720,10 @@ impl Text {
             node_ws: None,
         }
     }
+
+    pub fn strip_ws_node(&mut self) {
+        self.node_ws.take();
+    }
 }
 
 /// A component in our virtual DOM.
@@ -743,6 +747,7 @@ impl<Ms: 'static> Clone for Node<Ms> {
     }
 }
 
+// Element methods
 impl<Ms> Node<Ms> {
     /// See `El::from_markdown`
     pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
@@ -824,6 +829,7 @@ impl<Ms> Node<Ms> {
     }
 }
 
+// Convenience methods
 impl<Ms> Node<Ms> {
     pub fn new_text(text: impl Into<Cow<'static, str>>) -> Self {
         Node::Text(Text::new(text))
@@ -863,6 +869,17 @@ impl<Ms> Node<Ms> {
             Some(e)
         } else {
             None
+        }
+    }
+}
+
+// Backing node manipulation
+impl<Ms> Node<Ms> {
+    pub fn strip_ws_nodes_from_self_and_children(&mut self) {
+        match self {
+            Node::Text(t) => t.strip_ws_node(),
+            Node::Element(e) => e.strip_ws_nodes_from_self_and_children(),
+            Node::Empty => (),
         }
     }
 }
@@ -1126,6 +1143,14 @@ impl<Ms> El<Ms> {
                 _ => None,
             })
             .collect()
+    }
+
+    /// Remove websys nodes.
+    pub fn strip_ws_nodes_from_self_and_children(&mut self) {
+        self.node_ws.take();
+        for child in &mut self.children {
+            child.strip_ws_nodes_from_self_and_children();
+        }
     }
 }
 
