@@ -744,18 +744,6 @@ impl<Ms: 'static> Clone for Node<Ms> {
 }
 
 impl<Ms> Node<Ms> {
-    fn is_text(&self) -> bool {
-        if let Node::Text(_) = self {
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn new_text(text: impl Into<Cow<'static, str>>) -> Self {
-        Node::Text(Text::new(text))
-    }
-
     /// See `El::from_markdown`
     pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         El::from_markdown(markdown)
@@ -832,6 +820,49 @@ impl<Ms> Node<Ms> {
             Node::Element(el) => el.get_text(),
             Node::Text(text) => text.text.to_string(),
             _ => "".to_string(),
+        }
+    }
+}
+
+impl<Ms> Node<Ms> {
+    pub fn new_text(text: impl Into<Cow<'static, str>>) -> Self {
+        Node::Text(Text::new(text))
+    }
+
+    pub fn is_text(&self) -> bool {
+        if let Node::Text(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+    pub fn is_el(&self) -> bool {
+        if let Node::Element(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        if let Node::Empty = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn text(&self) -> Option<&Text> {
+        if let Node::Text(t) = self {
+            Some(t)
+        } else {
+            None
+        }
+    }
+    pub fn el(&self) -> Option<&El<Ms>> {
+        if let Node::Element(e) = self {
+            Some(e)
+        } else {
+            None
         }
     }
 }
