@@ -14,18 +14,19 @@ fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
         .expect("Problem setting style");
 }
 
+pub(crate) fn assign_ws_nodes_to_el<Ms>(document: &Document, el: &mut El<Ms>) {
+    el.node_ws = Some(make_websys_el(el, document));
+    for mut child in &mut el.children {
+        assign_ws_nodes(document, &mut child);
+    }
+}
 /// Recursively create `web_sys::Node`s, and place them in the vdom Nodes' fields.
 pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>)
 where
     Ms: 'static,
 {
     match node {
-        Node::Element(el) => {
-            el.node_ws = Some(make_websys_el(el, document));
-            for mut child in &mut el.children {
-                assign_ws_nodes(document, &mut child);
-            }
-        }
+        Node::Element(el) => assign_ws_nodes_to_el(document, el),
         Node::Text(text) => {
             text.node_ws = Some(
                 document
