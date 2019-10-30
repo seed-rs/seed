@@ -25,6 +25,7 @@ wasm-bindgen-test = "0.2.50" # NOTE: keep in sync with wasm-bindgen version
 
 [dependencies]
 console_error_panic_hook = "^0.1.6"
+cookie = { version = "0.12", features = ["percent-encode"] }
 enclose = "^1.1.6"
 futures = "^0.1.27"
 gloo-timers = "^0.1.0"
