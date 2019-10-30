@@ -33,6 +33,35 @@ impl From<&CSSValue> for CSSValue {
     }
 }
 
+// ----------- ToCssValue impls ------------
+
+// impl<T: ToString> ToCssValue for T
+#[doc(hidden)]
+pub trait ToCssValueForToString {
+    fn to_css_value(&self) -> CSSValue;
+}
+
+impl<T: ToString> ToCssValueForToString for T {
+    fn to_css_value(&self) -> CSSValue {
+        CSSValue::Some(self.to_string())
+    }
+}
+
+// impl<T: ToString> ToCssValue for Option<T>
+#[doc(hidden)]
+pub trait ToCssValueForOptionToString {
+    fn to_css_value(&self) -> CSSValue;
+}
+
+impl<T: ToString> ToCssValueForOptionToString for Option<T> {
+    fn to_css_value(&self) -> CSSValue {
+        self.as_ref()
+            .map_or(CSSValue::Ignored, |t| CSSValue::Some(t.to_string()))
+    }
+}
+
+// TODO: Should we impl ToCssValue for more types? such as Vec<T>, Box<T>.. etc
+
 // ------------- AtValue -------------
 
 /// Attribute value.
