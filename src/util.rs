@@ -44,6 +44,11 @@ pub fn history() -> web_sys::History {
     window().history().expect("Can't find history")
 }
 
+/// Convenience function to access the `web_sys::HtmlDocument`.
+pub fn html_document() -> web_sys::HtmlDocument {
+    wasm_bindgen::JsValue::from(document()).unchecked_into::<web_sys::HtmlDocument>()
+}
+
 /// Request the animation frame.
 pub fn request_animation_frame(
     f: Closure<dyn FnMut(RequestAnimationFrameTime)>,

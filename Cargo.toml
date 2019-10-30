@@ -57,6 +57,7 @@ features = [
     "History",
     "HtmlElement",
     "HtmlCollection",
+    "HtmlDocument",
     "HtmlInputElement",
     "HtmlMenuItemElement",
     "HtmlProgressElement",
