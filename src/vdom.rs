@@ -195,47 +195,42 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
     }
 
-    /// App initialization: Collect its fundamental components, setup, and perform
-    /// an initial render.
-    pub fn run(self) -> Self {
-        self.process_cmd_and_msg_queue(
-            self.cfg
-                .initial_orders
-                .replace(None)
-                .expect("initial_orders should be set in AppBuilder::finish")
-                .effects,
-        );
-        // Our initial render. Can't initialize in new due to mailbox() requiring self.
+    fn bootstrapped_vdom(&self) -> El<Ms> {
         // "new" name is for consistency with `update` function.
         // this section parent is a placeholder, so we can iterate over children
         // in a way consistent with patching code.
-        let mut new = El::empty(dom_types::Tag::Section);
-        new.children = (self.cfg.view)(self.data.model.borrow().as_ref().unwrap()).els();
+        let mut new = El::empty(dom_types::Tag::Placeholder);
 
         self.setup_window_listeners();
         patch::setup_input_listeners(&mut new);
         patch::attach_listeners(&mut new, &self.mailbox());
 
-        let mut new_node = Node::Element(new);
+        websys_bridge::assign_ws_nodes_to_el(&util::document(), &mut new);
 
-        websys_bridge::assign_ws_nodes(&util::document(), &mut new_node);
-
-        if let Node::Element(mut new) = new_node {
-            // Attach all top-level elements to the mount point: This is where our initial render occurs.
-            for child in &mut new.children {
-                match child {
-                    Node::Element(child_el) => {
-                        websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
-                        patch::attach_listeners(child_el, &self.mailbox());
-                    }
-                    Node::Text(top_child_text) => {
-                        websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
-                    }
-                    Node::Empty => (),
+        // Attach all top-level elements to the mount point.
+        for child in &mut new.children {
+            match child {
+                Node::Element(child_el) => {
+                    websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
+                    patch::attach_listeners(child_el, &self.mailbox());
                 }
+                Node::Text(top_child_text) => {
+                    websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
+                }
+                Node::Empty => (),
             }
-            self.data.main_el_vdom.replace(Some(new));
         }
+
+        new
+    }
+
+    /// App initialization: Collect its fundamental components, setup, and perform
+    /// an initial render.
+    pub fn run(self) -> Self {
+        // Bootstrap the virtual DOM.
+        self.data
+            .main_el_vdom
+            .replace(Some(self.bootstrapped_vdom()));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
@@ -256,6 +251,17 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             );
             routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
         }
+
+        // Our initial render. Can't initialize in new due to mailbox() requiring self.
+        self.process_cmd_and_msg_queue(
+            self.cfg
+                .initial_orders
+                .replace(None)
+                .expect("initial_orders should be set in AppBuilder::finish")
+                .effects,
+        );
+        self.rerender_vdom();
+
         self
     }
 
