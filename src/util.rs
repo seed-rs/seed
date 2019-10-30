@@ -49,6 +49,25 @@ pub fn html_document() -> web_sys::HtmlDocument {
     wasm_bindgen::JsValue::from(document()).unchecked_into::<web_sys::HtmlDocument>()
 }
 
+/// Convenience function to get all cookies from the current `HtmlDocument`
+/// _Note:_ Returns `None` if parsing cookies fails or there are no cookies.
+pub fn cookies() -> Option<cookie::CookieJar> {
+    let cookies_str = html_document().cookie().ok()?;
+    let mut jar = cookie::CookieJar::new();
+
+    for cookie_str in cookies_str.split(';') {
+        let cookie = cookie::Cookie::parse_encoded(cookie_str).ok()?;
+        jar.add(cookie.into_owned());
+    }
+
+    let jar_is_empty = jar.iter().next().is_none();
+    if jar_is_empty {
+        None
+    } else {
+        Some(jar)
+    }
+}
+
 /// Request the animation frame.
 pub fn request_animation_frame(
     f: Closure<dyn FnMut(RequestAnimationFrameTime)>,
