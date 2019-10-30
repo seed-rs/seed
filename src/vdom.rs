@@ -260,6 +260,8 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 .expect("initial_orders should be set in AppBuilder::finish")
                 .effects,
         );
+        // TODO: In the future, only run the following line if the above statement does not
+        // TODO: call `rerender_vdom` for efficiency.
         self.rerender_vdom();
 
         self
