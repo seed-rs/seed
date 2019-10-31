@@ -25,14 +25,6 @@ impl<T: ToString> From<T> for CSSValue {
     }
 }
 
-// `&` because `style!` macro automatically adds prefix `&` before values for more ergonomic API
-// (otherwise it would fail when you use for example a Model's property in View functions as `CSSValue`)
-impl From<&CSSValue> for CSSValue {
-    fn from(value: &CSSValue) -> Self {
-        value.clone()
-    }
-}
-
 // ----------- ToCssValue impls ------------
 
 // impl ToCssValue for CSSValue
