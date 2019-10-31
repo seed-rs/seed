@@ -250,6 +250,7 @@ macro_rules! id {
 macro_rules! style {
     { $($key:expr => $value:expr $(;)?$(,)?)* } => {
         {
+            #[allow(unused_imports)]
             use $crate::dom_types::values::{
                 ToCssValue, ToCssValueForOptionToString, ToCssValueForToString
             };
