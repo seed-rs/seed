@@ -251,7 +251,7 @@ macro_rules! style {
     { $($key:expr => $value:expr $(;)?$(,)?)* } => {
         {
             use $crate::dom_types::values::{
-                ToCssValueForOptionToString, ToCssValueForToString
+                ToCssValue, ToCssValueForOptionToString, ToCssValueForToString
             };
             let mut vals = IndexMap::new();
             $(

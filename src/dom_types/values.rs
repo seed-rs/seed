@@ -35,6 +35,18 @@ impl From<&CSSValue> for CSSValue {
 
 // ----------- ToCssValue impls ------------
 
+// impl ToCssValue for CSSValue
+#[doc(hidden)]
+pub trait ToCssValue {
+    fn to_css_value(self) -> CSSValue;
+}
+
+impl ToCssValue for CSSValue {
+    fn to_css_value(self) -> CSSValue {
+        self
+    }
+}
+
 // impl<T: ToString> ToCssValue for T
 #[doc(hidden)]
 pub trait ToCssValueForToString {
