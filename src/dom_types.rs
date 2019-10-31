@@ -1430,4 +1430,28 @@ pub mod tests {
 
         assert_eq!(expected, get_node_html(&node));
     }
+
+    /// Test that `style!` macro accpet types that have to_css_value() function
+    #[wasm_bindgen_test]
+    pub fn to_css_value_in_style() {
+        let display: &str = "flex";
+        let direction: String = "column".to_string();
+        let order: Option<u32> = None;
+        let gap: Option<&str> = Some("8px");
+
+        let style = style![
+            St::Display => display,
+            St::FlexDirection => direction,
+            St::Order => order,
+            St::Gap => gap,
+        ];
+
+        let mut result_style = Style::empty();
+        result_style.add(St::Display, CSSValue::Some("flex".into()));
+        result_style.add(St::FlexDirection, CSSValue::Some("column".into()));
+        result_style.add(St::Order, CSSValue::Ignored);
+        result_style.add(St::Gap, CSSValue::Some("8px".into()));
+
+        assert_eq!(style, result_style)
+    }
 }
