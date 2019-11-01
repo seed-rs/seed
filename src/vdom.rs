@@ -195,7 +195,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
     }
 
-    fn bootstrapped_vdom(&self) -> El<Ms> {
+    fn bootstrap_vdom(&self) -> El<Ms> {
         // "new" name is for consistency with `update` function.
         // this section parent is a placeholder, so we can iterate over children
         // in a way consistent with patching code.
@@ -230,7 +230,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         // Bootstrap the virtual DOM.
         self.data
             .main_el_vdom
-            .replace(Some(self.bootstrapped_vdom()));
+            .replace(Some(self.bootstrap_vdom()));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
