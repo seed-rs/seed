@@ -363,6 +363,5 @@ fn routes(url: seed::Url) -> Option<Msg> {
 pub fn render() {
     seed::App::build(|_, _| Init::new(Model::default()), update, view)
         .routes(routes)
-        .finish()
-        .run();
+        .start();
 }

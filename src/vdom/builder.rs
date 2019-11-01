@@ -4,8 +4,6 @@ use super::{alias::*, App};
 
 use crate::{dom_types::View, orders::OrdersContainer, routing, util};
 
-//type InitFn<Ms, Mdl, ElC, GMs> =
-//    Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Mdl>;
 pub type InitFn<Ms, Mdl, ElC, GMs> =
     Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
 
@@ -46,7 +44,6 @@ pub enum UrlHandling {
 
 /// Used as a flexible wrapper for the init function.
 pub struct Init<Mdl> {
-    //    init: InitFn<Ms, Mdl, ElC, GMs>,
     model: Mdl,
     url_handling: UrlHandling,
 }
@@ -182,5 +179,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
         app.data.model.replace(Some(init.model));
 
         app
+    }
+
+    /// Start the app; wraps `.finish()` and `.start()`.
+    pub fn start(self) -> App<Ms, Mdl, ElC, GMs> {
+        let app = self.finish();
+        app.run()
     }
 }

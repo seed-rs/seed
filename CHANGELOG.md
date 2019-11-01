@@ -3,16 +3,19 @@
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
 - The `routes` function now returns an `Option<Msg>` (Breaking)
-- updated `Tag::from()` to accept more input types
+- Updated `Tag::from()` to accept more input types
+- `style!` now accepts types that implement the new `ToCssValue` trait
 - Fixed a bug affecting element render order
 Added a `hashchange` listener
 - Improved error-handling
+- Tweakd bootstrap order so that `main_el_vdom` is initialized first (internal)
 - Macro `custom!` checks if you set tag, and panics when you forget
 - Fixed a bug with children being absent from cloned elements
 - Improved debugging
 - Added a routing listener for changed hash
 - Fixed a namespace bug with adding children to `Svg` elements
 - Fixed a bug affecting Safari
+- Added a `seed::html_document()` and `seed::cookies` convenience functions
 
 ## v0.4.1
 - Added more SVG `At` variants
