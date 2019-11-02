@@ -64,8 +64,6 @@ impl<T: ToString> ToCSSValueForOptionToString for Option<T> {
     }
 }
 
-// TODO: Should we impl ToCSSValue for more types? such as Vec<T>, Box<T>.. etc
-
 // ------------- AtValue -------------
 
 /// Attribute value.
