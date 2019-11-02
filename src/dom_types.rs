@@ -1431,7 +1431,7 @@ pub mod tests {
         assert_eq!(expected, get_node_html(&node));
     }
 
-    /// Test that `style!` macro accpet types that have to_css_value() function
+    /// Test that `style!` macro accept types that have `to_css_value()` function
     #[wasm_bindgen_test]
     pub fn to_css_value_in_style() {
         let display: &str = "flex";
