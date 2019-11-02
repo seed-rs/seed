@@ -15,7 +15,7 @@ use next_tick::NextTick;
 pub mod alias;
 pub use alias::*;
 pub mod builder;
-pub use builder::{Builder as AppBuilder, Init, UrlHandling};
+pub use builder::{Builder as AppBuilder, Init, MountType, UrlHandling};
 
 use crate::{
     dom_types::{self, El, MessageMapper, Namespace, Node, View},
@@ -107,6 +107,7 @@ where
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
+    mount_type: RefCell<Option<MountType>>,
     pub update: UpdateFn<Ms, Mdl, ElC, GMs>,
     pub sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
@@ -167,6 +168,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 view,
                 window_events,
                 initial_orders: RefCell::new(None),
+                mount_type: RefCell::new(None),
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(None),
@@ -195,29 +197,67 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
     }
 
+    /// Bootstrap the dom with the vdom by taking over all children of the mount point and
+    /// replacing them with the vdom if requested. Will otherwise ignore the original children of
+    /// the mount point.
     fn bootstrap_vdom(&self) -> El<Ms> {
+        let mount_type = self.cfg.mount_type.borrow().unwrap_or(MountType::Append);
         // "new" name is for consistency with `update` function.
         // this section parent is a placeholder, so we can iterate over children
         // in a way consistent with patching code.
         let mut new = El::empty(dom_types::Tag::Placeholder);
 
+        // Map the DOM's elements onto the virtual DOM if requested to takeover.
+        if mount_type == MountType::Takeover {
+            // Construct a vdom from the root element. Subsequently strip the workspace so that we
+            // can recreate it later - this is a kind of simple way to avoid missing nodes (but
+            // not entirely correct).
+            // TODO: 1) Optimize by utilizing a patching strategy instead of recreating the workspace
+            // TODO: nodes.
+            // TODO: 2) Watch out for elements that should not be recreated, such as script nodes,
+            // TODO: and other, similar things. For now, leave the warning in the builder's
+            // TODO: documentation.
+            let mut dom_nodes: El<Ms> = (&self.cfg.mount_point).into();
+            dom_nodes.strip_ws_nodes_from_self_and_children();
+
+            // Replace the root dom with a placeholder tag and move the children from the root element
+            // to the newly created root. Uses `Placeholder` to mimic update logic.
+            new.children = dom_nodes.children;
+        }
+
         self.setup_window_listeners();
         patch::setup_input_listeners(&mut new);
         patch::attach_listeners(&mut new, &self.mailbox());
 
-        websys_bridge::assign_ws_nodes_to_el(&util::document(), &mut new);
+        // Recreate the needed nodes. Only do this if requested to takeover the mount point since
+        // it should only be needed here.
+        if mount_type == MountType::Takeover {
+            // TODO: Refer the Optimization TODO.
+            websys_bridge::assign_ws_nodes_to_el(&util::document(), &mut new);
 
-        // Attach all top-level elements to the mount point.
-        for child in &mut new.children {
-            match child {
-                Node::Element(child_el) => {
-                    websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
-                    patch::attach_listeners(child_el, &self.mailbox());
+            // Remove all old elements. We'll swap them out with the newly created elements later.
+            // This maneuver will effectively allow us to remove everything in the mount and thus
+            // takeover the mount point.
+            while let Some(child) = self.cfg.mount_point.first_child() {
+                self.cfg
+                    .mount_point
+                    .remove_child(&child)
+                    .expect("No problem removing node from parent.");
+            }
+
+            // Attach all top-level elements to the mount point if present. This means that we have
+            // effectively taken full control of everything within the mounting element.
+            for child in &mut new.children {
+                match child {
+                    Node::Element(child_el) => {
+                        websys_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
+                        patch::attach_listeners(child_el, &self.mailbox());
+                    }
+                    Node::Text(top_child_text) => {
+                        websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
+                    }
+                    Node::Empty => (),
                 }
-                Node::Text(top_child_text) => {
-                    websys_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
-                }
-                Node::Empty => (),
             }
         }
 
@@ -228,9 +268,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     /// an initial render.
     pub fn run(self) -> Self {
         // Bootstrap the virtual DOM.
-        self.data
-            .main_el_vdom
-            .replace(Some(self.bootstrap_vdom()));
+        self.data.main_el_vdom.replace(Some(self.bootstrap_vdom()));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
