@@ -25,46 +25,46 @@ impl<T: ToString> From<T> for CSSValue {
     }
 }
 
-// ----------- ToCssValue impls ------------
+// ----------- ToCSSValue impls ------------
 
-// impl ToCssValue for CSSValue
+// impl ToCSSValue for CSSValue
 #[doc(hidden)]
-pub trait ToCssValue {
+pub trait ToCSSValueForCSSValue {
     fn to_css_value(self) -> CSSValue;
 }
 
-impl ToCssValue for CSSValue {
+impl ToCSSValueForCSSValue for CSSValue {
     fn to_css_value(self) -> CSSValue {
         self
     }
 }
 
-// impl<T: ToString> ToCssValue for T
+// impl<T: ToString> ToCSSValue for T
 #[doc(hidden)]
-pub trait ToCssValueForToString {
+pub trait ToCSSValueForToString {
     fn to_css_value(&self) -> CSSValue;
 }
 
-impl<T: ToString> ToCssValueForToString for T {
+impl<T: ToString> ToCSSValueForToString for T {
     fn to_css_value(&self) -> CSSValue {
         CSSValue::Some(self.to_string())
     }
 }
 
-// impl<T: ToString> ToCssValue for Option<T>
+// impl<T: ToString> ToCSSValue for Option<T>
 #[doc(hidden)]
-pub trait ToCssValueForOptionToString {
+pub trait ToCSSValueForOptionToString {
     fn to_css_value(&self) -> CSSValue;
 }
 
-impl<T: ToString> ToCssValueForOptionToString for Option<T> {
+impl<T: ToString> ToCSSValueForOptionToString for Option<T> {
     fn to_css_value(&self) -> CSSValue {
         self.as_ref()
             .map_or(CSSValue::Ignored, |t| CSSValue::Some(t.to_string()))
     }
 }
 
-// TODO: Should we impl ToCssValue for more types? such as Vec<T>, Box<T>.. etc
+// TODO: Should we impl ToCSSValue for more types? such as Vec<T>, Box<T>.. etc
 
 // ------------- AtValue -------------
 
