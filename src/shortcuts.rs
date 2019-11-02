@@ -252,7 +252,7 @@ macro_rules! style {
         {
             #[allow(unused_imports)]
             use $crate::dom_types::values::{
-                ToCssValue, ToCssValueForOptionToString, ToCssValueForToString
+                ToCSSValueForCSSValue, ToCSSValueForOptionToString, ToCSSValueForToString
             };
             let mut vals = IndexMap::new();
             $(
