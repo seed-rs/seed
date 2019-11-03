@@ -228,9 +228,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     /// an initial render.
     pub fn run(self) -> Self {
         // Bootstrap the virtual DOM.
-        self.data
-            .main_el_vdom
-            .replace(Some(self.bootstrap_vdom()));
+        self.data.main_el_vdom.replace(Some(self.bootstrap_vdom()));
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
