@@ -8,7 +8,7 @@ pub use crate::{
     fetch::{Method, Request},
     routing::{push_route, Url},
     util::{body, cookies, document, error, history, html_document, log, update, window},
-    vdom::{App, AppBuilder, MountType},
+    vdom::{App, AppBuilder},
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -97,7 +97,7 @@ pub mod prelude {
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
         },
-        vdom::{Init, UrlHandling},
+        vdom::{Init, UrlHandling, MountType},
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
     pub use wasm_bindgen::prelude::*;
