@@ -154,5 +154,5 @@ fn view(model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    App::build(init, update, view).start();
+    App::build(init, update, view).build_and_run();
 }

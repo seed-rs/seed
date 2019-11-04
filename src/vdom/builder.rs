@@ -182,7 +182,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
     }
 
     /// Start the app; wraps `.finish()` and `.start()`.
-    pub fn start(self) -> App<Ms, Mdl, ElC, GMs> {
+    pub fn build_and_run(self) -> App<Ms, Mdl, ElC, GMs> {
         let app = self.finish();
         app.run()
     }

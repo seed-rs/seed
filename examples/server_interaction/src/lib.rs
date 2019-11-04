@@ -135,5 +135,5 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(init, update, view).start();
+    seed::App::build(init, update, view).build_and_run();
 }

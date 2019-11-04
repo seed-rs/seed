@@ -15,7 +15,7 @@ Added a `hashchange` listener
 - Added a routing listener for changed hash
 - Fixed a namespace bug with adding children to `Svg` elements
 - Fixed a bug affecting Safari
-- Added a `seed::html_document()` and `seed::cookies` convenience functions
+- Added `seed::html_document()` and `seed::cookies` convenience functions
 
 ## v0.4.1
 - Added more SVG `At` variants
