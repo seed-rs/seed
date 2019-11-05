@@ -12,7 +12,6 @@
 - Macro `custom!` checks if you set tag, and panics when you forget
 - Fixed a bug with children being absent from cloned elements
 - Improved debugging
-- Added a routing listener for changed hash
 - Fixed a namespace bug with adding children to `Svg` elements
 - Fixed a bug affecting Safari
 - Added `seed::html_document()` and `seed::cookies` convenience functions
