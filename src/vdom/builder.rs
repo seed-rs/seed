@@ -146,7 +146,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
     ///
     /// [`Builder`]: struct.Builder.html
     /// [`App`]: struct.App.html
-    #[deprecated(since = "0.4.2", note = "Please use `.build_and_run` instead")]
+    #[deprecated(since = "0.4.2", note = "Please use `.build_and_start` instead")]
     pub fn finish(mut self) -> App<Ms, Mdl, ElC, GMs> {
         if self.mount_point.is_none() {
             self = self.mount("app")
@@ -183,7 +183,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
     }
 
     /// Build and run the app.
-    pub fn build_and_run(self) -> App<Ms, Mdl, ElC, GMs> {
+    pub fn build_and_start(self) -> App<Ms, Mdl, ElC, GMs> {
         let app = self.finish();
         app.run()
     }

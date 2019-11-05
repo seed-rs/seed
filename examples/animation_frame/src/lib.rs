@@ -182,5 +182,5 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
 pub fn render() {
     seed::App::build(init, update, view)
         .window_events(|_| vec![simple_ev(Ev::Resize, Msg::SetViewportWidth)])
-        .build_and_run();
+        .build_and_start();
 }

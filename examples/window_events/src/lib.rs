@@ -85,5 +85,5 @@ fn window_events(model: &Model) -> Vec<Listener<Msg>> {
 pub fn render() {
     seed::App::build(|_, _| Init::new(Model::default()), update, view)
         .window_events(window_events)
-        .build_and_run();
+        .build_and_start();
 }

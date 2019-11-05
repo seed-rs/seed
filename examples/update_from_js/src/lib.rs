@@ -76,7 +76,7 @@ fn view(model: &Model) -> Node<Msg> {
 #[wasm_bindgen]
 // `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
 pub fn start() -> Box<[JsValue]> {
-    let app = seed::App::build(init, update, view).finish().run();
+    let app = seed::App::build(init, update, view).build_and_start();
 
     create_closures_for_js(&app)
 }
