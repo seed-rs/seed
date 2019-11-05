@@ -36,16 +36,37 @@ impl MountPoint for web_sys::HtmlElement {
 }
 
 /// Used for handling initial routing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UrlHandling {
     PassToRoutes,
     None,
     // todo: Expand later, as-required
 }
 
+/// Describes the handling of elements already present in the mount element.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MountType {
+    /// Take control of previously existing elements in the mount. This does not make guarantees of
+    /// elements added after the [`App`] has been mounted.
+    ///
+    /// Note that existing elements in the DOM will be recreated. This can be dangerous for script
+    /// tags and other, similar tags.
+    Takeover,
+    /// Leave the previously existing elements in the mount alone. This does not make guarantees of
+    /// elements added after the [`App`] has been mounted.
+    Append,
+}
+
 /// Used as a flexible wrapper for the init function.
 pub struct Init<Mdl> {
-    model: Mdl,
-    url_handling: UrlHandling,
+    /// Initial model to be used when the app begins.
+    pub model: Mdl,
+    /// How to handle initial url routing. Defaults to [`UrlHandling::PassToRoutes`] in the
+    /// constructors.
+    pub url_handling: UrlHandling,
+    /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
+    /// in the constructors.
+    pub mount_type: MountType,
 }
 
 impl<Mdl> Init<Mdl> {
@@ -53,6 +74,7 @@ impl<Mdl> Init<Mdl> {
         Self {
             model,
             url_handling: UrlHandling::PassToRoutes,
+            mount_type: MountType::Append,
         }
     }
 
@@ -60,6 +82,17 @@ impl<Mdl> Init<Mdl> {
         Self {
             model,
             url_handling,
+            mount_type: MountType::Append,
+        }
+    }
+}
+
+impl<Mdl: Default> Default for Init<Mdl> {
+    fn default() -> Self {
+        Self {
+            model: Mdl::default(),
+            url_handling: UrlHandling::PassToRoutes,
+            mount_type: MountType::Append,
         }
     }
 }
@@ -177,6 +210,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
         };
 
         app.cfg.initial_orders.replace(Some(initial_orders));
+        app.cfg.mount_type.replace(Some(init.mount_type));
         app.data.model.replace(Some(init.model));
 
         app

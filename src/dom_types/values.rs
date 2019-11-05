@@ -25,11 +25,42 @@ impl<T: ToString> From<T> for CSSValue {
     }
 }
 
-// `&` because `style!` macro automatically adds prefix `&` before values for more ergonomic API
-// (otherwise it would fail when you use for example a Model's property in View functions as `CSSValue`)
-impl From<&CSSValue> for CSSValue {
-    fn from(value: &CSSValue) -> Self {
-        value.clone()
+// ----------- ToCSSValue impls ------------
+
+// impl ToCSSValue for CSSValue
+#[doc(hidden)]
+pub trait ToCSSValueForCSSValue {
+    fn to_css_value(self) -> CSSValue;
+}
+
+impl ToCSSValueForCSSValue for CSSValue {
+    fn to_css_value(self) -> CSSValue {
+        self
+    }
+}
+
+// impl<T: ToString> ToCSSValue for T
+#[doc(hidden)]
+pub trait ToCSSValueForToString {
+    fn to_css_value(&self) -> CSSValue;
+}
+
+impl<T: ToString> ToCSSValueForToString for T {
+    fn to_css_value(&self) -> CSSValue {
+        CSSValue::Some(self.to_string())
+    }
+}
+
+// impl<T: ToString> ToCSSValue for Option<T>
+#[doc(hidden)]
+pub trait ToCSSValueForOptionToString {
+    fn to_css_value(&self) -> CSSValue;
+}
+
+impl<T: ToString> ToCSSValueForOptionToString for Option<T> {
+    fn to_css_value(&self) -> CSSValue {
+        self.as_ref()
+            .map_or(CSSValue::Ignored, |t| CSSValue::Some(t.to_string()))
     }
 }
 

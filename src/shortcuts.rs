@@ -243,17 +243,20 @@ macro_rules! id {
      };
 }
 
+// reference for workaround used by style! macro
+// (https://github.com/dtolnay/case-studies/blob/master/autoref-specialization/README.md)
 /// Provide a shortcut for creating styles.
 #[macro_export]
 macro_rules! style {
     { $($key:expr => $value:expr $(;)?$(,)?)* } => {
         {
+            #[allow(unused_imports)]
+            use $crate::dom_types::values::{
+                ToCSSValueForCSSValue, ToCSSValueForOptionToString, ToCSSValueForToString
+            };
             let mut vals = IndexMap::new();
             $(
-                // We can handle arguments of multiple types by using this:
-                // Strings, &strs, bools, numbers etc.
-                // And cases like `CSSValue::Ignored`.
-                vals.insert($key.into(), (&$value).into());
+                vals.insert($key.into(), ($value).to_css_value());
             )*
             $crate::dom_types::Style::new(vals)
         }
