@@ -262,6 +262,10 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 
     /// App initialization: Collect its fundamental components, setup, and perform
     /// an initial render.
+    #[deprecated(
+        since = "0.4.2",
+        note = "Please use `AppBuilder.build_and_start` instead"
+    )]
     pub fn run(self) -> Self {
         // Bootstrap the virtual DOM.
         self.data.main_el_vdom.replace(Some(self.bootstrap_vdom()));

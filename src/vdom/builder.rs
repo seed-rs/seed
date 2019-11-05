@@ -4,8 +4,6 @@ use super::{alias::*, App};
 
 use crate::{dom_types::View, orders::OrdersContainer, routing, util};
 
-//type InitFn<Ms, Mdl, ElC, GMs> =
-//    Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Mdl>;
 pub type InitFn<Ms, Mdl, ElC, GMs> =
     Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
 
@@ -61,7 +59,6 @@ pub enum MountType {
 
 /// Used as a flexible wrapper for the init function.
 pub struct Init<Mdl> {
-    //    init: InitFn<Ms, Mdl, ElC, GMs>,
     /// Initial model to be used when the app begins.
     pub model: Mdl,
     /// How to handle initial url routing. Defaults to [`UrlHandling::PassToRoutes`] in the
@@ -182,6 +179,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
     ///
     /// [`Builder`]: struct.Builder.html
     /// [`App`]: struct.App.html
+    #[deprecated(since = "0.4.2", note = "Please use `.build_and_start` instead")]
     pub fn finish(mut self) -> App<Ms, Mdl, ElC, GMs> {
         if self.mount_point.is_none() {
             self = self.mount("app")
@@ -216,5 +214,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
         app.data.model.replace(Some(init.model));
 
         app
+    }
+
+    /// Build and run the app.
+    pub fn build_and_start(self) -> App<Ms, Mdl, ElC, GMs> {
+        let app = self.finish();
+        app.run()
     }
 }
