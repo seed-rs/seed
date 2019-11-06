@@ -16,6 +16,7 @@ struct Model {}
 
 #[derive(Clone)]
 enum Msg {}
+//type Msg = ();
 
 fn update(_msg: Msg, _model: &mut Model, _: &mut impl Orders<Msg>) {}
 
@@ -26,7 +27,7 @@ fn view(_model: &Model) -> impl View<Msg> {
         h1!["Example canvas"],
         canvas![
             attrs![
-                At::Id => "canvas",
+                At::Id => CANVAS_ID,
                 At::Width => px(200),
                 At::Height => px(100),
             ],
@@ -39,7 +40,7 @@ fn view(_model: &Model) -> impl View<Msg> {
 
 fn draw() {
     let canvas = seed::canvas(CANVAS_ID).unwrap();
-    let ctx = seed::canvas_context(&canvas, "2d");
+    let ctx = seed::canvas_context_2d(&canvas);
 
     ctx.move_to(0., 0.);
     ctx.line_to(200., 100.);

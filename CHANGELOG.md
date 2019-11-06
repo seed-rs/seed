@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.3 [unreleased]
+[unreleased]
 - Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions
 
 ## v0.4.2
