@@ -54,7 +54,7 @@ pub fn canvas(id: &str) -> Option<web_sys::HtmlCanvasElement> {
         Some(
             c.dyn_into::<web_sys::HtmlCanvasElement>()
                 .map_err(|_| ())
-                .unwrap(),
+                .expect("Problem casting as web_sys::HtmlCanvasElement"),
         )
     } else {
         None
@@ -67,8 +67,8 @@ pub fn canvas_context_2d(
 ) -> web_sys::CanvasRenderingContext2d {
     canvas
         .get_context("2d")
-        .unwrap()
-        .unwrap()
+        .expect("Problem getting canvas context")
+        .expect("The canvas context is empty")
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap()
 }
