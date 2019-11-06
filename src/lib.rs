@@ -8,7 +8,7 @@ pub use crate::{
     fetch::{Method, Request},
     routing::{push_route, Url},
     util::{
-        body, canvas, canvas_context, cookies, document, error, history, html_document, log,
+        body, canvas, canvas_context_2d, cookies, document, error, history, html_document, log,
         update, window,
     },
     vdom::{App, AppBuilder},
