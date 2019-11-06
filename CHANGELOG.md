@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.4.3 [unreleased]
+- Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions
+
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
 - The `routes` function now returns an `Option<Msg>` (Breaking)

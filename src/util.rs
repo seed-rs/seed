@@ -49,12 +49,16 @@ pub fn html_document() -> web_sys::HtmlDocument {
     wasm_bindgen::JsValue::from(document()).unchecked_into::<web_sys::HtmlDocument>()
 }
 /// Convenience function to access the `web_sys::HtmlCanvasElement`.
-pub fn canvas(id: &str) -> web_sys::HtmlCanvasElement {
-    let canvas = document().get_element_by_id(id).unwrap();
-    canvas
-        .dyn_into::<web_sys::HtmlCanvasElement>()
-        .map_err(|_| ())
-        .unwrap()
+pub fn canvas(id: &str) -> Option<web_sys::HtmlCanvasElement> {
+    if let Some(c) = document().get_element_by_id(id) {
+        Some(
+            c.dyn_into::<web_sys::HtmlCanvasElement>()
+                .map_err(|_| ())
+                .unwrap(),
+        )
+    } else {
+        None
+    }
 }
 
 /// Convenience function to access the `web_sys::CanvasRenderingContext2d`.
