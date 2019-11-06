@@ -14,7 +14,7 @@ struct Model {}
 
 // Update
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 enum Msg {
     Draw,
 }
