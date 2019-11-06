@@ -16,12 +16,12 @@ struct Model {}
 
 #[derive(Copy, Clone)]
 enum Msg {
-    Draw,
+    Fill,
 }
 
 fn update(msg: Msg, _model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Draw => fill(),
+        Msg::Fill => fill(),
     }
 }
 
@@ -40,7 +40,7 @@ fn view(_model: &Model) -> impl View<Msg> {
                 St::Border => "1px solid black",
             ],
         ],
-        button!["Change color", simple_ev(Ev::Click, Msg::Draw)],
+        button!["Change color", simple_ev(Ev::Click, Msg::Fill)],
     ]
 }
 
@@ -65,5 +65,5 @@ fn fill() {
 #[wasm_bindgen(start)]
 pub fn render() {
     seed::App::build(|_, _| Init::new(Model {}), update, view).build_and_start();
-    draw();
+    draw();  // Initial drawing
 }
