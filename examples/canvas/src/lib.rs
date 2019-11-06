@@ -6,6 +6,8 @@
 extern crate seed;
 use seed::prelude::*;
 
+const CANVAS_ID: &str = "canvas";
+
 // Model
 
 struct Model {}
@@ -29,14 +31,14 @@ fn view(_model: &Model) -> impl View<Msg> {
                 At::Height => px(100),
             ],
             style![
-                St::Border => "1px solid #000000",
+                St::Border => "1px solid black",
             ],
         ],
     ]
 }
 
 fn draw() {
-    let canvas = seed::canvas("canvas");
+    let canvas = seed::canvas(CANVAS_ID).unwrap();
     let ctx = seed::canvas_context(&canvas, "2d");
 
     ctx.move_to(0., 0.);
