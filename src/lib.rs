@@ -7,7 +7,10 @@
 pub use crate::{
     fetch::{Method, Request},
     routing::{push_route, Url},
-    util::{body, cookies, document, error, history, html_document, log, update, window},
+    util::{
+        body, canvas, canvas_context, cookies, document, error, history, html_document, log,
+        update, window,
+    },
     vdom::{App, AppBuilder},
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };

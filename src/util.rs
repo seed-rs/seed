@@ -48,6 +48,27 @@ pub fn history() -> web_sys::History {
 pub fn html_document() -> web_sys::HtmlDocument {
     wasm_bindgen::JsValue::from(document()).unchecked_into::<web_sys::HtmlDocument>()
 }
+/// Convenience function to access the `web_sys::HtmlCanvasElement`.
+pub fn canvas(id: &str) -> web_sys::HtmlCanvasElement {
+    let canvas = document().get_element_by_id(id).unwrap();
+    canvas
+        .dyn_into::<web_sys::HtmlCanvasElement>()
+        .map_err(|_| ())
+        .unwrap()
+}
+
+/// Convenience function to access the `web_sys::CanvasRenderingContext2d`.
+pub fn canvas_context(
+    canvas: &web_sys::HtmlCanvasElement,
+    context: &str,
+) -> web_sys::CanvasRenderingContext2d {
+    canvas
+        .get_context(context)
+        .unwrap()
+        .unwrap()
+        .dyn_into::<web_sys::CanvasRenderingContext2d>()
+        .unwrap()
+}
 
 /// Convenience function to get all cookies from the current `HtmlDocument`
 /// _Note:_ Returns `None` if parsing cookies fails or there are no cookies.
