@@ -21,7 +21,7 @@ enum Msg {
 
 fn update(msg: Msg, _model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Draw => draw(),
+        Msg::Draw => fill(),
     }
 }
 
@@ -40,7 +40,7 @@ fn view(_model: &Model) -> impl View<Msg> {
                 St::Border => "1px solid black",
             ],
         ],
-        button!["Click me to draw", simple_ev(Ev::Click, Msg::Draw)],
+        button!["Change color", simple_ev(Ev::Click, Msg::Draw)],
     ]
 }
 
@@ -53,7 +53,17 @@ fn draw() {
     ctx.stroke();
 }
 
+fn fill() {
+    let canvas = seed::canvas(CANVAS_ID).unwrap();
+    let ctx = seed::canvas_context_2d(&canvas);
+
+    ctx.rect(0., 0., 200., 100.);
+    ctx.set_fill_style(&JsValue::from_str("blue"));
+    ctx.fill();
+}
+
 #[wasm_bindgen(start)]
 pub fn render() {
     seed::App::build(|_, _| Init::new(Model {}), update, view).build_and_start();
+    draw();
 }
