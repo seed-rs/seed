@@ -7,6 +7,7 @@ changes are included in `CHANGELOG.md`, and that breaking changes
 are specifically annotated
 1. Ensure both the readme and homepage website reflect API changes. Instructions
 for updating the homepage are available [here](https://github.com/David-OConnor/seed-homepage)
+1. Update the homepage with the new release version (main page), and changelog
 1. Ensure the [quickstart repo](https://github.com/David-Oconnor/seed-quickstart) is updated
 to reflect API changes, and the new version
 1. Ensure the version listed in `Cargo.toml` is updated
