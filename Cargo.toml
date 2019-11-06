@@ -46,6 +46,7 @@ version = "0.3.27"
 features = [
     "AbortController",
     "AbortSignal",
+    "CanvasRenderingContext2d",
     "CustomEvent",
     "CustomEventInit",
     "Document",
@@ -57,6 +58,7 @@ features = [
     "Headers",
     "History",
     "HtmlElement",
+    "HtmlCanvasElement",
     "HtmlCollection",
     "HtmlDocument",
     "HtmlInputElement",
@@ -98,6 +100,7 @@ features = [
 members = [
     "examples/animation_frame",
     "examples/counter",
+    "examples/canvas",
     "examples/drop",
     # "examples/homepage",   # isn't Rust project
     "examples/mathjax",
