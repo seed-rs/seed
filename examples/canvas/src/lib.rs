@@ -15,16 +15,21 @@ struct Model {}
 // Update
 
 #[derive(Clone)]
-enum Msg {}
-//type Msg = ();
+enum Msg {
+    Draw,
+}
 
-fn update(_msg: Msg, _model: &mut Model, _: &mut impl Orders<Msg>) {}
+fn update(msg: Msg, _model: &mut Model, _: &mut impl Orders<Msg>) {
+    match msg {
+        Msg::Draw => draw(),
+    }
+}
 
 // View
 
 fn view(_model: &Model) -> impl View<Msg> {
-    vec![
-        h1!["Example canvas"],
+    div![
+        style! {St::Display => "flex"},
         canvas![
             attrs![
                 At::Id => CANVAS_ID,
@@ -35,6 +40,7 @@ fn view(_model: &Model) -> impl View<Msg> {
                 St::Border => "1px solid black",
             ],
         ],
+        button!["Click me to draw", simple_ev(Ev::Click, Msg::Draw)],
     ]
 }
 
@@ -50,5 +56,4 @@ fn draw() {
 #[wasm_bindgen(start)]
 pub fn render() {
     seed::App::build(|_, _| Init::new(Model {}), update, view).build_and_start();
-    draw();
 }

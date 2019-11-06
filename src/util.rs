@@ -62,15 +62,13 @@ pub fn canvas(id: &str) -> Option<web_sys::HtmlCanvasElement> {
 }
 
 /// Convenience function to access the `web_sys::CanvasRenderingContext2d`.
-pub fn canvas_context_2d(
-    canvas: &web_sys::HtmlCanvasElement,
-) -> web_sys::CanvasRenderingContext2d {
+pub fn canvas_context_2d(canvas: &web_sys::HtmlCanvasElement) -> web_sys::CanvasRenderingContext2d {
     canvas
         .get_context("2d")
         .expect("Problem getting canvas context")
         .expect("The canvas context is empty")
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
-        .unwrap()
+        .expect("Problem casting as web_sys::CanvasRenderingContext2d")
 }
 
 /// Convenience function to get all cookies from the current `HtmlDocument`
