@@ -62,12 +62,11 @@ pub fn canvas(id: &str) -> Option<web_sys::HtmlCanvasElement> {
 }
 
 /// Convenience function to access the `web_sys::CanvasRenderingContext2d`.
-pub fn canvas_context(
+pub fn canvas_context_2d(
     canvas: &web_sys::HtmlCanvasElement,
-    context: &str,
 ) -> web_sys::CanvasRenderingContext2d {
     canvas
-        .get_context(context)
+        .get_context("2d")
         .unwrap()
         .unwrap()
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
