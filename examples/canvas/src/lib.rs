@@ -65,5 +65,5 @@ fn fill() {
 #[wasm_bindgen(start)]
 pub fn render() {
     seed::App::build(|_, _| Init::new(Model {}), update, view).build_and_start();
-    draw();  // Initial drawing
+    draw(); // Initial drawing
 }
