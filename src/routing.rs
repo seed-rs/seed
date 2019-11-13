@@ -2,7 +2,7 @@
 
 use crate::util::ClosureNew;
 use serde::{Deserialize, Serialize};
-use std::convert::identity;
+use std::convert::{identity, TryFrom, TryInto};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Repeated here from `seed::util`, to make this module standalone.  Once we have a Gloo module
@@ -79,10 +79,7 @@ impl From<web_sys::Url> for Url {
             let mut path = url.pathname();
             // Remove leading `/`.
             path.remove(0);
-            path
-                .split('/')
-                .map(|path_part| path_part.to_owned())
-                .collect::<Vec<_>>()
+            path.split('/').map(ToOwned::to_owned).collect::<Vec<_>>()
         };
 
         let hash = {
@@ -116,12 +113,14 @@ impl From<web_sys::Url> for Url {
     }
 }
 
-impl From<String> for Url {
-    fn from(string_url: String) -> Self {
+impl TryFrom<String> for Url {
+    type Error = String;
+
+    fn try_from(relative_url: String) -> Result<Self, Self::Error> {
         let dummy_base_url = "http://example.com";
-        // @TODO remove unwrap
-        let url = web_sys::Url::new_with_base(&string_url, dummy_base_url).unwrap();
-        url.into()
+        web_sys::Url::new_with_base(&relative_url, dummy_base_url)
+            .map(Url::from)
+            .map_err(|_| format!("`{}` is invalid relative URL", relative_url))
     }
 }
 
@@ -141,10 +140,7 @@ impl From<Vec<&str>> for Url {
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial_url() -> Url {
-    let current_url = util::window()
-        .location()
-        .href()
-        .expect("get `href`");
+    let current_url = util::window().location().href().expect("get `href`");
 
     web_sys::Url::new(&current_url)
         .expect("create `web_sys::Url` from the current URL")
@@ -153,9 +149,11 @@ pub fn initial_url() -> Url {
 
 /// Remove prepended / from all items in the Url's path.
 fn clean_url(mut url: Url) -> Url {
-    url.path = url.path.into_iter().map(|path_part| {
-        path_part.trim_start_matches('/').to_owned()
-    }).collect();
+    url.path = url
+        .path
+        .into_iter()
+        .map(|path_part| path_part.trim_start_matches('/').to_owned())
+        .collect();
     url
 }
 
@@ -240,7 +238,10 @@ pub fn setup_hashchange_listener<Ms>(
             .dyn_ref::<web_sys::HashChangeEvent>()
             .expect("Problem casting as hashchange event");
 
-        let url: Url = ev.new_url().into();
+        let url: Url = ev
+            .new_url()
+            .try_into()
+            .expect("cast hashchange event url to `Url`");
 
         if let Some(routing_msg) = routes(url) {
             update(routing_msg);
@@ -289,7 +290,7 @@ where
                     event.prevent_default(); // Prevent page refresh
                 } else {
                     // Only update when requested for an update by the user.
-                    let url = clean_url(Url::from(href));
+                    let url = clean_url(Url::try_from(href).expect("cast link href to `Url`"));
                     if let Some(redirect_msg) = routes(url.clone()) {
                         // Route internally, overriding the default history
                         push_route(url);
@@ -324,7 +325,7 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path1/path2".to_string().into();
+        let actual: Url = "/path1/path2".to_string().try_into().unwrap();
         assert_eq!(expected, actual)
     }
 
@@ -337,7 +338,7 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path?search=query#hash".to_string().into();
+        let actual: Url = "/path?search=query#hash".to_string().try_into().unwrap();
         assert_eq!(expected, actual)
     }
 
@@ -350,7 +351,7 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path#hash".to_string().into();
+        let actual: Url = "/path#hash".to_string().try_into().unwrap();
         assert_eq!(expected, actual)
     }
 
@@ -363,7 +364,7 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/#/discover".to_string().into();
+        let actual: Url = "/#/discover".to_string().try_into().unwrap();
         assert_eq!(expected, actual)
     }
 }
