@@ -74,62 +74,47 @@ impl Url {
 }
 
 impl From<String> for Url {
-    fn from(s: String) -> Self {
-        // This could be done more elegantly with regex, but adding it as a dependency
-        // causes a big increase in WASM size.
-        let mut path: Vec<String> = s.split('/').map(ToString::to_string).collect();
-        if let Some(first) = path.get(0) {
-            if first.is_empty() {
-                path.remove(0); // Remove a leading empty string.
+    fn from(string_url: String) -> Self {
+        let dummy_base_url = "http://example.com";
+        // @TODO remove unwrap
+        let url = web_sys::Url::new_with_base(&string_url, dummy_base_url).unwrap();
+
+        let path = {
+            let mut path = url.pathname();
+            // Remove leading `/`.
+            path.remove(0);
+            path
+                .split('/')
+                .map(|path_part| path_part.to_owned())
+                .collect::<Vec<_>>()
+        };
+
+        let hash = {
+            let mut hash = url.hash();
+            if hash.is_empty() {
+                None
+            } else {
+                // Remove leading `#`.
+                hash.remove(0);
+                Some(hash)
             }
-        }
+        };
 
-        // We assume hash and search terms are at the end of the path, and hash comes before search.
-        let last = path.pop();
-
-        let mut last_path = String::new();
-        let mut hash = String::new();
-        let mut search = String::new();
-
-        if let Some(l) = last {
-            let mut in_hash = false;
-            let mut in_search = false;
-            for c in l.chars() {
-                if c == '#' {
-                    in_hash = true;
-                    in_search = false;
-                    continue;
-                }
-
-                if c == '?' {
-                    in_hash = false;
-                    in_search = true;
-                    continue;
-                }
-
-                if in_hash {
-                    hash.push(c);
-                } else if in_search {
-                    search.push(c);
-                } else {
-                    last_path.push(c);
-                }
+        let search = {
+            let mut search = url.search();
+            if search.is_empty() {
+                None
+            } else {
+                // Remove leading `?`.
+                search.remove(0);
+                Some(search)
             }
-        }
-
-        // Re-add the pre-`#` and pre-`?` part of the path.
-        if !last_path.is_empty() {
-            path.push(last_path);
-        }
+        };
 
         Self {
             path,
-            hash: if hash.is_empty() { None } else { Some(hash) },
-            search: if search.is_empty() {
-                None
-            } else {
-                Some(search)
-            },
+            hash,
+            search,
             title: None,
         }
     }
@@ -192,12 +177,14 @@ pub fn initial_url() -> Url {
         _ => Some(raw_search),
     };
 
-    Url {
+    let url = Url {
         path,
         hash,
         search,
         title: None,
-    }
+    };
+    log!("URL_FROM_INITIAL_URL", url);
+    url
 }
 
 fn remove_first(s: &str) -> Option<&str> {
@@ -255,7 +242,6 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
     util::history()
         .push_state_with_url(&data, title, Some(&path))
         .expect("Problem pushing state");
-
     url
 }
 
@@ -303,7 +289,11 @@ pub fn setup_hashchange_listener<Ms>(
             .dyn_ref::<web_sys::HashChangeEvent>()
             .expect("Problem casting as hashchange event");
 
+        log!("NEW_URL", ev.new_url());
+
         let url: Url = ev.new_url().into();
+
+        log!("URL_FROM_setup_hashchange_listener", url);
 
         if let Some(routing_msg) = routes(url) {
             update(routing_msg);
@@ -414,6 +404,19 @@ mod tests {
         };
 
         let actual: Url = "/path/#hash".to_string().into();
+        assert_eq!(expected, actual)
+    }
+
+    #[wasm_bindgen_test]
+    fn parse_url_with_hash_routing() {
+        let expected = Url {
+            path: vec!["".into()],
+            hash: Some("/discover".into()),
+            search: None,
+            title: None,
+        };
+
+        let actual: Url = "/#/discover".to_string().into();
         assert_eq!(expected, actual)
     }
 }

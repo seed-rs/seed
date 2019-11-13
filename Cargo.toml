@@ -94,6 +94,7 @@ features = [
     "Window",
     "KeyboardEvent",
     "InputEvent",
+    "Url",
 ]
 
 [workspace]
