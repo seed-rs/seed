@@ -73,12 +73,8 @@ impl Url {
     }
 }
 
-impl From<String> for Url {
-    fn from(string_url: String) -> Self {
-        let dummy_base_url = "http://example.com";
-        // @TODO remove unwrap
-        let url = web_sys::Url::new_with_base(&string_url, dummy_base_url).unwrap();
-
+impl From<web_sys::Url> for Url {
+    fn from(url: web_sys::Url) -> Self {
         let path = {
             let mut path = url.pathname();
             // Remove leading `/`.
@@ -120,6 +116,15 @@ impl From<String> for Url {
     }
 }
 
+impl From<String> for Url {
+    fn from(string_url: String) -> Self {
+        let dummy_base_url = "http://example.com";
+        // @TODO remove unwrap
+        let url = web_sys::Url::new_with_base(&string_url, dummy_base_url).unwrap();
+        url.into()
+    }
+}
+
 impl From<Vec<String>> for Url {
     fn from(path: Vec<String>) -> Self {
         Url::new(path)
@@ -133,58 +138,17 @@ impl From<Vec<&str>> for Url {
     }
 }
 
-/// Get the current url path, without a prepended /
-fn get_path() -> String {
-    let path = util::window()
-        .location()
-        .pathname()
-        .expect("Can't find pathname");
-    path[1..path.len()].to_string() // Remove leading /
-}
-
-fn get_hash() -> String {
-    util::window()
-        .location()
-        .hash()
-        .expect("Can't find hash")
-        .replace("#", "")
-}
-
-fn get_search() -> String {
-    util::window()
-        .location()
-        .search()
-        .expect("Can't find search")
-        .replace("?", "")
-}
-
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
 pub fn initial_url() -> Url {
-    let raw_path = get_path();
-    let path_ref: Vec<&str> = raw_path.split('/').collect();
-    let path: Vec<String> = path_ref.into_iter().map(ToString::to_string).collect();
+    let current_url = util::window()
+        .location()
+        .href()
+        .expect("get `href`");
 
-    let raw_hash = get_hash();
-    let hash = match raw_hash.len() {
-        0 => None,
-        _ => Some(raw_hash),
-    };
-
-    let raw_search = get_search();
-    let search = match raw_search.len() {
-        0 => None,
-        _ => Some(raw_search),
-    };
-
-    let url = Url {
-        path,
-        hash,
-        search,
-        title: None,
-    };
-    log!("URL_FROM_INITIAL_URL", url);
-    url
+    web_sys::Url::new(&current_url)
+        .expect("create `web_sys::Url` from the current URL")
+        .into()
 }
 
 fn remove_first(s: &str) -> Option<&str> {
@@ -289,11 +253,7 @@ pub fn setup_hashchange_listener<Ms>(
             .dyn_ref::<web_sys::HashChangeEvent>()
             .expect("Problem casting as hashchange event");
 
-        log!("NEW_URL", ev.new_url());
-
         let url: Url = ev.new_url().into();
-
-        log!("URL_FROM_setup_hashchange_listener", url);
 
         if let Some(routing_msg) = routes(url) {
             update(routing_msg);
