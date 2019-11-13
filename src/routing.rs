@@ -346,11 +346,11 @@ mod tests {
         let expected = Url {
             path: vec!["path".into()],
             hash: Some("hash".into()),
-            search: Some("sea=rch".into()),
+            search: Some("search=query".into()),
             title: None,
         };
 
-        let actual: Url = "/path/#hash?sea=rch".to_string().into();
+        let actual: Url = "/path?search=query#hash".to_string().into();
         assert_eq!(expected, actual)
     }
 
@@ -363,7 +363,7 @@ mod tests {
             title: None,
         };
 
-        let actual: Url = "/path/#hash".to_string().into();
+        let actual: Url = "/path#hash".to_string().into();
         assert_eq!(expected, actual)
     }
 
