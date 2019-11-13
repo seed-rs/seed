@@ -151,24 +151,11 @@ pub fn initial_url() -> Url {
         .into()
 }
 
-fn remove_first(s: &str) -> Option<&str> {
-    s.chars().next().map(|c| &s[c.len_utf8()..])
-}
-
 /// Remove prepended / from all items in the Url's path.
 fn clean_url(mut url: Url) -> Url {
-    let mut cleaned_path = vec![];
-    for part in &url.path {
-        if let Some(first) = part.chars().next() {
-            if first == '/' {
-                cleaned_path.push(remove_first(part).unwrap().to_string());
-            } else {
-                cleaned_path.push(part.to_string());
-            }
-        }
-    }
-
-    url.path = cleaned_path;
+    url.path = url.path.into_iter().map(|path_part| {
+        path_part.trim_start_matches('/').to_owned()
+    }).collect();
     url
 }
 
