@@ -334,6 +334,7 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
         .expect("Unable to cast as a mouse event")
 }
 
+#[allow(clippy::too_many_lines)]
 impl<Ms> From<&web_sys::Element> for El<Ms> {
     /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
     /// and markdown strings. Includes children, recursively added.
