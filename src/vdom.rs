@@ -85,9 +85,22 @@ impl<Ms> Clone for Mailbox<Ms> {
 // TODO: Examine what needs to be ref cells, rcs etc
 
 type StoredPopstate = RefCell<Option<Closure<dyn FnMut(Event)>>>;
-
-pub type RenderTimestampDelta = f64;
 type RenderTimestamp = f64;
+
+#[derive(Copy, Clone, PartialEq, Default, Debug, PartialOrd)]
+pub struct RenderTimestampDelta(f64);
+
+impl RenderTimestampDelta {
+    pub const fn new(delta: f64) -> Self {
+        Self(delta)
+    }
+}
+
+impl From<RenderTimestampDelta> for f64 {
+    fn from(delta: RenderTimestampDelta) -> Self {
+        delta.0
+    }
+}
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 #[allow(clippy::type_complexity)]
@@ -481,13 +494,17 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         // it will be used as the old El next time.
         self.data.main_el_vdom.borrow_mut().replace(new);
 
-        // Execute after_next_render_callbacks.
+        // Execute `after_next_render_callbacks`.
+
         let old_render_timestamp = self
             .data
             .render_timestamp
             .replace(Some(new_render_timestamp));
-        let timestamp_delta = old_render_timestamp
-            .map(|old_render_timestamp| new_render_timestamp - old_render_timestamp);
+
+        let timestamp_delta = old_render_timestamp.map(|old_render_timestamp| {
+            RenderTimestampDelta::new(new_render_timestamp - old_render_timestamp)
+        });
+
         self.process_cmd_and_msg_queue(
             self.data
                 .after_next_render_callbacks

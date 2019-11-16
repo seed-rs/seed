@@ -100,7 +100,7 @@ pub mod prelude {
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
         },
-        vdom::{Init, MountType, UrlHandling},
+        vdom::{Init, MountType, RenderTimestampDelta, UrlHandling},
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
     pub use wasm_bindgen::prelude::*;
