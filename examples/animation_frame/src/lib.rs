@@ -47,44 +47,31 @@ impl Default for Car {
 
 #[derive(Default)]
 struct Model {
-    request_animation_frame_handle: Option<RequestAnimationFrameHandle>,
-    previous_time: Option<RequestAnimationFrameTime>,
     viewport_width: f64,
     car: Car,
+}
+
+// Init
+
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+    orders
+        .send_msg(Msg::SetViewportWidth)
+        .after_next_render(Msg::Rendered);
+    Init::new(Model::default())
 }
 
 // Update
 
 #[derive(Clone, Copy)]
 enum Msg {
+    Rendered(Option<RenderTimestampDelta>),
     SetViewportWidth,
-    NextAnimationStep,
-    OnAnimationFrame(RequestAnimationFrameTime),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::SetViewportWidth => {
-            model.viewport_width = f64::from(seed::body().client_width());
-            orders.skip();
-        }
-        Msg::NextAnimationStep => {
-            let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
-
-            let cb = Closure::new(move |time| {
-                app.update(msg_mapper(Msg::OnAnimationFrame(time)));
-            });
-
-            model.request_animation_frame_handle = Some(request_animation_frame(cb));
-            orders.skip();
-        }
-        Msg::OnAnimationFrame(time) => {
-            let delta = match model.previous_time {
-                Some(previous_time) => time - previous_time,
-                None => 0.,
-            };
-            model.previous_time = Some(time);
-
+        Msg::Rendered(delta) => {
+            let delta = f64::from(delta.unwrap_or_default());
             if delta > 0. {
                 // move car at least 1px to the right
                 model.car.x += f64::max(1., delta / 1000. * model.car.speed);
@@ -94,7 +81,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     model.car = Car::default();
                 }
             }
-            orders.send_msg(Msg::NextAnimationStep);
+            orders.after_next_render(Msg::Rendered);
+        }
+        Msg::SetViewportWidth => {
+            model.viewport_width = f64::from(seed::body().client_width());
+            orders.skip();
         }
     }
 }
@@ -167,15 +158,6 @@ fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
         St::BorderRadius => unit!(9999, px);
         St::Position => "absolute";
     }]
-}
-
-// Init
-
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
-    orders
-        .send_msg(Msg::SetViewportWidth)
-        .send_msg(Msg::NextAnimationStep);
-    Init::new(Model::default())
 }
 
 #[wasm_bindgen(start)]

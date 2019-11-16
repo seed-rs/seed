@@ -78,13 +78,15 @@ pub trait Orders<Ms: 'static, GMs = ()> {
 
     /// Register the callback that will be executed after the next render.
     ///
-    /// Callback's only parameter is a render timestamp delta - i.e. difference between the old render timestamp and the new one.
-    /// The parameter has value `None` if it's the first render.
+    /// Callback's only parameter is `Option<RenderTimestampDelta>` - the difference between
+    /// the old render timestamp and the new one.
+    /// The parameter has value `None` if it's the first rendering.
     ///
     /// - It's useful when you want to use DOM API or make animations.
     /// - You can call this function multiple times - callbacks will be executed in the same order.
     ///
-    /// _Note:_ [performance.now()](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now) is used under the hood to get timestamps.
+    /// _Note:_ [performance.now()](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now)
+    ///  is used under the hood to get timestamps.
     fn after_next_render(
         &mut self,
         callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
