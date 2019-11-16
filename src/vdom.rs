@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Cell, RefCell},
     collections::{vec_deque::VecDeque, HashMap},
     rc::Rc,
 };
@@ -23,7 +23,7 @@ use crate::{
     orders::OrdersContainer,
     patch, routing,
     util::{self, ClosureNew},
-    websys_bridge,
+    websys_bridge, window,
 };
 
 pub enum Effect<Ms, GMs> {
@@ -86,7 +86,11 @@ impl<Ms> Clone for Mailbox<Ms> {
 
 type StoredPopstate = RefCell<Option<Closure<dyn FnMut(Event)>>>;
 
+pub type RenderTimestampDelta = f64;
+type RenderTimestamp = f64;
+
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
+#[allow(clippy::type_complexity)]
 pub struct AppData<Ms: 'static, Mdl> {
     // Model is in a RefCell here so we can modify it in self.update().
     pub model: RefCell<Option<Mdl>>,
@@ -97,6 +101,9 @@ pub struct AppData<Ms: 'static, Mdl> {
     window_listeners: RefCell<Vec<events::Listener<Ms>>>,
     msg_listeners: RefCell<MsgListeners<Ms>>,
     scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
+    pub after_next_render_callbacks:
+        RefCell<Vec<Box<dyn FnOnce(Option<RenderTimestampDelta>) -> Ms>>>,
+    pub render_timestamp: Cell<Option<RenderTimestamp>>,
 }
 
 pub struct AppCfg<Ms, Mdl, ElC, GMs>
@@ -180,6 +187,8 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 window_listeners: RefCell::new(Vec::new()),
                 msg_listeners: RefCell::new(Vec::new()),
                 scheduled_render_handle: RefCell::new(None),
+                after_next_render_callbacks: RefCell::new(Vec::new()),
+                render_timestamp: Cell::new(None),
             }),
         }
     }
@@ -427,8 +436,8 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 
         if scheduled_render_handle.is_none() {
             let cb = Closure::new(enclose!((self => s) move |_| {
-                s.rerender_vdom();
                 s.data.scheduled_render_handle.borrow_mut().take();
+                s.rerender_vdom();
             }));
 
             *scheduled_render_handle = Some(util::request_animation_frame(cb));
@@ -441,6 +450,8 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     }
 
     fn rerender_vdom(&self) {
+        let new_render_timestamp = window().performance().expect("get `Performance`").now();
+
         // Create a new vdom: The top element, and all its children. Does not yet
         // have associated web_sys elements.
         let mut new = El::empty(dom_types::Tag::Placeholder);
@@ -469,6 +480,22 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next time.
         self.data.main_el_vdom.borrow_mut().replace(new);
+
+        // Execute after_next_render_callbacks.
+        let old_render_timestamp = self
+            .data
+            .render_timestamp
+            .replace(Some(new_render_timestamp));
+        let timestamp_delta = old_render_timestamp
+            .map(|old_render_timestamp| new_render_timestamp - old_render_timestamp);
+        self.process_cmd_and_msg_queue(
+            self.data
+                .after_next_render_callbacks
+                .replace(Vec::new())
+                .into_iter()
+                .map(|callback| Effect::Msg(callback(timestamp_delta)))
+                .collect(),
+        );
     }
 
     pub fn add_message_listener<F>(&self, listener: F)
