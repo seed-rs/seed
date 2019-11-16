@@ -6,23 +6,64 @@
 extern crate seed;
 use seed::prelude::*;
 
+type Color = &'static str;
+
+const COLOR_A: Color = "white";
+const COLOR_B: Color = "green";
 const CANVAS_ID: &str = "canvas";
 
 // Model
 
-struct Model {}
+struct Model {
+    fill_color: Color,
+}
+
+// Init
+
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+    orders.after_next_render(|_| Msg::Rendered);
+    Init::new(Model {
+        fill_color: COLOR_A,
+    })
+}
 
 // Update
 
 #[derive(Copy, Clone)]
 enum Msg {
-    Fill,
+    Rendered,
+    ChangeColor,
 }
 
-fn update(msg: Msg, _model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Fill => fill(),
+        Msg::Rendered => {
+            draw(model.fill_color);
+            // We want to call `.skip` to prevent infinite loop.
+            // (Infinite loops are useful for animations.)
+            orders.after_next_render(|_| Msg::Rendered).skip();
+        }
+        Msg::ChangeColor => {
+            model.fill_color = if model.fill_color == COLOR_A {
+                COLOR_B
+            } else {
+                COLOR_A
+            };
+        }
     }
+}
+
+fn draw(fill_color: Color) {
+    let canvas = seed::canvas(CANVAS_ID).unwrap();
+    let ctx = seed::canvas_context_2d(&canvas);
+
+    ctx.rect(0., 0., 200., 100.);
+    ctx.set_fill_style(&JsValue::from_str(fill_color));
+    ctx.fill();
+
+    ctx.move_to(0., 0.);
+    ctx.line_to(200., 100.);
+    ctx.stroke();
 }
 
 // View
@@ -40,30 +81,11 @@ fn view(_model: &Model) -> impl View<Msg> {
                 St::Border => "1px solid black",
             ],
         ],
-        button!["Change color", simple_ev(Ev::Click, Msg::Fill)],
+        button!["Change color", simple_ev(Ev::Click, Msg::ChangeColor)],
     ]
-}
-
-fn draw() {
-    let canvas = seed::canvas(CANVAS_ID).unwrap();
-    let ctx = seed::canvas_context_2d(&canvas);
-
-    ctx.move_to(0., 0.);
-    ctx.line_to(200., 100.);
-    ctx.stroke();
-}
-
-fn fill() {
-    let canvas = seed::canvas(CANVAS_ID).unwrap();
-    let ctx = seed::canvas_context_2d(&canvas);
-
-    ctx.rect(0., 0., 200., 100.);
-    ctx.set_fill_style(&JsValue::from_str("blue"));
-    ctx.fill();
 }
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(|_, _| Init::new(Model {}), update, view).build_and_start();
-    draw(); // Initial drawing
+    seed::App::build(init, update, view).build_and_start();
 }

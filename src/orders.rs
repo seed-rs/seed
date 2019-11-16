@@ -1,5 +1,5 @@
 use crate::dom_types::{MessageMapper, View};
-use crate::vdom::{App, Effect, ShouldRender};
+use crate::vdom::{App, Effect, RenderTimestampDelta, ShouldRender};
 use futures::Future;
 use std::{collections::VecDeque, convert::identity, rc::Rc};
 
@@ -34,12 +34,12 @@ pub trait Orders<Ms: 'static, GMs = ()> {
     fn skip(&mut self) -> &mut Self;
 
     /// Call function `update` with the given `msg` after model update.
-    /// You can call this function more times - messages will be sent in the same order.
+    /// - You can call this function multiple times - messages will be sent in the same order.
     fn send_msg(&mut self, msg: Ms) -> &mut Self;
 
     /// Schedule given future `cmd` to be executed after model update.
-    /// Result is send to function `update`.
-    /// You can call this function more times - futures will be scheduled in the same order.
+    /// - Result is send to function `update`.
+    /// - You can call this function multiple times - futures will be scheduled in the same order.
     ///
     /// # Example
     ///
@@ -75,6 +75,20 @@ pub trait Orders<Ms: 'static, GMs = ()> {
     ///app.update(msg_mapper(Msg::AMessage));
     /// ```
     fn msg_mapper(&self) -> Box<dyn Fn(Ms) -> Self::AppMs>;
+
+    /// Register the callback that will be executed after the next render.
+    ///
+    /// Callback's only parameter is a render timestamp delta - i.e. difference between the old render timestamp and the new one.
+    /// The parameter has value `None` if it's the first render.
+    ///
+    /// - It's useful when you want to use DOM API or make animations.
+    /// - You can call this function multiple times - callbacks will be executed in the same order.
+    ///
+    /// _Note:_ [performance.now()](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now) is used under the hood to get timestamps.
+    fn after_next_render(
+        &mut self,
+        callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
+    ) -> &mut Self;
 }
 
 // ------ OrdersContainer ------
@@ -161,6 +175,18 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 
     fn msg_mapper(&self) -> Box<dyn Fn(Ms) -> Self::AppMs> {
         Box::new(identity)
+    }
+
+    fn after_next_render(
+        &mut self,
+        callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
+    ) -> &mut Self {
+        self.app
+            .data
+            .after_next_render_callbacks
+            .borrow_mut()
+            .push(Box::new(callback));
+        self
     }
 }
 
@@ -262,5 +288,15 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     fn msg_mapper(&self) -> Box<dyn Fn(Ms) -> Self::AppMs> {
         let f = self.f.clone();
         Box::new(move |ms| f(ms))
+    }
+
+    fn after_next_render(
+        &mut self,
+        callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
+    ) -> &mut Self {
+        let f = self.f.clone();
+        self.orders_container
+            .after_next_render(move |timestamp_delta| f(callback(timestamp_delta)));
+        self
     }
 }
