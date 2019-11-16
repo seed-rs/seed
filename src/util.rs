@@ -49,16 +49,11 @@ pub fn html_document() -> web_sys::HtmlDocument {
     wasm_bindgen::JsValue::from(document()).unchecked_into::<web_sys::HtmlDocument>()
 }
 /// Convenience function to access the `web_sys::HtmlCanvasElement`.
+/// /// _Note:_ Returns `None` if there is no element with the given `id` or the element isn't `HtmlCanvasElement`.
 pub fn canvas(id: &str) -> Option<web_sys::HtmlCanvasElement> {
-    if let Some(c) = document().get_element_by_id(id) {
-        Some(
-            c.dyn_into::<web_sys::HtmlCanvasElement>()
-                .map_err(|_| ())
-                .expect("Problem casting as web_sys::HtmlCanvasElement"),
-        )
-    } else {
-        None
-    }
+    document()
+        .get_element_by_id(id)
+        .and_then(|element| element.dyn_into::<web_sys::HtmlCanvasElement>().ok())
 }
 
 /// Convenience function to access the `web_sys::CanvasRenderingContext2d`.
@@ -314,7 +309,7 @@ pub fn error<T: std::fmt::Debug>(object: T) -> T {
 /// and to register `trigger_update_handler` in `window_events`.
 /// Consider to use [`App::update`](struct.App.html#method.update) if you have access to the [`App`](struct.App.html) instance.
 ///
-/// _Note_: Function is `deprecated`. See examples `update_from_js`, `websocket` and `animation_frame` for alternatives.
+/// _Note_: Function is `deprecated`. See examples `update_from_js` and `websocket` for alternatives.
 #[deprecated]
 pub fn update<Ms>(msg: Ms)
 where
