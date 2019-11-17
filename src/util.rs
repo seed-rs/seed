@@ -160,13 +160,9 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'sta
     // https://docs.rs/web-sys/0.3.25/web_sys/struct.HtmlMenuItemElement.html?search=set_value
     // They should be ordered by expected frequency of use
 
-    set!(HtmlInputElement, |input: &HtmlInputElement| {
-        // https://www.w3schools.com/tags/att_input_value.asp
-        match input.type_().as_str() {
-            "file" => Err(r#"The value attribute cannot be used with <input type="file">."#),
-            _ => Ok(value),
-        }
-    });
+    if let Some(input) = target.dyn_ref::<HtmlInputElement>() {
+        return set_html_input_element_value(input, value);
+    }
     set!(HtmlTextAreaElement);
     set!(HtmlSelectElement);
     set!(HtmlProgressElement, |_| value.parse().map_err(|_| {
@@ -185,6 +181,51 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'sta
     set!(HtmlParamElement);
 
     Err("Can't use function `set_value` for given element.")
+}
+
+fn set_html_input_element_value(
+    input: &web_sys::HtmlInputElement,
+    value: &str,
+) -> Result<(), &'static str> {
+    // https://www.w3schools.com/tags/att_input_value.asp
+    if input.type_().as_str() == "file" {
+        return Err(r#"The value attribute cannot be used with <input type="file">."#);
+    }
+
+    let input_is_active =
+        document().active_element().as_ref() == input.dyn_ref::<web_sys::Element>();
+    // We don't want to set selection in inactive input because
+    // that input would "steal" focus from the active element on some platforms.
+    if input_is_active {
+        // We need to set selection manually because otherwise the cursor would jump at the end on some platforms.
+
+        // `selectionStart` and `selectionEnd`
+        // - "If this element is an input element, and selectionStart does not apply to this element, return null."
+        //   - https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-textarea/input-selectionstart
+        // - => return values if the element type is:
+        //   -  `text`, `search`, `url`, `tel`, `password` and probably also `week`, `month`
+        //   - https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
+        //   - https://html.spec.whatwg.org/multipage/input.html#do-not-apply
+        let selection_start = input
+            .selection_start()
+            .expect("get `HtmlInputElement` selection start");
+        let selection_end = input
+            .selection_end()
+            .expect("get `HtmlInputElement` selection end");
+
+        input.set_value(value);
+
+        input
+            .set_selection_start(selection_start)
+            .expect("set `HtmlInputElement` selection start");
+        input
+            .set_selection_end(selection_end)
+            .expect("set `HtmlInputElement` selection end");
+    } else {
+        input.set_value(value);
+    }
+
+    Ok(())
 }
 
 /// Similar to `get_value`
