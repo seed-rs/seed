@@ -338,6 +338,7 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
 impl<Ms> From<&web_sys::Element> for El<Ms> {
     /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
     /// and markdown strings. Includes children, recursively added.
+    #[allow(clippy::too_many_lines)]
     fn from(ws_el: &web_sys::Element) -> Self {
         // Result of tag_name is all caps, but tag From<String> expects lower.
         // Probably is more pure to match by xlmns attribute instead.

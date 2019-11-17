@@ -4,6 +4,7 @@
 - Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions
 - Fixed `Url` parsing (resolves issue with hash routing)
 - [BREAKING] `From<String> for Url` changed to `TryFrom<String> for Url`
+- Fixed jumping cursor in inputs (#158) 
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
