@@ -24,8 +24,8 @@ And cargo-make: `cargo install --force cargo-make`
 
 ## The theoretical minimum
 
-To start, clone [the quickstart repo](https://github.com/David-OConnor/seed-quickstart):
-`git clone https://github.com/david-oconnor/seed-quickstart.git`,
+To start, clone [the quickstart repo](https://github.com/seed-rs/seed-quickstart):
+`git clone https://github.com/seed-rs/seed-quickstart.git`,
 run `cargo make build` in a terminal to build the app, and `cargo make serve` to start a dev server
 on `127.0.0.0:8000`. If you'd like the compiler to automatically check and recompile when you 
 make changes, run `cargo make watch` instead of `cargo make build`.
@@ -73,7 +73,7 @@ wasm-bindgen = "^0.2.50"
 ## A short example
 
 Here's an example demonstrating structure and syntax; it can be found in working form
-in the [counter example](https://github.com/David-OConnor/seed/tree/master/examples/counter)
+in the [counter example](https://github.com/seed-rs/seed/tree/master/examples/counter)
 Descriptions of its parts are in the
 Guide section below. Its structure follows [The Elm Architecture](https://guide.elm-lang.org/architecture/).
 
@@ -178,7 +178,7 @@ pub fn render() {
 }
 ```
 
-For a truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/David-OConnor/seed-quickstart/blob/master/src/lib.rs)
+For a truly minimimal example, see [lib.rs in the quickstart repo](https://github.com/seed-rs/seed-quickstart/blob/master/src/lib.rs)
 
 ## Building and running
 
@@ -188,7 +188,7 @@ For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webp
 
 ## Running included examples
 
-To run an example located in the [examples folder](https://github.com/David-OConnor/seed/tree/master/examples),
+To run an example located in the [examples folder](https://github.com/seed-rs/seed/tree/master/examples),
 run `cargo make start example_name`, where you replace `example_name` with the example name. Eg:
 `cargo make start counter`.
 
@@ -235,7 +235,7 @@ are worth it.
 
 ## Where to start if you're familiar with existing frontend frameworks
 
-The [todomvc example](https://github.com/David-OConnor/seed/tree/master/examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
+The [todomvc example](https://github.com/seed-rs/seed-rs/seed/tree/master/examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
 which has example code in other frameworks that produce identitcal apps. Compare the example in this
 project to one on that page that uses a framework you're familiar with.
 
