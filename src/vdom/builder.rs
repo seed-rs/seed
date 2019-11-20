@@ -1,101 +1,21 @@
 use web_sys::Element;
 
-use super::{alias::*, App};
+use crate::{
+    dom_types::View,
+    orders::OrdersContainer,
+    routing, util,
+    vdom::{
+        alias::*,
+        App,
+    },
+};
 
-use crate::{dom_types::View, orders::OrdersContainer, routing, util};
-
-pub type InitFn<Ms, Mdl, ElC, GMs> =
-    Box<dyn FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
-
-pub trait MountPoint {
-    fn element(self) -> Element;
-}
-
-impl MountPoint for &str {
-    fn element(self) -> Element {
-        util::document().get_element_by_id(self).unwrap_or_else(|| {
-            panic!(
-                "Can't find element with id={:?} - app cannot be mounted!\n\
-                 (Id defaults to \"app\", or can be set with the .mount() method)",
-                self
-            )
-        })
-    }
-}
-
-impl MountPoint for Element {
-    fn element(self) -> Element {
-        self
-    }
-}
-
-impl MountPoint for web_sys::HtmlElement {
-    fn element(self) -> Element {
-        self.into()
-    }
-}
-
-/// Used for handling initial routing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UrlHandling {
-    PassToRoutes,
-    None,
-    // todo: Expand later, as-required
-}
-
-/// Describes the handling of elements already present in the mount element.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum MountType {
-    /// Take control of previously existing elements in the mount. This does not make guarantees of
-    /// elements added after the [`App`] has been mounted.
-    ///
-    /// Note that existing elements in the DOM will be recreated. This can be dangerous for script
-    /// tags and other, similar tags.
-    Takeover,
-    /// Leave the previously existing elements in the mount alone. This does not make guarantees of
-    /// elements added after the [`App`] has been mounted.
-    Append,
-}
-
-/// Used as a flexible wrapper for the init function.
-pub struct Init<Mdl> {
-    /// Initial model to be used when the app begins.
-    pub model: Mdl,
-    /// How to handle initial url routing. Defaults to [`UrlHandling::PassToRoutes`] in the
-    /// constructors.
-    pub url_handling: UrlHandling,
-    /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
-    /// in the constructors.
-    pub mount_type: MountType,
-}
-
-impl<Mdl> Init<Mdl> {
-    pub const fn new(model: Mdl) -> Self {
-        Self {
-            model,
-            url_handling: UrlHandling::PassToRoutes,
-            mount_type: MountType::Append,
-        }
-    }
-
-    pub const fn new_with_url_handling(model: Mdl, url_handling: UrlHandling) -> Self {
-        Self {
-            model,
-            url_handling,
-            mount_type: MountType::Append,
-        }
-    }
-}
-
-impl<Mdl: Default> Default for Init<Mdl> {
-    fn default() -> Self {
-        Self {
-            model: Mdl::default(),
-            url_handling: UrlHandling::PassToRoutes,
-            mount_type: MountType::Append,
-        }
-    }
-}
+pub mod init;
+pub use init::{Init, InitFn};
+pub mod before_mount;
+pub use before_mount::{MountPoint, MountType};
+pub mod after_mount;
+pub use after_mount::UrlHandling;
 
 /// Used to create and store initial app configuration, ie items passed by the app creator
 pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> {
