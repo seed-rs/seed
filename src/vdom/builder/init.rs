@@ -1,21 +1,15 @@
-use web_sys::Element;
-
 use crate::{
     dom_types::View,
     orders::OrdersContainer,
-    routing::Url, util,
-    vdom::{
-        alias::*,
-        App,
-        builder::{
-            before_mount::{MountPoint, MountType},
-            after_mount::{UrlHandling},
-        },
+    routing::Url,
+    vdom::builder::{
+        after_mount::{AfterMount, Into as IntoAfterMount, UrlHandling},
+        before_mount::MountType,
     },
 };
 
-
 /// Used as a flexible wrapper for the init function.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Init<Mdl> {
     /// Initial model to be used when the app begins.
     pub model: Mdl,
@@ -45,29 +39,36 @@ impl<Mdl> Init<Mdl> {
     }
 }
 
-impl<Mdl: Default> Default for Init<Mdl> {
-    fn default() -> Self {
-        Self {
-            model: Mdl::default(),
-            url_handling: UrlHandling::PassToRoutes,
-            mount_type: MountType::Append,
-        }
-    }
-}
-
-pub type InitFn<Ms, Mdl, ElC, GMs> =
+pub type Fn<Ms, Mdl, ElC, GMs> =
     Box<dyn FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
 
-pub trait IntoInit<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
+pub trait Into<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     fn into_init(self, init_url: Url, ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>;
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> IntoInit<Ms, Mdl, ElC, GMs>
-    for F
-    where
-        F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
+impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> Into<Ms, Mdl, ElC, GMs> for F
+where
+    F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
 {
     fn into_init(self, init_url: Url, ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> {
         self(init_url, ord)
+    }
+}
+
+impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs>
+    for (Init<Mdl>, OrdersContainer<Ms, Mdl, ElC, GMs>)
+{
+    fn into_after_mount(
+        self: Box<Self>,
+        _: Url,
+        ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
+    ) -> AfterMount<Mdl> {
+        let (init, old_ord) = *self;
+        ord.effects = old_ord.effects;
+        ord.should_render = old_ord.should_render;
+        AfterMount {
+            model: init.model,
+            url_handling: init.url_handling,
+        }
     }
 }

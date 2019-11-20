@@ -1,48 +1,368 @@
-use web_sys::Element;
+use std::marker::PhantomData;
 
 use crate::{
     dom_types::View,
     orders::OrdersContainer,
-    routing, util,
-    vdom::{
-        alias::*,
-        App,
-    },
+    routing,
+    vdom::{alias::*, App, AppRunCfg},
 };
 
 pub mod init;
-pub use init::{Init, InitFn};
+pub use init::{Fn as InitFn, Init, Into as IntoInit};
 pub mod before_mount;
-pub use before_mount::{MountPoint, MountType};
+pub use before_mount::{BeforeMount, Into as IntoBeforeMount, MountPoint, MountType};
 pub mod after_mount;
-pub use after_mount::UrlHandling;
+pub use after_mount::{AfterMount, Into as IntoAfterMount, UrlHandling};
 
-/// Used to create and store initial app configuration, ie items passed by the app creator
-pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> {
-    init: InitFn<Ms, Mdl, ElC, GMs>,
-    update: UpdateFn<Ms, Mdl, ElC, GMs>,
-    sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
-    view: ViewFn<Mdl, ElC>,
-    mount_point: Option<Element>,
-    routes: Option<RoutesFn<Ms>>,
-    window_events: Option<WindowEvents<Ms, Mdl>>,
+pub struct MountPointInitInitAPI<MP, II> {
+    mount_point: MP,
+    into_init: II,
+}
+pub struct BeforeAfterInitAPI<IBM, IAM> {
+    into_before_mount: IBM,
+    into_after_mount: IAM,
+}
+impl Default for BeforeAfterInitAPI<(), ()> {
+    fn default() -> Self {
+        BeforeAfterInitAPI {
+            into_before_mount: (),
+            into_after_mount: (),
+        }
+    }
 }
 
-impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> {
+pub trait InitAPI<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
+    type Builder;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs>;
+}
+pub trait InitAPIData {
+    type IntoBeforeMount;
+    type IntoAfterMount;
+    type IntoInit;
+    type MountPoint;
+
+    fn before_mount<NewIBM: IntoBeforeMount>(
+        self,
+        into_before_mount: NewIBM,
+    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount>;
+    fn after_mount<
+        Ms: 'static,
+        Mdl,
+        ElC: View<Ms>,
+        GMs,
+        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+    >(
+        self,
+        into_after_mount: NewIAM,
+    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM>;
+
+    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+        self,
+        into_init: NewII,
+    ) -> MountPointInitInitAPI<Self::MountPoint, NewII>;
+    fn mount<NewMP: MountPoint>(
+        self,
+        mount_point: NewMP,
+    ) -> MountPointInitInitAPI<NewMP, Self::IntoInit>;
+}
+
+impl<
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: 'static + View<Ms>,
+        GMs: 'static,
+        MP: MountPoint,
+        II: IntoInit<Ms, Mdl, ElC, GMs>,
+    > InitAPI<Ms, Mdl, ElC, GMs> for MountPointInitInitAPI<MP, II>
+{
+    type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
+        let MountPointInitInitAPI {
+            into_init,
+            mount_point,
+        } = builder.init_api;
+
+        let mut app = App::new(
+            builder.update,
+            builder.sink,
+            builder.view,
+            mount_point.element(),
+            builder.routes,
+            builder.window_events,
+            None,
+        );
+
+        let mut initial_orders = OrdersContainer::new(app.clone());
+        let init = into_init.into_init(routing::current_url(), &mut initial_orders);
+
+        app.run_cfg.replace(AppRunCfg {
+            mount_type: init.mount_type,
+            into_after_mount: Box::new((init, initial_orders)),
+            phantom: PhantomData,
+        });
+
+        app
+    }
+}
+impl<
+        Ms: 'static,
+        Mdl: 'static,
+        ElC: 'static + View<Ms>,
+        GMs: 'static,
+        IBM: IntoBeforeMount,
+        IAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>,
+    > InitAPI<Ms, Mdl, ElC, GMs> for BeforeAfterInitAPI<IBM, IAM>
+{
+    type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
+        let BeforeAfterInitAPI {
+            into_before_mount,
+            into_after_mount,
+        } = builder.init_api;
+
+        let BeforeMount {
+            mount_point,
+            mount_type,
+        } = into_before_mount.into_before_mount(routing::current_url());
+
+        App::new(
+            builder.update,
+            builder.sink,
+            builder.view,
+            mount_point.element(),
+            builder.routes,
+            builder.window_events,
+            Some(AppRunCfg {
+                mount_type,
+                into_after_mount: Box::new(into_after_mount),
+                phantom: PhantomData,
+            }),
+        )
+    }
+}
+impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
+    InitAPI<Ms, Mdl, ElC, GMs> for ()
+{
+    type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
+        BeforeAfterInitAPI::build(Builder {
+            update: builder.update,
+            view: builder.view,
+
+            routes: builder.routes,
+            window_events: builder.window_events,
+            sink: builder.sink,
+
+            init_api: BeforeAfterInitAPI::default(),
+        })
+    }
+}
+
+impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
+    type IntoBeforeMount = ();
+    type IntoAfterMount = ();
+    type IntoInit = II;
+    type MountPoint = MP;
+
+    fn before_mount<NewIBM: IntoBeforeMount>(
+        self,
+        into_before_mount: NewIBM,
+    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount> {
+        BeforeAfterInitAPI {
+            into_before_mount,
+            into_after_mount: (),
+        }
+    }
+    fn after_mount<
+        Ms: 'static,
+        Mdl,
+        ElC: View<Ms>,
+        GMs,
+        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+    >(
+        self,
+        into_after_mount: NewIAM,
+    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM> {
+        BeforeAfterInitAPI {
+            into_after_mount,
+            into_before_mount: (),
+        }
+    }
+
+    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+        self,
+        into_init: NewII,
+    ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
+        MountPointInitInitAPI {
+            into_init,
+            mount_point: self.mount_point,
+        }
+    }
+    fn mount<NewMP: MountPoint>(
+        self,
+        mount_point: NewMP,
+    ) -> MountPointInitInitAPI<NewMP, Self::IntoInit> {
+        MountPointInitInitAPI {
+            mount_point,
+            into_init: self.into_init,
+        }
+    }
+}
+impl<IBM, IAM> InitAPIData for BeforeAfterInitAPI<IBM, IAM> {
+    type IntoBeforeMount = IBM;
+    type IntoAfterMount = IAM;
+    type IntoInit = ();
+    type MountPoint = ();
+
+    fn before_mount<NewIBM: IntoBeforeMount>(
+        self,
+        into_before_mount: NewIBM,
+    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount> {
+        BeforeAfterInitAPI {
+            into_before_mount,
+            into_after_mount: self.into_after_mount,
+        }
+    }
+    fn after_mount<
+        Ms: 'static,
+        Mdl,
+        ElC: View<Ms>,
+        GMs,
+        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+    >(
+        self,
+        into_after_mount: NewIAM,
+    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM> {
+        BeforeAfterInitAPI {
+            into_after_mount,
+            into_before_mount: self.into_before_mount,
+        }
+    }
+
+    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+        self,
+        into_init: NewII,
+    ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
+        MountPointInitInitAPI {
+            into_init,
+            mount_point: (),
+        }
+    }
+    fn mount<NewMP: MountPoint>(
+        self,
+        mount_point: NewMP,
+    ) -> MountPointInitInitAPI<NewMP, Self::IntoInit> {
+        MountPointInitInitAPI {
+            mount_point,
+            into_init: (),
+        }
+    }
+}
+impl InitAPIData for () {
+    type IntoBeforeMount = ();
+    type IntoAfterMount = ();
+    type IntoInit = ();
+    type MountPoint = ();
+
+    fn before_mount<NewIBM: IntoBeforeMount>(
+        self,
+        into_before_mount: NewIBM,
+    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount> {
+        BeforeAfterInitAPI {
+            into_before_mount,
+            into_after_mount: (),
+        }
+    }
+    fn after_mount<
+        Ms: 'static,
+        Mdl,
+        ElC: View<Ms>,
+        GMs,
+        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+    >(
+        self,
+        into_after_mount: NewIAM,
+    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM> {
+        BeforeAfterInitAPI {
+            into_after_mount,
+            into_before_mount: (),
+        }
+    }
+
+    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+        self,
+        into_init: NewII,
+    ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
+        MountPointInitInitAPI {
+            into_init,
+            mount_point: (),
+        }
+    }
+    fn mount<NewMP: MountPoint>(
+        self,
+        mount_point: NewMP,
+    ) -> MountPointInitInitAPI<NewMP, Self::IntoInit> {
+        MountPointInitInitAPI {
+            mount_point,
+            into_init: (),
+        }
+    }
+}
+
+/// Used to create and store initial app configuration, ie items passed by the app creator
+pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs, InitAPIType> {
+    update: UpdateFn<Ms, Mdl, ElC, GMs>,
+    view: ViewFn<Mdl, ElC>,
+
+    routes: Option<RoutesFn<Ms>>,
+    window_events: Option<WindowEvents<Ms, Mdl>>,
+    sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
+
+    // TODO: Remove when removing legacy init fields.
+    init_api: InitAPIType,
+}
+
+impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs, ()> {
     /// Constructs the Builder.
-    pub(super) fn new(
-        init: InitFn<Ms, Mdl, ElC, GMs>,
-        update: UpdateFn<Ms, Mdl, ElC, GMs>,
-        view: ViewFn<Mdl, ElC>,
-    ) -> Self {
-        Self {
-            init,
+    pub(super) fn new(update: UpdateFn<Ms, Mdl, ElC, GMs>, view: ViewFn<Mdl, ElC>) -> Self {
+        Builder {
             update,
-            sink: None,
             view,
-            mount_point: None,
+
             routes: None,
             window_events: None,
+            sink: None,
+
+            init_api: (),
+        }
+    }
+}
+
+impl<
+        Ms,
+        Mdl,
+        ElC: View<Ms> + 'static,
+        GMs: 'static,
+        IBM,
+        IAM: 'static,
+        MP,
+        II,
+        InitAPIType: InitAPIData<IntoInit = II, MountPoint = MP, IntoBeforeMount = IBM, IntoAfterMount = IAM>,
+    > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
+{
+    pub fn init<NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+        self,
+        new_init: NewII,
+    ) -> Builder<Ms, Mdl, ElC, GMs, MountPointInitInitAPI<MP, NewII>> {
+        Builder {
+            update: self.update,
+            view: self.view,
+
+            routes: self.routes,
+            window_events: self.window_events,
+            sink: self.sink,
+
+            init_api: self.init_api.init(new_init),
         }
     }
 
@@ -63,14 +383,52 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
     /// // argument is `Element`
     /// mount(seed::body().querySelector("section").unwrap().unwrap())
     /// ```
-    pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
-        // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
-        // https://github.com/seed-rs/seed/issues/241
-        // https://bugs.webkit.org/show_bug.cgi?id=202881
-        let _ = util::document().query_selector("html");
+    pub fn mount<NewMP: MountPoint>(
+        self,
+        new_mount_point: NewMP,
+    ) -> Builder<Ms, Mdl, ElC, GMs, MountPointInitInitAPI<NewMP, II>> {
+        Builder {
+            update: self.update,
+            view: self.view,
 
-        self.mount_point = Some(mount_point.element());
-        self
+            routes: self.routes,
+            window_events: self.window_events,
+            sink: self.sink,
+
+            init_api: self.init_api.mount(new_mount_point),
+        }
+    }
+
+    pub fn before_mount<NewIBM: IntoBeforeMount>(
+        self,
+        new_before_mount: NewIBM,
+    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<NewIBM, IAM>> {
+        Builder {
+            update: self.update,
+            view: self.view,
+
+            routes: self.routes,
+            window_events: self.window_events,
+            sink: self.sink,
+
+            init_api: self.init_api.before_mount(new_before_mount),
+        }
+    }
+
+    pub fn after_mount<NewIAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>>(
+        self,
+        new_after_mount: NewIAM,
+    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<IBM, NewIAM>> {
+        Builder {
+            update: self.update,
+            view: self.view,
+
+            routes: self.routes,
+            window_events: self.window_events,
+            sink: self.sink,
+
+            init_api: self.init_api.after_mount(new_after_mount),
+        }
     }
 
     /// Registers a function which maps URLs to messages.
@@ -94,51 +452,37 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
         self.sink = Some(sink);
         self
     }
+}
 
+impl<
+        Ms: 'static,
+        Mdl,
+        ElC: View<Ms> + 'static,
+        GMs: 'static,
+        InitAPIType: InitAPI<Ms, Mdl, ElC, GMs, Builder = Self>,
+    > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
+{
+    /// Build and run the app.
+    pub fn build_and_start(self) -> App<Ms, Mdl, ElC, GMs> {
+        InitAPIType::build(self).run()
+    }
+}
+
+impl<
+        Ms: 'static,
+        Mdl,
+        ElC: View<Ms> + 'static,
+        GMs: 'static,
+        MP: MountPoint,
+        II: IntoInit<Ms, Mdl, ElC, GMs>,
+    > Builder<Ms, Mdl, ElC, GMs, MountPointInitInitAPI<MP, II>>
+{
     /// Turn this [`Builder`] into an [`App`] which is ready to run.
     ///
     /// [`Builder`]: struct.Builder.html
     /// [`App`]: struct.App.html
     #[deprecated(since = "0.4.2", note = "Please use `.build_and_start` instead")]
-    pub fn finish(mut self) -> App<Ms, Mdl, ElC, GMs> {
-        if self.mount_point.is_none() {
-            self = self.mount("app")
-        }
-
-        let app = App::new(
-            self.update,
-            self.sink,
-            self.view,
-            self.mount_point.unwrap(),
-            self.routes,
-            self.window_events,
-        );
-
-        let mut initial_orders = OrdersContainer::new(app.clone());
-        let mut init = (self.init)(routing::current_url(), &mut initial_orders);
-
-        match init.url_handling {
-            UrlHandling::PassToRoutes => {
-                let url = routing::current_url();
-                if let Some(r) = self.routes {
-                    if let Some(u) = r(url) {
-                        (self.update)(u, &mut init.model, &mut initial_orders);
-                    }
-                }
-            }
-            UrlHandling::None => (),
-        };
-
-        app.cfg.initial_orders.replace(Some(initial_orders));
-        app.cfg.mount_type.replace(Some(init.mount_type));
-        app.data.model.replace(Some(init.model));
-
-        app
-    }
-
-    /// Build and run the app.
-    pub fn build_and_start(self) -> App<Ms, Mdl, ElC, GMs> {
-        let app = self.finish();
-        app.run()
+    pub fn finish(self) -> App<Ms, Mdl, ElC, GMs> {
+        MountPointInitInitAPI::build(self)
     }
 }
