@@ -14,8 +14,10 @@ use next_tick::NextTick;
 
 pub mod alias;
 pub use alias::*;
+
+// Building process.
 pub mod builder;
-pub use builder::{Builder as AppBuilder, Init, MountType, UrlHandling};
+pub use builder::{Builder as AppBuilder, MountPoint, MountType, UrlHandling, Init};
 
 use crate::{
     dom_types::{self, El, MessageMapper, Namespace, Node, View},
