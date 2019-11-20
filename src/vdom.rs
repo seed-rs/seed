@@ -1,6 +1,7 @@
 use std::{
     cell::{Cell, RefCell},
     collections::{vec_deque::VecDeque, HashMap},
+    marker::PhantomData,
     rc::Rc,
 };
 
@@ -17,7 +18,7 @@ pub use alias::*;
 
 // Building process.
 pub mod builder;
-pub use builder::{Builder as AppBuilder, MountPoint, MountType, UrlHandling, Init};
+pub use builder::{Builder as AppBuilder, Init, InitFn, MountPoint, MountType, UrlHandling};
 
 use crate::{
     dom_types::{self, El, MessageMapper, Namespace, Node, View},
@@ -121,6 +122,21 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub render_timestamp: Cell<Option<RenderTimestamp>>,
 }
 
+type OptDynRunCfg<Ms, Mdl, ElC, GMs> =
+    Option<AppRunCfg<Ms, Mdl, ElC, GMs, dyn builder::IntoAfterMount<Ms, Mdl, ElC, GMs>>>;
+
+pub struct AppRunCfg<Ms, Mdl, ElC, GMs, IAM: ?Sized>
+where
+    Ms: 'static,
+    Mdl: 'static,
+    ElC: View<Ms>,
+    IAM: builder::IntoAfterMount<Ms, Mdl, ElC, GMs>,
+{
+    mount_type: MountType,
+    into_after_mount: Box<IAM>,
+    phantom: PhantomData<(Ms, Mdl, ElC, GMs)>,
+}
+
 pub struct AppCfg<Ms, Mdl, ElC, GMs>
 where
     Ms: 'static,
@@ -129,12 +145,10 @@ where
 {
     document: web_sys::Document,
     mount_point: web_sys::Element,
-    mount_type: RefCell<Option<MountType>>,
     pub update: UpdateFn<Ms, Mdl, ElC, GMs>,
     pub sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
     window_events: Option<WindowEvents<Ms, Mdl>>,
-    initial_orders: RefCell<Option<OrdersContainer<Ms, Mdl, ElC, GMs>>>,
 }
 
 pub struct App<Ms, Mdl, ElC, GMs = ()>
@@ -143,6 +157,8 @@ where
     Mdl: 'static,
     ElC: View<Ms>,
 {
+    /// State that is removed after app begins running.
+    pub run_cfg: OptDynRunCfg<Ms, Mdl, ElC, GMs>,
     /// Stateless app configuration
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC, GMs>>,
     /// Mutable app state
@@ -155,6 +171,9 @@ impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms
     }
 }
 
+type InitAppBuilder<Ms, Mdl, ElC, GMs> =
+    AppBuilder<Ms, Mdl, ElC, GMs, builder::MountPointInitInitAPI<(), InitFn<Ms, Mdl, ElC, GMs>>>;
+
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
 impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
@@ -162,11 +181,23 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         init: impl FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
         view: ViewFn<Mdl, ElC>,
-    ) -> AppBuilder<Ms, Mdl, ElC, GMs> {
+    ) -> InitAppBuilder<Ms, Mdl, ElC, GMs> {
+        Self::builder(update, view).init(Box::new(init))
+    }
+
+    pub fn builder(
+        update: UpdateFn<Ms, Mdl, ElC, GMs>,
+        view: ViewFn<Mdl, ElC>,
+    ) -> AppBuilder<Ms, Mdl, ElC, GMs, ()> {
+        // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
+        // https://github.com/David-OConnor/seed/issues/241
+        // https://bugs.webkit.org/show_bug.cgi?id=202881
+        let _ = util::document().query_selector("html");
+
         // Allows panic messages to output to the browser console.error.
         console_error_panic_hook::set_once();
 
-        AppBuilder::new(Box::new(init), update, view)
+        AppBuilder::new(update, view)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -177,11 +208,13 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
+        run_cfg: OptDynRunCfg<Ms, Mdl, ElC, GMs>,
     ) -> Self {
         let window = util::window();
         let document = window.document().expect("Can't find the window's document");
 
         Self {
+            run_cfg,
             cfg: Rc::new(AppCfg {
                 document,
                 mount_point,
@@ -189,8 +222,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 sink,
                 view,
                 window_events,
-                initial_orders: RefCell::new(None),
-                mount_type: RefCell::new(None),
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(None),
@@ -224,8 +255,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     /// Bootstrap the dom with the vdom by taking over all children of the mount point and
     /// replacing them with the vdom if requested. Will otherwise ignore the original children of
     /// the mount point.
-    fn bootstrap_vdom(&self) -> El<Ms> {
-        let mount_type = self.cfg.mount_type.borrow().unwrap_or(MountType::Append);
+    fn bootstrap_vdom(&self, mount_type: MountType) -> El<Ms> {
         // "new" name is for consistency with `update` function.
         // this section parent is a placeholder, so we can iterate over children
         // in a way consistent with patching code.
@@ -290,9 +320,48 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         since = "0.4.2",
         note = "Please use `AppBuilder.build_and_start` instead"
     )]
-    pub fn run(self) -> Self {
+    pub fn run(mut self) -> Self {
+        let AppRunCfg {
+            mount_type,
+            into_after_mount,
+            ..
+        } = self
+            .run_cfg
+            .take()
+            .expect("run_cfg should be set in App::new which is called from AppBuilder");
+
         // Bootstrap the virtual DOM.
-        self.data.main_el_vdom.replace(Some(self.bootstrap_vdom()));
+        self.data
+            .main_el_vdom
+            .replace(Some(self.bootstrap_vdom(mount_type)));
+
+        // Can this simply be `self.update`?
+        let mut orders = OrdersContainer::new(self.clone());
+        let builder::AfterMount {
+            model,
+            url_handling,
+        } = into_after_mount.into_after_mount(routing::current_url(), &mut orders);
+
+        self.data.model.replace(Some(model));
+
+        // TODO: Does this go before or after setting up the routes listener?
+        // TODO: Does this go before or after the initial render? The effects are created before
+        // TODO: the render, but after the orders. But old behavior let this run before the orders.
+        match url_handling {
+            UrlHandling::PassToRoutes => {
+                let url = routing::current_url();
+                if let Some(routes) = self.data.routes.borrow().as_ref() {
+                    if let Some(routing_msg) = routes(url) {
+                        (self.cfg.update)(
+                            routing_msg,
+                            &mut self.data.model.borrow_mut().as_mut().unwrap(),
+                            &mut orders,
+                        );
+                    }
+                }
+            }
+            UrlHandling::None => (),
+        };
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
@@ -315,13 +384,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
 
         // Our initial render. Can't initialize in new due to mailbox() requiring self.
-        self.process_cmd_and_msg_queue(
-            self.cfg
-                .initial_orders
-                .replace(None)
-                .expect("initial_orders should be set in AppBuilder::finish")
-                .effects,
-        );
+        self.process_cmd_and_msg_queue(orders.effects);
         // TODO: In the future, only run the following line if the above statement does not
         // TODO: call `rerender_vdom` for efficiency.
         self.rerender_vdom();
@@ -552,6 +615,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
     fn clone(&self) -> Self {
         Self {
+            run_cfg: None,
             cfg: Rc::clone(&self.cfg),
             data: Rc::clone(&self.data),
         }
