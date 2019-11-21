@@ -23,7 +23,7 @@ struct Model {
 
 // Init
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     let ws = WebSocket::new(WS_URL).unwrap();
 
     register_ws_handler(WebSocket::set_onopen, Msg::Connected, &ws, orders);
@@ -31,7 +31,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
     register_ws_handler(WebSocket::set_onmessage, Msg::ServerMessage, &ws, orders);
     register_ws_handler(WebSocket::set_onerror, Msg::Error, &ws, orders);
 
-    Init::new(Model {
+    AfterMount::new(Model {
         ws,
         connected: false,
         msg_rx_cnt: 0,
@@ -154,5 +154,7 @@ fn view(model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    App::build(init, update, view).build_and_start();
+    App::builder(update, view)
+        .after_mount(after_mount)
+        .build_and_start();
 }

@@ -128,12 +128,14 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
 
 // Init
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.perform_cmd(fetch_repository_info());
-    Init::new(Model::default())
+    AfterMount::default()
 }
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(init, update, view).build_and_start();
+    seed::App::builder(update, view)
+        .after_mount(after_mount)
+        .build_and_start();
 }

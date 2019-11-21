@@ -18,11 +18,11 @@ struct Model {
     fill_color: Color,
 }
 
-// Init
+// AfterMount
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.after_next_render(|_| Msg::Rendered);
-    Init::new(Model {
+    AfterMount::new(Model {
         fill_color: COLOR_A,
     })
 }
@@ -87,5 +87,7 @@ fn view(_model: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(init, update, view).build_and_start();
+    seed::App::builder(update, view)
+        .after_mount(after_mount)
+        .build_and_start();
 }

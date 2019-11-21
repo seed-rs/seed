@@ -18,7 +18,10 @@ pub use alias::*;
 
 // Building process.
 pub mod builder;
-pub use builder::{Builder as AppBuilder, Init, InitFn, MountPoint, MountType, UrlHandling};
+pub use builder::{
+    AfterMount, BeforeMount, Builder as AppBuilder, Init, InitFn, MountPoint, MountType,
+    UrlHandling,
+};
 
 use crate::{
     dom_types::{self, El, MessageMapper, Namespace, Node, View},
@@ -171,12 +174,17 @@ impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms
     }
 }
 
+#[deprecated(since = "0.4.3", note = "Part of the old Init API.")]
 type InitAppBuilder<Ms, Mdl, ElC, GMs> =
     AppBuilder<Ms, Mdl, ElC, GMs, builder::MountPointInitInitAPI<(), InitFn<Ms, Mdl, ElC, GMs>>>;
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
 impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
+    #[deprecated(
+        since = "0.4.3",
+        note = "Use `builder` with `AppBuilder::{after_mount, before_mount}` instead."
+    )]
     pub fn build(
         init: impl FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
@@ -275,10 +283,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             new.children = dom_nodes.children;
         }
 
-        self.setup_window_listeners();
-        patch::setup_input_listeners(&mut new);
-        patch::attach_listeners(&mut new, &self.mailbox());
-
         // Recreate the needed nodes. Only do this if requested to takeover the mount point since
         // it should only be needed here.
         if mount_type == MountType::Takeover {
@@ -325,10 +329,9 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             mount_type,
             into_after_mount,
             ..
-        } = self
-            .run_cfg
-            .take()
-            .expect("run_cfg should be set in App::new which is called from AppBuilder");
+        } = self.run_cfg.take().expect(
+            "run_cfg should be set in App::new which is called from AppBuilder::build_and_start",
+        );
 
         // Bootstrap the virtual DOM.
         self.data
@@ -362,6 +365,13 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             }
             UrlHandling::None => (),
         };
+
+        self.setup_window_listeners();
+        patch::setup_input_listeners(&mut self.data.main_el_vdom.borrow_mut().as_mut().unwrap());
+        patch::attach_listeners(
+            self.data.main_el_vdom.borrow_mut().as_mut().unwrap(),
+            &self.mailbox(),
+        );
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.

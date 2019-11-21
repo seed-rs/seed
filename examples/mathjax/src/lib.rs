@@ -226,13 +226,7 @@ fn view(model: &Model) -> impl View<Msg> {
     ]
 }
 
-// Init
-
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Init<Model> {
-    Init::new(Model::default())
-}
-
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(init, update, view).build_and_start();
+    seed::App::builder(update, view).build_and_start();
 }

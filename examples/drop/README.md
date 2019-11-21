@@ -1,6 +1,6 @@
 ## Drop example
 
-How to crate a drop-zone.
+How to create a drop-zone.
 
 ---
 
