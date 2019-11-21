@@ -304,9 +304,7 @@ fn view(model: &Model) -> Vec<El<Msg>> {
 
 #[wasm_bindgen]
 pub fn render() {
-    let state = seed::App::build(Model::default(), update, view)
-        .finish()
-        .run();
+    let state = seed::App::builder(update, view).build_and_start();
 
     state.update(Msg::GetData)
 }

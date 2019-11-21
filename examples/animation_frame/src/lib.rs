@@ -51,13 +51,13 @@ struct Model {
     car: Car,
 }
 
-// Init
+// AfterMount
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders
         .send_msg(Msg::SetViewportWidth)
         .after_next_render(Msg::Rendered);
-    Init::new(Model::default())
+    AfterMount::default()
 }
 
 // Update
@@ -162,7 +162,8 @@ fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(init, update, view)
+    seed::App::builder(update, view)
+        .after_mount(after_mount)
         .window_events(|_| vec![simple_ev(Ev::Resize, Msg::SetViewportWidth)])
         .build_and_start();
 }

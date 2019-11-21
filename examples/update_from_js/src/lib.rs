@@ -12,12 +12,6 @@ struct Model {
     time_from_js: Option<String>,
 }
 
-// Init
-
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Init<Model> {
-    Init::new(Model::default())
-}
-
 // Update
 
 #[derive(Clone)]
@@ -76,7 +70,7 @@ fn view(model: &Model) -> Node<Msg> {
 #[wasm_bindgen]
 // `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
 pub fn start() -> Box<[JsValue]> {
-    let app = seed::App::build(init, update, view).build_and_start();
+    let app = seed::App::builder(update, view).build_and_start();
 
     create_closures_for_js(&app)
 }

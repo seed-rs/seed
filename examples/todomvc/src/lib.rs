@@ -361,7 +361,7 @@ fn routes(url: seed::Url) -> Option<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::build(|_, _| Init::new(Model::default()), update, view)
+    seed::App::builder(update, view)
         .routes(routes)
         .build_and_start();
 }

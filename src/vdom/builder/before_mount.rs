@@ -56,9 +56,11 @@ impl Default for MountType {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BeforeMount<MP: MountPoint> {
     pub mount_point: MP,
+    /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
+    /// in the constructors.
     pub mount_type: MountType,
 }
 
@@ -83,9 +85,22 @@ impl<MP: MountPoint> BeforeMount<MP> {
     }
 }
 
+impl Default for BeforeMount<()> {
+    fn default() -> Self {
+        Self::new(())
+    }
+}
+
 pub trait Into {
     type MP: MountPoint;
     fn into_before_mount(self, init_url: Url) -> BeforeMount<Self::MP>;
+}
+
+impl<MP: MountPoint> Into for BeforeMount<MP> {
+    type MP = MP;
+    fn into_before_mount(self, _: Url) -> BeforeMount<MP> {
+        self
+    }
 }
 
 impl<MP: MountPoint, F> Into for F

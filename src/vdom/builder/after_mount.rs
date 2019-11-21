@@ -16,7 +16,10 @@ impl Default for UrlHandling {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AfterMount<Mdl> {
+    /// Initial model to be used when the app begins.
     pub model: Mdl,
+    /// How to handle initial url routing. Defaults to [`UrlHandling::PassToRoutes`] in the
+    /// constructors.
     pub url_handling: UrlHandling,
 }
 
@@ -50,6 +53,16 @@ pub trait Into<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
         init_url: Url,
         orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> AfterMount<Mdl>;
+}
+
+impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> Into<Ms, Mdl, ElC, GMs> for AfterMount<Mdl> {
+    fn into_after_mount(
+        self: Box<Self>,
+        _: Url,
+        _: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
+    ) -> AfterMount<Mdl> {
+        *self
+    }
 }
 
 impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> Into<Ms, Mdl, ElC, GMs> for F

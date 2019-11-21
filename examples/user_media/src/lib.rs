@@ -12,11 +12,11 @@ use web_sys::{HtmlMediaElement, MediaStream, MediaStreamConstraints};
 
 struct Model {}
 
-// Init
+// AfterMount
 
-fn init(_: Url, orders: &mut impl Orders<Msg>) -> Init<Model> {
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.perform_cmd(user_media());
-    Init::new(Model {})
+    AfterMount::new(Model {})
 }
 
 fn user_media() -> impl Future<Item = Msg, Error = Msg> {
@@ -74,5 +74,7 @@ fn view(_: &Model) -> impl View<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::build(init, update, view).build_and_start();
+    seed::App::builder(update, view)
+        .after_mount(after_mount)
+        .build_and_start();
 }
