@@ -160,9 +160,9 @@ where
     Mdl: 'static,
     ElC: View<Ms>,
 {
-    /// State that is removed after app begins running.
+    /// Temporary app configuration that is removed after app begins running.
     pub run_cfg: OptDynRunCfg<Ms, Mdl, ElC, GMs>,
-    /// Stateless app configuration
+    /// App configuration available for the entire application lifetime.
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC, GMs>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
@@ -174,7 +174,7 @@ impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms
     }
 }
 
-#[deprecated(since = "0.4.3", note = "Part of the old Init API.")]
+#[deprecated(since = "0.5.0", note = "Part of the old Init API.")]
 type InitAppBuilder<Ms, Mdl, ElC, GMs> =
     AppBuilder<Ms, Mdl, ElC, GMs, builder::MountPointInitInitAPI<(), InitFn<Ms, Mdl, ElC, GMs>>>;
 
@@ -182,7 +182,7 @@ type InitAppBuilder<Ms, Mdl, ElC, GMs> =
 /// repetitive sequences of parameters.
 impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     #[deprecated(
-        since = "0.4.3",
+        since = "0.5.0",
         note = "Use `builder` with `AppBuilder::{after_mount, before_mount}` instead."
     )]
     pub fn build(
@@ -330,7 +330,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             into_after_mount,
             ..
         } = self.run_cfg.take().expect(
-            "run_cfg should be set in App::new which is called from AppBuilder::build_and_start",
+            "`run_cfg` should be set in `App::new` which is called from `AppBuilder::build_and_start`",
         );
 
         // Bootstrap the virtual DOM.
@@ -338,7 +338,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             .main_el_vdom
             .replace(Some(self.bootstrap_vdom(mount_type)));
 
-        // Can this simply be `self.update`?
         let mut orders = OrdersContainer::new(self.clone());
         let builder::AfterMount {
             model,
@@ -347,9 +346,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 
         self.data.model.replace(Some(model));
 
-        // TODO: Does this go before or after setting up the routes listener?
-        // TODO: Does this go before or after the initial render? The effects are created before
-        // TODO: the render, but after the orders. But old behavior let this run before the orders.
         match url_handling {
             UrlHandling::PassToRoutes => {
                 let url = routing::current_url();
@@ -393,10 +389,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
         }
 
-        // Our initial render. Can't initialize in new due to mailbox() requiring self.
         self.process_cmd_and_msg_queue(orders.effects);
-        // TODO: In the future, only run the following line if the above statement does not
-        // TODO: call `rerender_vdom` for efficiency.
+        // TODO: In the future, only run the following line if the above statement:
+        //  - didn't force-rerender vdom
+        //  - didn't schedule render
+        //  - doesn't want to skip render
         self.rerender_vdom();
 
         self

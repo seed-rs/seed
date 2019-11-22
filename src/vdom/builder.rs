@@ -15,8 +15,8 @@ pub mod after_mount;
 pub use after_mount::{AfterMount, Into as IntoAfterMount, UrlHandling};
 
 #[deprecated(
-    since = "0.4.3",
-    note = "Used for compatability with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
+    since = "0.5.0",
+    note = "Used for compatibility with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
 )]
 pub struct MountPointInitInitAPI<MP, II> {
     mount_point: MP,
@@ -47,13 +47,13 @@ pub trait InitAPIData {
     type IntoBeforeMount;
     type IntoAfterMount;
     #[deprecated(
-        since = "0.4.3",
-        note = "Used for compatability with old Init API. Use `IntoBeforeMount` and `IntoAfterMount` instead."
+        since = "0.5.0",
+        note = "Used for compatibility with old Init API. Use `IntoBeforeMount` and `IntoAfterMount` instead."
     )]
     type IntoInit;
     #[deprecated(
-        since = "0.4.3",
-        note = "Used for compatability with old Init API. Use `IntoBeforeMount` and `IntoAfterMount` instead."
+        since = "0.5.0",
+        note = "Used for compatibility with old Init API. Use `IntoBeforeMount` and `IntoAfterMount` instead."
     )]
     type MountPoint;
 
@@ -73,16 +73,16 @@ pub trait InitAPIData {
     ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM>;
 
     #[deprecated(
-        since = "0.4.3",
-        note = "Used for compatability with old Init API. Use `before_mount` and `after_mount` instead."
+        since = "0.5.0",
+        note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
     )]
     fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
         self,
         into_init: NewII,
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII>;
     #[deprecated(
-        since = "0.4.3",
-        note = "Used for compatability with old Init API. Use `before_mount` and `after_mount` instead."
+        since = "0.5.0",
+        note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
     )]
     fn mount<NewMP: MountPoint>(
         self,
@@ -92,8 +92,8 @@ pub trait InitAPIData {
 
 // TODO Remove when removing the other `InitAPI`s.
 #[deprecated(
-    since = "0.4.3",
-    note = "Used for compatability with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
+    since = "0.5.0",
+    note = "Used for compatibility with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
 )]
 impl<
         Ms: 'static,
@@ -190,8 +190,8 @@ impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
 }
 
 #[deprecated(
-    since = "0.4.3",
-    note = "Used for compatability with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
+    since = "0.5.0",
+    note = "Used for compatibility with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
 )]
 impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
     type IntoBeforeMount = ();
@@ -388,8 +388,8 @@ impl<
     > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
 {
     #[deprecated(
-        since = "0.4.3",
-        note = "Used for compatability with old Init API. Use `before_mount` and `after_mount` instead."
+        since = "0.5.0",
+        note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
     )]
     pub fn init<NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
         self,
@@ -425,8 +425,8 @@ impl<
     /// mount(seed::body().querySelector("section").unwrap().unwrap())
     /// ```
     #[deprecated(
-        since = "0.4.3",
-        note = "Used for compatability with old Init API. Use `before_mount` and `after_mount` instead."
+        since = "0.5.0",
+        note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
     )]
     pub fn mount<NewMP: MountPoint>(
         self,
