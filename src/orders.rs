@@ -110,6 +110,11 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
             app,
         }
     }
+
+    pub(crate) fn append_from(&mut self, mut other: Self) {
+        self.should_render = other.should_render;
+        self.effects.append(&mut other.effects);
+    }
 }
 
 impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
