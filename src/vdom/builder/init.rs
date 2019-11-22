@@ -3,7 +3,7 @@ use crate::{
     orders::OrdersContainer,
     routing::Url,
     vdom::builder::{
-        after_mount::{AfterMount, Into as IntoAfterMount, UrlHandling},
+        after_mount::{AfterMount, IntoAfterMount, UrlHandling},
         before_mount::MountType,
     },
 };
@@ -63,22 +63,24 @@ impl<Mdl> Init<Mdl> {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[deprecated(
     since = "0.5.0",
     note = "Part of old Init API. Use `AfterMount` instead."
 )]
-pub type Fn<Ms, Mdl, ElC, GMs> =
+pub type InitFn<Ms, Mdl, ElC, GMs> =
     Box<dyn FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
 
+#[allow(clippy::module_name_repetitions)]
 #[deprecated(
     since = "0.5.0",
     note = "Part of old Init API. Use `IntoAfterMount` and `IntoBeforeMount` instead."
 )]
-pub trait Into<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
+pub trait IntoInit<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     fn into_init(self, init_url: Url, ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>;
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> Into<Ms, Mdl, ElC, GMs> for F
+impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> IntoInit<Ms, Mdl, ElC, GMs> for F
 where
     F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
 {
@@ -96,8 +98,7 @@ impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs>
         ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> AfterMount<Mdl> {
         let (init, old_ord) = *self;
-        ord.effects = old_ord.effects;
-        ord.should_render = old_ord.should_render;
+        ord.append_from(old_ord);
         AfterMount {
             model: init.model,
             url_handling: init.url_handling,

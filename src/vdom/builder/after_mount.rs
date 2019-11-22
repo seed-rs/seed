@@ -47,7 +47,8 @@ impl<Mdl> AfterMount<Mdl> {
     }
 }
 
-pub trait Into<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
+#[allow(clippy::module_name_repetitions)]
+pub trait IntoAfterMount<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     fn into_after_mount(
         self: Box<Self>,
         init_url: Url,
@@ -55,7 +56,7 @@ pub trait Into<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     ) -> AfterMount<Mdl>;
 }
 
-impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> Into<Ms, Mdl, ElC, GMs> for AfterMount<Mdl> {
+impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs> for AfterMount<Mdl> {
     fn into_after_mount(
         self: Box<Self>,
         _: Url,
@@ -65,7 +66,7 @@ impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> Into<Ms, Mdl, ElC, GMs> for 
     }
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> Into<Ms, Mdl, ElC, GMs> for F
+impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> IntoAfterMount<Ms, Mdl, ElC, GMs> for F
 where
     F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> AfterMount<Mdl>,
 {
@@ -78,7 +79,7 @@ where
     }
 }
 
-impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> Into<Ms, Mdl, ElC, GMs> for () {
+impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs> for () {
     fn into_after_mount(
         self: Box<Self>,
         _: Url,

@@ -91,19 +91,20 @@ impl Default for BeforeMount<()> {
     }
 }
 
-pub trait Into {
+#[allow(clippy::module_name_repetitions)]
+pub trait IntoBeforeMount {
     type MP: MountPoint;
     fn into_before_mount(self, init_url: Url) -> BeforeMount<Self::MP>;
 }
 
-impl<MP: MountPoint> Into for BeforeMount<MP> {
+impl<MP: MountPoint> IntoBeforeMount for BeforeMount<MP> {
     type MP = MP;
     fn into_before_mount(self, _: Url) -> BeforeMount<MP> {
         self
     }
 }
 
-impl<MP: MountPoint, F> Into for F
+impl<MP: MountPoint, F> IntoBeforeMount for F
 where
     F: FnOnce(Url) -> BeforeMount<MP>,
 {
@@ -113,7 +114,7 @@ where
     }
 }
 
-impl Into for () {
+impl IntoBeforeMount for () {
     type MP = ();
     fn into_before_mount(self, _: Url) -> BeforeMount<Self::MP> {
         BeforeMount::default()

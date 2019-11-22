@@ -8,11 +8,11 @@ use crate::{
 };
 
 pub mod init;
-pub use init::{Fn as InitFn, Init, Into as IntoInit};
+pub use init::{Init, InitFn, IntoInit};
 pub mod before_mount;
-pub use before_mount::{BeforeMount, Into as IntoBeforeMount, MountPoint, MountType};
+pub use before_mount::{BeforeMount, IntoBeforeMount, MountPoint, MountType};
 pub mod after_mount;
-pub use after_mount::{AfterMount, Into as IntoAfterMount, UrlHandling};
+pub use after_mount::{AfterMount, IntoAfterMount, UrlHandling};
 
 #[deprecated(
     since = "0.5.0",

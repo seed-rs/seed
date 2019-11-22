@@ -11,15 +11,6 @@ struct Model {
     drop_zone_content: Vec<Node<Msg>>,
 }
 
-// AfterMount
-
-fn after_mount(_: Url, _: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    AfterMount::new(Model {
-        drop_zone_active: false,
-        drop_zone_content: vec![div!["Drop files here"]],
-    })
-}
-
 // Update
 
 #[derive(Clone, Debug)]
@@ -118,6 +109,9 @@ fn view(model: &Model) -> impl View<Msg> {
 #[wasm_bindgen(start)]
 pub fn start() {
     seed::App::builder(update, view)
-        .after_mount(after_mount)
+        .after_mount(AfterMount::new(Model {
+            drop_zone_active: false,
+            drop_zone_content: vec![div!["Drop files here"]],
+        }))
         .build_and_start();
 }
