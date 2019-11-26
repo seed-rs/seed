@@ -349,14 +349,14 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         match url_handling {
             UrlHandling::PassToRoutes => {
                 let url = routing::current_url();
-                if let Some(routes) = self.data.routes.borrow().as_ref() {
-                    if let Some(routing_msg) = routes(url) {
-                        (self.cfg.update)(
-                            routing_msg,
-                            &mut self.data.model.borrow_mut().as_mut().unwrap(),
-                            &mut orders,
-                        );
-                    }
+                let routing_msg = self
+                    .data
+                    .routes
+                    .borrow()
+                    .as_ref()
+                    .and_then(|routes| routes(url));
+                if let Some(routing_msg) = routing_msg {
+                    orders.effects.push_back(routing_msg.into());
                 }
             }
             UrlHandling::None => (),
