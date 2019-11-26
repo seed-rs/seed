@@ -14,6 +14,7 @@ better denote state before and after mounting the `App` occurs.
 - Added `IntoInit`, `IntoAfterMount`, and `IntoBeforeMount` traits. It is possible to use these
 in place of a closure or function to produce the corresponding `Init`, `AfterMount`, and
 `BeforeMount` structs.
+- Messages sent from `IntoAfterMount` will now be run after the routing message.
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
