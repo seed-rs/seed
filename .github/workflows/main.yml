@@ -1,0 +1,63 @@
+name: Main
+
+on: [push, pull_request]
+
+env:
+  RUST_BACKTRACE: 1
+
+jobs:
+  verify:
+    runs-on: ${{ matrix.os }}
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest] # windows-latest is too slow at the moment
+    steps:
+      #  remove once https://github.com/rustwasm/wasm-pack/pull/706 is included in a next wasm-pack version (> 0.8.1)
+      - name: Get write access
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: |
+          sudo chown -R $USER /usr/local/lib/node_modules
+          sudo chown -R $USER /usr/local/bin
+
+      # remove once https://github.com/rustwasm/wasm-pack/pull/706 is included in a next wasm-pack version (> 0.8.1)
+      - name: Install chromedriver
+        run: npm install -g chromedriver
+
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**\Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - name: Install cargo-make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Run tests - Windows or Ubuntu
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
+        run: |
+          cargo make test_h chrome
+          cargo make test_h firefox
+
+      # uncomment once fixes from https://webkit.org/blog/9609/release-notes-for-safari-technology-preview-94/
+      # are included in installed Safari
+#      - name: Run tests - macOS
+#        if: matrix.os == 'macos-latest'
+#        run: |
+#          sudo safaridriver --enable
+#          cargo make test_h safari
+
+      - name: Verify
+        run: cargo make verify_for_ci
+
