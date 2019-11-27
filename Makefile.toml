@@ -23,10 +23,10 @@ description = "Format, lint with Clippy, build, run tests, simulate publish"
 workspace = false
 dependencies = ["fmt_all", "clippy_all", "all", "test_h_firefox", "publish_dry_run"]
 
-[tasks.verify_only]
-description = "Like `verify`, but fails if the code isn't formatted. Primarily for CI."
+[tasks.verify_for_ci]
+description = "Like `verify`, but fails if the code isn't formatted and you should run tests with other commands."
 workspace = false
-dependencies = ["fmt_all_check", "clippy_all", "all", "test_h_firefox", "publish_dry_run"]
+dependencies = ["fmt_all_check", "clippy_all", "all", "publish_dry_run"]
 
 # ---- BUILD ----
 

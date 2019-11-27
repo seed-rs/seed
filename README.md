@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/David-OConnor/seed.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
 [![crates.io version](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
 [![crates.io downloads](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
 [![docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
