@@ -125,10 +125,10 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub render_timestamp: Cell<Option<RenderTimestamp>>,
 }
 
-type OptDynRunCfg<Ms, Mdl, ElC, GMs> =
-    Option<AppRunCfg<Ms, Mdl, ElC, GMs, dyn builder::IntoAfterMount<Ms, Mdl, ElC, GMs>>>;
+type OptDynInitCfg<Ms, Mdl, ElC, GMs> =
+    Option<AppInitCfg<Ms, Mdl, ElC, GMs, dyn builder::IntoAfterMount<Ms, Mdl, ElC, GMs>>>;
 
-pub struct AppRunCfg<Ms, Mdl, ElC, GMs, IAM: ?Sized>
+pub struct AppInitCfg<Ms, Mdl, ElC, GMs, IAM: ?Sized>
 where
     Ms: 'static,
     Mdl: 'static,
@@ -161,7 +161,7 @@ where
     ElC: View<Ms>,
 {
     /// Temporary app configuration that is removed after app begins running.
-    pub run_cfg: OptDynRunCfg<Ms, Mdl, ElC, GMs>,
+    pub init_cfg: OptDynInitCfg<Ms, Mdl, ElC, GMs>,
     /// App configuration available for the entire application lifetime.
     pub cfg: Rc<AppCfg<Ms, Mdl, ElC, GMs>>,
     /// Mutable app state
@@ -216,13 +216,13 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEvents<Ms, Mdl>>,
-        run_cfg: OptDynRunCfg<Ms, Mdl, ElC, GMs>,
+        init_cfg: OptDynInitCfg<Ms, Mdl, ElC, GMs>,
     ) -> Self {
         let window = util::window();
         let document = window.document().expect("Can't find the window's document");
 
         Self {
-            run_cfg,
+            init_cfg,
             cfg: Rc::new(AppCfg {
                 document,
                 mount_point,
@@ -325,12 +325,12 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         note = "Please use `AppBuilder.build_and_start` instead"
     )]
     pub fn run(mut self) -> Self {
-        let AppRunCfg {
+        let AppInitCfg {
             mount_type,
             into_after_mount,
             ..
-        } = self.run_cfg.take().expect(
-            "`run_cfg` should be set in `App::new` which is called from `AppBuilder::build_and_start`",
+        } = self.init_cfg.take().expect(
+            "`init_cfg` should be set in `App::new` which is called from `AppBuilder::build_and_start`",
         );
 
         // Bootstrap the virtual DOM.
@@ -622,7 +622,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
     fn clone(&self) -> Self {
         Self {
-            run_cfg: None,
+            init_cfg: None,
             cfg: Rc::clone(&self.cfg),
             data: Rc::clone(&self.data),
         }

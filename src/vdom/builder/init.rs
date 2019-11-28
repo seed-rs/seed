@@ -98,7 +98,7 @@ impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs>
         ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> AfterMount<Mdl> {
         let (init, old_ord) = *self;
-        ord.append_from(old_ord);
+        ord.merge(old_ord);
         AfterMount {
             model: init.model,
             url_handling: init.url_handling,

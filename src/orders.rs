@@ -111,7 +111,7 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
         }
     }
 
-    pub(crate) fn append_from(&mut self, mut other: Self) {
+    pub(crate) fn merge(&mut self, mut other: Self) {
         self.should_render = other.should_render;
         self.effects.append(&mut other.effects);
     }

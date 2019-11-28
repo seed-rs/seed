@@ -4,7 +4,7 @@ use crate::{
     dom_types::View,
     orders::OrdersContainer,
     routing,
-    vdom::{alias::*, App, AppRunCfg},
+    vdom::{alias::*, App, AppInitCfg},
 };
 
 pub mod init;
@@ -124,7 +124,7 @@ impl<
         let mut initial_orders = OrdersContainer::new(app.clone());
         let init = into_init.into_init(routing::current_url(), &mut initial_orders);
 
-        app.run_cfg.replace(AppRunCfg {
+        app.init_cfg.replace(AppInitCfg {
             mount_type: init.mount_type,
             into_after_mount: Box::new((init, initial_orders)),
             phantom: PhantomData,
@@ -162,7 +162,7 @@ impl<
             mount_point.element(),
             builder.routes,
             builder.window_events,
-            Some(AppRunCfg {
+            Some(AppInitCfg {
                 mount_type,
                 into_after_mount: Box::new(into_after_mount),
                 phantom: PhantomData,
