@@ -6,5 +6,3 @@ but provides a syntax example.
 ```bash
 cargo make start
 ```
-
-[Hosted](https://david-oconnor.github.io/linalg/)

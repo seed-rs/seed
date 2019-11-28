@@ -13,7 +13,7 @@ use serde::Deserialize;
 use std::fs;
 
 const STYLE_NAMES_FILE: &str = "./src/dom_entity_names/styles/style_names.rs";
-const STYLES_ENDPOINT: &str = "https://martinkavik.github.io/html-css-db/css_properties.json";
+const STYLES_ENDPOINT: &str = "https://seed-rs.github.io/html-css-db/css_properties.json";
 
 #[derive(Debug, Deserialize)]
 struct Style {
