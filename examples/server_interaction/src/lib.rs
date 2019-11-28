@@ -11,7 +11,7 @@ use seed::prelude::*;
 use seed::{fetch, Method, Request};
 use serde::{Deserialize, Serialize};
 
-const REPOSITORY_URL: &str = "https://api.github.com/repos/david-oconnor/seed/branches/master";
+const REPOSITORY_URL: &str = "https://api.github.com/repos/seed-rs/seed/branches/master";
 const CONTACT_URL: &str = "https://infinitea.herokuapp.com/api/contact";
 
 #[derive(Serialize)]

@@ -12,7 +12,7 @@ especially safe concurrency.
 
 >  Seed is a high-level framework for building websites using these tools.
 
-> _[Seed](https://github.com/David-OConnor/seed)_
+> _[Seed](https://github.com/seed-rs/seed)_
 
 ## Learning Rust
 
@@ -24,8 +24,8 @@ Here are some links you may find helpful:
 * [Rust Documentation](https://doc.rust-lang.org/)
 * [Rust Source Code](https://github.com/rust-lang/rust)
 * [wasm-bindgen Source Code](https://github.com/rustwasm/wasm-bindgen)
-* [Seed guide](https://github.com/David-OConnor/seed)
-* [Seed quickstart repo](https://github.com/David-OConnor/seed-quickstart)
+* [Seed guide](https://github.com/seed-rs/seed)
+* [Seed quickstart repo](https://github.com/seed-rs/seed-quickstart)
 
 Get help from Rust users:
 

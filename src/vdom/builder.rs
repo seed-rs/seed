@@ -145,7 +145,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
     /// ```
     pub fn mount(mut self, mount_point: impl MountPoint) -> Self {
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
-        // https://github.com/David-OConnor/seed/issues/241
+        // https://github.com/seed-rs/seed/issues/241
         // https://bugs.webkit.org/show_bug.cgi?id=202881
         let _ = util::document().query_selector("html");
 

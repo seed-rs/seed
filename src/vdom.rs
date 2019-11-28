@@ -234,7 +234,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             // Construct a vdom from the root element. Subsequently strip the workspace so that we
             // can recreate it later - this is a kind of simple way to avoid missing nodes (but
             // not entirely correct).
-            // TODO: 1) Please refer to [issue #277](https://github.com/David-OConnor/seed/issues/277)
+            // TODO: 1) Please refer to [issue #277](https://github.com/seed-rs/seed/issues/277)
             let mut dom_nodes: El<Ms> = (&self.cfg.mount_point).into();
             dom_nodes.strip_ws_nodes_from_self_and_children();
 
@@ -250,7 +250,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         // Recreate the needed nodes. Only do this if requested to takeover the mount point since
         // it should only be needed here.
         if mount_type == MountType::Takeover {
-            // TODO: Please refer to [issue #277](https://github.com/David-OConnor/seed/issues/277)
+            // TODO: Please refer to [issue #277](https://github.com/seed-rs/seed/issues/277)
             websys_bridge::assign_ws_nodes_to_el(&util::document(), &mut new);
 
             // Remove all old elements. We'll swap them out with the newly created elements later.
