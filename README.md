@@ -7,7 +7,10 @@
   <img src="/seed_branding/seed_logo.svg" width="256" title="Seed logo">
 </p>
 
-The best place to learn is the [guide](https://seed-rs.org) - this readme is an excerpt from it.
+
+## [New homepage](https://seed-rs.org), as of November 2019
+
+The best place to learn is the guide on the homepage - this readme is an excerpt from it.
 
 # Quickstart
 
