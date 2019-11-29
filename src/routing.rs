@@ -192,18 +192,16 @@ pub fn setup_popstate_listener<Ms>(
             .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
-        if let Some(state_str) = ev.state().as_string() {
-            let url: Url =
-                serde_json::from_str(&state_str).expect("Problem deserializing popstate state");
+        let url = match ev.state().as_string() {
+            Some(state_str) => {
+                serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
+            }
             // Only update when requested for an update by the user.
-            if let Some(routing_msg) = routes(url) {
-                update(routing_msg);
-            }
-        } else {
-            // `ev.state()` will be a null JsValue for the landing page.
-            if let Some(routing_msg) = routes(initial_url()) {
-                update(routing_msg);
-            }
+            None => initial_url(),
+        };
+
+        if let Some(routing_msg) = routes(url) {
+            update(routing_msg);
         }
     });
 
