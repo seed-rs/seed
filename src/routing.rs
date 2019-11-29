@@ -40,13 +40,12 @@ impl Url {
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
     pub fn new<T: ToString>(path: Vec<T>) -> Self {
-        let result = Self {
+        Self {
             path: path.into_iter().map(|p| p.to_string()).collect(),
             hash: None,
             search: None,
             title: None,
-        };
-        clean_url(result)
+        }
     }
 
     /// Builder-pattern method for defining hash.
@@ -147,29 +146,15 @@ pub fn initial_url() -> Url {
         .into()
 }
 
-/// Remove prepended / from all items in the Url's path.
-fn clean_url(mut url: Url) -> Url {
-    url.path = url
-        .path
-        .into_iter()
-        .map(|path_part| path_part.trim_start_matches('/').to_owned())
-        .collect();
-    url
-}
-
 /// Add a new route using history's `push_state` method.
 ///
 /// # Refenences
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
 pub fn push_route<U: Into<Url>>(url: U) -> Url {
-    let mut url = url.into();
-    // Purge leading / from each part, if it exists, eg passed by user.
-    url = clean_url(url);
-
+    let url = url.into();
     // We use data to evaluate the path instead of the path displayed in the url.
     let data =
-        JsValue::from_serde(&serde_json::to_string(&url).expect("Problem serializing route data"))
-            .expect("Problem converting route data to JsValue");
+        JsValue::from_str(&serde_json::to_string(&url).expect("Problem serializing route data"));
 
     // title is currently unused by Firefox.
     let title = match &url.title {
@@ -190,6 +175,7 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 
     util::history()
         .push_state_with_url(&data, title, Some(&path))
+//        .push_state_with_url(&url.to_str(), title, Some(&path))
         .expect("Problem pushing state");
     url
 }
@@ -214,7 +200,12 @@ pub fn setup_popstate_listener<Ms>(
             if let Some(routing_msg) = routes(url) {
                 update(routing_msg);
             }
-        };
+        } else {
+            // `ev.state()` will be a null JsValue for the landing page.
+            if let Some(routing_msg) = routes(initial_url()) {
+                update(routing_msg);
+            }
+        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -290,7 +281,7 @@ where
                     event.prevent_default(); // Prevent page refresh
                 } else {
                     // Only update when requested for an update by the user.
-                    let url = clean_url(Url::try_from(href).expect("cast link href to `Url`"));
+                    let url = Url::try_from(href).expect("cast link href to `Url`");
                     if let Some(redirect_msg) = routes(url.clone()) {
                         // Route internally, overriding the default history
                         push_route(url);
