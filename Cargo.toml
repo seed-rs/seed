@@ -30,7 +30,7 @@ enclose = "^1.1.6"
 futures = "^0.1.27"
 gloo-timers = "^0.1.0"
 indexmap = "^1.0.2"
-js-sys = "0.3.27"
+js-sys = "0.3.32"
 pulldown-cmark = "^0.5.2"
 serde = { version = "^1.0.92", features = ['derive'] }
 serde_json = "^1.0.39"
@@ -42,7 +42,7 @@ wasm-bindgen-futures = "0.3.22"
 dbg = "1.0.4"
 
 [dependencies.web-sys]
-version = "0.3.27"
+version = "0.3.32"
 features = [
     "AbortController",
     "AbortSignal",
