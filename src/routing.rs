@@ -175,7 +175,6 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 
     util::history()
         .push_state_with_url(&data, title, Some(&path))
-//        .push_state_with_url(&url.to_str(), title, Some(&path))
         .expect("Problem pushing state");
     url
 }
