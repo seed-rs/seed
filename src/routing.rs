@@ -138,7 +138,7 @@ impl From<Vec<&str>> for Url {
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
-pub fn initial_url() -> Url {
+pub fn current_url() -> Url {
     let current_url = util::window().location().href().expect("get `href`");
 
     web_sys::Url::new(&current_url)
@@ -197,7 +197,7 @@ pub fn setup_popstate_listener<Ms>(
                 serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
             }
             // Only update when requested for an update by the user.
-            None => initial_url(),
+            None => current_url(),
         };
 
         if let Some(routing_msg) = routes(url) {

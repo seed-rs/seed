@@ -195,11 +195,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs> 
         );
 
         let mut initial_orders = OrdersContainer::new(app.clone());
-        let mut init = (self.init)(routing::initial_url(), &mut initial_orders);
+        let mut init = (self.init)(routing::current_url(), &mut initial_orders);
 
         match init.url_handling {
             UrlHandling::PassToRoutes => {
-                let url = routing::initial_url();
+                let url = routing::current_url();
                 if let Some(r) = self.routes {
                     if let Some(u) = r(url) {
                         (self.update)(u, &mut init.model, &mut initial_orders);
