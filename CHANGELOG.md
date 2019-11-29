@@ -6,6 +6,7 @@
 - [BREAKING] `From<String> for Url` changed to `TryFrom<String> for Url`
 - Fixed jumping cursor in inputs (#158) 
 - Added method `orders.after_next_render(Option<RenderTimestampDelta>)` (#207)
+- Fixed a bug with back/forward routing to the landing page (#296)
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
