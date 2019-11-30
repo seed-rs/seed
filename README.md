@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/David-OConnor/seed.svg?branch=master)](https://travis-ci.org/David-OConnor/seed)
 [![crates.io version](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
 [![crates.io downloads](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
 [![docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
@@ -12,6 +11,7 @@
 ## [New homepage](https://seed-rs.org), as of November 2019
 
 The best place to learn is the guide on the homepage - this readme is an excerpt from it.
+
 
 # Quickstart
 
@@ -187,7 +187,7 @@ For a truly minimimal example, see [lib.rs in the quickstart repo](https://githu
 
 To build your app, run `cargo make build`, and to host on a dev server, run `cargo make serve`.
 
-For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/MartinKavik/seed-quickstart-webpack).
+For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/seed-rs/seed-quickstart-webpack).
 
 ## Running included examples
 
@@ -200,8 +200,8 @@ Some examples also require to run API server in another terminal window - `cargo
 When server(s) are running, open [127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 ## Resources
-- [Awesome-seed-rs](https://github.com/MartinKavik/awesome-seed-rs): A curated list of resources
-- [Seed Realworld](https://github.com/MartinKavik/seed-rs-realworld): A detailed realworld example site
+- [Awesome-seed-rs](https://github.com/seed-rs/awesome-seed-rs): A curated list of resources
+- [Seed Realworld](https://github.com/seed-rs/seed-rs-realworld): A detailed realworld example site
 - [Engineering Rust Web Applications](https://erwabook.com/): A book describing full-stack Rust web-development, using Seed for the frontend
 
 # About
