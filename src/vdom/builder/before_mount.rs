@@ -31,12 +31,6 @@ impl MountPoint for web_sys::HtmlElement {
     }
 }
 
-impl MountPoint for () {
-    fn element_getter(self) -> Box<dyn FnOnce() -> Element> {
-        "app".element_getter()
-    }
-}
-
 /// Describes the handling of elements already present in the mount element.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MountType {
@@ -87,7 +81,10 @@ impl BeforeMount {
 
 impl Default for BeforeMount {
     fn default() -> Self {
-        Self::new(())
+        Self {
+            mount_point_getter: "app".element_getter(),
+            mount_type: MountType::default(),
+        }
     }
 }
 
