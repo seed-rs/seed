@@ -15,6 +15,15 @@ version = "1.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "app_builder"
+version = "0.1.0"
+dependencies = [
+ "seed 0.4.2",
+ "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
+ "web-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "autocfg"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
