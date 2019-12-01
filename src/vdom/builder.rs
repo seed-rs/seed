@@ -115,7 +115,7 @@ impl<
             builder.update,
             builder.sink,
             builder.view,
-            mount_point.element(),
+            mount_point.element_getter()(),
             builder.routes,
             builder.window_events,
             None,
@@ -151,7 +151,7 @@ impl<
         } = builder.init_api;
 
         let BeforeMount {
-            mount_point,
+            mount_point_getter,
             mount_type,
         } = into_before_mount.into_before_mount(routing::current_url());
 
@@ -159,7 +159,7 @@ impl<
             builder.update,
             builder.sink,
             builder.view,
-            mount_point.element(),
+            mount_point_getter(),
             builder.routes,
             builder.window_events,
             Some(AppInitCfg {
