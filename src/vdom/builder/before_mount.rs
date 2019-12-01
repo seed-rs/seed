@@ -3,36 +3,37 @@ use web_sys::Element;
 use crate::{routing::Url, util};
 
 pub trait MountPoint {
-    fn element(self) -> Element;
+    fn element_getter(self) -> Box<dyn FnOnce() -> Element>;
 }
 
 impl MountPoint for &str {
-    fn element(self) -> Element {
-        util::document().get_element_by_id(self).unwrap_or_else(|| {
+    fn element_getter(self) -> Box<dyn FnOnce() -> Element> {
+        let id = self.to_owned();
+        Box::new(move || util::document().get_element_by_id(&id).unwrap_or_else(|| {
             panic!(
                 "Can't find element with id={:?} - app cannot be mounted!\n\
                  (Id defaults to \"app\", or can be set with the .mount() method)",
-                self
+                id
             )
-        })
+        }))
     }
 }
 
 impl MountPoint for Element {
-    fn element(self) -> Element {
-        self
+    fn element_getter(self) -> Box<dyn FnOnce() -> Element> {
+        Box::new(|| self)
     }
 }
 
 impl MountPoint for web_sys::HtmlElement {
-    fn element(self) -> Element {
-        self.into()
+    fn element_getter(self) -> Box<dyn FnOnce() -> Element> {
+        Box::new(|| self.into())
     }
 }
 
 impl MountPoint for () {
-    fn element(self) -> Element {
-        "app".element()
+    fn element_getter(self) -> Box<dyn FnOnce() -> Element> {
+        "app".element_getter()
     }
 }
 
@@ -56,25 +57,24 @@ impl Default for MountType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BeforeMount<MP: MountPoint> {
-    pub mount_point: MP,
+pub struct BeforeMount {
+    pub mount_point_getter: Box<dyn FnOnce() -> Element>,
     /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
     /// in the constructors.
     pub mount_type: MountType,
 }
 
-impl<MP: MountPoint> BeforeMount<MP> {
-    pub fn new(mp: MP) -> Self {
+impl BeforeMount {
+    pub fn new(mp: impl MountPoint + 'static) -> Self {
         Self {
-            mount_point: mp,
+            mount_point_getter: Box::new(mp.element_getter()),
             mount_type: MountType::default(),
         }
     }
 
-    pub fn mount_point<NewMP: MountPoint>(self, new_mp: NewMP) -> BeforeMount<NewMP> {
+    pub fn mount_point(self, new_mp: impl MountPoint + 'static) -> BeforeMount {
         BeforeMount {
-            mount_point: new_mp,
+            mount_point_getter: Box::new(new_mp.element_getter()),
             mount_type: self.mount_type,
         }
     }
@@ -85,7 +85,7 @@ impl<MP: MountPoint> BeforeMount<MP> {
     }
 }
 
-impl Default for BeforeMount<()> {
+impl Default for BeforeMount {
     fn default() -> Self {
         Self::new(())
     }
@@ -93,30 +93,26 @@ impl Default for BeforeMount<()> {
 
 #[allow(clippy::module_name_repetitions)]
 pub trait IntoBeforeMount {
-    type MP: MountPoint;
-    fn into_before_mount(self, init_url: Url) -> BeforeMount<Self::MP>;
+    fn into_before_mount(self, init_url: Url) -> BeforeMount;
 }
 
-impl<MP: MountPoint> IntoBeforeMount for BeforeMount<MP> {
-    type MP = MP;
-    fn into_before_mount(self, _: Url) -> BeforeMount<MP> {
+impl IntoBeforeMount for BeforeMount {
+    fn into_before_mount(self, _: Url) -> BeforeMount {
         self
     }
 }
 
-impl<MP: MountPoint, F> IntoBeforeMount for F
+impl<F> IntoBeforeMount for F
 where
-    F: FnOnce(Url) -> BeforeMount<MP>,
+    F: FnOnce(Url) -> BeforeMount,
 {
-    type MP = MP;
-    fn into_before_mount(self, init_url: Url) -> BeforeMount<MP> {
+    fn into_before_mount(self, init_url: Url) -> BeforeMount {
         self(init_url)
     }
 }
 
 impl IntoBeforeMount for () {
-    type MP = ();
-    fn into_before_mount(self, _: Url) -> BeforeMount<Self::MP> {
+    fn into_before_mount(self, _: Url) -> BeforeMount {
         BeforeMount::default()
     }
 }
