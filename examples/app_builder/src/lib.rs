@@ -5,7 +5,6 @@ use web_sys;
 //     Model
 // ------ ------
 
-#[derive(Default)]
 struct Model {
     clicks: u32,
 }
@@ -94,12 +93,20 @@ fn sink(g_msg: GMsg, _model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
 
 fn before_mount(_url: Url) -> BeforeMount {
     BeforeMount::default()
-        .mount_point("main")
         .mount_type(MountType::Takeover)
 }
 
 // ------ ------
 //  After Mount
+// ------ ------
+
+fn after_mount(_url: Url, _orders: &mut impl Orders<Msg, GMsg>) -> AfterMount<Model> {
+    AfterMount::new(Model { clicks: 0 })
+        .url_handling(UrlHandling::None)
+}
+
+// ------ ------
+//     Start
 // ------ ------
 
 #[wasm_bindgen(start)]
@@ -109,6 +116,6 @@ pub fn render() {
         .window_events(window_events)
         .sink(sink)
         .before_mount(before_mount)
-//        .after_mount(after_mount)
+        .after_mount(after_mount)
         .build_and_start();
 }
