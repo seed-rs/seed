@@ -1,6 +1,6 @@
 use web_sys::Element;
 
-use crate::{routing::Url, util};
+use crate::util;
 
 // ------ MountPoint ------
 
@@ -89,33 +89,5 @@ impl Default for BeforeMount {
             mount_point_getter: "app".element_getter(),
             mount_type: MountType::default(),
         }
-    }
-}
-
-// ------ IntoBeforeMount ------
-
-#[allow(clippy::module_name_repetitions)]
-pub trait IntoBeforeMount {
-    fn into_before_mount(self, init_url: Url) -> BeforeMount;
-}
-
-impl IntoBeforeMount for BeforeMount {
-    fn into_before_mount(self, _: Url) -> BeforeMount {
-        self
-    }
-}
-
-impl<F> IntoBeforeMount for F
-where
-    F: FnOnce(Url) -> BeforeMount,
-{
-    fn into_before_mount(self, init_url: Url) -> BeforeMount {
-        self(init_url)
-    }
-}
-
-impl IntoBeforeMount for () {
-    fn into_before_mount(self, _: Url) -> BeforeMount {
-        BeforeMount::default()
     }
 }

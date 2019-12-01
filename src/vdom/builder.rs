@@ -10,7 +10,7 @@ use crate::{
 pub mod init;
 pub use init::{Init, InitFn, IntoInit};
 pub mod before_mount;
-pub use before_mount::{BeforeMount, IntoBeforeMount, MountPoint, MountType};
+pub use before_mount::{BeforeMount, MountPoint, MountType};
 pub mod after_mount;
 pub use after_mount::{AfterMount, IntoAfterMount, UrlHandling};
 
@@ -23,15 +23,15 @@ pub struct MountPointInitInitAPI<MP, II> {
     into_init: II,
 }
 // TODO Remove when removing the other `InitAPI`s.
-pub struct BeforeAfterInitAPI<IBM, IAM> {
-    into_before_mount: IBM,
+pub struct BeforeAfterInitAPI<IAM> {
+    before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
     into_after_mount: IAM,
 }
 // TODO Remove when removing the other `InitAPI`s.
-impl Default for BeforeAfterInitAPI<(), ()> {
+impl Default for BeforeAfterInitAPI<()> {
     fn default() -> Self {
         BeforeAfterInitAPI {
-            into_before_mount: (),
+            before_mount_handler: Box::new(|_| BeforeMount::default()),
             into_after_mount: (),
         }
     }
@@ -44,7 +44,6 @@ pub trait InitAPI<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
 }
 // TODO Remove when removing the other `InitAPI`s.
 pub trait InitAPIData {
-    type IntoBeforeMount;
     type IntoAfterMount;
     #[deprecated(
         since = "0.5.0",
@@ -57,10 +56,10 @@ pub trait InitAPIData {
     )]
     type MountPoint;
 
-    fn before_mount<NewIBM: IntoBeforeMount>(
+    fn before_mount(
         self,
-        into_before_mount: NewIBM,
-    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount>;
+        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+    ) -> BeforeAfterInitAPI<Self::IntoAfterMount>;
     fn after_mount<
         Ms: 'static,
         Mdl,
@@ -70,7 +69,7 @@ pub trait InitAPIData {
     >(
         self,
         into_after_mount: NewIAM,
-    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM>;
+    ) -> BeforeAfterInitAPI<NewIAM>;
 
     #[deprecated(
         since = "0.5.0",
@@ -139,21 +138,20 @@ impl<
         Mdl: 'static,
         ElC: 'static + View<Ms>,
         GMs: 'static,
-        IBM: IntoBeforeMount,
         IAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>,
-    > InitAPI<Ms, Mdl, ElC, GMs> for BeforeAfterInitAPI<IBM, IAM>
+    > InitAPI<Ms, Mdl, ElC, GMs> for BeforeAfterInitAPI<IAM>
 {
     type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
     fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
         let BeforeAfterInitAPI {
-            into_before_mount,
+            before_mount_handler,
             into_after_mount,
         } = builder.init_api;
 
         let BeforeMount {
             mount_point_getter,
             mount_type,
-        } = into_before_mount.into_before_mount(routing::current_url());
+        } = before_mount_handler(routing::current_url());
 
         App::new(
             builder.update,
@@ -194,17 +192,16 @@ impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
     note = "Used for compatibility with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
 )]
 impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
-    type IntoBeforeMount = ();
     type IntoAfterMount = ();
     type IntoInit = II;
     type MountPoint = MP;
 
-    fn before_mount<NewIBM: IntoBeforeMount>(
+    fn before_mount(
         self,
-        into_before_mount: NewIBM,
-    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount> {
+        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+    ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
-            into_before_mount,
+            before_mount_handler,
             into_after_mount: (),
         }
     }
@@ -217,10 +214,10 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
     >(
         self,
         into_after_mount: NewIAM,
-    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM> {
+    ) -> BeforeAfterInitAPI<NewIAM> {
         BeforeAfterInitAPI {
             into_after_mount,
-            into_before_mount: (),
+            before_mount_handler: Box::new(|_| BeforeMount::default()),
         }
     }
 
@@ -244,18 +241,17 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
     }
 }
 // TODO Remove when removing the other `InitAPI`s.
-impl<IBM, IAM> InitAPIData for BeforeAfterInitAPI<IBM, IAM> {
-    type IntoBeforeMount = IBM;
+impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
     type IntoAfterMount = IAM;
     type IntoInit = ();
     type MountPoint = ();
 
-    fn before_mount<NewIBM: IntoBeforeMount>(
+    fn before_mount(
         self,
-        into_before_mount: NewIBM,
-    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount> {
+        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+    ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
-            into_before_mount,
+            before_mount_handler,
             into_after_mount: self.into_after_mount,
         }
     }
@@ -268,10 +264,10 @@ impl<IBM, IAM> InitAPIData for BeforeAfterInitAPI<IBM, IAM> {
     >(
         self,
         into_after_mount: NewIAM,
-    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM> {
+    ) -> BeforeAfterInitAPI<NewIAM> {
         BeforeAfterInitAPI {
             into_after_mount,
-            into_before_mount: self.into_before_mount,
+            before_mount_handler: self.before_mount_handler,
         }
     }
 
@@ -296,17 +292,16 @@ impl<IBM, IAM> InitAPIData for BeforeAfterInitAPI<IBM, IAM> {
 }
 // TODO Remove when removing the other `InitAPI`s.
 impl InitAPIData for () {
-    type IntoBeforeMount = ();
     type IntoAfterMount = ();
     type IntoInit = ();
     type MountPoint = ();
 
-    fn before_mount<NewIBM: IntoBeforeMount>(
+    fn before_mount(
         self,
-        into_before_mount: NewIBM,
-    ) -> BeforeAfterInitAPI<NewIBM, Self::IntoAfterMount> {
+        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+    ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
-            into_before_mount,
+            before_mount_handler,
             into_after_mount: (),
         }
     }
@@ -319,10 +314,10 @@ impl InitAPIData for () {
     >(
         self,
         into_after_mount: NewIAM,
-    ) -> BeforeAfterInitAPI<Self::IntoBeforeMount, NewIAM> {
+    ) -> BeforeAfterInitAPI<NewIAM> {
         BeforeAfterInitAPI {
             into_after_mount,
-            into_before_mount: (),
+            before_mount_handler: Box::new(|_| BeforeMount::default()),
         }
     }
 
@@ -380,11 +375,10 @@ impl<
         Mdl,
         ElC: View<Ms> + 'static,
         GMs: 'static,
-        IBM,
         IAM: 'static,
         MP,
         II,
-        InitAPIType: InitAPIData<IntoInit = II, MountPoint = MP, IntoBeforeMount = IBM, IntoAfterMount = IAM>,
+        InitAPIType: InitAPIData<IntoInit = II, MountPoint = MP, IntoAfterMount = IAM>,
     > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
 {
     #[deprecated(
@@ -444,10 +438,10 @@ impl<
         }
     }
 
-    pub fn before_mount<NewIBM: IntoBeforeMount>(
+    pub fn before_mount(
         self,
-        before_mount: NewIBM,
-    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<NewIBM, IAM>> {
+        before_mount: impl FnOnce(routing::Url) -> BeforeMount + 'static,
+    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<IAM>> {
         Builder {
             update: self.update,
             view: self.view,
@@ -456,14 +450,14 @@ impl<
             window_events: self.window_events,
             sink: self.sink,
 
-            init_api: self.init_api.before_mount(before_mount),
+            init_api: self.init_api.before_mount(Box::new(before_mount)),
         }
     }
 
     pub fn after_mount<NewIAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>>(
         self,
         new_after_mount: NewIAM,
-    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<IBM, NewIAM>> {
+    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<NewIAM>> {
         Builder {
             update: self.update,
             view: self.view,
