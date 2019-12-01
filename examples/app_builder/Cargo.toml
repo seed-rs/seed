@@ -1,0 +1,13 @@
+[package]
+name = "app_builder"
+version = "0.1.0"
+authors = ["David O'Connor <david.alan.oconnor@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+seed = {path = "../../"}
+wasm-bindgen = "0.2.45"
+web-sys = { version = "^0.3.22", features = [ "KeyboardEvent" ]}
