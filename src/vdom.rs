@@ -20,7 +20,7 @@ pub use alias::*;
 pub mod builder;
 pub use builder::{
     AfterMount, BeforeMount, Builder as AppBuilder, Init, InitFn, MountPoint, MountType,
-    UrlHandling,
+    UrlHandling, UndefinedInitAPI, UndefinedMountPoint
 };
 
 use crate::{
@@ -176,7 +176,7 @@ impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms
 
 #[deprecated(since = "0.5.0", note = "Part of the old Init API.")]
 type InitAppBuilder<Ms, Mdl, ElC, GMs> =
-    AppBuilder<Ms, Mdl, ElC, GMs, builder::MountPointInitInitAPI<(), InitFn<Ms, Mdl, ElC, GMs>>>;
+    AppBuilder<Ms, Mdl, ElC, GMs, builder::MountPointInitInitAPI<UndefinedMountPoint, InitFn<Ms, Mdl, ElC, GMs>>>;
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
@@ -196,7 +196,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn builder(
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
         view: ViewFn<Mdl, ElC>,
-    ) -> AppBuilder<Ms, Mdl, ElC, GMs, ()> {
+    ) -> AppBuilder<Ms, Mdl, ElC, GMs, UndefinedInitAPI> {
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
         // https://github.com/David-OConnor/seed/issues/241
         // https://bugs.webkit.org/show_bug.cgi?id=202881

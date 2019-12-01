@@ -1,11 +1,14 @@
 use crate::{dom_types::View, orders::OrdersContainer, routing::Url};
 
+pub struct UndefinedAfterMount;
+
+// ------ UrlHandling ------
+
 /// Used for handling initial routing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UrlHandling {
     PassToRoutes,
     None,
-    // todo: Expand later, as-required
 }
 
 impl Default for UrlHandling {
@@ -14,13 +17,15 @@ impl Default for UrlHandling {
     }
 }
 
+// ------ AfterMount ------
+
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AfterMount<Mdl> {
     /// Initial model to be used when the app begins.
-    pub model: Mdl,
+    pub(crate) model: Mdl,
     /// How to handle initial url routing. Defaults to [`UrlHandling::PassToRoutes`] in the
     /// constructors.
-    pub url_handling: UrlHandling,
+    pub(crate) url_handling: UrlHandling,
 }
 
 impl<Mdl> AfterMount<Mdl> {
@@ -47,6 +52,8 @@ impl<Mdl> AfterMount<Mdl> {
     }
 }
 
+// ------ IntoAfterMount ------
+
 #[allow(clippy::module_name_repetitions)]
 pub trait IntoAfterMount<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     fn into_after_mount(
@@ -54,16 +61,6 @@ pub trait IntoAfterMount<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
         init_url: Url,
         orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
     ) -> AfterMount<Mdl>;
-}
-
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs> for AfterMount<Mdl> {
-    fn into_after_mount(
-        self: Box<Self>,
-        _: Url,
-        _: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
-    ) -> AfterMount<Mdl> {
-        *self
-    }
 }
 
 impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> IntoAfterMount<Ms, Mdl, ElC, GMs> for F
@@ -79,7 +76,7 @@ where
     }
 }
 
-impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs> for () {
+impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs> for UndefinedAfterMount {
     fn into_after_mount(
         self: Box<Self>,
         _: Url,
