@@ -154,7 +154,9 @@ where
     window_events: Option<WindowEvents<Ms, Mdl>>,
 }
 
-pub struct App<Ms, Mdl, ElC, GMs = ()>
+pub struct UndefinedGMsg;
+
+pub struct App<Ms, Mdl, ElC, GMs = UndefinedGMsg>
 where
     Ms: 'static,
     Mdl: 'static,
