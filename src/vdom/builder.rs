@@ -446,7 +446,7 @@ impl<
 
     pub fn before_mount<NewIBM: IntoBeforeMount>(
         self,
-        new_before_mount: NewIBM,
+        before_mount: NewIBM,
     ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<NewIBM, IAM>> {
         Builder {
             update: self.update,
@@ -456,7 +456,7 @@ impl<
             window_events: self.window_events,
             sink: self.sink,
 
-            init_api: self.init_api.before_mount(new_before_mount),
+            init_api: self.init_api.before_mount(before_mount),
         }
     }
 

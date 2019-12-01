@@ -94,8 +94,8 @@ fn sink(g_msg: GMsg, _model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
 
 fn before_mount(_url: Url) -> BeforeMount {
     BeforeMount::default()
-        .mount_type(MountType::Takeover)
         .mount_point("main")
+        .mount_type(MountType::Takeover)
 }
 
 // ------ ------

@@ -2,6 +2,8 @@ use web_sys::Element;
 
 use crate::{routing::Url, util};
 
+// ------ MountPoint ------
+
 pub trait MountPoint {
     fn element_getter(self) -> Box<dyn FnOnce() -> Element>;
 }
@@ -31,6 +33,8 @@ impl MountPoint for web_sys::HtmlElement {
     }
 }
 
+// ------ MountType ------
+
 /// Describes the handling of elements already present in the mount element.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MountType {
@@ -51,6 +55,8 @@ impl Default for MountType {
     }
 }
 
+// ------ BeforeMount ------
+
 pub struct BeforeMount {
     pub mount_point_getter: Box<dyn FnOnce() -> Element>,
     /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
@@ -59,22 +65,20 @@ pub struct BeforeMount {
 }
 
 impl BeforeMount {
-    pub fn new(mp: impl MountPoint + 'static) -> Self {
+    pub fn new(mount_point: impl MountPoint + 'static, mount_type: MountType) -> Self {
         Self {
-            mount_point_getter: Box::new(mp.element_getter()),
-            mount_type: MountType::default(),
+            mount_point_getter: Box::new(mount_point.element_getter()),
+            mount_type,
         }
     }
 
-    pub fn mount_point(self, new_mp: impl MountPoint + 'static) -> BeforeMount {
-        BeforeMount {
-            mount_point_getter: Box::new(new_mp.element_getter()),
-            mount_type: self.mount_type,
-        }
+    pub fn mount_point(mut self, mount_point: impl MountPoint + 'static) -> BeforeMount {
+        self.mount_point_getter = Box::new(mount_point.element_getter());
+        self
     }
 
-    pub fn mount_type(mut self, new_mt: MountType) -> Self {
-        self.mount_type = new_mt;
+    pub fn mount_type(mut self, mount_type: MountType) -> Self {
+        self.mount_type = mount_type;
         self
     }
 }
@@ -87,6 +91,8 @@ impl Default for BeforeMount {
         }
     }
 }
+
+// ------ IntoBeforeMount ------
 
 #[allow(clippy::module_name_repetitions)]
 pub trait IntoBeforeMount {
