@@ -12,7 +12,11 @@ pub use init::{Init, InitFn, IntoInit};
 pub mod before_mount;
 pub use before_mount::{BeforeMount, MountPoint, MountType};
 pub mod after_mount;
-pub use after_mount::{AfterMount, IntoAfterMount, UrlHandling};
+pub use after_mount::{AfterMount, IntoAfterMount, UndefinedAfterMount, UrlHandling};
+
+pub struct UndefinedIntoInit;
+pub struct UndefinedMountPoint;
+pub struct UndefinedInitAPI;
 
 #[deprecated(
     since = "0.5.0",
@@ -28,11 +32,11 @@ pub struct BeforeAfterInitAPI<IAM> {
     into_after_mount: IAM,
 }
 // TODO Remove when removing the other `InitAPI`s.
-impl Default for BeforeAfterInitAPI<()> {
+impl Default for BeforeAfterInitAPI<UndefinedAfterMount> {
     fn default() -> Self {
         BeforeAfterInitAPI {
             before_mount_handler: Box::new(|_| BeforeMount::default()),
-            into_after_mount: (),
+            into_after_mount: UndefinedAfterMount,
         }
     }
 }
@@ -42,6 +46,7 @@ pub trait InitAPI<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
     type Builder;
     fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs>;
 }
+
 // TODO Remove when removing the other `InitAPI`s.
 pub trait InitAPIData {
     type IntoAfterMount;
@@ -170,7 +175,7 @@ impl<
 }
 // TODO Remove when removing the other `InitAPI`s.
 impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
-    InitAPI<Ms, Mdl, ElC, GMs> for ()
+    InitAPI<Ms, Mdl, ElC, GMs> for UndefinedAfterMount
 {
     type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
     fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
@@ -192,7 +197,7 @@ impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
     note = "Used for compatibility with old Init API. Use `BeforeAfterInitAPI` together with `BeforeMount` and `AfterMount` instead."
 )]
 impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
-    type IntoAfterMount = ();
+    type IntoAfterMount = UndefinedAfterMount;
     type IntoInit = II;
     type MountPoint = MP;
 
@@ -202,7 +207,7 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
     ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
             before_mount_handler,
-            into_after_mount: (),
+            into_after_mount: UndefinedAfterMount,
         }
     }
     fn after_mount<
@@ -243,8 +248,8 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
 // TODO Remove when removing the other `InitAPI`s.
 impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
     type IntoAfterMount = IAM;
-    type IntoInit = ();
-    type MountPoint = ();
+    type IntoInit = UndefinedIntoInit;
+    type MountPoint = UndefinedMountPoint;
 
     fn before_mount(
         self,
@@ -277,7 +282,7 @@ impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
         MountPointInitInitAPI {
             into_init,
-            mount_point: (),
+            mount_point: UndefinedMountPoint,
         }
     }
     fn mount<NewMP: MountPoint>(
@@ -286,15 +291,15 @@ impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
     ) -> MountPointInitInitAPI<NewMP, Self::IntoInit> {
         MountPointInitInitAPI {
             mount_point,
-            into_init: (),
+            into_init: UndefinedIntoInit,
         }
     }
 }
 // TODO Remove when removing the other `InitAPI`s.
-impl InitAPIData for () {
-    type IntoAfterMount = ();
-    type IntoInit = ();
-    type MountPoint = ();
+impl InitAPIData for UndefinedInitAPI {
+    type IntoAfterMount = UndefinedAfterMount;
+    type IntoInit = UndefinedIntoInit;
+    type MountPoint = UndefinedMountPoint;
 
     fn before_mount(
         self,
@@ -302,7 +307,7 @@ impl InitAPIData for () {
     ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
             before_mount_handler,
-            into_after_mount: (),
+            into_after_mount: UndefinedAfterMount,
         }
     }
     fn after_mount<
@@ -327,7 +332,7 @@ impl InitAPIData for () {
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
         MountPointInitInitAPI {
             into_init,
-            mount_point: (),
+            mount_point: UndefinedMountPoint,
         }
     }
     fn mount<NewMP: MountPoint>(
@@ -336,7 +341,7 @@ impl InitAPIData for () {
     ) -> MountPointInitInitAPI<NewMP, Self::IntoInit> {
         MountPointInitInitAPI {
             mount_point,
-            into_init: (),
+            into_init: UndefinedIntoInit,
         }
     }
 }
@@ -354,7 +359,7 @@ pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs, InitAPIType> {
     init_api: InitAPIType,
 }
 
-impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs, ()> {
+impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs, UndefinedInitAPI> {
     /// Constructs the Builder.
     pub(super) fn new(update: UpdateFn<Ms, Mdl, ElC, GMs>, view: ViewFn<Mdl, ElC>) -> Self {
         Builder {
@@ -365,7 +370,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs, 
             window_events: None,
             sink: None,
 
-            init_api: (),
+            init_api: UndefinedInitAPI,
         }
     }
 }
