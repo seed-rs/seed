@@ -58,18 +58,15 @@ impl Default for MountType {
 // ------ BeforeMount ------
 
 pub struct BeforeMount {
-    pub mount_point_getter: Box<dyn FnOnce() -> Element>,
+    pub(crate) mount_point_getter: Box<dyn FnOnce() -> Element>,
     /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
     /// in the constructors.
-    pub mount_type: MountType,
+    pub(crate) mount_type: MountType,
 }
 
 impl BeforeMount {
-    pub fn new(mount_point: impl MountPoint + 'static, mount_type: MountType) -> Self {
-        Self {
-            mount_point_getter: Box::new(mount_point.element_getter()),
-            mount_type,
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn mount_point(mut self, mount_point: impl MountPoint + 'static) -> BeforeMount {
