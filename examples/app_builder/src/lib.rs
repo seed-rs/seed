@@ -2,12 +2,61 @@ use seed::{prelude::*, *};
 use web_sys;
 
 // ------ ------
+// Before Mount
+// ------ ------
+
+fn before_mount(_: Url) -> BeforeMount {
+    BeforeMount::new()
+        .mount_point("main")
+        .mount_type(MountType::Takeover)
+}
+
+// ------ ------
 //     Model
 // ------ ------
 
-#[derive(Default)]
 struct Model {
     clicks: u32,
+}
+
+// ------ ------
+//  After Mount
+// ------ ------
+
+fn after_mount(_: Url, _: &mut impl Orders<Msg, GMsg>) -> AfterMount<Model> {
+    let model = Model { clicks: 0 };
+    AfterMount::new(model).url_handling(UrlHandling::None)
+}
+
+// ------ ------
+//    Routes
+// ------ ------
+
+fn routes(url: Url) -> Option<Msg> {
+    Some(Msg::UrlChanged(url))
+}
+
+// ------ ------
+// Window Events
+// ------ ------
+
+fn window_events(_: &Model) -> Vec<Listener<Msg>> {
+    vec![keyboard_ev(Ev::KeyDown, Msg::KeyPressed)]
+}
+
+// ------ ------
+//     Sink
+// ------ ------
+
+#[derive(Clone, Copy)]
+enum GMsg {
+    SayHello,
+}
+
+fn sink(g_msg: GMsg, _: &mut Model, _: &mut impl Orders<Msg, GMsg>) {
+    match g_msg {
+        GMsg::SayHello => log!("Hello!"),
+    }
 }
 
 // ------ ------
@@ -54,65 +103,16 @@ fn view(model: &Model) -> impl View<Msg> {
 }
 
 // ------ ------
-//    Routes
-// ------ ------
-
-fn routes(url: Url) -> Option<Msg> {
-    Some(Msg::UrlChanged(url))
-}
-
-// ------ ------
-// Window Events
-// ------ ------
-
-fn window_events(_model: &Model) -> Vec<Listener<Msg>> {
-    vec![keyboard_ev(Ev::KeyDown, Msg::KeyPressed)]
-}
-
-// ------ ------
-//     Sink
-// ------ ------
-
-#[derive(Clone, Copy)]
-enum GMsg {
-    SayHello,
-}
-
-fn sink(g_msg: GMsg, _model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
-    match g_msg {
-        GMsg::SayHello => log!("Hello!"),
-    }
-}
-
-// ------ ------
-// Before Mount
-// ------ ------
-
-fn before_mount(_: Url) -> BeforeMount {
-    BeforeMount::new()
-        .mount_point("main")
-        .mount_type(MountType::Takeover)
-}
-
-// ------ ------
-//  After Mount
-// ------ ------
-
-fn after_mount(_: Url, _orders: &mut impl Orders<Msg, GMsg>) -> AfterMount<Model> {
-    AfterMount::new(Model { clicks: 0 }).url_handling(UrlHandling::None)
-}
-
-// ------ ------
 //     Start
 // ------ ------
 
 #[wasm_bindgen(start)]
 pub fn render() {
     App::builder(update, view)
+        .before_mount(before_mount)
+        .after_mount(after_mount)
         .routes(routes)
         .window_events(window_events)
         .sink(sink)
-        .before_mount(before_mount)
-        .after_mount(after_mount)
         .build_and_start();
 }
