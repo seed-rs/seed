@@ -175,7 +175,7 @@ impl<
 }
 // TODO Remove when removing the other `InitAPI`s.
 impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
-    InitAPI<Ms, Mdl, ElC, GMs> for UndefinedAfterMount
+    InitAPI<Ms, Mdl, ElC, GMs> for UndefinedInitAPI
 {
     type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
     fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
@@ -461,7 +461,7 @@ impl<
 
     pub fn after_mount<NewIAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>>(
         self,
-        new_after_mount: NewIAM,
+        after_mount: NewIAM,
     ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<NewIAM>> {
         Builder {
             update: self.update,
@@ -471,7 +471,7 @@ impl<
             window_events: self.window_events,
             sink: self.sink,
 
-            init_api: self.init_api.after_mount(new_after_mount),
+            init_api: self.init_api.after_mount(after_mount),
         }
     }
 
@@ -482,8 +482,8 @@ impl<
     }
 
     /// Registers a function which decides how window events will be handled.
-    pub fn window_events(mut self, evts: WindowEvents<Ms, Mdl>) -> Self {
-        self.window_events = Some(evts);
+    pub fn window_events(mut self, window_events: WindowEvents<Ms, Mdl>) -> Self {
+        self.window_events = Some(window_events);
         self
     }
 

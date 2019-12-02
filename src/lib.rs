@@ -89,7 +89,7 @@ pub mod prelude {
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
-            Ev, Listener
+            Ev, Listener,
         },
         orders::Orders,
         routing::Url,
