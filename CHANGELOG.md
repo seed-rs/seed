@@ -1,20 +1,24 @@
 # Changelog
 
 [unreleased]
-- Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions
-- Fixed `Url` parsing (resolves issue with hash routing)
-- [BREAKING] `From<String> for Url` changed to `TryFrom<String> for Url`
-- Fixed jumping cursor in inputs (#158) 
-- Added method `orders.after_next_render(Option<RenderTimestampDelta>)` (#207)
-- Fixed a bug with back/forward routing to the landing page (#296)
-- [BREAKING] Deprecated `Init` struct, replacing it with `BeforeMount` and `AfterMount` structs to
+- Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions.
+- Fixed `Url` parsing (resolves issue with hash routing).
+- [BREAKING] `From<String> for Url` changed to `TryFrom<String> for Url`.
+- Fixed jumping cursor in inputs (#158) .
+- Added method `orders.after_next_render(Option<RenderTimestampDelta>)` (#207).
+- Fixed a bug with back/forward routing to the landing page (#296).
+- Deprecated `Init` struct, replacing it with `BeforeMount` and `AfterMount` structs to
 better denote state before and after mounting the `App` occurs.
-- [BREAKING] Added a new function `builder` which replaces `build` as part of deprecating `Init`.
-- [BREAKING] Added a new function `build` which replaces `finish` as part of deprecating `Init`.
-- Added `IntoInit`, `IntoAfterMount`, and `IntoBeforeMount` traits. It is possible to use these
-in place of a closure or function to produce the corresponding `Init`, `AfterMount`, and
-`BeforeMount` structs.
+- Added a new function `builder` which replaces `build` as part of deprecating `Init`.
+- Added a new function `build_and_start` which replaces `finish` as part of deprecating `Init`.
+- Added `IntoInit`and `IntoAfterMount` traits. It is possible to use these
+in place of a closure or function to produce the corresponding `Init` and `AfterMount` structs.
 - Messages sent from `IntoAfterMount` will now be run after the routing message.
+- Added example `app_builder`.
+- `events::Listener` is included in `prelude`.
+- `()`s  have been replaced with structs - e.g. `GMs = ()` => `GMs = UndefinedGMs`.
+- `WindowEvents` alias changed to `WindowEventsFn` for consistency with other `*Fn`.
+- Commented builder and helper methods.
 
 ## v0.4.2
 - Added an `Init` struct, which can help with initial routing (Breaking)
