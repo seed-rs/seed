@@ -346,13 +346,13 @@ impl InitAPIData for UndefinedInitAPI {
     }
 }
 
-/// Used to create and store initial app configuration, ie items passed by the app creator
+/// Used to create and store initial app configuration, ie items passed by the app creator.
 pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs, InitAPIType> {
     update: UpdateFn<Ms, Mdl, ElC, GMs>,
     view: ViewFn<Mdl, ElC>,
 
     routes: Option<RoutesFn<Ms>>,
-    window_events: Option<WindowEvents<Ms, Mdl>>,
+    window_events: Option<WindowEventsFn<Ms, Mdl>>,
     sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
 
     // TODO: Remove when removing legacy init fields.
@@ -443,6 +443,19 @@ impl<
         }
     }
 
+    /// Select HTML element where the app will be mounted and how it'll be mounted.
+    ///
+    /// See `BeforeMount::mount_point` and `BeforeMount::mount_type` docs for more info.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn before_mount(_url: Url) -> BeforeMount {
+    ///    BeforeMount::new()
+    ///        .mount_point("main")
+    ///        .mount_type(MountType::Takeover)
+    ///}
+    /// ```
     pub fn before_mount(
         self,
         before_mount: impl FnOnce(routing::Url) -> BeforeMount + 'static,
@@ -459,10 +472,22 @@ impl<
         }
     }
 
-    pub fn after_mount<NewIAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>>(
+    /// You can create your `Model` and handle initial URL in this method.
+    ///
+    /// See `AfterMount::url_handling` for more info about initial URL handling.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn after_mount(_url: Url, _orders: &mut impl Orders<Msg, GMsg>) -> AfterMount<Model> {
+    ///    let model = Model { clicks: 0 };
+    ///    AfterMount::new(model).url_handling(UrlHandling::None)
+    ///}
+    /// ```
+    pub fn after_mount<AM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>>(
         self,
-        after_mount: NewIAM,
-    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<NewIAM>> {
+        after_mount: AM,
+    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<AM>> {
         Builder {
             update: self.update,
             view: self.view,
@@ -476,13 +501,34 @@ impl<
     }
 
     /// Registers a function which maps URLs to messages.
+    ///
+    /// When you return `None`, Seed doesn't call your `update` function
+    /// and also doesn't push the new route or prevent page refresh.
+    /// It's useful if the user clicked on a link and Seed shouldn't intercept it,
+    /// because it's e.g. a download link.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn routes(url: Url) -> Option<Msg> {
+    ///    Some(Msg::UrlChanged(url))
+    ///}
+    /// ```
     pub fn routes(mut self, routes: RoutesFn<Ms>) -> Self {
         self.routes = Some(routes);
         self
     }
 
     /// Registers a function which decides how window events will be handled.
-    pub fn window_events(mut self, window_events: WindowEvents<Ms, Mdl>) -> Self {
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn window_events(_model: &Model) -> Vec<Listener<Msg>> {
+    ///    vec![keyboard_ev(Ev::KeyDown, Msg::KeyPressed)]
+    ///}
+    /// ```
+    pub fn window_events(mut self, window_events: WindowEventsFn<Ms, Mdl>) -> Self {
         self.window_events = Some(window_events);
         self
     }
@@ -492,6 +538,16 @@ impl<
     /// The sink function is a function which can update the model based
     /// on global messages. Consider to use a sink function when a
     /// submodule needs to trigger changes in other modules.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///fn sink(g_msg: GMsg, _model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
+    ///    match g_msg {
+    ///        GMsg::SayHello => log!("Hello!"),
+    ///    }
+    ///}
+    /// ```
     pub fn sink(mut self, sink: SinkFn<Ms, Mdl, ElC, GMs>) -> Self {
         self.sink = Some(sink);
         self
@@ -506,7 +562,7 @@ impl<
         InitAPIType: InitAPI<Ms, Mdl, ElC, GMs, Builder = Self>,
     > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
 {
-    /// Build and run the app.
+    /// Build, mount and start the app.
     pub fn build_and_start(self) -> App<Ms, Mdl, ElC, GMs> {
         InitAPIType::build(self).run()
     }

@@ -151,7 +151,7 @@ where
     pub update: UpdateFn<Ms, Mdl, ElC, GMs>,
     pub sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
     view: ViewFn<Mdl, ElC>,
-    window_events: Option<WindowEvents<Ms, Mdl>>,
+    window_events: Option<WindowEventsFn<Ms, Mdl>>,
 }
 
 pub struct UndefinedGMsg;
@@ -200,6 +200,33 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         Self::builder(update, view).init(Box::new(init))
     }
 
+    /// Creates a new `AppBuilder` instance. It's the standard way to create a Seed app.
+    ///
+    /// Then you can call optional builder methods like `routes` or `sink`.
+    /// And you have to call method `build_and_start` to build and run a new `App` instance.
+    ///
+    /// _NOTE:_ If your `Model` doesn't implement `Default`, you have to call builder method `after_mount`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
+    ///    match msg {
+    ///        Msg::Clicked => model.clicks += 1,
+    ///    }
+    ///}
+    ///
+    /// fn view(model: &Model) -> impl View<Msg> {
+    ///    vec![
+    ///        button![
+    ///            format!("Clicked: {}", model.clicks),
+    ///            simple_ev(Ev::Click, Msg::Clicked),
+    ///        ],
+    ///    ]
+    ///}
+    ///
+    ///App::builder(update, view)
+    /// ```
     pub fn builder(
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
         view: ViewFn<Mdl, ElC>,
@@ -222,7 +249,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         view: ViewFn<Mdl, ElC>,
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
-        window_events: Option<WindowEvents<Ms, Mdl>>,
+        window_events: Option<WindowEventsFn<Ms, Mdl>>,
         init_cfg: OptDynInitCfg<Ms, Mdl, ElC, GMs>,
     ) -> Self {
         let window = util::window();
