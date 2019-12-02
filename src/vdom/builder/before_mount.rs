@@ -61,21 +61,40 @@ impl Default for MountType {
 
 pub struct BeforeMount {
     pub(crate) mount_point_getter: Box<dyn FnOnce() -> Element>,
-    /// How to handle elements already present in the mount. Defaults to [`MountType::Append`]
-    /// in the constructors.
+    /// How to handle elements already present in the mount.
+    /// Defaults to `MountType::Append` in the constructors.
     pub(crate) mount_type: MountType,
 }
 
 impl BeforeMount {
+    /// Creates a new `BeforeMount` instance. It's the alias for `BeforeMount::default`.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Choose the element where the application will be mounted.
+    /// The default one is the element with `id` = "app".
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// // argument is `&str`
+    /// mount_point("another_id")
+    ///
+    /// // argument is `HTMLElement`
+    /// // NOTE: Be careful with mounting into body,
+    /// // it can cause hard-to-debug bugs when there are other scripts in the body.
+    /// mount_point(seed::body())
+    ///
+    /// // argument is `Element`
+    /// mount_point(seed::body().querySelector("section").unwrap().unwrap())
+    /// ```
     pub fn mount_point(mut self, mount_point: impl MountPoint + 'static) -> BeforeMount {
         self.mount_point_getter = Box::new(mount_point.element_getter());
         self
     }
 
+    /// How to handle elements already present in the mount point. Defaults to `MountType::Append`.
     pub const fn mount_type(mut self, mount_type: MountType) -> Self {
         self.mount_type = mount_type;
         self

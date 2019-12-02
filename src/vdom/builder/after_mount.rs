@@ -30,6 +30,8 @@ pub struct AfterMount<Mdl> {
 }
 
 impl<Mdl> AfterMount<Mdl> {
+    /// Creates a new `AfterMount` instance. You can also use `AfterMount::default`
+    /// if your `Model` implements `Default`.
     pub fn new(model: Mdl) -> Self {
         Self {
             model,
@@ -37,16 +39,8 @@ impl<Mdl> AfterMount<Mdl> {
         }
     }
 
-    // TODO: Change to const fn when possible.
-    // TODO: Relevant issue: https://github.com/rust-lang/rust/issues/60964
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn model<NewMdl>(self, model: NewMdl) -> AfterMount<NewMdl> {
-        AfterMount {
-            model,
-            url_handling: self.url_handling,
-        }
-    }
-
+    /// - `UrlHandling::PassToRoutes` - your function `routes` will be called with initial URL. _[Default]_
+    /// - `UrlHandling::None` - URL won't be handled by Seed.
     pub const fn url_handling(mut self, url_handling: UrlHandling) -> Self {
         self.url_handling = url_handling;
         self
