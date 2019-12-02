@@ -1,11 +1,11 @@
 use crate::dom_types::{MessageMapper, View};
-use crate::vdom::{App, Effect, RenderTimestampDelta, ShouldRender};
+use crate::vdom::{App, Effect, RenderTimestampDelta, ShouldRender, UndefinedGMsg};
 use futures::Future;
 use std::{collections::VecDeque, convert::identity, rc::Rc};
 
 // ------ Orders ------
 
-pub trait Orders<Ms: 'static, GMs = ()> {
+pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     type AppMs: 'static;
     type Mdl: 'static;
     type ElC: View<Self::AppMs> + 'static;
@@ -96,7 +96,7 @@ pub trait Orders<Ms: 'static, GMs = ()> {
 // ------ OrdersContainer ------
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = ()> {
+pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = UndefinedGMsg> {
     pub(crate) should_render: ShouldRender,
     pub(crate) effects: VecDeque<Effect<Ms, GMs>>,
     app: App<Ms, Mdl, ElC, GMs>,
@@ -200,7 +200,14 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 // ------ OrdersProxy ------
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersProxy<'a, Ms, AppMs: 'static, Mdl: 'static, ElC: View<AppMs>, GMs: 'static = ()> {
+pub struct OrdersProxy<
+    'a,
+    Ms,
+    AppMs: 'static,
+    Mdl: 'static,
+    ElC: View<AppMs>,
+    GMs: 'static = UndefinedGMsg,
+> {
     orders_container: &'a mut OrdersContainer<AppMs, Mdl, ElC, GMs>,
     f: Rc<dyn Fn(Ms) -> AppMs>,
 }

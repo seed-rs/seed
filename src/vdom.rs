@@ -20,7 +20,7 @@ pub use alias::*;
 pub mod builder;
 pub use builder::{
     AfterMount, BeforeMount, Builder as AppBuilder, Init, InitFn, MountPoint, MountType,
-    UrlHandling, UndefinedInitAPI, UndefinedMountPoint
+    UndefinedInitAPI, UndefinedMountPoint, UrlHandling,
 };
 
 use crate::{
@@ -177,8 +177,13 @@ impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms
 }
 
 #[deprecated(since = "0.5.0", note = "Part of the old Init API.")]
-type InitAppBuilder<Ms, Mdl, ElC, GMs> =
-    AppBuilder<Ms, Mdl, ElC, GMs, builder::MountPointInitInitAPI<UndefinedMountPoint, InitFn<Ms, Mdl, ElC, GMs>>>;
+type InitAppBuilder<Ms, Mdl, ElC, GMs> = AppBuilder<
+    Ms,
+    Mdl,
+    ElC,
+    GMs,
+    builder::MountPointInitInitAPI<UndefinedMountPoint, InitFn<Ms, Mdl, ElC, GMs>>,
+>;
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.

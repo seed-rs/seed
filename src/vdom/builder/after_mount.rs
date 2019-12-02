@@ -1,5 +1,6 @@
 use crate::{dom_types::View, orders::OrdersContainer, routing::Url};
 
+#[allow(clippy::module_name_repetitions)]
 pub struct UndefinedAfterMount;
 
 // ------ UrlHandling ------
@@ -76,7 +77,9 @@ where
     }
 }
 
-impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs> for UndefinedAfterMount {
+impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs>
+    for UndefinedAfterMount
+{
     fn into_after_mount(
         self: Box<Self>,
         _: Url,

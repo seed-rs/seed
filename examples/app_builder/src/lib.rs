@@ -1,10 +1,11 @@
-use seed::{*, prelude::*};
+use seed::{prelude::*, *};
 use web_sys;
 
 // ------ ------
 //     Model
 // ------ ------
 
+#[derive(Default)]
 struct Model {
     clicks: u32,
 }
@@ -27,11 +28,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg, GMsg>) {
         Msg::UrlChanged(url) => {
             log!(url);
             orders.skip();
-        },
+        }
         Msg::KeyPressed(event) => {
             log!(event.key());
             orders.skip();
-        },
+        }
         Msg::SayHello => {
             orders.send_g_msg(GMsg::SayHello);
         }
@@ -48,10 +49,7 @@ fn view(model: &Model) -> impl View<Msg> {
             format!("Clicked: {}", model.clicks),
             simple_ev(Ev::Click, Msg::Clicked),
         ],
-        button![
-            "Say hello",
-            simple_ev(Ev::Click, Msg::SayHello),
-        ]
+        button!["Say hello", simple_ev(Ev::Click, Msg::SayHello),],
     ]
 }
 
@@ -68,15 +66,14 @@ fn routes(url: Url) -> Option<Msg> {
 // ------ ------
 
 fn window_events(_model: &Model) -> Vec<Listener<Msg>> {
-    vec![
-        keyboard_ev(Ev::KeyDown, Msg::KeyPressed)
-    ]
+    vec![keyboard_ev(Ev::KeyDown, Msg::KeyPressed)]
 }
 
 // ------ ------
 //     Sink
 // ------ ------
 
+#[derive(Clone, Copy)]
 enum GMsg {
     SayHello,
 }
@@ -91,7 +88,7 @@ fn sink(g_msg: GMsg, _model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
 // Before Mount
 // ------ ------
 
-fn before_mount(_url: Url) -> BeforeMount {
+fn before_mount(_: Url) -> BeforeMount {
     BeforeMount::new()
         .mount_point("main")
         .mount_type(MountType::Takeover)
@@ -101,9 +98,8 @@ fn before_mount(_url: Url) -> BeforeMount {
 //  After Mount
 // ------ ------
 
-fn after_mount(_url: Url, _orders: &mut impl Orders<Msg, GMsg>) -> AfterMount<Model> {
-    AfterMount::new(Model { clicks: 0 })
-        .url_handling(UrlHandling::None)
+fn after_mount(_: Url, _orders: &mut impl Orders<Msg, GMsg>) -> AfterMount<Model> {
+    AfterMount::new(Model { clicks: 0 }).url_handling(UrlHandling::None)
 }
 
 // ------ ------

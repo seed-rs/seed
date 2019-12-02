@@ -11,13 +11,15 @@ pub trait MountPoint {
 impl MountPoint for &str {
     fn element_getter(self) -> Box<dyn FnOnce() -> Element> {
         let id = self.to_owned();
-        Box::new(move || util::document().get_element_by_id(&id).unwrap_or_else(|| {
-            panic!(
-                "Can't find element with id={:?} - app cannot be mounted!\n\
-                 (Id defaults to \"app\", or can be set with the .mount() method)",
-                id
-            )
-        }))
+        Box::new(move || {
+            util::document().get_element_by_id(&id).unwrap_or_else(|| {
+                panic!(
+                    "Can't find element with id={:?} - app cannot be mounted!\n\
+                     (Id defaults to \"app\", or can be set with the .mount() method)",
+                    id
+                )
+            })
+        })
     }
 }
 
@@ -74,7 +76,7 @@ impl BeforeMount {
         self
     }
 
-    pub fn mount_type(mut self, mount_type: MountType) -> Self {
+    pub const fn mount_type(mut self, mount_type: MountType) -> Self {
         self.mount_type = mount_type;
         self
     }
