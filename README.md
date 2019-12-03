@@ -8,7 +8,7 @@
 </p>
 
 
-## [New homepage](https://seed-rs.org), as of November 2019
+## [New homepage](https://seed-rs.org), as of Nov 2019 - We are looking forward to your [feedback](https://github.com/seed-rs/seed/issues/303)!
 
 The best place to learn is the guide on the homepage - this readme is an excerpt from it.
 
