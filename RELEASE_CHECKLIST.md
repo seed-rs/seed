@@ -5,6 +5,7 @@ This is a list of steps to complete when making a new release.
 1. Review the commit and PR history since last release. Ensure that all relevant
 changes are included in `CHANGELOG.md`, and that breaking changes
 are specifically annotated
+1. Update the version of seed dependency in the readme.
 1. Ensure both the readme and homepage website reflect API changes. Instructions
 for updating the homepage are available [here](https://github.com/seed-rs/seed-homepage)
 1. Update the homepage with the new release version (main page), and changelog
