@@ -27,13 +27,14 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v1
 
-      - name: Cache Rust dependencies
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.OS }}-build-${{ hashFiles('**\Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-build-
+# @TODO: Doesn't work + `cargo.lock` is not usable anymore.
+#      - name: Cache Rust dependencies
+#        uses: actions/cache@v1
+#        with:
+#          path: target
+#          key: ${{ runner.OS }}-build-${{ hashFiles('**\Cargo.lock') }}
+#          restore-keys: |
+#            ${{ runner.OS }}-build-
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
