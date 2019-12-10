@@ -264,7 +264,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         let f = self.f.clone();
         self.orders_container
             .effects
-            .push_back(Effect::Msg(msg).map_message(move |ms| f(ms)));
+            .push_back(Effect::Msg(msg).map_msg(move |ms| f(ms)));
         self
     }
 
@@ -274,7 +274,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         C: Future<Item = Ms, Error = Ms> + 'static,
     {
         let f = self.f.clone();
-        let effect = Effect::Cmd(Box::new(cmd)).map_message(move |ms| f(ms));
+        let effect = Effect::Cmd(Box::new(cmd)).map_msg(move |ms| f(ms));
         self.orders_container.effects.push_back(effect);
         self
     }

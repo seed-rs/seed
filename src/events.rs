@@ -273,7 +273,7 @@ impl<Ms> PartialEq for Listener<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Listener<Ms> {
     type SelfWithOtherMs = Listener<OtherMs>;
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Listener<OtherMs> {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Listener<OtherMs> {
         Listener {
             trigger: self.trigger,
             handler: self.handler.map(enclose!((f) |mut eh| {
