@@ -61,27 +61,27 @@ fn view(model: &Model) -> impl View<Msg> {
         view_example_introduction(example_a::TITLE, example_a::DESCRIPTION),
         example_a::view(&model.example_a)
             .els()
-            .map_message(Msg::ExampleA),
+            .map_msg(Msg::ExampleA),
         // example_b
         view_example_introduction(example_b::TITLE, example_b::DESCRIPTION),
         example_b::view(&model.example_b)
             .els()
-            .map_message(Msg::ExampleB),
+            .map_msg(Msg::ExampleB),
         // example_c
         view_example_introduction(example_c::TITLE, example_c::DESCRIPTION),
         example_c::view(&model.example_c)
             .els()
-            .map_message(Msg::ExampleC),
+            .map_msg(Msg::ExampleC),
         // example_d
         view_example_introduction(example_d::TITLE, example_d::DESCRIPTION),
         example_d::view(&model.example_d)
             .els()
-            .map_message(Msg::ExampleD),
+            .map_msg(Msg::ExampleD),
         // example_e
         view_example_introduction(example_e::TITLE, example_e::DESCRIPTION),
         example_e::view(&model.example_e)
             .els()
-            .map_message(Msg::ExampleE),
+            .map_msg(Msg::ExampleE),
     ]
     .into_iter()
     .flatten()

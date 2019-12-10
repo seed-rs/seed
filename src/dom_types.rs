@@ -18,7 +18,7 @@ pub mod values;
 
 pub trait MessageMapper<Ms, OtherMs> {
     type SelfWithOtherMs;
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Self::SelfWithOtherMs;
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Self::SelfWithOtherMs;
 }
 
 /// Common Namespaces
@@ -887,9 +887,9 @@ impl<Ms> Node<Ms> {
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
     type SelfWithOtherMs = Node<OtherMs>;
     /// See note on impl for El
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Node<OtherMs> {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Node<OtherMs> {
         match self {
-            Node::Element(el) => Node::Element(el.map_message(f)),
+            Node::Element(el) => Node::Element(el.map_msg(f)),
             Node::Text(text) => Node::Text(text),
             Node::Empty => Node::Empty,
         }
@@ -898,9 +898,9 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<Node<Ms>> {
     type SelfWithOtherMs = Vec<Node<OtherMs>>;
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Vec<Node<OtherMs>> {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Vec<Node<OtherMs>> {
         self.into_iter()
-            .map(|node| node.map_message(f.clone()))
+            .map(|node| node.map_msg(f.clone()))
             .collect()
     }
 }
@@ -956,7 +956,7 @@ impl<Ms> fmt::Debug for LifecycleHooks<Ms> {
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for LifecycleHooks<Ms> {
     type SelfWithOtherMs = LifecycleHooks<OtherMs>;
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Self::SelfWithOtherMs {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Self::SelfWithOtherMs {
         LifecycleHooks {
             did_mount: self.did_mount.map(|d| DidMount {
                 actions: d.actions,
@@ -984,7 +984,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
     /// # Note
     /// There is an overhead to calling this versus keeping all messages under one type.
     /// The deeper the nested structure of children, the more time this will take to run.
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> El<OtherMs> {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> El<OtherMs> {
         El {
             tag: self.tag,
             attrs: self.attrs,
@@ -992,26 +992,24 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             listeners: self
                 .listeners
                 .into_iter()
-                .map(|l| l.map_message(f.clone()))
+                .map(|l| l.map_msg(f.clone()))
                 .collect(),
             children: self
                 .children
                 .into_iter()
-                .map(|c| c.map_message(f.clone()))
+                .map(|c| c.map_msg(f.clone()))
                 .collect(),
             node_ws: self.node_ws,
             namespace: self.namespace,
-            hooks: self.hooks.map_message(f),
+            hooks: self.hooks.map_msg(f),
         }
     }
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Vec<El<Ms>> {
     type SelfWithOtherMs = Vec<El<OtherMs>>;
-    fn map_message(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Vec<El<OtherMs>> {
-        self.into_iter()
-            .map(|el| el.map_message(f.clone()))
-            .collect()
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Vec<El<OtherMs>> {
+        self.into_iter().map(|el| el.map_msg(f.clone())).collect()
     }
 }
 

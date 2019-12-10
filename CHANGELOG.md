@@ -2,6 +2,8 @@
 
 [unreleased]
 
+- [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
+
 ## v0.5.0
 - Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions.
 - Fixed `Url` parsing (resolves issue with hash routing).
