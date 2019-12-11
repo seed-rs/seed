@@ -358,6 +358,10 @@ make_attrs! {
 }
 
 /// A thinly-wrapped `HashMap` holding DOM attributes
+///
+/// Attributes can be either String or Boolean. If attribute is
+/// boolean and is true, it should have value of empty string. If it's
+/// false, it should be omitted completely.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Attrs {
     // We use an IndexMap instead of HashMap here, and in Style, to preserve order.
@@ -371,9 +375,9 @@ impl fmt::Display for Attrs {
             .vals
             .iter()
             .filter_map(|(k, v)| match v {
-                AtValue::Ignored => None,
-                AtValue::None => Some(k.as_str().to_string()),
-                AtValue::Some(value) => Some(format!("{}=\"{}\"", k.as_str(), value)),
+                AtValue::Bool(false) => None,
+                AtValue::Bool(true) | AtValue::Empty => Some(k.as_str().to_string()),
+                AtValue::String(value) => Some(format!("{}=\"{}\"", k.as_str(), value)),
             })
             .collect::<Vec<_>>()
             .join(" ");
@@ -409,7 +413,7 @@ impl Attrs {
     pub fn add_multiple(&mut self, key: At, items: &[&str]) {
         self.add(
             key,
-            &items
+            items
                 .iter()
                 .filter_map(|item| {
                     if item.is_empty() {
@@ -444,7 +448,7 @@ impl Attrs {
         mut other_value: AtValue,
     ) {
         match (key, &mut original_value, &mut other_value) {
-            (At::Class, AtValue::Some(original), AtValue::Some(other)) => {
+            (At::Class, AtValue::String(original), AtValue::String(other)) => {
                 if !original.is_empty() {
                     original.push(' ');
                 }
@@ -1094,15 +1098,15 @@ impl<Ms> El<Ms> {
             .vals
             .entry(At::Class)
             .and_modify(|at_value| match at_value {
-                AtValue::Some(v) => {
+                AtValue::String(v) => {
                     if !v.is_empty() {
                         *v += " ";
                     }
                     *v += name.as_ref();
                 }
-                _ => *at_value = AtValue::Some(name.clone().into_owned()),
+                _ => *at_value = AtValue::String(name.clone().into_owned()),
             })
-            .or_insert(AtValue::Some(name.into_owned()));
+            .or_insert(AtValue::String(name.into_owned()));
         self
     }
 

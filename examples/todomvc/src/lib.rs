@@ -226,7 +226,7 @@ fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> Node<Msg> {
                 attrs! {
                    At::Class => "toggle",
                    At::Type => "checkbox",
-                   At::Checked => item.completed.as_at_value()
+                   At::Checked => item.completed,
                 },
                 simple_ev(Ev::Click, Msg::Toggle(posit))
             ],
@@ -317,7 +317,7 @@ fn view(model: &Model) -> impl View<Msg> {
             input![
                 attrs! {
                     At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox",
-                    At::Checked => (model.active_count() == 0).as_at_value(),
+                    At::Checked => model.active_count() == 0,
                 },
                 simple_ev(Ev::Click, Msg::ToggleAll)
             ],

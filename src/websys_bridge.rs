@@ -51,7 +51,7 @@ fn node_to_element(el_ws: &web_sys::Node) -> Result<&web_sys::Element, &'static 
 
 fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue) {
     match at_value {
-        AtValue::Some(value) => {
+        AtValue::String(value) => {
             node_to_element(el_ws)
                 .and_then(|element| {
                     element
@@ -62,7 +62,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                     crate::error(err);
                 });
         }
-        AtValue::None => {
+        AtValue::Empty | AtValue::Bool(true) => {
             node_to_element(el_ws)
                 .and_then(|element| {
                     element
@@ -73,7 +73,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &dom_types::At, at_value: &AtValue)
                     crate::error(err);
                 });
         }
-        AtValue::Ignored => {
+        AtValue::Bool(false) => {
             node_to_element(el_ws)
                 .and_then(|element| {
                     element
@@ -202,19 +202,19 @@ fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
     // Set focus because of attribute "autofocus"
     if let Some(at_value) = el_vdom.attrs.vals.get(&dom_types::At::AutoFocus) {
         match at_value {
-            AtValue::Some(_) | AtValue::None => el_ws
+            AtValue::String(_) | AtValue::Empty | AtValue::Bool(true) => el_ws
                 .dyn_ref::<web_sys::HtmlElement>()
                 .expect("Problem casting Node as HtmlElement while focusing")
                 .focus()
                 .expect("Problem focusing to an element."),
-            AtValue::Ignored => (),
+            AtValue::Bool(false) => (),
         }
     }
 
     // We set Textarea's initial value through non-standard attribute "value", so we have to simulate
     // the standard way (i.e. `<textarea>A Value</textarea>`)
     if let Some(textarea) = el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-        if let Some(AtValue::Some(value)) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
+        if let Some(AtValue::String(value)) = el_vdom.attrs.vals.get(&dom_types::At::Value) {
             textarea.set_value(value);
         }
     }
@@ -254,12 +254,14 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
             // to use set_value or set_checked.
             match key {
                 dom_types::At::Value => match new_val {
-                    AtValue::Some(new_val) => crate::util::set_value(old_el_ws, new_val),
-                    AtValue::None | AtValue::Ignored => crate::util::set_value(old_el_ws, ""),
+                    AtValue::String(new_val) => crate::util::set_value(old_el_ws, new_val),
+                    AtValue::Empty | AtValue::Bool(_) => crate::util::set_value(old_el_ws, ""),
                 },
                 dom_types::At::Checked => match new_val {
-                    AtValue::Some(_) | AtValue::None => crate::util::set_checked(old_el_ws, true),
-                    AtValue::Ignored => crate::util::set_checked(old_el_ws, false),
+                    AtValue::String(_) | AtValue::Empty | AtValue::Bool(true) => {
+                        crate::util::set_checked(old_el_ws, true)
+                    }
+                    AtValue::Bool(false) => crate::util::set_checked(old_el_ws, false),
                 },
                 _ => Ok(()),
             }
@@ -356,7 +358,7 @@ impl<Ms> From<&web_sys::Element> for El<Ms> {
                     .as_string()
                     .expect("problem converting attr to string");
                 if let Some(attr_val) = ws_el.get_attribute(&attr_name) {
-                    attrs.add(attr_name.into(), &attr_val);
+                    attrs.add(attr_name.into(), attr_val);
                 }
             });
         el.attrs = attrs;

@@ -204,7 +204,7 @@ macro_rules! attrs {
                 // We can handle arguments of multiple types by using this:
                 // Strings, &strs, bools, numbers etc.
                 // And cases like `true.as_attr_value()` or `AtValue::Ignored`.
-                vals.insert($key.into(), (&$value).into());
+                vals.insert($key.into(), AtValue::from($value));
             )*
             $crate::dom_types::Attrs::new(vals)
         }

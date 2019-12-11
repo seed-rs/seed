@@ -84,8 +84,8 @@ pub mod prelude {
         css_units::*,
         dom_entity_names::styles::St,
         dom_types::{
-            did_mount, did_update, will_unmount, AsAtValue, At, AtValue, CSSValue, El,
-            MessageMapper, Node, Tag, UpdateEl, View,
+            did_mount, did_update, will_unmount, At, AtValue, CSSValue, El, MessageMapper, Node,
+            Tag, UpdateEl, View,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,

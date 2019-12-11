@@ -79,39 +79,34 @@ impl<T: ToString> ToCSSValueForOptionToString for Option<T> {
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AtValue {
-    /// The whole attribute is ignored (i.e. not rendered).
-    Ignored,
+    /// Boolean attribute value.
+    Bool(bool),
     /// Attribute value is not used (i.e. rendered as empty string).
-    None,
-    /// Rendered attribute value.
-    Some(String),
+    Empty,
+    /// String attribute value.
+    String(String), // TODO: try Cow<str>?
 }
 
-impl<T: ToString> From<T> for AtValue {
-    fn from(value: T) -> Self {
-        AtValue::Some(value.to_string())
+impl From<bool> for AtValue {
+    fn from(value: bool) -> Self {
+        AtValue::Bool(value)
     }
 }
 
-// `&` because `attrs!` macro automatically adds prefix `&` before values for more ergonomic API
-// (otherwise it would fail when you use for example a Model's property in View functions as `AtValue`)
-impl From<&AtValue> for AtValue {
-    fn from(value: &AtValue) -> Self {
-        value.clone()
+impl From<String> for AtValue {
+    fn from(value: String) -> Self {
+        AtValue::String(value)
     }
 }
 
-// -- AsAtValue --
-
-pub trait AsAtValue {
-    fn as_at_value(&self) -> AtValue;
+impl From<&str> for AtValue {
+    fn from(value: &str) -> Self {
+        AtValue::String(value.to_string())
+    }
 }
 
-impl AsAtValue for bool {
-    fn as_at_value(&self) -> AtValue {
-        match self {
-            true => AtValue::None,
-            false => AtValue::Ignored,
-        }
+impl From<Option<()>> for AtValue {
+    fn from(_value: Option<()>) -> Self {
+        AtValue::Empty
     }
 }

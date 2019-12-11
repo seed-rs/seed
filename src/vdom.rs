@@ -990,7 +990,7 @@ pub mod tests {
                 &parent,
                 &mailbox,
                 vdom,
-                div![button![attrs! { At::Disabled => false.as_at_value() }]],
+                div![button![attrs! { At::Disabled => false }]],
                 &app,
             );
 
@@ -1010,7 +1010,7 @@ pub mod tests {
                 &parent,
                 &mailbox,
                 vdom,
-                div![button![attrs! { At::Disabled => true.as_at_value() }]],
+                div![button![attrs! { At::Disabled => true }]],
                 &app,
             );
 
@@ -1033,7 +1033,7 @@ pub mod tests {
                 &parent,
                 &mailbox,
                 vdom,
-                div![button![attrs! { At::Disabled => false.as_at_value() }]],
+                div![button![attrs! { At::Disabled => false }]],
                 &app,
             );
 

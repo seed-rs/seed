@@ -82,12 +82,12 @@ where
     {
         let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
             events::Listener::new_control_check(match checked {
-                AtValue::Some(_) => true,
+                AtValue::String(_) => true,
                 _ => false,
             })
         } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
             events::Listener::new_control(match control_val {
-                AtValue::Some(value) => value.clone(),
+                AtValue::String(value) => value.clone(),
                 _ => "".into(),
             })
         } else {
