@@ -9,11 +9,11 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-wasm-bindgen = "0.2.45"
+wasm-bindgen = "0.2.55"
 
 
 [dependencies.web-sys]
-version = "0.3.30"
+version = "0.3.32"
 features = [
     "CanvasRenderingContext2d",
     "HtmlCanvasElement",
