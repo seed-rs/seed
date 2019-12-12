@@ -1,6 +1,6 @@
 //! High-level interface for `web_sys` HTTP requests.
+use std::future::Future;
 
-use futures::{future, Future};
 use gloo_timers::callback::Timeout;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json;
@@ -436,108 +436,85 @@ impl Request {
     ///        .fetch(Msg::Fetched)
     ///}
     /// ```
-    pub fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> impl Future<Item = U, Error = U>
+    pub async fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> Result<U, U>
     where
         U: 'static,
     {
-        // @TODO: once await/async stabilized, refactor
-        future::ok(()).then(|_: Result<(), ()>| {
-            self.send_request()
-                .map(|raw_response: web_sys::Response| ResponseWithDataResult {
-                    status: Status::from(&raw_response),
-                    raw: raw_response,
-                    data: Ok(()),
-                })
-                .map_err(|js_value_error| RequestError::DomException(js_value_error.into()))
-                .then(|fetch_result| {
-                    Ok(f(FetchObject {
-                        request: self,
-                        result: fetch_result,
-                    }))
-                })
-        })
+        let fetch_result = self
+            .send_request()
+            .await
+            .map(|raw_response: web_sys::Response| ResponseWithDataResult {
+                status: Status::from(&raw_response),
+                raw: raw_response,
+                data: Ok(()),
+            })
+            .map_err(|js_value_error| RequestError::DomException(js_value_error.into()));
+        Ok(f(FetchObject {
+            request: self,
+            result: fetch_result,
+        }))
     }
 
     /// Same as method `fetch`, but try to convert body to `String` and insert it into `Response` field `data`.
     /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
-    pub fn fetch_string<U>(
-        self,
-        f: impl FnOnce(FetchObject<String>) -> U,
-    ) -> impl Future<Item = U, Error = U>
+    pub async fn fetch_string<U>(self, f: impl FnOnce(FetchObject<String>) -> U) -> Result<U, U>
     where
         U: 'static,
     {
-        // @TODO: once await/async stabilized, refactor + delete Box
-        self.fetch(identity)
-            .then(|fetch_object_result| {
-                let output_future: Box<
-                    dyn Future<Item = FetchObject<String>, Error = FetchObject<String>>,
-                >;
+        let fetch_object = self.fetch(identity).await.unwrap();
+        let fetch_result = fetch_object.result;
+        let request = fetch_object.request;
 
-                let fetch_object: FetchObject<()> = fetch_object_result.unwrap();
-                let fetch_result = fetch_object.result;
-                let request = fetch_object.request;
-
-                match fetch_result {
-                    // There was problem with fetching - just change generic parameter from () to String.
-                    Err(request_error) => {
-                        output_future = Box::new(future::ok(FetchObject::<String> {
-                            request,
-                            result: Err(request_error),
-                        }))
-                    }
-                    Ok(response) => {
-                        match response.raw.text() {
-                            // Converting body to String failed.
-                            Err(js_value_error) => {
-                                output_future = Box::new(future::ok(FetchObject::<String> {
+        let fetch_object = match fetch_result {
+            // There was problem with fetching - just change generic parameter from () to String.
+            Err(request_error) => FetchObject::<String> {
+                request,
+                result: Err(request_error),
+            },
+            Ok(response) => {
+                match response.raw.text() {
+                    // Converting body to String failed.
+                    Err(js_value_error) => FetchObject::<String> {
+                        request,
+                        result: Ok(ResponseWithDataResult {
+                            raw: response.raw,
+                            status: response.status,
+                            data: Err(DataError::DomException(js_value_error.into())),
+                        }),
+                    },
+                    Ok(promise) => {
+                        let js_future_result = JsFuture::from(promise).await;
+                        match js_future_result {
+                            // Converting `promise` to `JsFuture` failed.
+                            Err(js_value_error) => FetchObject::<String> {
+                                request,
+                                result: Ok(ResponseWithDataResult {
+                                    raw: response.raw,
+                                    status: response.status,
+                                    data: Err(DataError::DomException(js_value_error.into())),
+                                }),
+                            },
+                            Ok(js_value) => {
+                                // Converting from body.text() result to String should never fail,
+                                // so `expect` should be enough.
+                                let text = js_value
+                                    .as_string()
+                                    .expect("fetch: cannot convert js_value to string");
+                                FetchObject::<String> {
                                     request,
                                     result: Ok(ResponseWithDataResult {
                                         raw: response.raw,
                                         status: response.status,
-                                        data: Err(DataError::DomException(js_value_error.into())),
+                                        data: Ok(text),
                                     }),
-                                }))
-                            }
-                            Ok(promise) => {
-                                output_future =
-                                    Box::new(JsFuture::from(promise).then(|js_future_result| {
-                                        match js_future_result {
-                                            // Converting `promise` to `JsFuture` failed.
-                                            Err(js_value_error) => Ok(FetchObject::<String> {
-                                                request,
-                                                result: Ok(ResponseWithDataResult {
-                                                    raw: response.raw,
-                                                    status: response.status,
-                                                    data: Err(DataError::DomException(
-                                                        js_value_error.into(),
-                                                    )),
-                                                }),
-                                            }),
-                                            Ok(js_value) => {
-                                                // Converting from body.text() result to String should never fail,
-                                                // so `expect` should be enough.
-                                                let text = js_value.as_string().expect(
-                                                    "fetch: cannot convert js_value to string",
-                                                );
-                                                Ok(FetchObject::<String> {
-                                                    request,
-                                                    result: Ok(ResponseWithDataResult {
-                                                        raw: response.raw,
-                                                        status: response.status,
-                                                        data: Ok(text),
-                                                    }),
-                                                })
-                                            }
-                                        }
-                                    }))
+                                }
                             }
                         }
                     }
                 }
-                output_future
-            })
-            .then(|fetch_object_result| Ok(f(fetch_object_result.unwrap())))
+            }
+        };
+        Ok(f(fetch_object))
     }
 
     /// Fetch and then convert body to `String`. It passes `ResponseDataResult<String>` into callback `f`.
@@ -545,7 +522,7 @@ impl Request {
     pub fn fetch_string_data<U>(
         self,
         f: impl FnOnce(ResponseDataResult<String>) -> U,
-    ) -> impl Future<Item = U, Error = U>
+    ) -> impl Future<Output = Result<U, U>>
     where
         U: 'static,
     {
@@ -553,79 +530,65 @@ impl Request {
     }
 
     /// Same as method `fetch`, but try to deserialize body and insert it into `Response` field `data`.
-    pub fn fetch_json<T, U>(
-        self,
-        f: impl FnOnce(FetchObject<T>) -> U,
-    ) -> impl Future<Item = U, Error = U>
+    pub async fn fetch_json<T, U>(self, f: impl FnOnce(FetchObject<T>) -> U) -> Result<U, U>
     where
         T: DeserializeOwned + 'static,
         U: 'static,
     {
-        // @TODO: once await/async stabilized, refactor
-        self.fetch_string(identity)
-            .then(|fetch_object_result| {
-                let fetch_object: FetchObject<String> = fetch_object_result.unwrap();
-                let fetch_result = fetch_object.result;
-                let request = fetch_object.request;
+        let fetch_object = self.fetch_string(identity).await.unwrap();
+        let fetch_result = fetch_object.result;
+        let request = fetch_object.request;
 
-                match fetch_result {
-                    // There was problem with fetching - just change generic parameter from String to T.
-                    Err(request_error) => future::ok(FetchObject::<T> {
+        let fetch_object = match fetch_result {
+            // There was problem with fetching - just change generic parameter from String to T.
+            Err(request_error) => FetchObject::<T> {
+                request,
+                result: Err(request_error),
+            },
+            Ok(response) => {
+                match response.data {
+                    // There was problem with converting to String
+                    // - just change generic parameter from String to T.
+                    Err(data_error) => FetchObject::<T> {
                         request,
-                        result: Err(request_error),
-                    }),
-                    Ok(response) => {
-                        match response.data {
-                            // There was problem with converting to String
-                            // - just change generic parameter from String to T.
-                            Err(data_error) => future::ok(FetchObject::<T> {
+                        result: Ok(ResponseWithDataResult {
+                            raw: response.raw,
+                            status: response.status,
+                            data: Err(data_error),
+                        }),
+                    },
+                    Ok(text) => {
+                        match serde_json::from_str(&text) {
+                            // Deserialization failed.
+                            Err(serde_error) => FetchObject::<T> {
                                 request,
                                 result: Ok(ResponseWithDataResult {
                                     raw: response.raw,
                                     status: response.status,
-                                    data: Err(data_error),
+                                    data: Err(DataError::SerdeError(Rc::new(serde_error), text)),
                                 }),
-                            }),
-                            Ok(text) => {
-                                match serde_json::from_str(&text) {
-                                    // Deserialization failed.
-                                    Err(serde_error) => future::ok(FetchObject::<T> {
-                                        request,
-                                        result: Ok(ResponseWithDataResult {
-                                            raw: response.raw,
-                                            status: response.status,
-                                            data: Err(DataError::SerdeError(
-                                                Rc::new(serde_error),
-                                                text,
-                                            )),
-                                        }),
-                                    }),
-                                    Ok(value) => future::ok(FetchObject::<T> {
-                                        request,
-                                        result: Ok(ResponseWithDataResult {
-                                            raw: response.raw,
-                                            status: response.status,
-                                            data: Ok(value),
-                                        }),
-                                    }),
-                                }
-                            }
+                            },
+                            Ok(value) => FetchObject::<T> {
+                                request,
+                                result: Ok(ResponseWithDataResult {
+                                    raw: response.raw,
+                                    status: response.status,
+                                    data: Ok(value),
+                                }),
+                            },
                         }
                     }
                 }
-            })
-            .then(
-                |fetch_object_result: Result<FetchObject<T>, FetchObject<T>>| {
-                    Ok(f(fetch_object_result.unwrap_or_else(identity)))
-                },
-            )
+            }
+        };
+        Ok(f(fetch_object))
     }
 
     /// Fetch and then deserialize body to `T`. It passes `ResponseDataResult<T>` into callback `f`.
     pub fn fetch_json_data<T, U>(
         self,
         f: impl FnOnce(ResponseDataResult<T>) -> U,
-    ) -> impl Future<Item = U, Error = U>
+    ) -> impl Future<Output = Result<U, U>>
     where
         T: DeserializeOwned + 'static,
         U: 'static,
@@ -635,14 +598,14 @@ impl Request {
 
     // ------ PRIVATE ------
 
-    fn send_request(&self) -> impl Future<Item = web_sys::Response, Error = JsValue> {
+    async fn send_request(&self) -> Result<web_sys::Response, JsValue> {
         let request_init = self.init_request_and_start_timeout();
 
         let fetch_promise = web_sys::window()
             .expect("fetch: cannot find window")
             .fetch_with_str_and_init(&self.url, &request_init);
 
-        JsFuture::from(fetch_promise).map(Into::into)
+        JsFuture::from(fetch_promise).await.map(Into::into)
     }
 
     fn init_request_and_start_timeout(&self) -> web_sys::RequestInit {

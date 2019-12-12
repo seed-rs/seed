@@ -10,6 +10,5 @@ crate-type = ["cdylib"]
 [dependencies]
 seed = {path = "../../"}
 wasm-bindgen = "0.2.45"
-wasm-bindgen-futures = "0.3.22"
-futures = "^0.1.27"
+wasm-bindgen-futures = "0.4.5"
 enclose = "^1.1.8"

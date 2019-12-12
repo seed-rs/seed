@@ -12,7 +12,6 @@ path = "src/lib.rs"
 seed = { path = "../../../" }
 serde = "^1.0.92"
 wasm-bindgen = "^0.2.45"
-futures = "^0.1.27"
 
 shared = { path = "../shared"}
 

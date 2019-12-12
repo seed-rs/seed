@@ -1,5 +1,5 @@
-use futures::{future, prelude::*};
-use seed::{prelude::*, *};
+use seed::prelude::*;
+use seed::{document, window};
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlMediaElement, MediaStream, MediaStreamConstraints};
@@ -15,22 +15,22 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     AfterMount::new(Model {})
 }
 
-fn user_media() -> impl Future<Item = Msg, Error = Msg> {
-    future::ok::<(), ()>(()).then(|_| {
-        let mut constraints = MediaStreamConstraints::new();
-        constraints.video(&JsValue::from(true));
+async fn user_media() -> Result<Msg, Msg> {
+    let mut constraints = MediaStreamConstraints::new();
+    constraints.video(&JsValue::from(true));
 
-        let media_stream_promise = window()
-            .navigator()
-            .media_devices()
-            .unwrap()
-            .get_user_media_with_constraints(&constraints)
-            .unwrap();
+    let media_stream_promise = window()
+        .navigator()
+        .media_devices()
+        .unwrap()
+        .get_user_media_with_constraints(&constraints)
+        .unwrap();
 
+    Ok(Msg::UserMedia(
         JsFuture::from(media_stream_promise)
-            .map(MediaStream::from)
-            .then(|result| Ok(Msg::UserMedia(result)))
-    })
+            .await
+            .map(MediaStream::from),
+    ))
 }
 
 // Update
