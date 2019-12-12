@@ -416,9 +416,9 @@ impl Request {
 
     /// Fetch.
     ///
-    /// It never fails. Use callback `f` to map `FetchObject<()>` to `Future` `Item` and `Error`.
+    /// It never fails. Use callback `f` to map `FetchObject<()>`.
     /// E.g.: You can use `std::convert::identity` as `f`
-    /// to return `Future<Item=FetchObject<()>, Error=FetchObject<()>>`.
+    /// to return `Result<FetchObject<()>, FetchObject<()>`.
     ///
     /// It's lazy - fetching is started when `Future` is executed.
     ///
@@ -431,9 +431,10 @@ impl Request {
     /// # Example
     ///
     /// ```rust,no_run
-    ///fn send_request() -> impl Future<Item=Msg, Error=Msg> {
+    ///async fn send_request() -> Result<Msg, Msg> {
     ///    fetch::Request::new(get_request_url())
     ///        .fetch(Msg::Fetched)
+    ///        .await
     ///}
     /// ```
     pub async fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> Result<U, U>
