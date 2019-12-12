@@ -14,18 +14,18 @@ path = "src/server.rs"
 
 [dependencies]
 # common
-serde = { version = "^1.0.92", features = ["derive"] }
-serde_json = "^1.0.39"
+serde = { version = "^1.0.103", features = ["derive"] }
+serde_json = "^1.0.44"
 
 # server
-ws = { version = "0.8.1", optional = true }
+ws = { version = "0.9.1", optional = true }
 
 #client
 seed = { path = "../../", optional = true }
-wasm-bindgen = { version = "^0.2.45", optional = true }
-js-sys = "0.3.28"
+wasm-bindgen = { version = "^0.2.55", optional = true }
+js-sys = "0.3.32"
 [dependencies.web-sys]
-version = "^0.3.22"
+version = "^0.3.32"
 features = ["WebSocket", "MessageEvent"]
 optional = true
 
