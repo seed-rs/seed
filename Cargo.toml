@@ -18,25 +18,24 @@ build = "build.rs"
 version_check = "^0.9.1"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.2.50" # NOTE: keep in sync with wasm-bindgen version
+wasm-bindgen-test = "0.3.5"
 
 [dependencies]
 console_error_panic_hook = "^0.1.6"
 cookie = { version = "0.12", features = ["percent-encode"] }
 enclose = "^1.1.6"
-futures = "^0.1.27"
 gloo-timers = "^0.1.0"
 indexmap = "^1.0.2"
 js-sys = "0.3.32"
 pulldown-cmark = "^0.5.2"
 serde = { version = "^1.0.92", features = ['derive'] }
 serde_json = "^1.0.39"
-# NOTE: keep in sync with wasm-bindgen-test version
 wasm-bindgen = {version = "0.2.50", features = ["serde-serialize"]}
-wasm-bindgen-futures = "0.3.22"
+wasm-bindgen-futures = "0.4.5"
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug
 dbg = "1.0.4"
+futures = "0.3.1"
 
 [dependencies.web-sys]
 version = "0.3.32"

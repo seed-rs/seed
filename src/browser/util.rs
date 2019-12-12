@@ -230,8 +230,10 @@ pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, &'static str> 
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         // https://www.w3schools.com/tags/att_input_checked.asp
         return match input.type_().as_str() {
-            "file" => Err(r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#),
-            _ => Ok(input.checked())
+            "file" => Err(
+                r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#,
+            ),
+            _ => Ok(input.checked()),
         };
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
@@ -246,8 +248,10 @@ pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'s
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         // https://www.w3schools.com/tags/att_input_checked.asp
         return match input.type_().as_str() {
-            "file" => Err(r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#),
-            _ => Ok(input.set_checked(value))
+            "file" => Err(
+                r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#,
+            ),
+            _ => Ok(input.set_checked(value)),
         };
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {

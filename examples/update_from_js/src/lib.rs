@@ -1,6 +1,5 @@
 use enclose::enc;
-use futures::{future, prelude::*};
-use seed::{prelude::*, *};
+use seed::prelude::*;
 
 // Model
 
@@ -41,11 +40,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-fn wrap_in_future(f: impl FnOnce()) -> impl Future<Item = Msg, Error = Msg> {
-    future::ok::<(), ()>(()).then(|_| {
-        f();
-        Ok(Msg::NoOp)
-    })
+async fn wrap_in_future(f: impl FnOnce()) -> Result<Msg, Msg> {
+    f();
+    Ok(Msg::NoOp)
 }
 
 // View
