@@ -1,6 +1,8 @@
 //! Provide a wrapper for commonly-used, but verbose `web_sys` features.
 //! This module is decoupled / independent.
 
+// @TODO refactor (ideally once `Unsized` and `Specialization` are stable)
+
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use web_sys;

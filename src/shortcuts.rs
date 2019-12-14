@@ -64,6 +64,7 @@ macro_rules! element_svg {
    }
 }
 
+// @TODO merge with make_tags!
 // El must be exposed in the module where this is called for these to work.
 element! {
     address => Address; article => Article; aside => Aside; footer => Footer;
@@ -103,6 +104,7 @@ element! {
     content => Content; element => Element; shadow => Shadow; slot => Slot; template => Template
 }
 
+// @TODO merge with make_tags!
 element_svg! {
     // SVG shape elements
     line_ => Line;  // line is a builtin rust macro.
