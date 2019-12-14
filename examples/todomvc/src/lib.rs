@@ -1,7 +1,10 @@
 //! Modelled after the todomvc project's [Typescript-React example](https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react)
 
-use seed::storage::Storage;
-use seed::{prelude::*, *};
+use seed::{
+    prelude::*,
+    service::storage::{self, Storage},
+    *,
+};
 use serde::{Deserialize, Serialize};
 
 const ENTER_KEY: u32 = 13;
@@ -65,14 +68,14 @@ impl Model {
     fn sync_storage(&self) {
         // todo: Every item that adds, deletes, or changes a today re-serializes and stores
         // todo the whole model. Effective, but probably quite slow!
-        seed::storage::store_data(&self.local_storage, "seed-todo-data", &self.todos);
+        storage::store_data(&self.local_storage, "seed-todo-data", &self.todos);
     }
 }
 
 // Setup a default here, for initialization later.
 impl Default for Model {
     fn default() -> Self {
-        let local_storage = seed::storage::get_storage().unwrap();
+        let local_storage = storage::get_storage().unwrap();
 
         //        let todos: Vec<Todo> = match local_storage.get_item("seed-todo-data") {
         //            Some(Ok(tds)) => {

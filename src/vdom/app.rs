@@ -5,8 +5,8 @@ use crate::vdom::builder::{
     Builder as AppBuilder, MountPointInitInitAPI,
 };
 use crate::vdom::{
-    alias::*, effects::Effect, mailbox::Mailbox, render_timestamp_delta::RenderTimestampDelta,
-    UndefinedGMsg,
+    alias::*, effects::Effect, mailbox::Mailbox, next_tick::NextTick,
+    render_timestamp_delta::RenderTimestampDelta, UndefinedGMsg,
 };
 use crate::{
     dom_types::{
@@ -14,7 +14,6 @@ use crate::{
         node::{el::El, Node},
         view::View,
     },
-    next_tick::NextTick,
     orders::OrdersContainer,
     patch, routing,
     util::{self, window, ClosureNew},

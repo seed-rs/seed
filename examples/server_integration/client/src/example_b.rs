@@ -1,6 +1,5 @@
 use futures::Future;
-use seed::fetch;
-use seed::prelude::*;
+use seed::{prelude::*, service::fetch};
 use serde::Deserialize;
 use std::borrow::Cow;
 
