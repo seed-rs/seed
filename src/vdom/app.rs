@@ -14,7 +14,7 @@ use crate::{
         node::{el::El, Node},
         view::View,
     },
-    orders::OrdersContainer,
+    orders::container::OrdersContainer,
     patch, routing,
     util::{self, window, ClosureNew},
     websys_bridge,
