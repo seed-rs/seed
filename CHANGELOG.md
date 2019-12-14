@@ -3,7 +3,7 @@
 [unreleased]
 
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
-- [BREAKING] `fetch` and `storage` moved to `service`.
+- [BREAKING] `fetch` and `storage` moved to `seed::browser::service::{fetch, storage}`.
 - `App` included in `prelude`.
 
 ## v0.5.0
