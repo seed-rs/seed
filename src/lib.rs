@@ -36,8 +36,8 @@ mod websys_bridge;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub const fn empty<Ms>() -> dom_types::Node<Ms> {
-    dom_types::Node::Empty
+pub const fn empty<Ms>() -> dom_types::node::Node<Ms> {
+    dom_types::node::Node::Empty
 }
 
 // @TODO remove `set_interval` and `set_timeout`? Alternative from `gloo` should be used instead.
@@ -82,10 +82,13 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 pub mod prelude {
     pub use crate::{
         css_units::*,
-        dom_entity_names::styles::St,
         dom_types::{
-            did_mount, did_update, will_unmount, AsAtValue, At, AtValue, CSSValue, El,
-            MessageMapper, Node, Tag, UpdateEl, View,
+            lifecycle_hooks::{did_mount, did_update, will_unmount},
+            node::{el::El, Node},
+            update_el::UpdateEl,
+            values::{AsAtValue, AtValue, CSSValue},
+            view::View,
+            At, MessageMapper, St, Tag,
         },
         events::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
@@ -129,7 +132,7 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
         use crate::{
-            dom_types::{El, UpdateEl},
+            dom_types::{node::el::El, update_el::UpdateEl},
             events::mouse_ev,
             orders::Orders,
         };

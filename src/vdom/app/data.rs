@@ -3,7 +3,7 @@ use crate::vdom::{
     render_timestamp_delta::{RenderTimestamp, RenderTimestampDelta},
 };
 use crate::{
-    dom_types::El,
+    dom_types::node::el::El,
     events::{Event, Listener},
     util,
 };

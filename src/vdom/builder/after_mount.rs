@@ -1,4 +1,4 @@
-use crate::{dom_types::View, orders::OrdersContainer, routing::Url};
+use crate::{dom_types::view::View, orders::OrdersContainer, routing::Url};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct UndefinedAfterMount;

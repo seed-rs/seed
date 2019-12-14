@@ -9,7 +9,11 @@ use crate::vdom::{
     UndefinedGMsg,
 };
 use crate::{
-    dom_types::{self, El, Node, View},
+    dom_types::{
+        self,
+        node::{el::El, Node},
+        view::View,
+    },
     next_tick::NextTick,
     orders::OrdersContainer,
     patch, routing,

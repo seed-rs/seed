@@ -2,7 +2,12 @@
 //! a subset of the `vdom` module.
 
 use crate::{
-    dom_types::{self, AtValue, El, Node, View},
+    dom_types::{
+        self,
+        node::{el::El, Node},
+        values::AtValue,
+        view::View,
+    },
     events::{self, Listener},
     vdom::{app::App, mailbox::Mailbox},
     websys_bridge,

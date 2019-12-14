@@ -1,4 +1,4 @@
-use crate::dom_types::{MessageMapper, View};
+use crate::dom_types::{view::View, MessageMapper};
 use crate::vdom::{
     app::{App, ShouldRender},
     effects::Effect,
