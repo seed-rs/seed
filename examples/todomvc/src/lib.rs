@@ -1,8 +1,8 @@
 //! Modelled after the todomvc project's [Typescript-React example](https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react)
 
 use seed::{
+    browser::service::storage::{self, Storage},
     prelude::*,
-    service::storage::{self, Storage},
     *,
 };
 use serde::{Deserialize, Serialize};

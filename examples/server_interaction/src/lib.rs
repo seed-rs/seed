@@ -4,7 +4,7 @@
 #![allow(clippy::large_enum_variant)]
 
 use futures::Future;
-use seed::{prelude::*, service::fetch, *};
+use seed::{browser::service::fetch, prelude::*, *};
 use serde::{Deserialize, Serialize};
 
 const REPOSITORY_URL: &str = "https://api.github.com/repos/seed-rs/seed/branches/master";

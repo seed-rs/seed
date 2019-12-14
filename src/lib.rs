@@ -6,39 +6,31 @@
 
 // @TODO move to prelude (?)
 pub use crate::{
-    routing::push_route,
-    service::fetch::{Method, Request},
-    url::Url,
-    util::{
-        body, canvas, canvas_context_2d, cookies, document, error, history, html_document, log,
-        update, window,
-    },
-    vdom::{app::App, builder::Builder as AppBuilder},
-    websys_bridge::converter::{
+    app::{App, AppBuilder},
+    browser::dom::cast::{
         to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea,
+    },
+    browser::service::fetch::{Method, Request},
+    browser::service::routing::push_route,
+    browser::url::Url,
+    browser::util::{
+        self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
+        log, update, window,
     },
 };
 use wasm_bindgen::{closure::Closure, JsCast};
 
 #[macro_use]
 pub mod shortcuts;
-
+pub mod app;
+pub mod browser;
 pub mod dom_entity_names;
-
-pub mod css_units;
-pub mod dom_types;
-pub mod orders;
-pub mod routing;
-pub mod service;
-pub mod url;
-mod util;
-mod vdom;
-mod websys_bridge;
+pub mod virtual_dom;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
 /// in ternary operations.
-pub const fn empty<Ms>() -> dom_types::node::Node<Ms> {
-    dom_types::node::Node::Empty
+pub const fn empty<Ms>() -> virtual_dom::Node<Ms> {
+    virtual_dom::Node::Empty
 }
 
 // @TODO remove `set_interval` and `set_timeout`? Alternative from `gloo` should be used instead.
@@ -82,37 +74,25 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 /// Expose the `wasm_bindgen` prelude, and lifecycle hooks.
 pub mod prelude {
     pub use crate::{
-        css_units::*,
-        dom_types::{
-            event_handler::{
-                input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
-                trigger_update_handler,
-            },
-            lifecycle_hooks::{did_mount, did_update, will_unmount},
-            listener::Listener,
-            node::{el::El, Node},
-            update_el::UpdateEl,
-            values::{AsAtValue, AtValue, CSSValue},
-            view::View,
-            At, Ev, MessageMapper, St, Tag,
+        app::{
+            builder::init::Init, AfterMount, App, BeforeMount, MessageMapper, MountType, Orders,
+            RenderTimestampDelta, UrlHandling,
         },
-        orders::Orders,
-        // macros are exported in crate root
-        // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
-        shortcuts::*,
-        url::Url,
-        util::{
+        browser::dom::css_units::*,
+        browser::dom::event_handler::{
+            input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
+        },
+        browser::dom::lifecycle_hooks::{did_mount, did_update, will_unmount},
+        browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
         },
-        vdom::{
-            app::App,
-            builder::{
-                after_mount::{AfterMount, UrlHandling},
-                before_mount::{BeforeMount, MountType},
-                init::Init,
-            },
-            render_timestamp_delta::RenderTimestampDelta,
+        browser::Url,
+        // macros are exported in crate root
+        // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
+        shortcuts::*,
+        virtual_dom::{
+            AsAtValue, At, AtValue, CSSValue, El, Ev, Listener, Node, St, Tag, UpdateEl, View,
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
@@ -133,11 +113,10 @@ pub mod tests {
     #[allow(dead_code)]
     pub fn app_builds() {
         use crate as seed; // required for macros to work.
+        use crate::app::{builder::init::Init, Orders};
+        use crate::browser::dom::event_handler::mouse_ev;
         use crate::prelude::*;
-        use crate::{
-            dom_types::{event_handler::mouse_ev, node::el::El, update_el::UpdateEl},
-            orders::Orders,
-        };
+        use crate::virtual_dom::{Listener, Node};
 
         struct Model {
             pub val: i32,

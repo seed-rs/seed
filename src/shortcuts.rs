@@ -1,6 +1,8 @@
 //! This file exports helper macros for element creation, populated by a higher-level macro,
 //! and macros for creating the parts of elements. (attrs, style, events)
 
+// @TODO merge with `pub use` & `prelude` in `lib.rs` and `browser::util`?
+
 use wasm_bindgen::JsValue;
 
 /// Copied from [https://github.com/rust-lang/rust/issues/35853](https://github.com/rust-lang/rust/issues/35853)
@@ -13,7 +15,7 @@ macro_rules! with_dollar_sign {
 
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
 /// In the matching pattern below, we match the name we want to use with the name under
-/// the `seed::dom_types::Tag` enum. Eg the div! macro uses `seed::dom_types::Tag::Div`.
+/// the `seed::virtual_dom::Tag` enum. Eg the div! macro uses `seed::virtual_dom::Tag::Div`.
 macro_rules! element {
     // Create shortcut macros for any element; populate these functions in this module.
     ($($Tag:ident => $Tag_camel:ident);+) => {
@@ -26,11 +28,11 @@ macro_rules! element {
                         ( $d($d part:expr),* $d(,)? ) => {
                             {
                                 #[allow(unused_mut)]
-                                let mut el = El::empty($crate::dom_types::Tag::$Tag_camel);
+                                let mut el = El::empty($crate::virtual_dom::Tag::$Tag_camel);
                                 $d (
                                     $d part.update(&mut el);
                                 )*
-                                $crate::dom_types::node::Node::Element(el)
+                                $crate::virtual_dom::Node::Element(el)
                             }
                         };
                     }
@@ -52,9 +54,9 @@ macro_rules! element_svg {
                         ( $d($d part:expr),* $d(,)? ) => {
                             {
                                 #[allow(unused_mut)]
-                                let mut el = El::empty_svg($crate::dom_types::Tag::$Tag_camel);
+                                let mut el = El::empty_svg($crate::virtual_dom::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
-                                $crate::dom_types::node::Node::Element(el)
+                                $crate::virtual_dom::Node::Element(el)
                             }
                         };
                     }
@@ -153,7 +155,7 @@ element_svg! {
 #[macro_export]
 macro_rules! empty {
     () => {
-        $crate::dom_types::node::Node::Empty
+        $crate::virtual_dom::Node::Empty
     };
 }
 
@@ -174,7 +176,7 @@ macro_rules! md {
 #[macro_export]
 macro_rules! plain {
     ($text:expr) => {
-        $crate::dom_types::node::Node::new_text($text)
+        $crate::virtual_dom::Node::new_text($text)
     };
 }
 
@@ -183,15 +185,15 @@ macro_rules! custom {
     ( $($part:expr),* $(,)? ) => {
         {
             let default_tag_name = "missing-tag-name";
-            let mut el = El::empty($crate::dom_types::Tag::from(default_tag_name));
+            let mut el = El::empty($crate::virtual_dom::Tag::from(default_tag_name));
             $ ( $part.update(&mut el); )*
 
-            if let $crate::dom_types::Tag::Custom(tag_name) = &el.tag {
+            if let $crate::virtual_dom::Tag::Custom(tag_name) = &el.tag {
                 let tag_changed = tag_name != default_tag_name;
                 assert!(tag_changed, "Tag has not been set in `custom!` element. Add e.g. `Tag::from(\"code-block\")`.");
             }
 
-            $crate::dom_types::node::Node::Element(el)
+            $crate::virtual_dom::Node::Element(el)
         }
     };
 }
@@ -208,7 +210,7 @@ macro_rules! attrs {
                 // And cases like `true.as_attr_value()` or `AtValue::Ignored`.
                 vals.insert($key.into(), (&$value).into());
             )*
-            $crate::dom_types::attrs::Attrs::new(vals)
+            $crate::virtual_dom::Attrs::new(vals)
         }
      };
 }
@@ -218,7 +220,7 @@ macro_rules! attrs {
 macro_rules! class {
     { $($class:expr $(=> $predicate:expr)? $(,)?)* } => {
         {
-            let mut result = $crate::dom_types::attrs::Attrs::empty();
+            let mut result = $crate::virtual_dom::Attrs::empty();
             let mut classes = Vec::new();
             $(
                 // refactor to labeled block once stable (https://github.com/rust-lang/rust/issues/48594)
@@ -240,7 +242,7 @@ macro_rules! class {
 macro_rules! id {
     { $id:expr } => {
         {
-            $crate::dom_types::attrs::Attrs::from_id($id)
+            $crate::virtual_dom::Attrs::from_id($id)
         }
      };
 }
@@ -253,14 +255,14 @@ macro_rules! style {
     { $($key:expr => $value:expr $(;)?$(,)?)* } => {
         {
             #[allow(unused_imports)]
-            use $crate::dom_types::values::{
+            use $crate::virtual_dom::values::{
                 ToCSSValueForCSSValue, ToCSSValueForOptionToString, ToCSSValueForToString
             };
             let mut vals = IndexMap::new();
             $(
                 vals.insert($key.into(), ($value).to_css_value());
             )*
-            $crate::dom_types::style::Style::new(vals)
+            $crate::virtual_dom::Style::new(vals)
         }
      };
 }
@@ -272,19 +274,19 @@ macro_rules! style {
 //            let mut result = Vec::new();
 //            $(
 //                match $event_str {
-////                    _ => result.push($crate::dom_types::Listener::new_input($event_str.into(), $handler)),
+////                    _ => result.push($crate::virtual_dom::Listener::new_input($event_str.into(), $handler)),
 //
 //
-//                    _ => result.push($crate::dom_types::Listener::new_input($event_str.into(), $handler)),
+//                    _ => result.push($crate::virtual_dom::Listener::new_input($event_str.into(), $handler)),
 ////
 ////
 ////
-////  "input" => result.push($crate::dom_types::Listener::new_input($event_str.into(), $handler)),
-////                    _ => result.push($crate::dom_types::Listener::new($event_str.into(), $handler)),
+////  "input" => result.push($crate::virtual_dom::Listener::new_input($event_str.into(), $handler)),
+////                    _ => result.push($crate::virtual_dom::Listener::new($event_str.into(), $handler)),
 //
 //                }
 //
-////                result.push($crate::dom_types::Listener::new($event_str.into(), $handler));
+////                result.push($crate::virtual_dom::Listener::new($event_str.into(), $handler));
 //            )+
 //            result
 //        }
@@ -298,17 +300,17 @@ macro_rules! style {
 //    { $event_str:expr, $handler:expr } => {
 //        {
 //            match event_str {
-//                "input" => $crate::dom_types::input_ev($event_str, $handler),
-////                "change" => $crate::dom_types::input_ev($event_str, $handler),
+//                "input" => $crate::virtual_dom::input_ev($event_str, $handler),
+////                "change" => $crate::virtual_dom::input_ev($event_str, $handler),
 ////
-////                "keydown" => $crate::dom_types::keyboard_ev($event_str, $handler),
+////                "keydown" => $crate::virtual_dom::keyboard_ev($event_str, $handler),
 ////
-////                "click" => $crate::dom_types::ev($event_str, $handler),
-////                "auxclick" => $crate::dom_types::ev($event_str, $handler),
-////                "dblclick" => $crate::dom_types::ev($event_str, $handler),
-////                "contextmenu" => $crate::dom_types::input_ev($event_str, $handler),
+////                "click" => $crate::virtual_dom::ev($event_str, $handler),
+////                "auxclick" => $crate::virtual_dom::ev($event_str, $handler),
+////                "dblclick" => $crate::virtual_dom::ev($event_str, $handler),
+////                "contextmenu" => $crate::virtual_dom::input_ev($event_str, $handler),
 //
-//                _ => $crate::dom_types::raw_ev($event_str, $handler),
+//                _ => $crate::virtual_dom::raw_ev($event_str, $handler),
 //
 //            }
 //        }
@@ -320,12 +322,12 @@ macro_rules! style {
 //macro_rules! ev2 {
 //    { input, $handler:expr } => {
 //        {
-//            $crate::dom_types::input_ev("input", $handler),
+//            $crate::virtual_dom::input_ev("input", $handler),
 //        }
 //    };
 //    { click, $handler:expr } => {
 //        {
-//            $crate::dom_types::simple_ev("click", $handler),
+//            $crate::virtual_dom::simple_ev("click", $handler),
 //        }
 //    };
 //
