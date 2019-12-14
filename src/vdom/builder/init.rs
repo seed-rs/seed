@@ -8,6 +8,10 @@ use crate::{
     },
 };
 
+pub struct UndefinedInitAPI;
+#[allow(clippy::module_name_repetitions)]
+pub struct UndefinedIntoInit;
+
 /// Used as a flexible wrapper for the init function.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[deprecated(

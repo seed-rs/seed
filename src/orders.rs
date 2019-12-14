@@ -1,5 +1,10 @@
 use crate::dom_types::{MessageMapper, View};
-use crate::vdom::{App, Effect, RenderTimestampDelta, ShouldRender, UndefinedGMsg};
+use crate::vdom::{
+    app::{App, ShouldRender},
+    effects::Effect,
+    render_timestamp_delta::RenderTimestampDelta,
+    UndefinedGMsg,
+};
 use futures::Future;
 use std::{collections::VecDeque, convert::identity, rc::Rc};
 
