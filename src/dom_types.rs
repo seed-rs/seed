@@ -27,7 +27,7 @@ pub mod tests {
     use super::*;
 
     use crate as seed;
-    use crate::{dom_types::style::Style, patch, prelude::*, util, vdom::mailbox::Mailbox};
+    use crate::{dom_types::style::Style, prelude::*, util, vdom::{patch, mailbox::Mailbox}};
     use std::collections::HashSet;
     use wasm_bindgen::{JsCast, JsValue};
     use web_sys::Element;

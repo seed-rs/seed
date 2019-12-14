@@ -6,6 +6,7 @@ pub mod builder;
 pub mod effects;
 pub mod mailbox;
 pub mod next_tick;
+pub mod patch;
 pub mod render_timestamp_delta;
 
 pub struct UndefinedGMsg;
@@ -19,7 +20,7 @@ pub mod tests {
     use web_sys::{self, Element};
 
     use crate as seed;
-    use crate::{class, patch, prelude::*, util, vdom::mailbox::Mailbox, websys_bridge};
+    use crate::{class, prelude::*, util, vdom::{patch, mailbox::Mailbox}, websys_bridge};
 
     wasm_bindgen_test_configure!(run_in_browser);
 
