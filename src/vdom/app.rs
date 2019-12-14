@@ -5,7 +5,7 @@ use crate::vdom::builder::{
     Builder as AppBuilder, MountPointInitInitAPI,
 };
 use crate::vdom::{
-    alias::*, effects::Effect, mailbox::Mailbox, next_tick::NextTick,
+    alias::*, effects::Effect, mailbox::Mailbox, next_tick::NextTick, patch,
     render_timestamp_delta::RenderTimestampDelta, UndefinedGMsg,
 };
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
         view::View,
     },
     orders::container::OrdersContainer,
-    patch, routing,
+    routing,
     url::{self, Url},
     util::{self, window, ClosureNew},
     websys_bridge,

@@ -28,7 +28,6 @@ pub mod dom_entity_names;
 pub mod css_units;
 pub mod dom_types;
 pub mod orders;
-mod patch;
 pub mod routing;
 pub mod service;
 pub mod url;
