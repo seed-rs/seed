@@ -1231,8 +1231,7 @@ pub mod tests {
     use super::*;
 
     use crate as seed;
-    // required for macros to work.
-    use crate::{patch, vdom};
+    use crate::{patch, prelude::*, vdom::mailbox::Mailbox};
     use std::collections::HashSet;
     use wasm_bindgen::{JsCast, JsValue};
     use web_sys::Element;
@@ -1243,7 +1242,7 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> seed::App<Msg, Model, Node<Msg>> {
-        seed::App::build(|_,_| vdom::Init::new(Model {}), |_, _, _| (), |_| seed::empty())
+        seed::App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
             // mount to the element that exists even in the default test html
             .mount(util::body())
             .finish()
@@ -1260,7 +1259,7 @@ pub mod tests {
             &mut node,
             &parent,
             None,
-            &vdom::Mailbox::new(|_: Msg| {}),
+            &Mailbox::new(|_: Msg| {}),
             &app,
         );
 

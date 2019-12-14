@@ -11,7 +11,7 @@ pub use crate::{
         body, canvas, canvas_context_2d, cookies, document, error, history, html_document, log,
         update, window,
     },
-    vdom::{App, AppBuilder},
+    vdom::{app::App, builder::Builder as AppBuilder},
     websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -100,7 +100,15 @@ pub mod prelude {
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
         },
-        vdom::{AfterMount, BeforeMount, Init, MountType, RenderTimestampDelta, UrlHandling},
+        vdom::{
+            app::App,
+            builder::{
+                after_mount::{AfterMount, UrlHandling},
+                before_mount::{BeforeMount, MountType},
+                init::Init,
+            },
+            render_timestamp_delta::RenderTimestampDelta,
+        },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
     pub use wasm_bindgen::prelude::*;

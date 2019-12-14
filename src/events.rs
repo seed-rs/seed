@@ -221,7 +221,7 @@ impl<Ms> Listener<Ms> {
     }
 
     /// This method is where the processing logic for events happens.
-    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::Mailbox<Ms>)
+    pub fn attach<T>(&mut self, el_ws: &T, mailbox: crate::vdom::mailbox::Mailbox<Ms>)
     where
         T: AsRef<web_sys::EventTarget>,
     {

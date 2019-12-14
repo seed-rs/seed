@@ -4,6 +4,8 @@ use crate::util;
 
 // ------ MountPoint ------
 
+pub struct UndefinedMountPoint;
+
 pub trait MountPoint {
     fn element_getter(self) -> Box<dyn FnOnce() -> Element>;
 }

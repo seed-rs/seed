@@ -4,7 +4,7 @@
 use crate::{
     dom_types::{self, AtValue, El, Node, View},
     events::{self, Listener},
-    vdom::{App, Mailbox},
+    vdom::{app::App, mailbox::Mailbox},
     websys_bridge,
 };
 use wasm_bindgen::JsCast;

@@ -4,19 +4,19 @@ use crate::{
     dom_types::View,
     orders::OrdersContainer,
     routing,
-    vdom::{alias::*, App, AppInitCfg},
+    vdom::{
+        alias::*,
+        app::{cfg::AppInitCfg, App},
+    },
 };
 
-pub mod init;
-pub use init::{Init, InitFn, IntoInit};
-pub mod before_mount;
-pub use before_mount::{BeforeMount, MountPoint, MountType};
 pub mod after_mount;
-pub use after_mount::{AfterMount, IntoAfterMount, UndefinedAfterMount, UrlHandling};
+pub mod before_mount;
+pub mod init;
 
-pub struct UndefinedIntoInit;
-pub struct UndefinedMountPoint;
-pub struct UndefinedInitAPI;
+use after_mount::{IntoAfterMount, UndefinedAfterMount};
+use before_mount::{BeforeMount, MountPoint, UndefinedMountPoint};
+use init::{IntoInit, UndefinedInitAPI, UndefinedIntoInit};
 
 #[deprecated(
     since = "0.5.0",
