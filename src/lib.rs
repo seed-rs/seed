@@ -6,8 +6,9 @@
 
 // @TODO move to prelude (?)
 pub use crate::{
-    routing::{push_route, Url},
+    routing::push_route,
     service::fetch::{Method, Request},
+    url::Url,
     util::{
         body, canvas, canvas_context_2d, cookies, document, error, history, html_document, log,
         update, window,
@@ -30,6 +31,7 @@ pub mod orders;
 mod patch;
 pub mod routing;
 pub mod service;
+pub mod url;
 mod util;
 mod vdom;
 mod websys_bridge;
@@ -96,10 +98,10 @@ pub mod prelude {
             At, Ev, MessageMapper, St, Tag,
         },
         orders::Orders,
-        routing::Url,
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
+        url::Url,
         util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,

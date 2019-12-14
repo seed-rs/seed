@@ -1,7 +1,7 @@
 use crate::{
     dom_types::view::View,
     orders::container::OrdersContainer,
-    routing::Url,
+    url::Url,
     vdom::builder::{
         after_mount::{AfterMount, IntoAfterMount, UrlHandling},
         before_mount::MountType,
