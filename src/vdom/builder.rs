@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::{
     dom_types::view::View,
     orders::container::OrdersContainer,
-    routing,
+    url::{self, Url},
     vdom::{
         alias::*,
         app::{cfg::AppInitCfg, App},
@@ -28,7 +28,7 @@ pub struct MountPointInitInitAPI<MP, II> {
 }
 // TODO Remove when removing the other `InitAPI`s.
 pub struct BeforeAfterInitAPI<IAM> {
-    before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+    before_mount_handler: Box<dyn FnOnce(Url) -> BeforeMount>,
     into_after_mount: IAM,
 }
 // TODO Remove when removing the other `InitAPI`s.
@@ -63,7 +63,7 @@ pub trait InitAPIData {
 
     fn before_mount(
         self,
-        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+        before_mount_handler: Box<dyn FnOnce(Url) -> BeforeMount>,
     ) -> BeforeAfterInitAPI<Self::IntoAfterMount>;
     fn after_mount<
         Ms: 'static,
@@ -126,7 +126,7 @@ impl<
         );
 
         let mut initial_orders = OrdersContainer::new(app.clone());
-        let init = into_init.into_init(routing::current_url(), &mut initial_orders);
+        let init = into_init.into_init(url::current(), &mut initial_orders);
 
         app.init_cfg.replace(AppInitCfg {
             mount_type: init.mount_type,
@@ -156,7 +156,7 @@ impl<
         let BeforeMount {
             mount_point_getter,
             mount_type,
-        } = before_mount_handler(routing::current_url());
+        } = before_mount_handler(url::current());
 
         App::new(
             builder.update,
@@ -203,7 +203,7 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
 
     fn before_mount(
         self,
-        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+        before_mount_handler: Box<dyn FnOnce(Url) -> BeforeMount>,
     ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
             before_mount_handler,
@@ -253,7 +253,7 @@ impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
 
     fn before_mount(
         self,
-        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+        before_mount_handler: Box<dyn FnOnce(Url) -> BeforeMount>,
     ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
             before_mount_handler,
@@ -303,7 +303,7 @@ impl InitAPIData for UndefinedInitAPI {
 
     fn before_mount(
         self,
-        before_mount_handler: Box<dyn FnOnce(routing::Url) -> BeforeMount>,
+        before_mount_handler: Box<dyn FnOnce(Url) -> BeforeMount>,
     ) -> BeforeAfterInitAPI<Self::IntoAfterMount> {
         BeforeAfterInitAPI {
             before_mount_handler,
@@ -458,7 +458,7 @@ impl<
     /// ```
     pub fn before_mount(
         self,
-        before_mount: impl FnOnce(routing::Url) -> BeforeMount + 'static,
+        before_mount: impl FnOnce(Url) -> BeforeMount + 'static,
     ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<IAM>> {
         Builder {
             update: self.update,

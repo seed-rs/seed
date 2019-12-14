@@ -16,6 +16,7 @@ use crate::{
     },
     orders::container::OrdersContainer,
     patch, routing,
+    url::{self, Url},
     util::{self, window, ClosureNew},
     websys_bridge,
 };
@@ -440,7 +441,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         note = "Use `builder` with `AppBuilder::{after_mount, before_mount}` instead."
     )]
     pub fn build(
-        init: impl FnOnce(routing::Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
+        init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
         update: UpdateFn<Ms, Mdl, ElC, GMs>,
         view: ViewFn<Mdl, ElC>,
     ) -> InitAppBuilder<Ms, Mdl, ElC, GMs> {
@@ -471,13 +472,13 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         let AfterMount {
             model,
             url_handling,
-        } = into_after_mount.into_after_mount(routing::current_url(), &mut orders);
+        } = into_after_mount.into_after_mount(url::current(), &mut orders);
 
         self.data.model.replace(Some(model));
 
         match url_handling {
             UrlHandling::PassToRoutes => {
-                let url = routing::current_url();
+                let url = url::current();
                 let routing_msg = self
                     .data
                     .routes
