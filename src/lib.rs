@@ -12,7 +12,9 @@ pub use crate::{
         update, window,
     },
     vdom::{app::App, builder::Builder as AppBuilder},
-    websys_bridge::{to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea},
+    websys_bridge::converter::{
+        to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea,
+    },
 };
 use wasm_bindgen::{closure::Closure, JsCast};
 
