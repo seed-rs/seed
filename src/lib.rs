@@ -4,9 +4,10 @@
 #![allow(clippy::use_self, clippy::single_match_else)]
 #![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
 
+// @TODO move to prelude (?)
 pub use crate::{
-    fetch::{Method, Request},
     routing::{push_route, Url},
+    service::fetch::{Method, Request},
     util::{
         body, canvas, canvas_context_2d, cookies, document, error, history, html_document, log,
         update, window,
@@ -25,12 +26,10 @@ pub mod dom_entity_names;
 
 pub mod css_units;
 pub mod dom_types;
-pub mod fetch;
-mod next_tick;
 pub mod orders;
 mod patch;
 pub mod routing;
-pub mod storage;
+pub mod service;
 mod util;
 mod vdom;
 mod websys_bridge;

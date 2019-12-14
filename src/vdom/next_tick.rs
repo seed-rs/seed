@@ -1,8 +1,3 @@
-extern crate futures;
-extern crate js_sys;
-extern crate wasm_bindgen;
-extern crate wasm_bindgen_futures;
-
 use futures::{Async, Future, Poll};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;

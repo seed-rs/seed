@@ -5,6 +5,7 @@ pub mod app;
 pub mod builder;
 pub mod effects;
 pub mod mailbox;
+pub mod next_tick;
 pub mod render_timestamp_delta;
 
 pub struct UndefinedGMsg;

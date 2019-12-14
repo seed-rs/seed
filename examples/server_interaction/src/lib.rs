@@ -3,12 +3,8 @@
 
 #![allow(clippy::large_enum_variant)]
 
-#[macro_use]
-extern crate seed;
-
 use futures::Future;
-use seed::prelude::*;
-use seed::{fetch, Method, Request};
+use seed::{prelude::*, service::fetch, *};
 use serde::{Deserialize, Serialize};
 
 const REPOSITORY_URL: &str = "https://api.github.com/repos/seed-rs/seed/branches/master";

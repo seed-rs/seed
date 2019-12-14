@@ -3,6 +3,8 @@
 [unreleased]
 
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
+- [BREAKING] `fetch` and `storage` moved to `service`.
+- `App` included in `prelude`.
 
 ## v0.5.0
 - Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions.
