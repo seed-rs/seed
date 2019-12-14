@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{
     dom_types::view::View,
-    orders::OrdersContainer,
+    orders::container::OrdersContainer,
     routing,
     vdom::{
         alias::*,

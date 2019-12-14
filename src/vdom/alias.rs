@@ -1,4 +1,4 @@
-use crate::{dom_types::listener::Listener, orders::OrdersContainer, routing};
+use crate::{dom_types::listener::Listener, orders::container::OrdersContainer, routing};
 
 pub type UpdateFn<Ms, Mdl, ElC, GMs> = fn(Ms, &mut Mdl, &mut OrdersContainer<Ms, Mdl, ElC, GMs>);
 pub type SinkFn<Ms, Mdl, ElC, GMs> = fn(GMs, &mut Mdl, &mut OrdersContainer<Ms, Mdl, ElC, GMs>);
