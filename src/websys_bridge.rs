@@ -1,12 +1,17 @@
 //! This file contains interactions with `web_sys`.
 use crate::dom_types;
-use crate::dom_types::{AtValue, El, Namespace, Node, Text};
+use crate::dom_types::{
+    namespace::Namespace,
+    node::el::El,
+    node::{text::Text, Node},
+    values::AtValue,
+};
 
 use wasm_bindgen::JsCast;
 use web_sys::Document;
 
 /// Convenience function to reduce repetition
-fn set_style(el_ws: &web_sys::Node, style: &dom_types::Style) {
+fn set_style(el_ws: &web_sys::Node, style: &dom_types::style::Style) {
     el_ws
         .dyn_ref::<web_sys::Element>()
         .expect("Problem casting Node as Element while setting style")
@@ -348,7 +353,7 @@ impl<Ms> From<&web_sys::Element> for El<Ms> {
         };
 
         // Populate attributes
-        let mut attrs = dom_types::Attrs::empty();
+        let mut attrs = dom_types::attrs::Attrs::empty();
         ws_el
             .get_attribute_names()
             .for_each(&mut |attr_name, _, _| {

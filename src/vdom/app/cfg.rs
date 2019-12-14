@@ -1,4 +1,4 @@
-use crate::dom_types::View;
+use crate::dom_types::view::View;
 use crate::vdom::{
     alias::*,
     builder::{after_mount::IntoAfterMount, before_mount::MountType},

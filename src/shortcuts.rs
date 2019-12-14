@@ -30,7 +30,7 @@ macro_rules! element {
                                 $d (
                                     $d part.update(&mut el);
                                 )*
-                                $crate::dom_types::Node::Element(el)
+                                $crate::dom_types::node::Node::Element(el)
                             }
                         };
                     }
@@ -54,7 +54,7 @@ macro_rules! element_svg {
                                 #[allow(unused_mut)]
                                 let mut el = El::empty_svg($crate::dom_types::Tag::$Tag_camel);
                                 $d ( $d part.update(&mut el); )*
-                                $crate::dom_types::Node::Element(el)
+                                $crate::dom_types::node::Node::Element(el)
                             }
                         };
                     }
@@ -151,7 +151,7 @@ element_svg! {
 #[macro_export]
 macro_rules! empty {
     () => {
-        $crate::dom_types::Node::Empty
+        $crate::dom_types::node::Node::Empty
     };
 }
 
@@ -172,7 +172,7 @@ macro_rules! md {
 #[macro_export]
 macro_rules! plain {
     ($text:expr) => {
-        $crate::dom_types::Node::new_text($text)
+        $crate::dom_types::node::Node::new_text($text)
     };
 }
 
@@ -189,7 +189,7 @@ macro_rules! custom {
                 assert!(tag_changed, "Tag has not been set in `custom!` element. Add e.g. `Tag::from(\"code-block\")`.");
             }
 
-            $crate::dom_types::Node::Element(el)
+            $crate::dom_types::node::Node::Element(el)
         }
     };
 }
@@ -206,7 +206,7 @@ macro_rules! attrs {
                 // And cases like `true.as_attr_value()` or `AtValue::Ignored`.
                 vals.insert($key.into(), (&$value).into());
             )*
-            $crate::dom_types::Attrs::new(vals)
+            $crate::dom_types::attrs::Attrs::new(vals)
         }
      };
 }
@@ -216,7 +216,7 @@ macro_rules! attrs {
 macro_rules! class {
     { $($class:expr $(=> $predicate:expr)? $(,)?)* } => {
         {
-            let mut result = $crate::dom_types::Attrs::empty();
+            let mut result = $crate::dom_types::attrs::Attrs::empty();
             let mut classes = Vec::new();
             $(
                 // refactor to labeled block once stable (https://github.com/rust-lang/rust/issues/48594)
@@ -238,7 +238,7 @@ macro_rules! class {
 macro_rules! id {
     { $id:expr } => {
         {
-            $crate::dom_types::Attrs::from_id($id)
+            $crate::dom_types::attrs::Attrs::from_id($id)
         }
      };
 }
@@ -258,7 +258,7 @@ macro_rules! style {
             $(
                 vals.insert($key.into(), ($value).to_css_value());
             )*
-            $crate::dom_types::Style::new(vals)
+            $crate::dom_types::style::Style::new(vals)
         }
      };
 }
