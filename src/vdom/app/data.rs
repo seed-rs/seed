@@ -3,8 +3,7 @@ use crate::vdom::{
     render_timestamp_delta::{RenderTimestamp, RenderTimestampDelta},
 };
 use crate::{
-    dom_types::node::el::El,
-    events::{Event, Listener},
+    dom_types::{listener::Listener, node::el::El},
     util,
 };
 use std::cell::{Cell, RefCell};
@@ -12,7 +11,7 @@ use wasm_bindgen::closure::Closure;
 
 // TODO: Examine what needs to be ref cells, rcs etc
 
-type StoredPopstate = RefCell<Option<Closure<dyn FnMut(Event)>>>;
+type StoredPopstate = RefCell<Option<Closure<dyn FnMut(web_sys::Event)>>>;
 
 /// Used as part of an interior-mutability pattern, ie Rc<RefCell<>>
 #[allow(clippy::type_complexity, clippy::module_name_repetitions)]

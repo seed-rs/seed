@@ -4,11 +4,11 @@
 use crate::{
     dom_types::{
         self,
+        listener::Listener,
         node::{el::El, Node},
         values::AtValue,
         view::View,
     },
-    events::{self, Listener},
     vdom::{app::App, mailbox::Mailbox},
     websys_bridge,
 };
@@ -86,18 +86,18 @@ where
         || el.tag == dom_types::Tag::TextArea
     {
         let listener = if let Some(checked) = el.attrs.vals.get(&dom_types::At::Checked) {
-            events::Listener::new_control_check(match checked {
+            Listener::new_control_check(match checked {
                 AtValue::Some(_) => true,
                 _ => false,
             })
         } else if let Some(control_val) = el.attrs.vals.get(&dom_types::At::Value) {
-            events::Listener::new_control(match control_val {
+            Listener::new_control(match control_val {
                 AtValue::Some(value) => value.clone(),
                 _ => "".into(),
             })
         } else {
             // If Value is not specified, force the field to be blank.
-            events::Listener::new_control("".to_string())
+            Listener::new_control("".to_string())
         };
         el.listeners.push(listener); // Add to the El, so we can deattach later.
     }

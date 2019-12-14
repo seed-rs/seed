@@ -1,11 +1,11 @@
 use crate::dom_types::{
     attrs::Attrs,
     lifecycle_hooks::{DidMount, DidUpdate, WillUnmount},
+    listener::Listener,
     node::{el::El, text::Text, Node},
     style::Style,
     Tag,
 };
-use crate::events::Listener;
 
 /// `UpdateEl` is used to distinguish arguments in element-creation macros, and handle
 /// each type appropriately.
