@@ -1,10 +1,7 @@
 //! Modelled after the todomvc project's [Typescript-React example](https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react)
 
-#[macro_use]
-extern crate seed;
-use seed::events::Event;
-use seed::prelude::*;
 use seed::storage::Storage;
+use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
 const ENTER_KEY: u32 = 13;

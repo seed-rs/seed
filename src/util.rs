@@ -1,7 +1,6 @@
 //! Provide a wrapper for commonly-used, but verbose `web_sys` features.
 //! This module is decoupled / independent.
 
-use crate::events;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use web_sys;
@@ -322,7 +321,7 @@ where
     custom_event_config.detail(&msg_as_js_value);
 
     let event = web_sys::CustomEvent::new_with_event_init_dict(
-        events::UPDATE_TRIGGER_EVENT_ID,
+        crate::dom_types::event_handler::UPDATE_TRIGGER_EVENT_ID,
         &custom_event_config,
     )
     .expect("Error: TriggerUpdate - create event failed!");

@@ -1,8 +1,4 @@
-//! A simple, cliché example demonstrating structure and syntax.
-
-#[macro_use]
-extern crate seed;
-use seed::{events::Listener, prelude::*};
+use seed::{prelude::*, *};
 
 // Model
 

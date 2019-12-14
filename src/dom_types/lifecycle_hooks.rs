@@ -1,9 +1,16 @@
 // @TODO remove
 
-use crate::{dom_types::MessageMapper, events};
+use crate::dom_types::MessageMapper;
 use std::fmt;
 
 type _HookFn = Box<dyn FnMut(&web_sys::Node)>; // todo
+
+pub(crate) fn fmt_hook_fn<T>(h: &Option<T>) -> &'static str {
+    match h {
+        Some(_) => "Some(.. a dynamic handler ..)",
+        None => "None",
+    }
+}
 
 pub struct LifecycleHooks<Ms> {
     pub did_mount: Option<DidMount<Ms>>,
@@ -26,9 +33,9 @@ impl<Ms> fmt::Debug for LifecycleHooks<Ms> {
         write!(
             f,
             "LifecycleHooks {{ did_mount:{:?}, did_update:{:?}, will_unmount:{} }}",
-            events::fmt_hook_fn(&self.did_mount),
-            events::fmt_hook_fn(&self.did_update),
-            events::fmt_hook_fn(&self.will_unmount)
+            fmt_hook_fn(&self.did_mount),
+            fmt_hook_fn(&self.did_update),
+            fmt_hook_fn(&self.will_unmount)
         )
     }
 }

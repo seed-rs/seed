@@ -2,7 +2,9 @@
 //! These are the types used internally by our virtual dom.
 
 pub mod attrs;
+pub mod event_handler;
 pub mod lifecycle_hooks;
+pub mod listener;
 pub mod namespace;
 pub mod node;
 pub mod style;
@@ -10,7 +12,7 @@ pub mod update_el;
 pub mod values;
 pub mod view;
 
-pub use crate::dom_entity_names::{attributes::At, styles::St, tags::Tag};
+pub use crate::dom_entity_names::{attributes::At, events::Ev, styles::St, tags::Tag};
 
 pub trait MessageMapper<Ms, OtherMs> {
     type SelfWithOtherMs;

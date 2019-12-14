@@ -25,7 +25,6 @@ pub mod dom_entity_names;
 
 pub mod css_units;
 pub mod dom_types;
-pub mod events;
 pub mod fetch;
 mod next_tick;
 pub mod orders;
@@ -85,16 +84,17 @@ pub mod prelude {
     pub use crate::{
         css_units::*,
         dom_types::{
+            event_handler::{
+                input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
+                trigger_update_handler,
+            },
             lifecycle_hooks::{did_mount, did_update, will_unmount},
+            listener::Listener,
             node::{el::El, Node},
             update_el::UpdateEl,
             values::{AsAtValue, AtValue, CSSValue},
             view::View,
-            At, MessageMapper, St, Tag,
-        },
-        events::{
-            input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
-            Ev, Listener,
+            At, Ev, MessageMapper, St, Tag,
         },
         orders::Orders,
         routing::Url,
@@ -117,6 +117,7 @@ pub mod prelude {
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
     pub use wasm_bindgen::prelude::*;
+    pub use web_sys::Event;
 }
 
 #[cfg(test)]
@@ -134,8 +135,7 @@ pub mod tests {
         use crate as seed; // required for macros to work.
         use crate::prelude::*;
         use crate::{
-            dom_types::{node::el::El, update_el::UpdateEl},
-            events::mouse_ev,
+            dom_types::{event_handler::mouse_ev, node::el::El, update_el::UpdateEl},
             orders::Orders,
         };
 
@@ -164,7 +164,7 @@ pub mod tests {
             vec![div!["Hello world"]]
         }
 
-        fn window_events(_model: &Model) -> Vec<seed::events::Listener<Msg>> {
+        fn window_events(_model: &Model) -> Vec<Listener<Msg>> {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 

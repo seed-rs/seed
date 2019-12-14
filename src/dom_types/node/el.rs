@@ -1,13 +1,14 @@
 use crate::dom_types::{
     attrs::Attrs,
     lifecycle_hooks::LifecycleHooks,
+    listener::Listener,
     namespace::Namespace,
     node::{text::Text, Node},
     style::Style,
     values::{AtValue, CSSValue},
     At, MessageMapper, St, Tag,
 };
-use crate::{events::Listener, util, websys_bridge};
+use crate::{util, websys_bridge};
 use std::borrow::Cow;
 
 /// A component in our virtual DOM.

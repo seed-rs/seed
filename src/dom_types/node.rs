@@ -1,9 +1,7 @@
-use crate::{
-    dom_types::{
-        values::{AtValue, CSSValue},
-        MessageMapper, St,
-    },
-    events::Listener,
+use crate::dom_types::{
+    listener::Listener,
+    values::{AtValue, CSSValue},
+    MessageMapper, St,
 };
 use std::borrow::Cow;
 
