@@ -27,14 +27,14 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v1
 
-# @TODO: Doesn't work + `cargo.lock` is not usable anymore.
-#      - name: Cache Rust dependencies
-#        uses: actions/cache@v1
-#        with:
-#          path: target
-#          key: ${{ runner.OS }}-build-${{ hashFiles('**\Cargo.lock') }}
-#          restore-keys: |
-#            ${{ runner.OS }}-build-
+      # @TODO: Doesn't work + `cargo.lock` is not usable anymore.
+      #      - name: Cache Rust dependencies
+      #        uses: actions/cache@v1
+      #        with:
+      #          path: target
+      #          key: ${{ runner.OS }}-build-${{ hashFiles('**\Cargo.lock') }}
+      #          restore-keys: |
+      #            ${{ runner.OS }}-build-
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
@@ -48,16 +48,18 @@ jobs:
       - name: Run tests - Windows or Ubuntu
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
         run: |
-          cargo make test_h chrome
+          # probably a driver problem again
+          # (see error below, we need to wait until wasm-pack > 0.8.1 is released or driver version is updated in NPM package)
+          # cargo make test_h chrome
           cargo make test_h firefox
 
       # uncomment once fixes from https://webkit.org/blog/9609/release-notes-for-safari-technology-preview-94/
       # are included in installed Safari
-#      - name: Run tests - macOS
-#        if: matrix.os == 'macos-latest'
-#        run: |
-#          sudo safaridriver --enable
-#          cargo make test_h safari
+      #      - name: Run tests - macOS
+      #        if: matrix.os == 'macos-latest'
+      #        run: |
+      #          sudo safaridriver --enable
+      #          cargo make test_h safari
 
       - name: Verify
         run: cargo make verify_for_ci
