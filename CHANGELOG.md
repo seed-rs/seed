@@ -1,6 +1,7 @@
 # Changelog
 
 [unreleased]
+- Added support for `Vec<Attr>` and `Vec<Style>` in view macros
 
 ## v0.5.0
 - Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions.
