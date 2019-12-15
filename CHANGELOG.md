@@ -4,6 +4,7 @@
 
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
 - [BREAKING] `fetch` and `storage` moved to `seed::browser::service::{fetch, storage}`.
+- Added support for `Vec<Attr>` and `Vec<Style>` in view macros
 - `App` included in `prelude`.
 - [BREAKING] Seed refactored to use `async/.await`. `fetch.rs` docs updated.
 
