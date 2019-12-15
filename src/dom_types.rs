@@ -79,6 +79,22 @@ impl<Ms> UpdateEl<El<Ms>> for &Attrs {
     }
 }
 
+impl<Ms> UpdateEl<El<Ms>> for Vec<Attrs> {
+    fn update(self, el: &mut El<Ms>) {
+        for at in self {
+            el.attrs.merge(at);
+        }
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<&Attrs> {
+    fn update(self, el: &mut El<Ms>) {
+        for at in self {
+            el.attrs.merge(at.clone());
+        }
+    }
+}
+
 impl<Ms> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self);
@@ -88,6 +104,22 @@ impl<Ms> UpdateEl<El<Ms>> for Style {
 impl<Ms> UpdateEl<El<Ms>> for &Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self.clone());
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<Style> {
+    fn update(self, el: &mut El<Ms>) {
+        for st in self {
+            el.style.merge(st);
+        }
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<&Style> {
+    fn update(self, el: &mut El<Ms>) {
+        for st in self {
+            el.style.merge(st.clone());
+        }
     }
 }
 

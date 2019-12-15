@@ -5,7 +5,7 @@ name = "animation_frame"
 version = "0.1.0"
 dependencies = [
  "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -18,7 +18,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "app_builder"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -80,7 +80,7 @@ dependencies = [
 name = "canvas"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -120,7 +120,7 @@ dependencies = [
 name = "counter"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -144,7 +144,7 @@ dependencies = [
 name = "drop"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -302,7 +302,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "mathjax"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -380,7 +380,7 @@ version = "0.1.0"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "gloo-timers 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -554,7 +554,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "seed"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "cookie 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -607,7 +607,7 @@ name = "server-interaction"
 version = "0.1.0"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.4.2",
+ "seed 0.5.0",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -672,7 +672,7 @@ dependencies = [
 name = "todomvc"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -683,7 +683,7 @@ version = "0.1.0"
 dependencies = [
  "enclose 1.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen-futures 0.3.27 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -752,7 +752,7 @@ name = "user_media"
 version = "0.1.0"
 dependencies = [
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen-futures 0.3.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -886,7 +886,7 @@ name = "websocket"
 version = "0.1.0"
 dependencies = [
  "js-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
- "seed 0.4.2",
+ "seed 0.5.0",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -935,7 +935,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "window-events"
 version = "0.1.0"
 dependencies = [
- "seed 0.4.2",
+ "seed 0.5.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
