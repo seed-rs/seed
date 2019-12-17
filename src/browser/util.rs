@@ -183,25 +183,26 @@ fn set_html_input_element_value(
     input: &web_sys::HtmlInputElement,
     value: &str,
 ) -> Result<(), &'static str> {
-    // https://www.w3schools.com/tags/att_input_value.asp
-    if input.type_().as_str() == "file" {
-        return Err(r#"The value attribute cannot be used with <input type="file">."#);
-    }
+    // In some cases we need to set selection manually because
+    // otherwise the cursor would jump at the end on some platforms.
 
-    let input_is_active =
-        document().active_element().as_ref() == input.dyn_ref::<web_sys::Element>();
+    // `selectionStart` and `selectionEnd`
+    // - "If this element is an input element, and selectionStart does not apply to this element, return null."
+    //   - https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-textarea/input-selectionstart
+    // - => return values if the element type is:
+    //   -  `text`, `search`, `url`, `tel`, `password` and probably also `week`, `month`
+    //   - https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
+    //   - https://html.spec.whatwg.org/multipage/input.html#do-not-apply
+    let selection_update_required = match input.type_().as_str() {
+        // https://www.w3schools.com/tags/att_input_value.asp
+        "file" => return Err(r#"The value attribute cannot be used with <input type="file">."#),
+        "text" | "password" | "search" | "tel" | "url" | "week" | "month" => true,
+        _ => false,
+    };
+
     // We don't want to set selection in inactive input because
     // that input would "steal" focus from the active element on some platforms.
-    if input_is_active {
-        // We need to set selection manually because otherwise the cursor would jump at the end on some platforms.
-
-        // `selectionStart` and `selectionEnd`
-        // - "If this element is an input element, and selectionStart does not apply to this element, return null."
-        //   - https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-textarea/input-selectionstart
-        // - => return values if the element type is:
-        //   -  `text`, `search`, `url`, `tel`, `password` and probably also `week`, `month`
-        //   - https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
-        //   - https://html.spec.whatwg.org/multipage/input.html#do-not-apply
+    if selection_update_required && is_active(input) {
         let selection_start = input
             .selection_start()
             .expect("get `HtmlInputElement` selection start");
@@ -222,6 +223,11 @@ fn set_html_input_element_value(
     }
 
     Ok(())
+}
+
+/// Return true if passed element is active.
+fn is_active(element: &web_sys::Element) -> bool {
+    document().active_element().as_ref() == Some(element)
 }
 
 /// Similar to `get_value`
