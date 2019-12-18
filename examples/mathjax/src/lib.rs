@@ -1,8 +1,6 @@
 #![allow(clippy::non_ascii_literal)]
 
-#[macro_use]
-extern crate seed;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 // Model
 
@@ -79,7 +77,7 @@ fn view(model: &Model) -> impl View<Msg> {
             St::Margin => "auto",
         },
         h1!["Linear algebra cheatsheet"],
-        p!["Intent: Provide a quick reference of definitions and identities that 
+        p!["Intent: Provide a quick reference of definitions and identities that
         are useful in formal, symbolic linear algebra"],
 
         button![
