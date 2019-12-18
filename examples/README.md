@@ -29,3 +29,4 @@ Intended as a demo of basic functionality.
 How to create a drop-zone.
 
 ### [Mathjax](mathjax)
+An example using Mathjax, for LaTeX-like math notation.
