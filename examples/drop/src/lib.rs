@@ -1,6 +1,4 @@
-#[macro_use]
-extern crate seed;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 use wasm_bindgen::JsCast;
 use web_sys::{self, DragEvent, Event, FileList};
 
@@ -38,12 +36,12 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         Msg::Drop(file_list) => {
             model.drop_zone_active = false;
 
-            let mut files = Vec::new();
-            for index in 0..file_list.length() {
-                files.push(file_list.item(index).unwrap());
-            }
-
-            model.drop_zone_content = files.iter().map(|file| div![file.name()]).collect();
+            // FileList is not an iterator, so instead we iterate over (0..len(FileList)) range.
+            // As `.item(index)` returns an `Option` we do `filter_map` to it.
+            model.drop_zone_content = (0..file_list.length())
+                .filter_map(|index| file_list.item(index))
+                .map(|file| div![file.name()])
+                .collect();
         }
     }
 }
@@ -53,6 +51,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 trait IntoDragEvent {
     fn into_drag_event(self) -> DragEvent;
 }
+
 impl IntoDragEvent for Event {
     fn into_drag_event(self) -> DragEvent {
         self.dyn_into::<web_sys::DragEvent>()
@@ -77,7 +76,7 @@ fn view(model: &Model) -> impl View<Msg> {
             St::Width => px(200),
             St::Margin => "auto",
             St::Background => if model.drop_zone_active { "lightgreen" } else { "lightgray" },
-            St::FontFamily => "Sans-Serif",
+            St::FontFamily => "sans-serif",
             St::Display => "flex",
             St::FlexDirection => "column",
             St::JustifyContent => "center",
