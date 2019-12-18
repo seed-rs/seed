@@ -2,7 +2,7 @@
 
 use futures::prelude::*;
 use gloo_timers::future::TimeoutFuture;
-use seed::{*, prelude::*};
+use seed::{prelude::*, *};
 
 // Model
 

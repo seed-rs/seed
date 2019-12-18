@@ -1,9 +1,5 @@
-#[macro_use]
-extern crate seed;
-use futures::future;
-use futures::prelude::*;
-use seed::prelude::*;
-use seed::{document, window};
+use futures::{future, prelude::*};
+use seed::{prelude::*, *};
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlMediaElement, MediaStream, MediaStreamConstraints};

@@ -1,8 +1,5 @@
-#[macro_use]
-extern crate seed;
-
 use js_sys::Function;
-use seed::{prelude::*, App};
+use seed::{prelude::*, App, *};
 use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket};
 
