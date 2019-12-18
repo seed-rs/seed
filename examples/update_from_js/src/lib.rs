@@ -1,9 +1,6 @@
-#[macro_use]
-extern crate seed;
 use enclose::enc;
-use futures::future;
-use futures::prelude::*;
-use seed::prelude::*;
+use futures::{future, prelude::*};
+use seed::{prelude::*, *};
 
 // Model
 
