@@ -37,9 +37,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             model.drop_zone_active = false;
 
             // FileList is not an iterator, so instead we iterate over (0..len(FileList)) range.
-            // As `.item(index)` returns an `Option` we do `filter_map` to it.
+            // As `.item(index)` returns an `Option` we need to unwrap it.
             model.drop_zone_content = (0..file_list.length())
-                .filter_map(|index| file_list.item(index))
+                .map(|index| file_list.item(index).unwrap())
                 .map(|file| div![file.name()])
                 .collect();
         }
