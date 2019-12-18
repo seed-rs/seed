@@ -30,3 +30,7 @@ How to create a drop-zone.
 
 ### [Mathjax](mathjax)
 An example using Mathjax, for LaTeX-like math notation.
+
+### [Orders](orders)
+How to perform commands and send messages from `update` function.
+And how to use [gloo](https://github.com/rustwasm/gloo) timers.
