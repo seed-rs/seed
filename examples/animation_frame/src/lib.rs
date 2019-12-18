@@ -1,7 +1,5 @@
-#[macro_use]
-extern crate seed;
 use rand::prelude::*;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 // Model
 
@@ -27,7 +25,7 @@ impl Car {
 
     fn generate_color() -> CarColor {
         let hue = thread_rng().gen_range(0, 360);
-        format!("hsl({},100%,50%)", hue)
+        format!("hsl({}, 80%, 50%)", hue)
     }
 }
 
@@ -93,14 +91,14 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 // View
 
 fn view(model: &Model) -> Node<Msg> {
-    // scene container + sky
+    // scene container, aslo represents sky
     div![
         style! {
-          St::Overflow => "hidden";
-          St::Width => unit!(100, %);
-          St::Position => "relative";
-          St::Height => unit!(170, px);
-          St::BackgroundColor => "deepskyblue";
+            St::Overflow => "hidden";
+            St::Width => unit!(100, %);
+            St::Position => "relative";
+            St::Height => unit!(170, px);
+            St::BackgroundColor => "deepskyblue";
         },
         // road
         div![style! {
@@ -126,7 +124,7 @@ fn view_car(car: &Car) -> Node<Msg> {
         },
         // windows
         div![style! {
-            St::BackgroundColor => "rgb(255,255,255,0.5)";
+            St::BackgroundColor => "rgb(255, 255, 255, 0.5)";
             St::Left => unit!(car.width * 0.25, px);
             St::Width => unit!(car.width * 0.5, px);
             St::Height => unit!(car.height * 0.6, px);
