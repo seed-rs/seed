@@ -86,7 +86,7 @@ impl<Ms> Listener<Ms> {
         }
     }
 
-    /// Similar to new_control, but for checkboxes
+    /// Similar to `new_control`, but for checkboxes
     pub fn new_control_check(checked: bool) -> Self {
         Self {
             trigger: Ev::Click,

@@ -30,7 +30,7 @@ impl Handler for Server {
         self.out.broadcast(server_msg)
     }
 
-    fn on_request(&mut self, req: &Request) -> Result<(Response)> {
+    fn on_request(&mut self, req: &Request) -> Result<Response> {
         match req.resource() {
             "/ws" => Response::from_request(req),
             _ => Ok(Response::new(
