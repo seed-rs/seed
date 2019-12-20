@@ -6,9 +6,9 @@ edition = "2018"
 
 [dependencies]
 actix = "0.8.3"
-actix-web = "1.0.0"
-actix-files = "0.1.1"
-actix-multipart = "0.1.2"
-tokio-timer = "0.2.11"
+actix-web = "1.0.9"
+actix-files = "0.1.7"
+actix-multipart = "0.1.5"
+tokio-timer = "0.2.12"
 
 shared = { path = "../shared" }

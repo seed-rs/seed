@@ -64,3 +64,13 @@ jobs:
       - name: Verify
         run: cargo make verify_for_ci
 
+
+#driver status: signal: 9
+#driver stdout:
+#  Starting ChromeDriver 79.0.3945.36 (3582db32b33893869b8c1339e8f4d9ed1816f143-refs/branch-heads/3945@{#614}) on port 44449
+#  Only local connections are allowed.
+#  Please protect ports used by ChromeDriver and related test frameworks to prevent access by malicious code.
+#
+#Error: non-200 response code: 404
+#  {"value":{"error":"invalid session id","message":"invalid session id","stacktrace":"#0 0x55747a956479 \u003Cunknown>\n"}}
+

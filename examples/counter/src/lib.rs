@@ -2,10 +2,7 @@
 
 #![allow(clippy::non_ascii_literal)]
 
-#[macro_use]
-extern crate seed;
-
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 // Model
 

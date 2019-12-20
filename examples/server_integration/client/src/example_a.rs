@@ -1,5 +1,5 @@
-use futures::Future;
-use seed::{browser::service::fetch, prelude::*};
+use seed::browser::service::fetch;
+use seed::prelude::*;
 use std::borrow::Cow;
 
 use shared;
@@ -52,11 +52,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-fn send_request(new_message: String) -> impl Future<Item = Msg, Error = Msg> {
+async fn send_request(new_message: String) -> Result<Msg, Msg> {
     fetch::Request::new(get_request_url())
         .method(fetch::Method::Post)
         .send_json(&shared::SendMessageRequestBody { text: new_message })
         .fetch_json_data(Msg::Fetched)
+        .await
 }
 
 // View
