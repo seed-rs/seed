@@ -3,8 +3,8 @@ use crate::app::{
     effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, ShouldRender, UndefinedGMsg,
 };
 use crate::virtual_dom::view::View;
-use futures::Future;
-use std::{collections::VecDeque, convert::identity};
+use futures::future::LocalFutureObj;
+use std::{collections::VecDeque, convert::identity, future::Future};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = UndefinedGMsg> {
@@ -65,9 +65,9 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 
     fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
     where
-        C: Future<Item = Ms, Error = Ms> + 'static,
+        C: Future<Output = Result<Ms, Ms>> + 'static,
     {
-        let effect = Effect::Cmd(Box::new(cmd));
+        let effect = Effect::Cmd(LocalFutureObj::new(Box::new(cmd)));
         self.effects.push_back(effect);
         self
     }
@@ -80,9 +80,9 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 
     fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
     where
-        C: Future<Item = GMs, Error = GMs> + 'static,
+        C: Future<Output = Result<GMs, GMs>> + 'static,
     {
-        let effect = Effect::GCmd(Box::new(g_cmd));
+        let effect = Effect::GCmd(LocalFutureObj::new(Box::new(g_cmd)));
         self.effects.push_back(effect);
         self
     }
