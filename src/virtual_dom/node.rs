@@ -61,7 +61,7 @@ impl<Ms> Node<Ms> {
         self
     }
 
-    /// /// See `El::add_class``
+    /// See `El::add_class`
     pub fn add_class(&mut self, name: impl Into<Cow<'static, str>>) -> &mut Self {
         if let Node::Element(el) = self {
             el.add_class(name);

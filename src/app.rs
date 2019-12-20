@@ -135,11 +135,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     /// by the state change.
     ///
     /// We re-create the whole virtual dom each time (Is there a way around this? Probably not without
-    /// knowing what vars the model holds ahead of time), but only edit the rendered, web_sys dom
+    /// knowing what vars the model holds ahead of time), but only edit the rendered, `web_sys` dom
     /// for things that have been changed.
     /// We re-render the virtual DOM on every change, but (attempt to) only change
-    /// the actual DOM, via web_sys, when we need.
-    /// The model stored in inner is the old model; updated_model is a newly-calculated one.
+    /// the actual DOM, via `web_sys`, when we need.
+    /// The model stored in inner is the old model; `updated_model` is a newly-calculated one.
     pub fn update(&self, message: Ms) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
         queue.push_front(message.into());
