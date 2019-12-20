@@ -1,5 +1,5 @@
 use enclose::enc;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 // Model
 

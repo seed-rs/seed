@@ -21,7 +21,7 @@ pub use crate::dom_entity_names::{At, Ev, St, Tag};
 
 #[cfg(test)]
 pub mod tests {
-    use futures::future::{self, Future};
+    use futures::future;
     use std::{cell::RefCell, rc::Rc};
     use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
@@ -664,11 +664,12 @@ pub mod tests {
 
     /// Tests an update() function that repeatedly sends messages or performs commands.
     #[wasm_bindgen_test(async)]
-    fn update_promises() -> impl Future<Item = (), Error = JsValue> {
+    async fn update_promises() {
         // ARRANGE
 
         // when we call `test_value_sender.send(..)`, future `test_value_receiver` will be marked as resolved
-        let (test_value_sender, test_value_receiver) = futures::oneshot::<Counters>();
+        let (test_value_sender, test_value_receiver) =
+            futures::channel::oneshot::channel::<Counters>();
 
         // big numbers because we want to test if it doesn't blow call-stack
         // Note: Firefox has bigger call stack then Chrome - see http://2ality.com/2014/04/call-stack-size.html
@@ -686,7 +687,7 @@ pub mod tests {
         #[derive(Default)]
         struct Model {
             counters: Counters,
-            test_value_sender: Option<futures::sync::oneshot::Sender<Counters>>,
+            test_value_sender: Option<futures::channel::oneshot::Sender<Counters>>,
         }
         #[derive(Clone)]
         enum Msg {
@@ -744,10 +745,11 @@ pub mod tests {
 
         // ASSERT
         test_value_receiver
+            .await
             .map(|counters| {
                 assert_eq!(counters.messages_received, MESSAGES_TO_SEND);
                 assert_eq!(counters.commands_performed, COMMANDS_TO_PERFORM);
             })
-            .map_err(|_| panic!("test_value_sender.send probably wasn't called!"))
+            .expect("test_value_sender.send probably wasn't called!");
     }
 }

@@ -1,11 +1,11 @@
 use super::MessageMapper;
-use futures::Future;
+use futures::future::LocalFutureObj;
 
 pub enum Effect<Ms, GMs> {
     Msg(Ms),
-    Cmd(Box<dyn Future<Item = Ms, Error = Ms> + 'static>),
+    Cmd(LocalFutureObj<'static, Result<Ms, Ms>>),
     GMsg(GMs),
-    GCmd(Box<dyn Future<Item = GMs, Error = GMs> + 'static>),
+    GCmd(LocalFutureObj<'static, Result<GMs, GMs>>),
 }
 
 impl<Ms, GMs> From<Ms> for Effect<Ms, GMs> {
@@ -19,7 +19,9 @@ impl<Ms: 'static, OtherMs: 'static, GMs> MessageMapper<Ms, OtherMs> for Effect<M
     fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Effect<OtherMs, GMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::Cmd(cmd) => Effect::Cmd(Box::new(cmd.map(f.clone()).map_err(f))),
+            Effect::Cmd(cmd) => Effect::Cmd(LocalFutureObj::new(Box::new(async {
+                cmd.await.map(f.clone()).map_err(f)
+            }))),
             Effect::GMsg(g_msg) => Effect::GMsg(g_msg),
             Effect::GCmd(g_cmd) => Effect::GCmd(g_cmd),
         }
