@@ -1,9 +1,5 @@
-#[macro_use]
-extern crate seed;
 use enclose::enc;
-use futures::future;
-use futures::prelude::*;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 // Model
 
@@ -44,11 +40,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-fn wrap_in_future(f: impl FnOnce()) -> impl Future<Item = Msg, Error = Msg> {
-    future::ok::<(), ()>(()).then(|_| {
-        f();
-        Ok(Msg::NoOp)
-    })
+async fn wrap_in_future(f: impl FnOnce()) -> Result<Msg, Msg> {
+    f();
+    Ok(Msg::NoOp)
 }
 
 // View
@@ -68,6 +62,7 @@ fn view(model: &Model) -> Node<Msg> {
 // Start
 
 #[wasm_bindgen]
+#[must_use]
 // `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
 pub fn start() -> Box<[JsValue]> {
     let app = seed::App::builder(update, view).build_and_start();

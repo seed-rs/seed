@@ -11,7 +11,8 @@ use builder::{
     IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
 };
 use enclose::enclose;
-use futures::Future;
+use futures::future::LocalFutureObj;
+use futures::FutureExt;
 use std::{
     cell::{Cell, RefCell},
     collections::VecDeque,
@@ -134,11 +135,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     /// by the state change.
     ///
     /// We re-create the whole virtual dom each time (Is there a way around this? Probably not without
-    /// knowing what vars the model holds ahead of time), but only edit the rendered, web_sys dom
+    /// knowing what vars the model holds ahead of time), but only edit the rendered, `web_sys` dom
     /// for things that have been changed.
     /// We re-render the virtual DOM on every change, but (attempt to) only change
-    /// the actual DOM, via web_sys, when we need.
-    /// The model stored in inner is the old model; updated_model is a newly-calculated one.
+    /// the actual DOM, via `web_sys`, when we need.
+    /// The model stored in inner is the old model; `updated_model` is a newly-calculated one.
     pub fn update(&self, message: Ms) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
         queue.push_front(message.into());
@@ -337,29 +338,27 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         orders.effects
     }
 
-    fn process_queue_cmd(&self, cmd: Box<dyn Future<Item = Ms, Error = Ms>>) {
+    fn process_queue_cmd(&self, cmd: LocalFutureObj<'static, Result<Ms, Ms>>) {
         let lazy_schedule_cmd = enclose!((self => s) move |_| {
             // schedule future (cmd) to be executed
-            spawn_local(cmd.then(move |res| {
-                let msg_returned_from_effect = res.unwrap_or_else(|err_msg| err_msg);
+            spawn_local(async move {
+                let msg_returned_from_effect = cmd.await.unwrap_or_else(|err_msg| err_msg);
                 // recursive call which can blow the call stack
                 s.update(msg_returned_from_effect);
-                Ok(())
-            }))
+            })
         });
         // we need to clear the call stack by NextTick so we don't exceed it's capacity
         spawn_local(NextTick::new().map(lazy_schedule_cmd));
     }
 
-    fn process_queue_global_cmd(&self, g_cmd: Box<dyn Future<Item = GMs, Error = GMs>>) {
+    fn process_queue_global_cmd(&self, g_cmd: LocalFutureObj<'static, Result<GMs, GMs>>) {
         let lazy_schedule_cmd = enclose!((self => s) move |_| {
             // schedule future (g_cmd) to be executed
-            spawn_local(g_cmd.then(move |res| {
-                let msg_returned_from_effect = res.unwrap_or_else(|err_msg| err_msg);
+            spawn_local(async move {
+                let msg_returned_from_effect = g_cmd.await.unwrap_or_else(|err_msg| err_msg);
                 // recursive call which can blow the call stack
                 s.sink(msg_returned_from_effect);
-                Ok(())
-            }))
+            })
         });
         // we need to clear the call stack by NextTick so we don't exceed it's capacity
         spawn_local(NextTick::new().map(lazy_schedule_cmd));

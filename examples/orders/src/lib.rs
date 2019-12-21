@@ -1,11 +1,7 @@
 #![allow(clippy::non_ascii_literal)]
 
-#[macro_use]
-extern crate seed;
-
-use futures::prelude::*;
 use gloo_timers::future::TimeoutFuture;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 // Model
 
@@ -24,7 +20,6 @@ enum Msg {
     WriteName(String),
     WriteExclamationMarks,
     WriteEmoticon(String),
-    TimeoutError,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -42,23 +37,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::WriteName(name) => model.title.push_str(&name),
         Msg::WriteExclamationMarks => model.title.push_str("!!! "),
         Msg::WriteEmoticon(emoticon) => model.title.push_str(&emoticon),
-        Msg::TimeoutError => {
-            error!("Timeout failed!");
-            orders.skip();
-        }
     }
 }
 
-fn write_exclamation_marks_after_delay() -> impl Future<Item = Msg, Error = Msg> {
-    TimeoutFuture::new(1_000)
-        .map(|_| Msg::WriteExclamationMarks)
-        .map_err(|_| Msg::TimeoutError)
+async fn write_exclamation_marks_after_delay() -> Result<Msg, Msg> {
+    TimeoutFuture::new(1_000).await;
+    Ok(Msg::WriteExclamationMarks)
 }
 
-fn write_emoticon_after_delay(emoticon: String) -> impl Future<Item = Msg, Error = Msg> {
-    TimeoutFuture::new(2_000)
-        .map(|_| Msg::WriteEmoticon(emoticon))
-        .map_err(|_| Msg::TimeoutError)
+async fn write_emoticon_after_delay(emoticon: String) -> Result<Msg, Msg> {
+    TimeoutFuture::new(2_000).await;
+    Ok(Msg::WriteEmoticon(emoticon))
 }
 
 // View

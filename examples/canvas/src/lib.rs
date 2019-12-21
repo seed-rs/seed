@@ -2,14 +2,13 @@
 //! [Web-sys example](https://rustwasm.github.io/wasm-bindgen/examples/2d-canvas.html)
 //! [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawWindow)
 
-#[macro_use]
-extern crate seed;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 type Color = &'static str;
 
 const COLOR_A: Color = "white";
 const COLOR_B: Color = "green";
+
 const CANVAS_ID: &str = "canvas";
 
 // Model

@@ -1,6 +1,6 @@
 use super::{App, RenderTimestampDelta, UndefinedGMsg};
 use crate::virtual_dom::View;
-use futures::Future;
+use std::future::Future;
 
 pub mod container;
 pub mod proxy;
@@ -56,7 +56,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// ```
     fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
     where
-        C: Future<Item = Ms, Error = Ms> + 'static;
+        C: Future<Output = Result<Ms, Ms>> + 'static;
 
     /// Similar to `send_msg`, but calls function `sink` with the given global message.
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self;
@@ -64,7 +64,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// Similar to `perform_cmd`, but result is send to function `sink`.
     fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
     where
-        C: Future<Item = GMs, Error = GMs> + 'static;
+        C: Future<Output = Result<GMs, GMs>> + 'static;
 
     /// Get app instance. Cloning is cheap because `App` contains only `Rc` fields.
     fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs>;

@@ -3,7 +3,8 @@ use super::{
     Orders, OrdersContainer,
 };
 use crate::virtual_dom::View;
-use futures::Future;
+use futures::future::LocalFutureObj;
+use std::future::Future;
 use std::rc::Rc;
 
 #[allow(clippy::module_name_repetitions)]
@@ -78,10 +79,10 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     #[allow(clippy::redundant_closure)]
     fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
     where
-        C: Future<Item = Ms, Error = Ms> + 'static,
+        C: Future<Output = Result<Ms, Ms>> + 'static,
     {
         let f = self.f.clone();
-        let effect = Effect::Cmd(Box::new(cmd)).map_msg(move |ms| f(ms));
+        let effect = Effect::Cmd(LocalFutureObj::new(Box::new(cmd))).map_msg(move |ms| f(ms));
         self.orders_container.effects.push_back(effect);
         self
     }
@@ -94,9 +95,9 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
 
     fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
     where
-        C: Future<Item = GMs, Error = GMs> + 'static,
+        C: Future<Output = Result<GMs, GMs>> + 'static,
     {
-        let effect = Effect::GCmd(Box::new(g_cmd));
+        let effect = Effect::GCmd(LocalFutureObj::new(Box::new(g_cmd)));
         self.orders_container.effects.push_back(effect);
         self
     }

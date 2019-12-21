@@ -1,5 +1,5 @@
-use futures::Future;
-use seed::{browser::service::fetch, prelude::*};
+use seed::browser::service::fetch;
+use seed::prelude::*;
 use std::borrow::Cow;
 
 pub const TITLE: &str = "Example C";
@@ -47,7 +47,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SendRequest => {
             model.status = Status::WaitingForResponse;
             model.response_data_result = None;
-            orders.perform_cmd(send_request(&mut model.request_controller));
+            let request = fetch::Request::new(get_request_url())
+                .controller(|controller| model.request_controller = Some(controller));
+            orders.perform_cmd(request.fetch_string_data(Msg::Fetched));
         }
 
         Msg::AbortRequest => {
@@ -64,14 +66,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.response_data_result = Some(response_data_result);
         }
     }
-}
-
-fn send_request(
-    request_controller: &mut Option<fetch::RequestController>,
-) -> impl Future<Item = Msg, Error = Msg> {
-    fetch::Request::new(get_request_url())
-        .controller(|controller| *request_controller = Some(controller))
-        .fetch_string_data(Msg::Fetched)
 }
 
 // View
