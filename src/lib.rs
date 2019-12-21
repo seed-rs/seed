@@ -16,6 +16,7 @@ pub use crate::{
     },
     browser::service::fetch::{Method, Request},
     browser::service::routing::push_route,
+    browser::virtualDom::{attrs::Attrs, style::Style, listener::Listener},
     browser::url::Url,
     browser::util::{
         self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
