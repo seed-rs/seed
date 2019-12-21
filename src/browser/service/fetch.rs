@@ -109,7 +109,7 @@ pub struct RequestController {
 impl RequestController {
     /// Abort request and disable request's timeout.
     ///
-    /// https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort)
     pub fn abort(&self) {
         // Cancel timeout by dropping it.
         self.timeout_handle.replace(None);
@@ -311,7 +311,7 @@ impl Request {
     /// Set the HTTP method.
     /// Default is GET.
     ///
-    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
     pub const fn method(mut self, method: Method) -> Self {
         self.method = method;
         self
@@ -320,7 +320,7 @@ impl Request {
     /// Add a single header.
     /// String multiple calls to this together to add multiple ones.
     ///
-    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
     pub fn header(mut self, name: &str, value: &str) -> Self {
         self.headers.insert(name.into(), value.into());
         self
@@ -347,43 +347,43 @@ impl Request {
             .body_json(data)
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/cache)
     pub fn cache(mut self, cache: web_sys::RequestCache) -> Self {
         self.cache = Some(cache);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials)
     pub fn credentials(mut self, request_credentials: web_sys::RequestCredentials) -> Self {
         self.credentials = Some(request_credentials);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/integrity
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/integrity)
     pub fn integrity(mut self, integrity: &str) -> Self {
         self.integrity = Some(integrity.into());
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/mode
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/mode)
     pub fn mode(mut self, mode: web_sys::RequestMode) -> Self {
         self.mode = Some(mode);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/redirect
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/redirect)
     pub fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
         self.redirect = Some(redirect);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/referrer
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrer)
     pub fn referrer(mut self, referrer: String) -> Self {
         self.referrer = Some(referrer);
         self
     }
 
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Request/referrerPolicy
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrerPolicy)
     pub fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
         self.referrer_policy = Some(referrer_policy);
         self
@@ -426,7 +426,7 @@ impl Request {
     /// if you want to get body data, you have to use field `raw` to get raw `web_sys::Response`.
     /// (Or use methods like `fetch_string` / `fetch_json`.)
     ///
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
     ///
     /// # Example
     ///
@@ -457,7 +457,7 @@ impl Request {
     }
 
     /// Same as method `fetch`, but try to convert body to `String` and insert it into `Response` field `data`.
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Body/text]
     pub async fn fetch_string<U>(self, f: impl FnOnce(FetchObject<String>) -> U) -> Result<U, U>
     where
         U: 'static,
@@ -519,7 +519,7 @@ impl Request {
     }
 
     /// Fetch and then convert body to `String`. It passes `ResponseDataResult<String>` into callback `f`.
-    /// https://developer.mozilla.org/en-US/docs/Web/API/Body/text
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Body/text)
     pub fn fetch_string_data<U>(
         self,
         f: impl FnOnce(ResponseDataResult<String>) -> U,

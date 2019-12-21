@@ -50,12 +50,14 @@ pub struct Date {
 //}
 
 impl PartialEq for Date {
+    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.wrapped == other.wrapped
     }
 }
 
 impl PartialOrd for Date {
+    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.wrapped.cmp(&other.wrapped))
     }
@@ -111,20 +113,23 @@ impl fmt::Debug for Date {
 //}
 
 impl From<Cdate> for Date {
+    #[must_use]
     fn from(date: Cdate) -> Self {
         Self { wrapped: date }
     }
 }
 
 impl Date {
+    #[must_use]
     pub fn new(year: i32, month: u32, day: u32) -> Self {
         Self {
             wrapped: chrono::Utc.ymd(year, month, day),
         }
     }
 
-    /// We use js_sys::Date, serialize it, then turn it into a Chrono date, due to limitations
+    /// We use `js_sys::Date`, serialize it, then turn it into a Chrono date, due to limitations
     /// with Crono on the wasm target.
+    #[must_use]
     pub fn today() -> Self {
         let today_js = js_sys::Date::new_0();
 
@@ -139,6 +144,7 @@ impl Date {
     }
 
     /// Convert an iso-format date, eg "2019-01-05" for January 5, 2019" to a Date.
+    #[must_use]
     pub fn from_iso(date: &str) -> Self {
         // Chrono needs time too, and can't parse date-only directly.
         let padded = &(date.to_string() + "T000000");
@@ -151,12 +157,14 @@ impl Date {
     }
 
     // todo operator overload with other being diff type?
+    #[must_use]
     pub fn add(&self, dur: chrono::Duration) -> Self {
         Self {
             wrapped: self.wrapped + dur,
         }
     }
 
+    #[must_use]
     pub fn sub(&self, dur: chrono::Duration) -> Self {
         Self {
             wrapped: self.wrapped - dur,
@@ -164,6 +172,7 @@ impl Date {
     }
 
     /// Getters/setters. Perhaps there's a better way.
+    #[must_use]
     pub fn year(&self) -> u16 {
         self.wrapped
             .year()
