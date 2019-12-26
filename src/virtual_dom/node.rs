@@ -19,7 +19,7 @@ pub enum Node<Ms: 'static> {
     Empty,
 }
 
-impl<Ms: 'static> Clone for Node<Ms> {
+impl<Ms: Clone + 'static> Clone for Node<Ms> {
     fn clone(&self) -> Self {
         match self {
             Self::Element(e) => Self::Element(e.clone()),

@@ -25,7 +25,7 @@ pub fn input_ev<Ms, T: ToString + Copy>(
 
     Listener::new(
         &trigger.to_string(),
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Input),
         None,
     )
@@ -42,7 +42,7 @@ pub fn keyboard_ev<Ms, T: ToString + Copy>(
     };
     Listener::new(
         &trigger.to_string(),
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Keyboard),
         None,
     )
@@ -58,7 +58,7 @@ pub fn mouse_ev<Ms, T: ToString + Copy>(
     };
     Listener::new(
         &trigger.to_string(),
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Mouse),
         None,
     )
@@ -74,7 +74,7 @@ pub fn pointer_ev<Ms, T: ToString + Copy>(
     };
     Listener::new(
         &trigger.to_string(),
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Pointer),
         None,
     )
@@ -89,7 +89,7 @@ pub fn raw_ev<Ms, T: ToString + Copy>(
     let closure = move |event: web_sys::Event| (handler.clone())(event);
     Listener::new(
         &trigger.to_string(),
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Raw),
         None,
     )
@@ -107,7 +107,7 @@ where
     let closure = move |_| handler.clone()();
     Listener::new(
         &trigger.to_string(),
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Simple),
         Some(message),
     )
@@ -127,7 +127,7 @@ pub fn trigger_update_ev<Ms>(
     };
     Listener::new(
         UPDATE_TRIGGER_EVENT_ID,
-        Some(Box::new(closure)),
+        Some(closure),
         Some(Category::Custom),
         None,
     )
