@@ -1,11 +1,56 @@
 use super::Ev;
 use crate::app::MessageMapper;
 use crate::browser::{dom::lifecycle_hooks::fmt_hook_fn, util::ClosureNew};
-use enclose::enclose;
-use std::{fmt, mem};
+use std::{fmt, mem, rc::Rc};
 use wasm_bindgen::{closure::Closure, JsCast};
 
-type EventHandler<Ms> = Box<dyn FnMut(web_sys::Event) -> Ms>;
+pub struct EventHandler<Ms>(Rc<dyn Fn(web_sys::Event) -> Ms>);
+
+impl<Ms, F: Fn(web_sys::Event) -> Ms + 'static> From<F> for EventHandler<Ms> {
+    fn from(func: F) -> Self {
+        EventHandler(Rc::new(func))
+    }
+}
+
+impl<Ms> Clone for EventHandler<Ms> {
+    fn clone(&self) -> Self {
+        EventHandler(self.0.clone())
+    }
+}
+
+impl<Ms> PartialEq for EventHandler<Ms> {
+    fn eq(&self, other: &EventHandler<Ms>) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+// TODO: try to print Ms too, maybe by restricting Ms: Debug ?
+impl<Ms> fmt::Debug for EventHandler<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("EventHandler<_>")
+    }
+}
+
+impl<Ms> EventHandler<Ms> {
+    pub fn call(&self, event: web_sys::Event) -> Ms {
+        (self.0)(event)
+    }
+}
+
+impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for EventHandler<Ms> {
+    type SelfWithOtherMs = EventHandler<OtherMs>;
+    fn map_msg(
+        self,
+        msg_mapper: impl FnOnce(Ms) -> OtherMs + 'static + Clone,
+    ) -> EventHandler<OtherMs> {
+        let orignal_handler = self;
+        let new_handler = move |event| {
+            let msg = orignal_handler.call(event);
+            (msg_mapper.clone())(msg)
+        };
+        EventHandler(Rc::new(new_handler))
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Category {
@@ -37,6 +82,21 @@ pub struct Listener<Ms> {
     message: Option<Ms>,
 }
 
+impl<Ms: Clone> Clone for Listener<Ms> {
+    fn clone(&self) -> Self {
+        Self {
+            trigger: self.trigger,
+            handler: self.handler.clone(),
+            // closure shouldn't be cloned since the new Listener isn't related to this Listener
+            closure: None,
+            control_val: self.control_val.clone(),
+            control_checked: self.control_checked,
+            category: self.category,
+            message: self.message.clone(),
+        }
+    }
+}
+
 impl<Ms> fmt::Debug for Listener<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -55,7 +115,7 @@ impl<Ms> fmt::Debug for Listener<Ms> {
 impl<Ms> Listener<Ms> {
     pub fn new(
         trigger: &str,
-        handler: Option<EventHandler<Ms>>,
+        handler: Option<impl Into<EventHandler<Ms>>>,
         category: Option<Category>,
         message: Option<Ms>,
     ) -> Self {
@@ -63,7 +123,7 @@ impl<Ms> Listener<Ms> {
             // We use &str instead of Event here to allow flexibility in helper funcs,
             // without macros by using ToString.
             trigger: trigger.into(),
-            handler,
+            handler: handler.map(Into::into),
             closure: None,
             control_val: None,
             control_checked: None,
@@ -104,10 +164,10 @@ impl<Ms> Listener<Ms> {
     where
         T: AsRef<web_sys::EventTarget>,
     {
-        let mut handler = self.handler.take().expect("Can't find old handler");
+        let handler = self.handler.clone().expect("Can't find old handler");
         // This is the closure ran when a DOM element has an user defined callback
         let closure = Closure::new(move |event: web_sys::Event| {
-            let msg = handler(event);
+            let msg = handler.call(event);
             mailbox.send(msg);
         });
 
@@ -155,16 +215,10 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Listener<Ms> 
     fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Listener<OtherMs> {
         Listener {
             trigger: self.trigger,
-            handler: self.handler.map(enclose!((f) |mut eh| {
-                Box::new(move |event| {
-                    let m = (*eh)(event);
-                    (f.clone())(m)
-                }) as EventHandler<OtherMs>
-            })),
+            handler: self.handler.map(|event| event.map_msg(f.clone())),
             closure: self.closure,
             control_val: self.control_val,
             control_checked: self.control_checked,
-
             category: self.category,
             message: self.message.map(f),
         }

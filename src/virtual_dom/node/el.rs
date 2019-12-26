@@ -205,7 +205,7 @@ impl<Ms> El<Ms> {
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
 /// closures within listeners or lifestyle hooks, so we omit them.
-impl<Ms> Clone for El<Ms> {
+impl<Ms: Clone> Clone for El<Ms> {
     fn clone(&self) -> Self {
         Self {
             tag: self.tag.clone(),
@@ -213,7 +213,7 @@ impl<Ms> Clone for El<Ms> {
             style: self.style.clone(),
             children: self.children.clone(),
             node_ws: self.node_ws.clone(),
-            listeners: Vec::new(),
+            listeners: self.listeners.clone(),
             namespace: self.namespace.clone(),
             hooks: LifecycleHooks::new(),
         }
