@@ -16,6 +16,7 @@ pub const MX_NE_WX: i8 = 1;
 pub const MX_NE_OPS: i8 = 2;
 pub const MX_NE_MX: i8 = 3;
 
+#[must_use]
 pub fn short_name(person: &Person) -> String {
     format! {"{}, {}", person.last_name, person.first_name}
     // todo first initial.
@@ -31,6 +32,7 @@ fn includes_line(lines: &[Line], line: &Line) -> bool {
     false
 }
 
+#[must_use]
 pub fn formation_lines(selected_line: &Line, lines: &[Line]) -> Vec<Line> {
     // todo sloppy clone (in to_owned)
     let mut sorted_lines = lines.to_owned();
@@ -56,6 +58,7 @@ pub fn formation_lines(selected_line: &Line, lines: &[Line]) -> Vec<Line> {
     current_form
 }
 
+#[must_use]
 pub fn is_aircrew(person: &Person) -> bool {
     person.job == PILOT_JOB || person.job == WSO_JOB
 }
