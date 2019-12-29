@@ -2,12 +2,17 @@
 
 [unreleased]
 
+- (placeholder)
+
+## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
-- [BREAKING] `fetch` and `storage` moved to `seed::browser::service::{fetch, storage}`.
+- [BREAKING] `fetch` and `storage` moved to `seed::browser::service::{fetch, storage}`,
+but reimported at the lib level. Ie: `seed::fetch`, and `seed::storage`.
 - Added support for `Vec<Attr>` and `Vec<Style>` in view macros.
 - `App` included in `prelude`.
 - [BREAKING] Seed refactored to use `async/.await`. `fetch.rs` docs updated.
 - Export `Attrs`, `Style`, `Listener`. ie, can import with `seed::Style` etc.
+- Fixed a bug causing the docs not to build.
 
 ## v0.5.0
 - Added helper `seed::canvas()`, and `seed::canvas_context()` helper functions.

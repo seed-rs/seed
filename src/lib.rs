@@ -14,8 +14,10 @@ pub use crate::{
     browser::dom::cast::{
         to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea,
     },
+    browser::service::fetch,
     browser::service::fetch::{Method, Request, ResponseDataResult, ResponseResult},
     browser::service::routing::push_route,
+    browser::service::storage,
     browser::url::Url,
     browser::util::{
         self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
