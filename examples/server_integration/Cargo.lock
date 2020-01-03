@@ -471,7 +471,7 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
- "seed 0.5.0",
+ "seed 0.5.1",
  "serde 1.0.103 (registry+https://github.com/rust-lang/crates.io-index)",
  "shared 0.1.0",
  "wasm-bindgen 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1490,7 +1490,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "seed"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "cookie 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",

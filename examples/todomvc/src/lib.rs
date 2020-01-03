@@ -295,7 +295,7 @@ fn view(model: &Model) -> impl View<Msg> {
     // We use the item's position in model.todos to identify it, because this allows
     // simple in-place modification through indexing. This is different from its
     // position in visible todos, hence the two-step process.
-    let todo_els: Vec<Node<Msg>> = model
+    let todo_els = model
         .todos
         .clone()
         .into_iter()
@@ -306,8 +306,7 @@ fn view(model: &Model) -> impl View<Msg> {
             } else {
                 None
             }
-        })
-        .collect();
+        });
 
     let main = if model.todos.is_empty() {
         seed::empty()

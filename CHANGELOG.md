@@ -2,7 +2,7 @@
 
 [unreleased]
 
-- (placeholder)
+- Implemented `UpdateEl` for `Filter` and `FilterMap`.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
