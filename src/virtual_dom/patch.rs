@@ -127,8 +127,9 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
         // old el vdom's elements are still attached.
 
         // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
+        // Custom elements can't be patched, because we need to reinit them (Issue #325). (@TODO is there a better way?)
         // Something about this element itself is different: patch it.
-        if old.tag != new.tag || old.namespace != new.namespace {
+        if old.tag != new.tag || old.namespace != new.namespace || old.is_custom() {
             let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");
 
             // We don't use assign_nodes directly here, since we only have access to

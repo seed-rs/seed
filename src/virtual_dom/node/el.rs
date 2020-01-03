@@ -201,6 +201,16 @@ impl<Ms> El<Ms> {
             child.strip_ws_nodes_from_self_and_children();
         }
     }
+
+    /// Is it a custom element?
+    pub fn is_custom(&self) -> bool {
+        // @TODO: replace with `matches!` macro once stable
+        if let Tag::Custom(_) = self.tag {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
