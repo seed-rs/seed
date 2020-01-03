@@ -24,13 +24,6 @@ impl<Ms> PartialEq for EventHandler<Ms> {
     }
 }
 
-// TODO: try to print Ms too, maybe by restricting Ms: Debug ?
-impl<Ms> fmt::Debug for EventHandler<Ms> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("EventHandler<_>")
-    }
-}
-
 impl<Ms> EventHandler<Ms> {
     pub fn call(&self, event: web_sys::Event) -> Ms {
         (self.0)(event)
