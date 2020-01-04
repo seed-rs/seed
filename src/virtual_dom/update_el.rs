@@ -20,6 +20,22 @@ impl<Ms> UpdateEl<El<Ms>> for &Attrs {
     }
 }
 
+impl<Ms> UpdateEl<El<Ms>> for Vec<Attrs> {
+    fn update(self, el: &mut El<Ms>) {
+        for at in self {
+            el.attrs.merge(at);
+        }
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<&Attrs> {
+    fn update(self, el: &mut El<Ms>) {
+        for at in self {
+            el.attrs.merge(at.clone());
+        }
+    }
+}
+
 impl<Ms> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self);
@@ -29,6 +45,22 @@ impl<Ms> UpdateEl<El<Ms>> for Style {
 impl<Ms> UpdateEl<El<Ms>> for &Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self.clone());
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<Style> {
+    fn update(self, el: &mut El<Ms>) {
+        for st in self {
+            el.style.merge(st);
+        }
+    }
+}
+
+impl<Ms> UpdateEl<El<Ms>> for Vec<&Style> {
+    fn update(self, el: &mut El<Ms>) {
+        for st in self {
+            el.style.merge(st.clone());
+        }
     }
 }
 
@@ -111,3 +143,58 @@ where
         self.for_each(|item| item.update(el));
     }
 }
+
+// impl<Ms, I, U, P> UpdateEl<El<Ms>> for std::iter::Filter<I, P>
+// where
+//     I: Iterator,
+//     U: UpdateEl<El<Ms>>,
+//     P: FnMut(&I::Item) -> bool,
+// {
+//     fn update(self, el: &mut El<Ms>) {
+//         self.for_each(|item| item.update(el));
+//     }
+// }
+
+//impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
+//where
+//    I: Iterator,
+//    U: UpdateEl<Attrs>,
+//    F: FnMut(I::Item) -> U,
+//{
+//    fn update(self, el: &mut El<Ms>) {
+//        self.for_each(|item| item.update(el));
+//    }
+//}
+//
+//impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
+//where
+//    I: Iterator,
+//    U: UpdateEl<&Attrs>,
+//    F: FnMut(I::Item) -> U,
+//{
+//    fn update(self, el: &mut El<Ms>) {
+//        self.for_each(|item| item.update(el));
+//    }
+//}
+//
+//impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
+//where
+//    I: Iterator,
+//    U: UpdateEl<Style>,
+//    F: FnMut(I::Item) -> U,
+//{
+//    fn update(self, el: &mut El<Ms>) {
+//        self.for_each(|item| item.update(el));
+//    }
+//}
+//
+//impl<Ms, I, U, F> UpdateEl<El<Ms>> for std::iter::Map<I, F>
+//where
+//    I: Iterator,
+//    U: UpdateEl<&Style>,
+//    F: FnMut(I::Item) -> U,
+//{
+//    fn update(self, el: &mut El<Ms>) {
+//        self.for_each(|item| item.update(el));
+//    }
+//}

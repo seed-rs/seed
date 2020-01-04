@@ -68,7 +68,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = "^0.5.0"
+seed = "^0.5.1"
 wasm-bindgen = "^0.2.50"
 ```
 
@@ -82,10 +82,7 @@ Guide section below. Its structure follows [The Elm Architecture](https://guide.
 _lib.rs_:
 
 ```rust
-#[macro_use]
-extern crate seed;
-use seed::prelude::*;
-
+use seed::{*, prelude::*};
 
 // Model
 
