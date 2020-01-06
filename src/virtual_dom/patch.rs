@@ -53,18 +53,6 @@ pub(crate) fn setup_window_listeners<Ms>(
     }
 }
 
-/// Remove a node from the vdom and `web_sys` DOM.
-pub(crate) fn remove_node<Ms>(node: &web_sys::Node, parent: &web_sys::Node, el_vdom: &mut El<Ms>) {
-    virtual_dom_bridge::remove_node(node, parent);
-
-    if let Some(unmount_actions) = &mut el_vdom.hooks.will_unmount {
-        (unmount_actions.actions)(node);
-        //                if let Some(message) = unmount_actions.message.clone() {
-        //                    app.update(message);
-        //                }
-    }
-}
-
 /// Set up controlled components: Input, Select, and `TextArea` elements must stay in sync with the
 /// model; don't let them get out of sync from typing or other events, which can occur if a change
 /// doesn't trigger a re-render, or if something else modifies them using a side effect.
@@ -138,10 +126,6 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
             for mut child in &mut new.children {
                 virtual_dom_bridge::assign_ws_nodes(document, &mut child);
             }
-            if let Some(unmount_actions) = &mut old.hooks.will_unmount {
-                let old_ws = old.node_ws.as_ref().expect("Missing websys el");
-                (unmount_actions.actions)(old_ws);
-            }
             virtual_dom_bridge::attach_el_and_children(new, parent);
 
             let new_ws = new.node_ws.as_ref().expect("Missing websys el");
@@ -204,13 +188,6 @@ pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
     let mut new_children_iter = new_children_iter.peekable();
     let mut last_visited_node: Option<web_sys::Node> = None;
 
-    // TODO: Lines below commented out, because they were breaking `lifecycle_hooks` test
-    //       - did_update was called 2x instead of 1x after 2nd call_patch
-    //
-    //  if let Some(update_actions) = &mut new.hooks.did_update {
-    //      (update_actions.actions)(&old_el_ws) // todo
-    //  }
-
     // Not using .zip() here to make sure we don't miss any of the children when one array is
     // longer than the other.
     while let (Some(_), Some(_)) = (old_children_iter.peek(), new_children_iter.peek()) {
@@ -259,7 +236,7 @@ pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
         match child {
             Node::Element(mut child_el) => {
                 let child_ws = child_el.node_ws.take().expect("Missing child el_ws");
-                remove_node(&child_ws, old_el_ws, &mut child_el);
+                virtual_dom_bridge::remove_node(&child_ws, old_el_ws);
                 child_el.node_ws.replace(child_ws);
             }
             Node::Text(mut child_text) => {
@@ -285,10 +262,6 @@ fn add_el_helper<Ms>(
         .take()
         .expect("Missing websys el when patching Text to Element");
     virtual_dom_bridge::insert_node(&new_ws, parent, next_node);
-
-    if let Some(mount_actions) = &mut new.hooks.did_mount {
-        (mount_actions.actions)(&new_ws);
-    }
 
     new.node_ws.replace(new_ws);
     // Make sure to attach after we've replaced node_ws.
@@ -343,7 +316,7 @@ pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
                         .node_ws
                         .take()
                         .expect("old el_ws missing when patching Element to Empty");
-                    remove_node(&old_el_ws, parent, &mut old_el);
+                    virtual_dom_bridge::remove_node(&old_el_ws, parent);
                     None
                 }
             }

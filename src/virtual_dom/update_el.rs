@@ -1,5 +1,4 @@
 use super::{Attrs, El, Listener, Node, Style, Tag, Text};
-use crate::browser::dom::lifecycle_hooks::{DidMount, DidUpdate, WillUnmount};
 
 /// `UpdateEl` is used to distinguish arguments in element-creation macros, and handle
 /// each type appropriately.
@@ -73,24 +72,6 @@ impl<Ms> UpdateEl<El<Ms>> for Listener<Ms> {
 impl<Ms> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
     fn update(mut self, el: &mut El<Ms>) {
         el.listeners.append(&mut self);
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for DidMount<Ms> {
-    fn update(self, el: &mut El<Ms>) {
-        el.hooks.did_mount = Some(self)
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for DidUpdate<Ms> {
-    fn update(self, el: &mut El<Ms>) {
-        el.hooks.did_update = Some(self)
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for WillUnmount<Ms> {
-    fn update(self, el: &mut El<Ms>) {
-        el.hooks.will_unmount = Some(self)
     }
 }
 

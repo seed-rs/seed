@@ -7,6 +7,7 @@
 - Fixed custom elements patching (#325).
 - Removed unnecessary error message for comment nodes.
 - [BREAKING] Removed deprecated `update` and `trigger_update_ev`.
+- [BREAKING] Removed the remains of lifecycle hooks.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.

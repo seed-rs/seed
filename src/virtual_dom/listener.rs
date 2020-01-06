@@ -1,6 +1,6 @@
 use super::Ev;
 use crate::app::MessageMapper;
-use crate::browser::{dom::lifecycle_hooks::fmt_hook_fn, util::ClosureNew};
+use crate::browser::util::ClosureNew;
 use std::{fmt, mem, rc::Rc};
 use wasm_bindgen::{closure::Closure, JsCast};
 
@@ -45,6 +45,12 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for EventHandler<
     }
 }
 
+impl<Ms> fmt::Debug for EventHandler<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "EventHandler")
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Category {
     Custom,
@@ -57,6 +63,7 @@ pub enum Category {
 }
 
 /// Ev-handling for Elements
+#[derive(Debug)]
 pub struct Listener<Ms> {
     pub trigger: Ev,
     // Handler describes how to handle the event, and is used to generate the closure.
@@ -87,21 +94,6 @@ impl<Ms: Clone> Clone for Listener<Ms> {
             category: self.category,
             message: self.message.clone(),
         }
-    }
-}
-
-impl<Ms> fmt::Debug for Listener<Ms> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Listener {{ trigger:{:#?}, handler:{:#?}, closure:{:#?}, control:{:#?}{:#?}, category:{:#?}",
-            self.trigger,
-            fmt_hook_fn(&self.handler),
-            fmt_hook_fn(&self.closure),
-            self.control_val,
-            self.control_checked,
-            self.category,
-        )
     }
 }
 

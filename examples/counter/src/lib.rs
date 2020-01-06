@@ -75,18 +75,13 @@ fn view(model: &Model) -> impl View<Msg> {
                 St::Border => "2px solid #004422";
                 St::Padding => unit!(20, px);
             },
-            // We can use normal Rust code and comments in the view.
-            h3![text, did_update(|_| log!("This shows when we increment"))],
+            h3![text],
             button![simple_ev(Ev::Click, Msg::Increment), "+"],
             button![simple_ev(Ev::Click, Msg::Decrement), "-"],
-            // Optionally-displaying an element, and lifecycle hooks
+            // We can use normal Rust code and comments in the view.
+            // Optionally-displaying an element
             if model.count >= 10 {
-                h2![
-                    style! {St::Padding => px(50)},
-                    "Nice!",
-                    did_mount(|_| log!("This shows when clicks reach 10")),
-                    will_unmount(|_| log!("This shows when clicks drop below 10")),
-                ]
+                h2![style! {St::Padding => px(50)}, "Nice!",]
             } else {
                 empty![]
             },
