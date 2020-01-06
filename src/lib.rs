@@ -78,7 +78,7 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 /// Introduce `El` and `Tag` into the global namespace for convenience (`El` will be repeated
 /// often in the output type of components), and `UpdateEl`, which is required
 /// for element-creation macros, input event constructors, and the `History` struct.
-/// Expose the `wasm_bindgen` prelude, and lifecycle hooks.
+/// Expose the `wasm_bindgen` prelude.
 pub mod prelude {
     pub use crate::{
         app::{
@@ -89,7 +89,6 @@ pub mod prelude {
         browser::dom::event_handler::{
             input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
         },
-        browser::dom::lifecycle_hooks::{did_mount, did_update, will_unmount},
         browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,

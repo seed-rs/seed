@@ -187,14 +187,6 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
     // Note: Call `set_default_element_state` after child appending,
     // otherwise it breaks autofocus in Firefox
     set_default_element_state(el_ws, el_vdom);
-
-    // Perform side-effects specified for mounting.
-    if let Some(mount_actions) = &mut el_vdom.hooks.did_mount {
-        (mount_actions.actions)(el_ws);
-        //        if let Some(message) = mount_actions.message.clone() {
-        //            app.update(message);
-        //        }
-    }
 }
 
 fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
@@ -231,11 +223,6 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
-    // Perform side-effects specified for updating
-    if let Some(update_actions) = &mut new.hooks.did_update {
-        (update_actions.actions)(old_el_ws) // todo
-    }
-
     if old.attrs != new.attrs {
         for (key, new_val) in &new.attrs.vals {
             match old.attrs.vals.get(key) {

@@ -4,11 +4,9 @@
 pub mod cast;
 pub mod css_units;
 pub mod event_handler;
-pub mod lifecycle_hooks;
 pub mod namespace;
 pub mod virtual_dom_bridge;
 
-pub use lifecycle_hooks::LifecycleHooks;
 pub use namespace::Namespace;
 
 #[cfg(test)]

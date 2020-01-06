@@ -22,7 +22,6 @@ pub use crate::dom_entity_names::{At, Ev, St, Tag};
 #[cfg(test)]
 pub mod tests {
     use futures::future;
-    use std::{cell::RefCell, rc::Rc};
     use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
     use web_sys::{self, Element};
@@ -544,122 +543,6 @@ pub mod tests {
             .expect("not a Text node")
             .clone();
         assert_eq!(text.text_content().unwrap(), "abc");
-    }
-
-    /// Test that the lifecycle hooks are called correctly.
-    #[wasm_bindgen_test]
-    fn lifecycle_hooks() {
-        let app = create_app();
-        use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
-
-        let mailbox = Mailbox::new(|_msg: Msg| {});
-
-        let doc = util::document();
-        let parent = doc.create_element("div").unwrap();
-
-        let mut vdom = seed::empty();
-
-        let node_ref: Rc<RefCell<Option<web_sys::Node>>> = Default::default();
-        let mount_op_counter: Rc<AtomicUsize> = Default::default();
-        let update_counter: Rc<AtomicUsize> = Default::default();
-
-        // A real view() function would recreate these closures on each call.
-        // We create the closures once and then clone them, which is hopefully close enough.
-        let did_mount_func = {
-            let node_ref = node_ref.clone();
-            let mount_op_counter = mount_op_counter.clone();
-            move |node: &web_sys::Node| {
-                node_ref.borrow_mut().replace(node.clone());
-                assert_eq!(
-                    mount_op_counter.fetch_add(1, SeqCst),
-                    0,
-                    "did_mount was called more than once"
-                );
-            }
-        };
-        let did_update_func = {
-            let update_counter = update_counter.clone();
-            move |_node: &web_sys::Node| {
-                update_counter.fetch_add(1, SeqCst);
-            }
-        };
-        let will_unmount_func = {
-            let node_ref = node_ref.clone();
-            move |_node: &web_sys::Node| {
-                node_ref.borrow_mut().take();
-                // If the counter wasn't 1, then either:
-                // * did_mount wasn't called - we already check this elsewhere
-                // * did_mount was called more than once - we already check this elsewhere
-                // * will_unmount was called more than once
-                assert_eq!(
-                    mount_op_counter.fetch_add(1, SeqCst),
-                    1,
-                    "will_unmount was called more than once"
-                );
-            }
-        };
-
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![
-                "a",
-                did_mount(did_mount_func.clone()),
-                did_update(did_update_func.clone()),
-                will_unmount(will_unmount_func.clone()),
-            ],
-            &app,
-        );
-        assert!(
-            node_ref.borrow().is_some(),
-            "did_mount wasn't called and should have been"
-        );
-        assert_eq!(
-            update_counter.load(SeqCst),
-            0,
-            "did_update was called and shouldn't have been"
-        );
-        let first_child = parent.first_child().unwrap();
-        assert!(node_ref
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .is_same_node(Some(&first_child)));
-
-        // now modify the element, see if did_update gets called.
-        vdom = call_patch(
-            &doc,
-            &parent,
-            &mailbox,
-            vdom,
-            div![
-                "a",
-                attrs! {At::Href => "#"},
-                did_mount(did_mount_func.clone()),
-                did_update(did_update_func.clone()),
-                will_unmount(will_unmount_func.clone()),
-            ],
-            &app,
-        );
-        assert!(
-            node_ref
-                .borrow()
-                .as_ref()
-                .expect("will_unmount was called early")
-                .is_same_node(Some(&first_child)),
-            "node reference changed"
-        );
-        assert_eq!(
-            update_counter.load(SeqCst),
-            1,
-            "did_update wasn't called and should have been"
-        );
-
-        // and now unmount the element to see if will_unmount gets called.
-        call_patch(&doc, &parent, &mailbox, vdom, seed::empty(), &app);
-        assert!(node_ref.borrow().is_none(), "will_unmount wasn't called");
     }
 
     /// Tests an update() function that repeatedly sends messages or performs commands.

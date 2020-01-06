@@ -1,7 +1,7 @@
 use super::super::{At, AtValue, Attrs, CSSValue, Listener, Node, St, Style, Tag, Text};
 use crate::app::MessageMapper;
 use crate::browser::{
-    dom::{virtual_dom_bridge, LifecycleHooks, Namespace},
+    dom::{virtual_dom_bridge, Namespace},
     util,
 };
 use std::borrow::Cow;
@@ -22,7 +22,6 @@ pub struct El<Ms: 'static> {
     /// The actual web element/node
     pub node_ws: Option<web_sys::Node>,
     pub namespace: Option<Namespace>,
-    pub hooks: LifecycleHooks<Ms>,
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
@@ -52,7 +51,6 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
                 .collect(),
             node_ws: self.node_ws,
             namespace: self.namespace,
-            hooks: self.hooks.map_msg(f),
         }
     }
 }
@@ -75,7 +73,6 @@ impl<Ms> El<Ms> {
             children: Vec::new(),
             node_ws: None,
             namespace: None,
-            hooks: LifecycleHooks::new(),
         }
     }
 
@@ -214,7 +211,7 @@ impl<Ms> El<Ms> {
 }
 
 /// Allow the user to clone their Els. Note that there's no easy way to clone the
-/// closures within listeners or lifestyle hooks, so we omit them.
+/// closures within listeners, so we omit them.
 impl<Ms: Clone> Clone for El<Ms> {
     fn clone(&self) -> Self {
         Self {
@@ -225,7 +222,6 @@ impl<Ms: Clone> Clone for El<Ms> {
             node_ws: self.node_ws.clone(),
             listeners: self.listeners.clone(),
             namespace: self.namespace.clone(),
-            hooks: LifecycleHooks::new(),
         }
     }
 }

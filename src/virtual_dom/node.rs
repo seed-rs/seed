@@ -11,6 +11,7 @@ pub use text::Text;
 /// A component in our virtual DOM.
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Node)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
