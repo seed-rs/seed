@@ -447,8 +447,12 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
         web_sys::Node::TEXT_NODE => Some(Node::new_text(
             node.text_content().expect("Can't find text"),
         )),
-        _ => {
-            crate::error("Unexpected node type found from raw html");
+        web_sys::Node::COMMENT_NODE => None,
+        node_type => {
+            crate::error(format!(
+                "HTML node type {} is not supported by Seed",
+                node_type
+            ));
             None
         }
     }

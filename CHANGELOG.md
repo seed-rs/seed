@@ -5,6 +5,7 @@
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
 - Added method `El::is_custom(&self)`.
 - Fixed custom elements patching (#325).
+- Removed unnecessary error message for comment nodes.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
