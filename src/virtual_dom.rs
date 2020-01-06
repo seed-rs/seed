@@ -9,7 +9,7 @@ pub mod values;
 pub mod view;
 
 pub use attrs::Attrs;
-pub use listener::{Category, Listener};
+pub use listener::Listener;
 pub use mailbox::Mailbox;
 pub use node::{El, Node, Text};
 pub use style::Style;
