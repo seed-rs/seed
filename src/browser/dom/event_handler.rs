@@ -3,7 +3,6 @@
 
 use super::super::util;
 use crate::virtual_dom::{Category, Listener};
-use serde::de::DeserializeOwned;
 use wasm_bindgen::JsCast;
 
 /// Create an event that passes a String of field text, for fast input handling.
@@ -111,40 +110,4 @@ where
         Some(Category::Simple),
         Some(message),
     )
-}
-
-#[deprecated]
-pub const UPDATE_TRIGGER_EVENT_ID: &str = "triggerupdate";
-
-/// Create an event that passes a `web_sys::CustomEvent`, allowing easy access
-/// to detail() and then trigger update
-#[deprecated]
-pub fn trigger_update_ev<Ms>(
-    handler: impl FnOnce(web_sys::CustomEvent) -> Ms + 'static + Clone,
-) -> Listener<Ms> {
-    let closure = move |event: web_sys::Event| {
-        (handler.clone())(event.dyn_ref::<web_sys::CustomEvent>().unwrap().clone())
-    };
-    Listener::new(
-        UPDATE_TRIGGER_EVENT_ID,
-        Some(closure),
-        Some(Category::Custom),
-        None,
-    )
-}
-
-///// Update app state directly, ie not from a Listener/event.
-//pub fn update<Ms>() -> Listener<Ms> {
-//    let closure = move |event: web_sys::Event| handler(event);
-//    Listener::new(&trigger.to_string(), Some(Box::new(closure)))
-//}
-
-/// Trigger update function from outside of App
-#[deprecated]
-pub fn trigger_update_handler<Ms: DeserializeOwned>() -> Listener<Ms> {
-    trigger_update_ev(|ev| {
-        ev.detail()
-            .into_serde()
-            .expect("trigger_update_handler: Deserialization failed!")
-    })
 }

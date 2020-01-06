@@ -314,31 +314,3 @@ pub fn error<T: std::fmt::Debug>(object: T) -> T {
     web_sys::console::error_1(&format!("{:#?}", &object).into());
     object
 }
-
-/// Trigger update function.
-/// It requires Msg to be (De)serializable
-/// and to register `trigger_update_handler` in `window_events`.
-/// Consider to use [`App::update`](struct.App.html#method.update) if you have access to the [`App`](struct.App.html) instance.
-///
-/// _Note_: Function is `deprecated`. See examples `update_from_js` and `websocket` for alternatives.
-#[deprecated]
-pub fn update<Ms>(msg: Ms)
-where
-    Ms: 'static + serde::Serialize,
-{
-    let msg_as_js_value = wasm_bindgen::JsValue::from_serde(&msg)
-        .expect("Error: TriggerUpdate - can't serialize given msg!");
-
-    let mut custom_event_config = web_sys::CustomEventInit::new();
-    custom_event_config.detail(&msg_as_js_value);
-
-    let event = web_sys::CustomEvent::new_with_event_init_dict(
-        super::dom::event_handler::UPDATE_TRIGGER_EVENT_ID,
-        &custom_event_config,
-    )
-    .expect("Error: TriggerUpdate - create event failed!");
-
-    window()
-        .dispatch_event(&event)
-        .expect("Error: TriggerUpdate - dispatch)event failed!");
-}
