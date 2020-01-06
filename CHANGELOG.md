@@ -6,6 +6,7 @@
 - Added method `El::is_custom(&self)`.
 - Fixed custom elements patching (#325).
 - Removed unnecessary error message for comment nodes.
+- [BREAKING] Removed deprecated `update` and `trigger_update_ev`.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.

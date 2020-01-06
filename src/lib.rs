@@ -21,7 +21,7 @@ pub use crate::{
     browser::url::Url,
     browser::util::{
         self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
-        log, update, window,
+        log, window,
     },
     virtual_dom::{attrs::Attrs, listener::Listener, style::Style},
 };
@@ -87,7 +87,7 @@ pub mod prelude {
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{
-            input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, trigger_update_handler,
+            input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
         },
         browser::dom::lifecycle_hooks::{did_mount, did_update, will_unmount},
         browser::util::{
