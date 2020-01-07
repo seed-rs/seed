@@ -223,48 +223,46 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
 pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
-    if old.attrs != new.attrs {
-        for (key, new_val) in &new.attrs.vals {
-            match old.attrs.vals.get(key) {
-                Some(old_val) => {
-                    // The value's different
-                    if old_val != new_val {
-                        set_attr_value(old_el_ws, key, new_val);
-                    }
-                }
-                None => {
+    for (key, new_val) in &new.attrs.vals {
+        match old.attrs.vals.get(key) {
+            Some(old_val) => {
+                // The value's different
+                if old_val != new_val {
                     set_attr_value(old_el_ws, key, new_val);
                 }
             }
-
-            // We handle value in the vdom using attributes, but the DOM needs
-            // to use set_value or set_checked.
-            match key {
-                At::Value => match new_val {
-                    AtValue::Some(new_val) => crate::util::set_value(old_el_ws, new_val),
-                    AtValue::None | AtValue::Ignored => crate::util::set_value(old_el_ws, ""),
-                },
-                At::Checked => match new_val {
-                    AtValue::Some(_) | AtValue::None => crate::util::set_checked(old_el_ws, true),
-                    AtValue::Ignored => crate::util::set_checked(old_el_ws, false),
-                },
-                _ => Ok(()),
+            None => {
+                set_attr_value(old_el_ws, key, new_val);
             }
-            .unwrap_or_else(|err| {
-                crate::error(err);
-            })
         }
-        // Remove attributes that aren't in the new vdom.
-        for name in old.attrs.vals.keys() {
-            if new.attrs.vals.get(name).is_none() {
-                // todo get to the bottom of this
-                match old_el_ws.dyn_ref::<web_sys::Element>() {
-                    Some(el) => el
-                        .remove_attribute(name.as_str())
-                        .expect("Removing an attribute"),
-                    None => {
-                        crate::error("Minor error on html element (setting attrs)");
-                    }
+
+        // We handle value in the vdom using attributes, but the DOM needs
+        // to use set_value or set_checked.
+        match key {
+            At::Value => match new_val {
+                AtValue::Some(new_val) => crate::util::set_value(old_el_ws, new_val),
+                AtValue::None | AtValue::Ignored => crate::util::set_value(old_el_ws, ""),
+            },
+            At::Checked => match new_val {
+                AtValue::Some(_) | AtValue::None => crate::util::set_checked(old_el_ws, true),
+                AtValue::Ignored => crate::util::set_checked(old_el_ws, false),
+            },
+            _ => Ok(()),
+        }
+        .unwrap_or_else(|err| {
+            crate::error(err);
+        })
+    }
+    // Remove attributes that aren't in the new vdom.
+    for name in old.attrs.vals.keys() {
+        if new.attrs.vals.get(name).is_none() {
+            // todo get to the bottom of this
+            match old_el_ws.dyn_ref::<web_sys::Element>() {
+                Some(el) => el
+                    .remove_attribute(name.as_str())
+                    .expect("Removing an attribute"),
+                None => {
+                    crate::error("Minor error on html element (setting attrs)");
                 }
             }
         }

@@ -1,7 +1,7 @@
 //! This module contains code related to patching the VDOM. It can be considered
 //! a subset of the `vdom` module.
 
-use super::{At, AtValue, El, Listener, Mailbox, Node, Tag, View};
+use super::{El, Listener, Mailbox, Node, View};
 use crate::app::App;
 use crate::browser::dom::virtual_dom_bridge;
 use wasm_bindgen::JsCast;
@@ -53,46 +53,6 @@ pub(crate) fn setup_window_listeners<Ms>(
     }
 }
 
-/// Set up controlled components: Input, Select, and `TextArea` elements must stay in sync with the
-/// model; don't let them get out of sync from typing or other events, which can occur if a change
-/// doesn't trigger a re-render, or if something else modifies them using a side effect.
-/// Handle controlled inputs: Ie force sync with the model.
-fn setup_input_listener<Ms>(el: &mut El<Ms>)
-where
-    Ms: 'static,
-{
-    if el.tag == Tag::Input || el.tag == Tag::Select || el.tag == Tag::TextArea {
-        let listener = if let Some(checked) = el.attrs.vals.get(&At::Checked) {
-            Listener::new_control_check(match checked {
-                AtValue::Some(_) => true,
-                _ => false,
-            })
-        } else if let Some(control_val) = el.attrs.vals.get(&At::Value) {
-            Listener::new_control(match control_val {
-                AtValue::Some(value) => value.clone(),
-                _ => "".into(),
-            })
-        } else {
-            // If Value is not specified, force the field to be blank.
-            Listener::new_control("".to_string())
-        };
-        el.listeners.push(listener); // Add to the El, so we can deattach later.
-    }
-}
-
-/// Recursively sets up input listeners
-pub(crate) fn setup_input_listeners<Ms>(el_vdom: &mut El<Ms>)
-where
-    Ms: 'static,
-{
-    setup_input_listener(el_vdom);
-    for child in &mut el_vdom.children {
-        if let Node::Element(child_el) = child {
-            setup_input_listener(child_el);
-        }
-    }
-}
-
 fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     document: &Document,
     mut old: El<Ms>,
@@ -101,48 +61,46 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, ElC, GMs>,
 ) -> Option<&'a web_sys::Node> {
-    if old != *new {
-        // At this step, we already assume we have the right element - either
-        // by entering this func directly for the top-level, or recursively after
-        // analyzing children
+    // At this step, we already assume we have the right element - either
+    // by entering this func directly for the top-level, or recursively after
+    // analyzing children
 
-        // If the tag's different, we must redraw the element and its children; there's
-        // no way to patch one element type into another.
-        // TODO: forcing a rerender for different listeners is inefficient
-        // TODO:, but I'm not sure how to patch them.
+    // If the tag's different, we must redraw the element and its children; there's
+    // no way to patch one element type into another.
+    // TODO: forcing a rerender for different listeners is inefficient
+    // TODO:, but I'm not sure how to patch them.
 
-        // Assume all listeners have been removed from the old el_ws (if any), and the
-        // old el vdom's elements are still attached.
+    // Assume all listeners have been removed from the old el_ws (if any), and the
+    // old el vdom's elements are still attached.
 
-        // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
-        // Custom elements can't be patched, because we need to reinit them (Issue #325). (@TODO is there a better way?)
-        // Something about this element itself is different: patch it.
-        if old.tag != new.tag || old.namespace != new.namespace || old.is_custom() {
-            let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");
+    // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
+    // Custom elements can't be patched, because we need to reinit them (Issue #325). (@TODO is there a better way?)
+    // Something about this element itself is different: patch it.
+    if old.tag != new.tag || old.namespace != new.namespace || old.is_custom() {
+        let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");
 
-            // We don't use assign_nodes directly here, since we only have access to
-            // the El, not wrapping node.
-            new.node_ws = Some(virtual_dom_bridge::make_websys_el(new, document));
-            for mut child in &mut new.children {
-                virtual_dom_bridge::assign_ws_nodes(document, &mut child);
-            }
-            virtual_dom_bridge::attach_el_and_children(new, parent);
-
-            let new_ws = new.node_ws.as_ref().expect("Missing websys el");
-            virtual_dom_bridge::replace_child(new_ws, old_el_ws, parent);
-
-            attach_listeners(new, mailbox);
-            // We've re-rendered this child and all children; we're done with this recursion.
-            return new.node_ws.as_ref();
-        } else {
-            // Patch parts of the Element.
-            let old_el_ws = old
-                .node_ws
-                .as_ref()
-                .expect("missing old el_ws when patching non-empty el")
-                .clone();
-            virtual_dom_bridge::patch_el_details(&mut old, new, &old_el_ws);
+        // We don't use assign_nodes directly here, since we only have access to
+        // the El, not wrapping node.
+        new.node_ws = Some(virtual_dom_bridge::make_websys_el(new, document));
+        for mut child in &mut new.children {
+            virtual_dom_bridge::assign_ws_nodes(document, &mut child);
         }
+        virtual_dom_bridge::attach_el_and_children(new, parent);
+
+        let new_ws = new.node_ws.as_ref().expect("Missing websys el");
+        virtual_dom_bridge::replace_child(new_ws, old_el_ws, parent);
+
+        attach_listeners(new, mailbox);
+        // We've re-rendered this child and all children; we're done with this recursion.
+        return new.node_ws.as_ref();
+    } else {
+        // Patch parts of the Element.
+        let old_el_ws = old
+            .node_ws
+            .as_ref()
+            .expect("missing old el_ws when patching non-empty el")
+            .clone();
+        virtual_dom_bridge::patch_el_details(&mut old, new, &old_el_ws);
     }
 
     let old_el_ws = old.node_ws.take().unwrap();
