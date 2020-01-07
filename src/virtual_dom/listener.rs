@@ -63,10 +63,6 @@ pub struct Listener<Ms> {
     pub handler: Option<EventHandler<Ms>>,
     // We store closure here so we can detach it later.
     pub closure: Option<Closure<dyn FnMut(web_sys::Event)>>,
-    // Control listeners prevent input on controlled input elements, and
-    // are not assoicated with a message.
-    pub control_val: Option<String>,
-    pub control_checked: Option<bool>,
 }
 
 impl<Ms> Clone for Listener<Ms> {
@@ -76,8 +72,6 @@ impl<Ms> Clone for Listener<Ms> {
             handler: self.handler.clone(),
             // closure shouldn't be cloned since the new Listener isn't related to this Listener
             closure: None,
-            control_val: self.control_val.clone(),
-            control_checked: self.control_checked,
         }
     }
 }
@@ -90,31 +84,6 @@ impl<Ms> Listener<Ms> {
             trigger: trigger.into(),
             handler: handler.map(Into::into),
             closure: None,
-            control_val: None,
-            control_checked: None,
-        }
-    }
-
-    /// Set up a listener that keeps the field's value in sync with the specific value,
-    /// from the model
-    pub fn new_control(val: String) -> Self {
-        Self {
-            trigger: Ev::Input,
-            handler: None,
-            closure: None,
-            control_val: Some(val),
-            control_checked: None,
-        }
-    }
-
-    /// Similar to `new_control`, but for checkboxes
-    pub fn new_control_check(checked: bool) -> Self {
-        Self {
-            trigger: Ev::Click,
-            handler: None,
-            closure: None,
-            control_val: None,
-            control_checked: Some(checked),
         }
     }
 
@@ -172,8 +141,6 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Listener<Ms> 
             trigger: self.trigger,
             handler: self.handler.map(|event| event.map_msg(f.clone())),
             closure: self.closure,
-            control_val: self.control_val,
-            control_checked: self.control_checked,
         }
     }
 }

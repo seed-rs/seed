@@ -8,7 +8,8 @@
 - Removed unnecessary error message for comment nodes.
 - [BREAKING] Removed deprecated `update` and `trigger_update_ev`.
 - [BREAKING] Removed the remains of lifecycle hooks.
-- [BREAKING] Removed `category` and `message` from `Listener`.
+- [BREAKING] Removed `category`, `message`, `control_val` and `control_checked` from `Listener`.
+- Fixed `value` and `checked` setting for input elements.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.

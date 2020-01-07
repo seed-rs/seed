@@ -498,7 +498,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         };
 
         self.setup_window_listeners();
-        patch::setup_input_listeners(&mut self.data.main_el_vdom.borrow_mut().as_mut().unwrap());
         patch::attach_listeners(
             self.data.main_el_vdom.borrow_mut().as_mut().unwrap(),
             &self.mailbox(),
