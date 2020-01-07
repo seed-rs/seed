@@ -40,7 +40,7 @@ fn routes(url: Url) -> Option<Msg> {
 // Window Events
 // ------ ------
 
-fn window_events(_: &Model) -> Vec<Listener<Msg>> {
+fn window_events(_: &Model) -> Vec<EventHandler<Msg>> {
     vec![keyboard_ev(Ev::KeyDown, Msg::KeyPressed)]
 }
 

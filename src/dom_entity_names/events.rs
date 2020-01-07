@@ -5,11 +5,12 @@ macro_rules! make_events {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
         /// [https://developer.mozilla.org/en-US/docs/Web/Evs](https://developer.mozilla.org/en-US/docs/Web/Evs)
-        #[derive(Clone, Copy, Debug, PartialEq)]
+        #[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Eq)]
         pub enum Ev {
             $(
                 $event_camel,
             )+
+            Custom(String)
         }
 
         impl Ev {
@@ -18,6 +19,7 @@ macro_rules! make_events {
                     $ (
                         Ev::$event_camel => $event,
                     ) +
+                    Ev::Custom(val) => &val
                 }
             }
         }
@@ -29,8 +31,7 @@ macro_rules! make_events {
                           $event => Ev::$event_camel,
                     ) +
                     _ => {
-                        crate::error(&format!("Can't find this event: {}", event));
-                        Ev::Click
+                        Ev::Custom(event.to_owned())
                     }
                 }
             }
@@ -43,20 +44,19 @@ macro_rules! make_events {
                           $event => Ev::$event_camel,
                     ) +
                     _ => {
-                        crate::error(&format!("Can't find this event: {}", event));
-                        Ev::Click
+                        Ev::Custom(event)
                     }
                 }
             }
         }
 
         impl ToString for Ev {
-            fn to_string( & self ) -> String {
+            fn to_string( &self ) -> String {
                 match self {
                     $ (
                         Ev::$ event_camel => $ event.into(),
                     ) +
-
+                    Ev::Custom(val) => val.clone()
                 }
             }
         }

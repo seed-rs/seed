@@ -95,7 +95,19 @@ fn view(model: &Model) -> impl View<Msg> {
     ]
 }
 
+fn window_events(_: &Model) -> Vec<EventHandler<Msg>> {
+    vec![
+        mouse_ev(Ev::Click, |_| Msg::Increment),
+        mouse_ev(Ev::Click, |_| Msg::Increment),
+        mouse_ev(Ev::Click, |_| Msg::Increment),
+        mouse_ev(Ev::Click, |_| Msg::Increment),
+        mouse_ev(Ev::Click, |_| Msg::Increment),
+    ]
+}
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view).build_and_start();
+    seed::App::builder(update, view)
+        .window_events(window_events)
+        .build_and_start();
 }

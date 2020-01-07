@@ -1,5 +1,5 @@
 pub mod attrs;
-pub mod listener;
+pub mod event_handler_manager;
 pub mod mailbox;
 pub mod node;
 pub mod patch;
@@ -9,7 +9,7 @@ pub mod values;
 pub mod view;
 
 pub use attrs::Attrs;
-pub use listener::Listener;
+pub use event_handler_manager::{EventHandler, EventHandlerManager, Listener};
 pub use mailbox::Mailbox;
 pub use node::{El, Node, Text};
 pub use style::Style;
@@ -74,14 +74,14 @@ pub mod tests {
         let mailbox = Mailbox::new(|_msg: Msg| {});
 
         let doc = util::document();
-        let parent = doc.create_element("div").unwrap();
+        let parent = doc.create_element("div").expect("parent");
 
         let mut vdom = Node::Element(El::empty(Tag::Div));
         virtual_dom_bridge::assign_ws_nodes(&doc, &mut vdom);
         // clone so we can keep using it after vdom is modified
         if let Node::Element(vdom_el) = vdom.clone() {
-            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
-            parent.append_child(&old_ws).unwrap();
+            let old_ws = vdom_el.node_ws.as_ref().expect("node_ws").clone();
+            parent.append_child(&old_ws).expect("successful appending");
 
             assert_eq!(parent.children().length(), 1);
             assert_eq!(old_ws.child_nodes().length(), 0);
@@ -91,7 +91,11 @@ pub mod tests {
             assert!(old_ws.is_same_node(parent.first_child().as_ref()));
             assert_eq!(old_ws.child_nodes().length(), 1);
             assert_eq!(
-                old_ws.first_child().unwrap().text_content().unwrap(),
+                old_ws
+                    .first_child()
+                    .expect("first_child")
+                    .text_content()
+                    .expect("first_child's text_content"),
                 "text"
             );
 
@@ -111,23 +115,26 @@ pub mod tests {
                 old_ws
                     .child_nodes()
                     .item(0)
-                    .unwrap()
+                    .expect("0. item")
                     .text_content()
-                    .unwrap(),
+                    .expect("0. item's text_content"),
                 "text"
             );
             assert_eq!(
                 old_ws
                     .child_nodes()
                     .item(1)
-                    .unwrap()
+                    .expect("1. item")
                     .text_content()
-                    .unwrap(),
+                    .expect("1. item's text_content"),
                 "more text"
             );
-            let child3 = old_ws.child_nodes().item(2).unwrap();
+            let child3 = old_ws.child_nodes().item(2).expect("child3");
             assert_eq!(child3.node_name(), "LI");
-            assert_eq!(child3.text_content().unwrap(), "even more text");
+            assert_eq!(
+                child3.text_content().expect("child3's text_content"),
+                "even more text"
+            );
         } else {
             panic!("Node not Element")
         }

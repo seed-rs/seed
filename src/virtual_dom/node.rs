@@ -1,10 +1,11 @@
-use super::{AtValue, CSSValue, Listener, St};
+use super::{AtValue, CSSValue, St};
 use crate::app::MessageMapper;
 use std::borrow::Cow;
 
 pub mod el;
 pub mod text;
 
+use crate::EventHandler;
 pub use el::El;
 pub use text::Text;
 
@@ -12,7 +13,7 @@ pub use text::Text;
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Node)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
     //    Svg(El<Ms>),  // May be best to handle using namespace field on El
@@ -78,10 +79,10 @@ impl<Ms> Node<Ms> {
         self
     }
 
-    /// See `El::add_listener`
-    pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
+    /// See `El::add_event_handler`
+    pub fn add_listener(&mut self, event_handler: EventHandler<Ms>) -> &mut Self {
         if let Node::Element(el) = self {
-            el.add_listener(listener);
+            el.add_event_handler(event_handler);
         }
         self
     }
