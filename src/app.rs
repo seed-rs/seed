@@ -5,7 +5,7 @@ use crate::browser::{
     util::{self, window, ClosureNew},
     NextTick, Url,
 };
-use crate::virtual_dom::{patch, El, Mailbox, Node, Tag, View};
+use crate::virtual_dom::{patch, El, EventHandlerManager, Mailbox, Node, Tag, View};
 use builder::{
     init::{Init, InitFn},
     IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
@@ -169,16 +169,15 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
     }
 
-    pub fn setup_window_listeners(&self) {
+    pub fn patch_window_event_handlers(&self) {
         if let Some(window_events) = self.cfg.window_events {
-            let mut new_listeners = (window_events)(self.data.model.borrow().as_ref().unwrap());
-            patch::setup_window_listeners(
-                &util::window(),
-                &mut self.data.window_listeners.borrow_mut(),
-                &mut new_listeners,
-                &self.mailbox(),
-            );
-            self.data.window_listeners.replace(new_listeners);
+            let new_event_handlers = (window_events)(self.data.model.borrow().as_ref().unwrap());
+            let new_manager = EventHandlerManager::new_with_event_handlers(new_event_handlers);
+
+            let mut old_manager = self.data.window_event_handler_manager.replace(new_manager);
+            let mut new_manager = self.data.window_event_handler_manager.borrow_mut();
+
+            new_manager.attach_listeners(util::window(), Some(&mut old_manager), &self.mailbox());
         }
     }
 
@@ -222,7 +221,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 popstate_closure: RefCell::new(None),
                 hashchange_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
-                window_listeners: RefCell::new(Vec::new()),
+                window_event_handler_manager: RefCell::new(EventHandlerManager::new()),
                 msg_listeners: RefCell::new(Vec::new()),
                 scheduled_render_handle: RefCell::new(None),
                 after_next_render_callbacks: RefCell::new(Vec::new()),
@@ -275,8 +274,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             for child in &mut new.children {
                 match child {
                     Node::Element(child_el) => {
-                        virtual_dom_bridge::attach_el_and_children(child_el, &self.cfg.mount_point);
-                        patch::attach_listeners(child_el, &self.mailbox());
+                        virtual_dom_bridge::attach_el_and_children(
+                            child_el,
+                            &self.cfg.mount_point,
+                            &self.mailbox(),
+                        );
                     }
                     Node::Text(top_child_text) => {
                         virtual_dom_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
@@ -301,7 +303,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             &mut orders,
         );
 
-        self.setup_window_listeners();
+        self.patch_window_event_handlers();
 
         match orders.should_render {
             ShouldRender::Render => self.schedule_render(),
@@ -325,7 +327,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             );
         }
 
-        self.setup_window_listeners();
+        self.patch_window_event_handlers();
 
         match orders.should_render {
             ShouldRender::Render => self.schedule_render(),
@@ -390,16 +392,12 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         let mut new = El::empty(Tag::Placeholder);
         new.children = (self.cfg.view)(self.data.model.borrow().as_ref().unwrap()).els();
 
-        let mut old = self
+        let old = self
             .data
             .main_el_vdom
             .borrow_mut()
             .take()
             .expect("missing main_el_vdom");
-
-        // Detach all old listeners before patching. We'll re-add them as required during patching.
-        // We'll get a runtime panic if any are left un-removed.
-        patch::detach_listeners(&mut old);
 
         patch::patch_els(
             &self.cfg.document,
@@ -497,11 +495,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             UrlHandling::None => (),
         };
 
-        self.setup_window_listeners();
-        patch::attach_listeners(
-            self.data.main_el_vdom.borrow_mut().as_mut().unwrap(),
-            &self.mailbox(),
-        );
+        self.patch_window_event_handlers();
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.

@@ -1,4 +1,6 @@
-use super::super::{At, AtValue, Attrs, CSSValue, Listener, Node, St, Style, Tag, Text};
+use super::super::{
+    At, AtValue, Attrs, CSSValue, EventHandler, EventHandlerManager, Node, St, Style, Tag, Text,
+};
 use crate::app::MessageMapper;
 use crate::browser::{
     dom::{virtual_dom_bridge, Namespace},
@@ -7,9 +9,12 @@ use crate::browser::{
 use std::borrow::Cow;
 
 /// A component in our virtual DOM.
+///
+/// _Note:_ `Listener`s in `El`'s `event_handler_manager` are not cloned, but recreated during VDOM patching.
+///
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Element)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
-#[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
+#[derive(Debug, Clone)] // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -17,11 +22,11 @@ pub struct El<Ms: 'static> {
     pub tag: Tag,
     pub attrs: Attrs,
     pub style: Style,
-    pub listeners: Vec<Listener<Ms>>,
+    pub event_handler_manager: EventHandlerManager<Ms>,
     pub children: Vec<Node<Ms>>,
-    /// The actual web element/node
-    pub node_ws: Option<web_sys::Node>,
     pub namespace: Option<Namespace>,
+    /// The actual DOM element/node.
+    pub node_ws: Option<web_sys::Node>,
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
@@ -39,11 +44,6 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             tag: self.tag,
             attrs: self.attrs,
             style: self.style,
-            listeners: self
-                .listeners
-                .into_iter()
-                .map(|l| l.map_msg(f.clone()))
-                .collect(),
             children: self
                 .children
                 .into_iter()
@@ -51,6 +51,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
                 .collect(),
             node_ws: self.node_ws,
             namespace: self.namespace,
+            event_handler_manager: self.event_handler_manager.map_msg(f),
         }
     }
 }
@@ -69,7 +70,7 @@ impl<Ms> El<Ms> {
             tag,
             attrs: Attrs::empty(),
             style: Style::empty(),
-            listeners: Vec::new(),
+            event_handler_manager: EventHandlerManager::new(),
             children: Vec::new(),
             node_ws: None,
             namespace: None,
@@ -154,15 +155,16 @@ impl<Ms> El<Ms> {
         self
     }
 
-    /// Add a new style (eg display, or height)
+    /// Add a new style (eg display, or height),
     pub fn add_style(&mut self, key: impl Into<St>, val: impl Into<CSSValue>) -> &mut Self {
         self.style.vals.insert(key.into(), val.into());
         self
     }
 
-    /// Add a new listener
-    pub fn add_listener(&mut self, listener: Listener<Ms>) -> &mut Self {
-        self.listeners.push(listener);
+    /// Add a new event handler.
+    pub fn add_event_handler(&mut self, event_handler: EventHandler<Ms>) -> &mut Self {
+        self.event_handler_manager
+            .add_event_handlers(vec![event_handler]);
         self
     }
 
@@ -207,33 +209,5 @@ impl<Ms> El<Ms> {
         } else {
             false
         }
-    }
-}
-
-/// Allow the user to clone their Els. Note that there's no easy way to clone the
-/// closures within listeners, so we omit them.
-impl<Ms: Clone> Clone for El<Ms> {
-    fn clone(&self) -> Self {
-        Self {
-            tag: self.tag.clone(),
-            attrs: self.attrs.clone(),
-            style: self.style.clone(),
-            children: self.children.clone(),
-            node_ws: self.node_ws.clone(),
-            listeners: self.listeners.clone(),
-            namespace: self.namespace.clone(),
-        }
-    }
-}
-
-impl<Ms> PartialEq for El<Ms> {
-    fn eq(&self, other: &Self) -> bool {
-        // todo Again, note that the listeners check only checks triggers.
-        // Don't check children.
-        self.tag == other.tag
-            && self.attrs == other.attrs
-            && self.style == other.style
-            && self.listeners == other.listeners
-            && self.namespace == other.namespace
     }
 }

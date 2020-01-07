@@ -1,4 +1,5 @@
-use super::{Attrs, El, Listener, Node, Style, Tag, Text};
+use super::{Attrs, El, Node, Style, Tag, Text};
+use crate::EventHandler;
 
 /// `UpdateEl` is used to distinguish arguments in element-creation macros, and handle
 /// each type appropriately.
@@ -63,15 +64,15 @@ impl<Ms> UpdateEl<El<Ms>> for Vec<&Style> {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Listener<Ms> {
+impl<Ms> UpdateEl<El<Ms>> for EventHandler<Ms> {
     fn update(self, el: &mut El<Ms>) {
-        el.listeners.push(self)
+        el.event_handler_manager.add_event_handlers(vec![self])
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<Listener<Ms>> {
-    fn update(mut self, el: &mut El<Ms>) {
-        el.listeners.append(&mut self);
+impl<Ms> UpdateEl<El<Ms>> for Vec<EventHandler<Ms>> {
+    fn update(self, el: &mut El<Ms>) {
+        el.event_handler_manager.add_event_handlers(self);
     }
 }
 

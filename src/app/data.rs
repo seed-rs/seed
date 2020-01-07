@@ -1,6 +1,6 @@
 use super::{render_timestamp_delta::RenderTimestamp, types::*, RenderTimestampDelta};
 use crate::browser::util;
-use crate::virtual_dom::{El, Listener};
+use crate::virtual_dom::{El, EventHandlerManager};
 use std::cell::{Cell, RefCell};
 use wasm_bindgen::closure::Closure;
 
@@ -17,7 +17,7 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub popstate_closure: StoredPopstate,
     pub hashchange_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
-    pub window_listeners: RefCell<Vec<Listener<Ms>>>,
+    pub window_event_handler_manager: RefCell<EventHandlerManager<Ms>>,
     pub msg_listeners: RefCell<MsgListeners<Ms>>,
     pub scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
     pub after_next_render_callbacks:

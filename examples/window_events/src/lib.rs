@@ -68,7 +68,7 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
     ]
 }
 
-fn window_events(model: &Model) -> Vec<Listener<Msg>> {
+fn window_events(model: &Model) -> Vec<EventHandler<Msg>> {
     let mut result = Vec::new();
     if model.watching {
         result.push(mouse_ev(Ev::MouseMove, Msg::UpdateCoords));

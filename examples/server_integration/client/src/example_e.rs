@@ -161,7 +161,7 @@ pub fn view(model: &Model) -> impl View<Msg> {
             "display" => "flex",
             "flex-direction" => "column",
         },
-        raw_ev(Ev::Submit, move |event| {
+        ev(Ev::Submit, move |event| {
             event.prevent_default();
             Msg::FormSubmitted(form_id)
         }),
@@ -190,7 +190,7 @@ pub fn view(model: &Model) -> impl View<Msg> {
         view_form_field(
             label!["Text file:", attrs! {At::For => "form-file" }],
             input![
-                raw_ev(Ev::Change, |event| {
+                ev(Ev::Change, |event| {
                     let file = event
                         .target()
                         .and_then(|target| target.dyn_into::<web_sys::HtmlInputElement>().ok())

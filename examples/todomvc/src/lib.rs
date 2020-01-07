@@ -6,6 +6,7 @@ use seed::{
     *,
 };
 use serde::{Deserialize, Serialize};
+use std::mem;
 
 const ENTER_KEY: u32 = 13;
 const ESCAPE_KEY: u32 = 27;
@@ -108,7 +109,7 @@ enum Msg {
     Destroy(usize),
     Toggle(usize),
     ToggleAll,
-    NewTodo(Event),
+    NewTodo,
     EditEntry(String),
 
     EditItem(usize),
@@ -117,6 +118,7 @@ enum Msg {
     EditKeyDown(usize, u32), // item position, keycode
 
     ChangeVisibility(Visible),
+    NoOp,
 }
 
 /// Called by update function. Split into separate function since we use it twice.
@@ -157,26 +159,14 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                 todo.completed = completed;
             }
         }
-        Msg::NewTodo(ev) => {
-            // Add a todo_, if the enter key is pressed.
-            // We handle text input after processing a key press, hence the
-            // raw event logic here.
-            let code = seed::to_kbevent(&ev).key_code();
-            if code == ENTER_KEY {
-                ev.prevent_default();
-
-                let target = ev.target().unwrap();
-                let input_el = seed::to_input(&target);
-                let title = input_el.value().trim().to_string();
-
-                if !title.is_empty() {
-                    model.todos.push(Todo {
-                        title,
-                        completed: false,
-                        editing: false,
-                    });
-                    input_el.set_value("");
-                }
+        Msg::NewTodo => {
+            // Add a todo, if the enter key is pressed.
+            if !model.entry_text.is_empty() {
+                model.todos.push(Todo {
+                    title: mem::replace(&mut model.entry_text, "".to_owned()),
+                    completed: false,
+                    editing: false,
+                });
             }
         }
         Msg::EditEntry(entry_text) => model.entry_text = entry_text,
@@ -204,6 +194,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             }
         }
         Msg::ChangeVisibility(visible) => model.visible = visible,
+        Msg::NoOp => (),
     }
 }
 
@@ -336,7 +327,13 @@ fn view(model: &Model) -> impl View<Msg> {
                     At::AutoFocus => true;
                     At::Value => model.entry_text;
                 },
-                raw_ev(Ev::KeyDown, Msg::NewTodo),
+                keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                    if keyboard_event.key_code() == ENTER_KEY {
+                        Msg::NewTodo
+                    } else {
+                        Msg::NoOp
+                    }
+                }),
                 input_ev(Ev::Input, Msg::EditEntry),
             ]
         ],

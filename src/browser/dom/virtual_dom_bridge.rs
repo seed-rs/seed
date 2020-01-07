@@ -1,7 +1,7 @@
 //! This file contains interactions with `web_sys`.
 
 use super::Namespace;
-use crate::virtual_dom::{At, AtValue, Attrs, El, Node, Style, Text};
+use crate::virtual_dom::{At, AtValue, Attrs, El, Mailbox, Node, Style, Text};
 use wasm_bindgen::JsCast;
 use web_sys::Document;
 
@@ -94,13 +94,10 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
 /// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
 /// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
-pub(crate) fn make_websys_el<Ms>(
-    el_vdom: &mut El<Ms>,
-    document: &web_sys::Document,
-) -> web_sys::Node {
-    let tag = el_vdom.tag.as_str();
+pub(crate) fn make_websys_el<Ms>(el: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
+    let tag = el.tag.as_str();
 
-    let el_ws = match el_vdom.namespace {
+    let el_ws = match el.namespace {
         Some(ref ns) => document
             .create_element_ns(Some(ns.as_str()), tag)
             .expect("Problem creating web-sys element with namespace"),
@@ -109,10 +106,10 @@ pub(crate) fn make_websys_el<Ms>(
             .expect("Problem creating web-sys element"),
     };
 
-    for (at, attr_value) in &el_vdom.attrs.vals {
+    for (at, attr_value) in &el.attrs.vals {
         set_attr_value(&el_ws, at, attr_value);
     }
-    if let Some(ns) = &el_vdom.namespace {
+    if let Some(ns) = &el.namespace {
         el_ws
             .dyn_ref::<web_sys::Element>()
             .expect("Problem casting Node as Element while setting an attribute")
@@ -122,8 +119,8 @@ pub(crate) fn make_websys_el<Ms>(
 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
-    if el_vdom.style.vals.keys().len() > 0 {
-        set_style(&el_ws, &el_vdom.style)
+    if el.style.vals.keys().len() > 0 {
+        set_style(&el_ws, &el.style)
     }
 
     el_ws.into()
@@ -140,16 +137,16 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
 
 /// Similar to `attach_el_and_children`, but without attaching the elemnt. Useful for
 /// patching, where we want to insert the element at a specific place.
-pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
-    let el_ws = el_vdom
+pub fn attach_children<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
+    let el_ws = el
         .node_ws
         .as_ref()
         .expect("Missing websys el in attach_children");
     // appending the its children to the el_ws
-    for child in &mut el_vdom.children {
+    for child in &mut el.children {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, mailbox),
             Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
@@ -159,10 +156,10 @@ pub fn attach_children<Ms>(el_vdom: &mut El<Ms>) {
 /// Attaches the element, and all children, recursively. Only run this when creating a fresh vdom node, since
 /// it performs a rerender of the el and all children; eg a potentially-expensive op.
 /// This is where rendering occurs.
-pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) {
+pub fn attach_el_and_children<Ms>(el: &mut El<Ms>, parent: &web_sys::Node, mailbox: &Mailbox<Ms>) {
     // No parent means we're operating on the top-level element; append it to the main div.
     // This is how we call this function externally, ie not through recursion.
-    let el_ws = el_vdom
+    let el_ws = el
         .node_ws
         .as_ref()
         .expect("Missing websys el in attach_el_and_children");
@@ -174,11 +171,14 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
         crate::error("Minor problem with html element (append)");
     }
 
+    el.event_handler_manager
+        .attach_listeners(el_ws.clone(), None, mailbox);
+
     // appending the its children to the el_ws
-    for child in &mut el_vdom.children {
+    for child in &mut el.children {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, el_ws),
+            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, mailbox),
             Node::Text(child_text) => attach_text_node(child_text, el_ws),
             Node::Empty => (),
         }
@@ -186,13 +186,13 @@ pub fn attach_el_and_children<Ms>(el_vdom: &mut El<Ms>, parent: &web_sys::Node) 
 
     // Note: Call `set_default_element_state` after child appending,
     // otherwise it breaks autofocus in Firefox
-    set_default_element_state(el_ws, el_vdom);
+    set_default_element_state(el_ws, el);
 }
 
-fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
+fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el: &El<Ms>) {
     // @TODO handle also other Auto* attributes?
     // Set focus because of attribute "autofocus"
-    if let Some(at_value) = el_vdom.attrs.vals.get(&At::AutoFocus) {
+    if let Some(at_value) = el.attrs.vals.get(&At::AutoFocus) {
         match at_value {
             AtValue::Some(_) | AtValue::None => el_ws
                 .dyn_ref::<web_sys::HtmlElement>()
@@ -206,7 +206,7 @@ fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el_vdom: &El<Ms>) {
     // We set Textarea's initial value through non-standard attribute "value", so we have to simulate
     // the standard way (i.e. `<textarea>A Value</textarea>`)
     if let Some(textarea) = el_ws.dyn_ref::<web_sys::HtmlTextAreaElement>() {
-        if let Some(AtValue::Some(value)) = el_vdom.attrs.vals.get(&At::Value) {
+        if let Some(AtValue::Some(value)) = el.attrs.vals.get(&At::Value) {
             textarea.set_value(value);
         }
     }
@@ -222,7 +222,12 @@ pub fn _remove_children(el: &web_sys::Node) {
 /// Update the attributes, style, text, and events of an element. Does not
 /// process children, and assumes the tag is the same. Assume we've identfied
 /// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_sys::Node) {
+pub fn patch_el_details<Ms>(
+    old: &mut El<Ms>,
+    new: &mut El<Ms>,
+    old_el_ws: &web_sys::Node,
+    mailbox: &Mailbox<Ms>,
+) {
     for (key, new_val) in &new.attrs.vals {
         match old.attrs.vals.get(key) {
             Some(old_val) => {
@@ -267,6 +272,13 @@ pub fn patch_el_details<Ms>(old: &mut El<Ms>, new: &mut El<Ms>, old_el_ws: &web_
             }
         }
     }
+
+    // Patch event handlers and listeners.
+    new.event_handler_manager.attach_listeners(
+        old_el_ws.clone(),
+        Some(&mut old.event_handler_manager),
+        mailbox,
+    );
 
     // Patch style.
     if old.style != new.style {

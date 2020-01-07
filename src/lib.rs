@@ -23,7 +23,7 @@ pub use crate::{
         self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
         log, window,
     },
-    virtual_dom::{attrs::Attrs, listener::Listener, style::Style},
+    virtual_dom::{Attrs, EventHandler, Style},
 };
 use wasm_bindgen::{closure::Closure, JsCast};
 
@@ -87,7 +87,7 @@ pub mod prelude {
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{
-            input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
+            ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
         },
         browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
@@ -98,7 +98,7 @@ pub mod prelude {
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
         virtual_dom::{
-            AsAtValue, At, AtValue, CSSValue, El, Ev, Listener, Node, St, Tag, UpdateEl, View,
+            AsAtValue, At, AtValue, CSSValue, El, Ev, EventHandler, Node, St, Tag, UpdateEl, View,
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
@@ -122,7 +122,7 @@ pub mod tests {
         use crate::app::{builder::init::Init, Orders};
         use crate::browser::dom::event_handler::mouse_ev;
         use crate::prelude::*;
-        use crate::virtual_dom::{Listener, Node};
+        use crate::virtual_dom::{EventHandler, Node};
 
         struct Model {
             pub val: i32,
@@ -149,7 +149,7 @@ pub mod tests {
             vec![div!["Hello world"]]
         }
 
-        fn window_events(_model: &Model) -> Vec<Listener<Msg>> {
+        fn window_events(_model: &Model) -> Vec<EventHandler<Msg>> {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 

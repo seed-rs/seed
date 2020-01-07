@@ -84,21 +84,21 @@ fn view(model: &Model) -> impl View<Msg> {
             St::Border => [&px(2), "dashed", "black"].join(" ");
             St::BorderRadius => px(20),
         ],
-        raw_ev(Ev::DragEnter, |event| {
+        ev(Ev::DragEnter, |event| {
             stop_and_prevent!(event);
             Msg::DragEnter
         }),
-        raw_ev(Ev::DragOver, |event| {
+        ev(Ev::DragOver, |event| {
             let drag_event = event.into_drag_event();
             stop_and_prevent!(drag_event);
             drag_event.data_transfer().unwrap().set_drop_effect("copy");
             Msg::DragOver
         }),
-        raw_ev(Ev::DragLeave, |event| {
+        ev(Ev::DragLeave, |event| {
             stop_and_prevent!(event);
             Msg::DragLeave
         }),
-        raw_ev(Ev::Drop, |event| {
+        ev(Ev::Drop, |event| {
             let drag_event = event.into_drag_event();
             stop_and_prevent!(drag_event);
             let file_list = drag_event.data_transfer().unwrap().files().unwrap();

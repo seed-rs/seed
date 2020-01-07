@@ -1,57 +1,11 @@
 //! This module contains code related to patching the VDOM. It can be considered
 //! a subset of the `vdom` module.
 
-use super::{El, Listener, Mailbox, Node, View};
+use super::{El, Mailbox, Node, View};
 use crate::app::App;
 use crate::browser::dom::virtual_dom_bridge;
 use wasm_bindgen::JsCast;
-use web_sys::{Document, Window};
-
-/// Recursively attach all event-listeners. Run this after creating elements.
-/// The associated `web_sys` nodes must be assigned prior to running this.
-pub(crate) fn attach_listeners<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
-    if let Some(el_ws) = el.node_ws.as_ref() {
-        for listener in &mut el.listeners {
-            listener.attach(el_ws, mailbox.clone());
-        }
-    }
-    for child in &mut el.children {
-        if let Node::Element(child_el) = child {
-            attach_listeners(child_el, mailbox);
-        }
-    }
-}
-
-/// Recursively detach event-listeners. Run this before patching.
-pub(crate) fn detach_listeners<Ms>(el: &mut El<Ms>) {
-    if let Some(el_ws) = el.node_ws.as_ref() {
-        for listener in &mut el.listeners {
-            listener.detach(el_ws);
-        }
-    }
-    for child in &mut el.children {
-        if let Node::Element(child_el) = child {
-            detach_listeners(child_el);
-        }
-    }
-}
-
-/// We reattach all listeners, as with normal Els, since we have no
-/// way of diffing them.
-pub(crate) fn setup_window_listeners<Ms>(
-    window: &Window,
-    old: &mut Vec<Listener<Ms>>,
-    new: &mut Vec<Listener<Ms>>,
-    mailbox: &Mailbox<Ms>,
-) {
-    for listener in old {
-        listener.detach(window);
-    }
-
-    for listener in new {
-        listener.attach(window, mailbox.clone());
-    }
-}
+use web_sys::Document;
 
 fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     document: &Document,
@@ -67,11 +21,8 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
 
     // If the tag's different, we must redraw the element and its children; there's
     // no way to patch one element type into another.
-    // TODO: forcing a rerender for different listeners is inefficient
-    // TODO:, but I'm not sure how to patch them.
 
-    // Assume all listeners have been removed from the old el_ws (if any), and the
-    // old el vdom's elements are still attached.
+    // Assume old el vdom's elements are still attached.
 
     // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
     // Custom elements can't be patched, because we need to reinit them (Issue #325). (@TODO is there a better way?)
@@ -85,14 +36,10 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
         for mut child in &mut new.children {
             virtual_dom_bridge::assign_ws_nodes(document, &mut child);
         }
-        virtual_dom_bridge::attach_el_and_children(new, parent);
+        virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
 
         let new_ws = new.node_ws.as_ref().expect("Missing websys el");
         virtual_dom_bridge::replace_child(new_ws, old_el_ws, parent);
-
-        attach_listeners(new, mailbox);
-        // We've re-rendered this child and all children; we're done with this recursion.
-        return new.node_ws.as_ref();
     } else {
         // Patch parts of the Element.
         let old_el_ws = old
@@ -100,33 +47,21 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
             .as_ref()
             .expect("missing old el_ws when patching non-empty el")
             .clone();
-        virtual_dom_bridge::patch_el_details(&mut old, new, &old_el_ws);
+        virtual_dom_bridge::patch_el_details(&mut old, new, &old_el_ws, mailbox);
+
+        let old_children_iter = old.children.into_iter();
+        let new_children_iter = new.children.iter_mut();
+
+        patch_els(
+            document,
+            mailbox,
+            app,
+            &old_el_ws,
+            old_children_iter,
+            new_children_iter,
+        );
+        new.node_ws = Some(old_el_ws);
     }
-
-    let old_el_ws = old.node_ws.take().unwrap();
-
-    // Before running patch, assume we've removed all listeners from the old element.
-    // Perform this attachment after we've verified we can patch this element, ie
-    // it has the same tag - otherwise  we'd have to detach after the parent.remove_child step.
-    // Note that unlike the attach_listeners function, this only attaches for the current
-    // element.
-    for listener in &mut new.listeners {
-        listener.attach(&old_el_ws, mailbox.clone());
-    }
-
-    let old_children_iter = old.children.into_iter();
-    let new_children_iter = new.children.iter_mut();
-
-    patch_els(
-        document,
-        mailbox,
-        app,
-        &old_el_ws,
-        old_children_iter,
-        new_children_iter,
-    );
-
-    new.node_ws = Some(old_el_ws);
     new.node_ws.as_ref()
 }
 
@@ -178,8 +113,7 @@ pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
 
         match child_new {
             Node::Element(child_new_el) => {
-                virtual_dom_bridge::attach_el_and_children(child_new_el, old_el_ws);
-                attach_listeners(child_new_el, mailbox);
+                virtual_dom_bridge::attach_el_and_children(child_new_el, old_el_ws, mailbox);
             }
             Node::Text(child_new_text) => {
                 virtual_dom_bridge::attach_text_node(child_new_text, old_el_ws);
@@ -214,7 +148,7 @@ fn add_el_helper<Ms>(
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
 ) {
-    virtual_dom_bridge::attach_children(new);
+    virtual_dom_bridge::attach_children(new, mailbox);
     let new_ws = new
         .node_ws
         .take()
@@ -222,8 +156,6 @@ fn add_el_helper<Ms>(
     virtual_dom_bridge::insert_node(&new_ws, parent, next_node);
 
     new.node_ws.replace(new_ws);
-    // Make sure to attach after we've replaced node_ws.
-    attach_listeners(new, mailbox);
 }
 
 /// Routes patching through different channels, depending on the Node variant
