@@ -10,53 +10,36 @@ macro_rules! make_events {
             $(
                 $event_camel,
             )+
-            Custom(String)
+            Custom(std::borrow::Cow<'static, str>)
         }
 
         impl Ev {
             pub fn as_str(&self) -> &str {
                 match self {
-                    $ (
+                    $(
                         Ev::$event_camel => $event,
                     ) +
-                    Ev::Custom(val) => &val
+                    Ev::Custom(event) => &event
                 }
             }
         }
 
-        impl From<&str> for Ev {
-            fn from(event: &str) -> Self {
-                match event {
-                    $ (
-                          $event => Ev::$event_camel,
-                    ) +
-                    _ => {
-                        Ev::Custom(event.to_owned())
-                    }
-                }
+        impl std::fmt::Display for Ev {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.as_str())
             }
         }
 
-        impl From<String> for Ev {
-            fn from(event: String) -> Self {
-                match event.as_ref(){
-                    $ (
-                          $event => Ev::$event_camel,
+        impl<T: Into<std::borrow::Cow<'static, str>>> From<T> for Ev {
+            fn from(event: T) -> Self {
+                let event = event.into();
+                match event.as_ref() {
+                    $(
+                        $event => Ev::$event_camel,
                     ) +
                     _ => {
                         Ev::Custom(event)
                     }
-                }
-            }
-        }
-
-        impl ToString for Ev {
-            fn to_string( &self ) -> String {
-                match self {
-                    $ (
-                        Ev::$ event_camel => $ event.into(),
-                    ) +
-                    Ev::Custom(val) => val.clone()
                 }
             }
         }

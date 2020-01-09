@@ -17,7 +17,7 @@ impl fmt::Display for Attrs {
             .iter()
             .filter_map(|(k, v)| match v {
                 AtValue::Ignored => None,
-                AtValue::None => Some(k.as_str().to_string()),
+                AtValue::None => Some(k.to_string()),
                 AtValue::Some(value) => Some(format!("{}=\"{}\"", k.as_str(), value)),
             })
             .collect::<Vec<_>>()

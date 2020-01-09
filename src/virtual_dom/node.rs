@@ -13,22 +13,12 @@ pub use text::Text;
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Node)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
     //    Svg(El<Ms>),  // May be best to handle using namespace field on El
     Text(Text),
     Empty,
-}
-
-impl<Ms: Clone + 'static> Clone for Node<Ms> {
-    fn clone(&self) -> Self {
-        match self {
-            Self::Element(e) => Self::Element(e.clone()),
-            Self::Text(t) => Self::Text(t.clone()),
-            Self::Empty => Self::Empty,
-        }
-    }
 }
 
 // Element methods

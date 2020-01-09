@@ -10,7 +10,7 @@ macro_rules! make_attrs {
             $(
                 $attr_camel,
             )+
-            Custom(String)
+            Custom(std::borrow::Cow<'static, str>)
         }
 
         impl At {
@@ -19,28 +19,23 @@ macro_rules! make_attrs {
                     $ (
                         At::$attr_camel => $attr,
                     ) +
-                    At::Custom(val) => &val
+                    At::Custom(attr) => &attr
                 }
             }
         }
 
-        impl From<&str> for At {
-            fn from(attr: &str) -> Self {
-                match attr {
-                    $ (
-                          $attr => At::$attr_camel,
-                    ) +
-                    _ => {
-                        At::Custom(attr.to_owned())
-                    }
-                }
+        impl std::fmt::Display for At {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.as_str())
             }
         }
-        impl From<String> for At {
-            fn from(attr: String) -> Self {
+
+        impl<T: Into<std::borrow::Cow<'static, str>>> From<T> for At {
+            fn from(attr: T) -> Self {
+                let attr = attr.into();
                 match attr.as_ref() {
-                    $ (
-                          $attr => At::$attr_camel,
+                    $(
+                        $attr => At::$attr_camel,
                     ) +
                     _ => {
                         At::Custom(attr)
@@ -48,7 +43,6 @@ macro_rules! make_attrs {
                 }
             }
         }
-
     }
 }
 
