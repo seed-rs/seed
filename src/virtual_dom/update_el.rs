@@ -1,5 +1,4 @@
-use super::{Attrs, El, Node, Style, Tag, Text};
-use crate::EventHandler;
+use super::{Attrs, El, ElRef, EventHandler, Node, Style, Tag, Text};
 
 /// `UpdateEl` is used to distinguish arguments in element-creation macros, and handle
 /// each type appropriately.
@@ -125,6 +124,12 @@ impl<Ms> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
 impl<Ms> UpdateEl<El<Ms>> for Tag {
     fn update(self, el: &mut El<Ms>) {
         el.tag = self;
+    }
+}
+
+impl<Ms, E: Clone> UpdateEl<El<Ms>> for ElRef<E> {
+    fn update(self, el: &mut El<Ms>) {
+        el.refs.push(self.shared_node_ws);
     }
 }
 

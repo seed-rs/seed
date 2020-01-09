@@ -1,5 +1,6 @@
 use super::super::{
-    At, AtValue, Attrs, CSSValue, EventHandler, EventHandlerManager, Node, St, Style, Tag, Text,
+    At, AtValue, Attrs, CSSValue, EventHandler, EventHandlerManager, Node, SharedNodeWs, St, Style,
+    Tag, Text,
 };
 use crate::app::MessageMapper;
 use crate::browser::{
@@ -14,7 +15,7 @@ use std::borrow::Cow;
 ///
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Element)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
-#[derive(Debug, Clone)] // todo: Custom debug implementation where children are on new lines and indented.
+#[derive(Clone, Debug)] // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -27,6 +28,7 @@ pub struct El<Ms: 'static> {
     pub namespace: Option<Namespace>,
     /// The actual DOM element/node.
     pub node_ws: Option<web_sys::Node>,
+    pub refs: Vec<SharedNodeWs>,
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
@@ -52,6 +54,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             node_ws: self.node_ws,
             namespace: self.namespace,
             event_handler_manager: self.event_handler_manager.map_msg(f),
+            refs: self.refs,
         }
     }
 }
@@ -72,8 +75,9 @@ impl<Ms> El<Ms> {
             style: Style::empty(),
             event_handler_manager: EventHandlerManager::new(),
             children: Vec::new(),
-            node_ws: None,
             namespace: None,
+            node_ws: None,
+            refs: Vec::new(),
         }
     }
 
