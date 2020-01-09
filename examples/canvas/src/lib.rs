@@ -3,18 +3,28 @@
 //! [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawWindow)
 
 use seed::{prelude::*, *};
-
-type Color = &'static str;
-
-const COLOR_A: Color = "white";
-const COLOR_B: Color = "green";
-
-const CANVAS_ID: &str = "canvas";
+use web_sys::HtmlCanvasElement;
 
 // Model
 
 struct Model {
     fill_color: Color,
+    canvas: ElRef<HtmlCanvasElement>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum Color {
+    A,
+    B,
+}
+
+impl Color {
+    fn as_str(&self) -> &str {
+        match self {
+            Self::A => "white",
+            Self::B => "green",
+        }
+    }
 }
 
 // AfterMount
@@ -22,7 +32,8 @@ struct Model {
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.after_next_render(|_| Msg::Rendered);
     AfterMount::new(Model {
-        fill_color: COLOR_A,
+        fill_color: Color::A,
+        canvas: ElRef::new(),
     })
 }
 
@@ -37,27 +48,27 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Rendered => {
-            draw(model.fill_color);
+            draw(&model.canvas, model.fill_color);
             // We want to call `.skip` to prevent infinite loop.
             // (Infinite loops are useful for animations.)
             orders.after_next_render(|_| Msg::Rendered).skip();
         }
         Msg::ChangeColor => {
-            model.fill_color = if model.fill_color == COLOR_A {
-                COLOR_B
+            model.fill_color = if model.fill_color == Color::A {
+                Color::B
             } else {
-                COLOR_A
+                Color::A
             };
         }
     }
 }
 
-fn draw(fill_color: Color) {
-    let canvas = seed::canvas(CANVAS_ID).unwrap();
+fn draw(canvas: &ElRef<HtmlCanvasElement>, fill_color: Color) {
+    let canvas = canvas.get().expect("get canvas element");
     let ctx = seed::canvas_context_2d(&canvas);
 
     ctx.rect(0., 0., 200., 100.);
-    ctx.set_fill_style(&JsValue::from_str(fill_color));
+    ctx.set_fill_style(&JsValue::from_str(fill_color.as_str()));
     ctx.fill();
 
     ctx.move_to(0., 0.);
@@ -67,12 +78,12 @@ fn draw(fill_color: Color) {
 
 // View
 
-fn view(_model: &Model) -> impl View<Msg> {
+fn view(model: &Model) -> impl View<Msg> {
     div![
         style! {St::Display => "flex"},
         canvas![
+            el_ref(&model.canvas),
             attrs![
-                At::Id => CANVAS_ID,
                 At::Width => px(200),
                 At::Height => px(100),
             ],
@@ -80,13 +91,13 @@ fn view(_model: &Model) -> impl View<Msg> {
                 St::Border => "1px solid black",
             ],
         ],
-        button!["Change color", simple_ev(Ev::Click, Msg::ChangeColor)],
+        button!["Change color", ev(Ev::Click, |_| Msg::ChangeColor)],
     ]
 }
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view)
+    App::builder(update, view)
         .after_mount(after_mount)
         .build_and_start();
 }
