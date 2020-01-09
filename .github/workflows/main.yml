@@ -22,7 +22,7 @@ jobs:
 
       # remove once https://github.com/rustwasm/wasm-pack/pull/706 is included in a next wasm-pack version (> 0.8.1)
       - name: Install chromedriver
-        run: npm install -g chromedriver
+        run: npm install -g chromedriver --force
 
       - name: Checkout sources
         uses: actions/checkout@v1
