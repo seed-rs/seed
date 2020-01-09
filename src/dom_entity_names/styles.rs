@@ -9,7 +9,7 @@ macro_rules! make_styles {
             $(
                 $st_pascal_case,
             )+
-            Custom(String)
+            Custom(std::borrow::Cow<'static, str>)
         }
 
         impl St {
@@ -18,38 +18,30 @@ macro_rules! make_styles {
                     $ (
                         St::$st_pascal_case => $st,
                     ) +
-                    St::Custom(val) => &val
+                    St::Custom(style) => &style
                 }
             }
         }
 
-        impl From<&str> for St {
-            fn from(st: &str) -> Self {
-                match st {
-                    $ (
-                          $st => St::$st_pascal_case,
-                    ) +
-                    _ => {
-                        crate::error(&format!("Can't find this style: {}", st));
-                        St::Custom(st.to_owned())
-                    }
-                }
-            }
-        }
-        impl From<String> for St {
-            fn from(st: String) -> Self {
-                match st.as_ref() {
-                    $ (
-                          $st => St::$st_pascal_case,
-                    ) +
-                    _ => {
-                        crate::error(&format!("Can't find this style: {}", st));
-                        St::Custom(st)
-                    }
-                }
+        impl std::fmt::Display for St {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.as_str())
             }
         }
 
+        impl<T: Into<std::borrow::Cow<'static, str>>> From<T> for St {
+            fn from(style: T) -> Self {
+                let style = style.into();
+                match style.as_ref() {
+                    $(
+                        $st => St::$st_pascal_case,
+                    ) +
+                    _ => {
+                        St::Custom(style)
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -9,32 +9,38 @@ macro_rules! make_tags {
         /// [https://developer.mozilla.org/en-US/docs/Web/HTML/Element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element)
         #[derive(Clone, Debug, PartialEq)]
         pub enum Tag {
-            Custom(String),
             $(
                 $tag_camel,
             )+
+            Custom(std::borrow::Cow<'static, str>)
         }
 
         impl Tag {
             pub fn as_str(&self) -> &str {
                 match self {
-                    Tag::Custom(name) => &name,
-                    $ (
+                    $(
                         Tag::$tag_camel => $tag,
                     ) +
+                    Tag::Custom(tag) => &tag
                 }
             }
         }
 
-        impl<'a, T: Into<std::borrow::Cow<'a, str>>> From<T> for Tag {
+        impl std::fmt::Display for Tag {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.as_str())
+            }
+        }
+
+        impl<T: Into<std::borrow::Cow<'static, str>>> From<T> for Tag {
             fn from(tag: T) -> Self {
-                let tag: std::borrow::Cow<'a, str> = tag.into();
+                let tag = tag.into();
                 match tag.as_ref() {
-                    $ (
-                          $tag => Tag::$tag_camel,
+                    $(
+                        $tag => Tag::$tag_camel,
                     ) +
                     _ => {
-                        Tag::Custom(tag.to_string())
+                        Tag::Custom(tag)
                     }
                 }
             }

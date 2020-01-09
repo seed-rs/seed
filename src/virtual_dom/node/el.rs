@@ -130,9 +130,7 @@ impl<Ms> El<Ms> {
         key: impl Into<Cow<'static, str>>,
         val: impl Into<AtValue>,
     ) -> &mut Self {
-        self.attrs
-            .vals
-            .insert(key.into().as_ref().into(), val.into());
+        self.attrs.vals.insert(At::from(key), val.into());
         self
     }
 
