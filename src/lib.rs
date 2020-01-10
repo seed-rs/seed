@@ -1,6 +1,7 @@
 //! See readme for details.
 
 //#![deny(missing_docs)]
+#![forbid(unsafe_code)]
 #![allow(
     clippy::use_self,
     clippy::single_match_else,
