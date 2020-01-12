@@ -1,59 +1,54 @@
-#![allow(clippy::non_ascii_literal)]
+#![allow(clippy::non_ascii_literal, clippy::replace_consts)]
 
 use seed::{prelude::*, *};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 struct Model {
     count: i32,
     what_we_count: String,
 }
 
-// Setup a default here, for initialization later.
+// Setup a default here - `Model::default` will be automatically called in the default `AfterMount`.
 impl Default for Model {
     fn default() -> Self {
         Self {
             count: 0,
-            what_we_count: "click".into(),
+            what_we_count: "click".to_owned(),
         }
     }
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Debug, Clone)]
 enum Msg {
     Increment,
     Decrement,
-    ChangeWWC(String),
+    WhatWeCountChanged(String),
 }
 
-/// The sole source of updating the model
+/// The sole source of updating the model.
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => model.count += 1,
         Msg::Decrement => model.count -= 1,
-        Msg::ChangeWWC(what_we_count) => model.what_we_count = what_we_count,
+        Msg::WhatWeCountChanged(what_we_count) => model.what_we_count = what_we_count,
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
-/// A simple component.
-fn success_level(clicks: i32) -> Node<Msg> {
-    let descrip = match clicks {
-        0..=5 => "Not very many 🙁",
-        6..=9 => "I got my first real six-string 😐",
-        10..=11 => "Spinal Tap 🙂",
-        _ => "Double pendulum 🙃",
-    };
-    p![descrip]
-}
-
-/// The top-level component we pass to the virtual dom. Must accept the model as its
-/// only argument, and output has to implement trait `ElContainer`.
+/// The top-level view we pass to the virtual dom.
+///  - Must accept the model as its only argument.
+///  - Output has to implement trait `ElContainer` (e.g. `Node<Msg>` or `Vec<Node<Msg>`).
 fn view(model: &Model) -> impl View<Msg> {
-    let plural = if model.count == 1 { "" } else { "s" };
+    let plural = if model.count.abs() == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 
     // Attrs, Style, Events, and children may be defined separately.
@@ -64,6 +59,7 @@ fn view(model: &Model) -> impl View<Msg> {
     };
 
     div![
+        // We can use normal Rust code and comments in the view.
         outer_style,
         h1!["The Grand Total"],
         div![
@@ -74,26 +70,40 @@ fn view(model: &Model) -> impl View<Msg> {
                 St::Padding => unit!(20, px);
             },
             h3![text],
-            button![simple_ev(Ev::Click, Msg::Increment), "+"],
-            button![simple_ev(Ev::Click, Msg::Decrement), "-"],
-            // We can use normal Rust code and comments in the view.
-            // Optionally-displaying an element
+            button![ev(Ev::Click, |_| Msg::Increment), "+"],
+            button![ev(Ev::Click, |_| Msg::Decrement), "-"],
+            // Optionally-displaying an element.
             if model.count >= 10 {
                 h2![style! {St::Padding => px(50)}, "Nice!",]
             } else {
                 empty![]
             },
         ],
-        success_level(model.count), // Incorporating a separate component
+        view_success_level(model.count), // Incorporating a separate reusable view.
         h3!["What are we counting?"],
         input![
             attrs! {At::Value => model.what_we_count},
-            input_ev(Ev::Input, Msg::ChangeWWC),
+            input_ev(Ev::Input, Msg::WhatWeCountChanged),
         ],
     ]
 }
 
+/// A simple reusable view.
+fn view_success_level(clicks: i32) -> Node<Msg> {
+    let description = match clicks {
+        std::i32::MIN..=5 => "Not very many 🙁",
+        6..=9 => "I got my first real six-string 😐",
+        10..=11 => "Spinal Tap 🙂",
+        _ => "Double pendulum 🙃",
+    };
+    p![description]
+}
+
+// ------ ------
+//     Start
+// ------ ------
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view).build_and_start();
+    App::builder(update, view).build_and_start();
 }

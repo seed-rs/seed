@@ -25,6 +25,9 @@ How to make a canvas element and use `ElRef`s.
 ### [Counter](counter)
 Intended as a demo of basic functionality.
 
+### [Counter Advanced](counter_advanced)
+Intended as a more sophisticated demo of basic functionality.
+
 ### [Drop Zone](drop_zone)
 How to create a drop-zone.
 
