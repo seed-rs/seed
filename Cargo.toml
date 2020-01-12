@@ -98,6 +98,7 @@ members = [
     "examples/animation_frame",
     "examples/app_builder",
     "examples/counter",
+    "examples/counter_advanced",
     "examples/canvas",
     "examples/drop_zone",
     "examples/mathjax",
