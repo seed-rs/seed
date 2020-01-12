@@ -2,25 +2,28 @@ use seed::{prelude::*, *};
 use wasm_bindgen::JsCast;
 use web_sys::{self, DragEvent, Event, FileList};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 struct Model {
     drop_zone_active: bool,
     drop_zone_content: Vec<Node<Msg>>,
 }
 
-//  After Mount
-
-fn after_mount(_: Url, _: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    AfterMount::new(Model {
-        drop_zone_active: false,
-        drop_zone_content: vec![div!["Drop files here"]],
-    })
+impl Default for Model {
+    fn default() -> Self {
+        Self {
+            drop_zone_active: false,
+            drop_zone_content: vec![div!["Drop files here"]],
+        }
+    }
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone, Debug)]
 enum Msg {
     DragEnter,
     DragOver,
@@ -46,7 +49,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 trait IntoDragEvent {
     fn into_drag_event(self) -> DragEvent;
@@ -59,7 +64,7 @@ impl IntoDragEvent for Event {
     }
 }
 
-// Note: It's macro so you can use it with all events
+// Note: It's macro so you can use it with all events.
 macro_rules! stop_and_prevent {
     { $event:expr } => {
         {
@@ -114,9 +119,11 @@ fn view(model: &Model) -> impl View<Msg> {
     ]
 }
 
+// ------ ------
+//     Start
+// ------ ------
+
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::builder(update, view)
-        .after_mount(after_mount)
-        .build_and_start();
+    App::builder(update, view).build_and_start();
 }

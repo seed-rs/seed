@@ -16,10 +16,6 @@ impl<Ms> EventHandler<Ms> {
             callback: Rc::new(callback),
         }
     }
-
-    pub fn call(&self, event: web_sys::Event) -> Ms {
-        (self.callback)(event)
-    }
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for EventHandler<Ms> {

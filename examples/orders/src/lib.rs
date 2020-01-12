@@ -3,7 +3,9 @@
 use gloo_timers::future::TimeoutFuture;
 use seed::{prelude::*, *};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 struct Model {
@@ -11,9 +13,10 @@ struct Model {
     greet_clicked: bool,
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 enum Msg {
     Greet,
     WriteHello,
@@ -50,7 +53,9 @@ async fn write_emoticon_after_delay(emoticon: String) -> Result<Msg, Msg> {
     Ok(Msg::WriteEmoticon(emoticon))
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> impl View<Msg> {
     div![
@@ -73,14 +78,18 @@ fn view(model: &Model) -> impl View<Msg> {
                     St::Cursor => "pointer",
                     St::BoxShadow => [vmin(0), vmin(0.5), vmin(0.5), "green".into()].join(" "),
                 ],
-                simple_ev(Ev::Click, Msg::Greet),
+                ev(Ev::Click, |_| Msg::Greet),
                 "Greet!"
             ]
         }
     ]
 }
 
+// ------ ------
+//     Start
+// ------ ------
+
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::builder(update, view).build_and_start();
+    App::builder(update, view).build_and_start();
 }

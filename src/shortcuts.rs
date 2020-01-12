@@ -267,6 +267,34 @@ macro_rules! style {
      };
 }
 
+#[macro_export]
+/// Converts items to `Vec<Node<Ms>` and returns flattened `Vec<Node<Ms>`.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// nodes![
+///     md!["# Hello"],
+///     h2!["world"],
+///     vec![
+///         div!["Do you like"],
+///         div!["Seed?"]
+///     ],
+/// ]
+/// ```
+macro_rules! nodes {
+    (  $($element:expr $(,)?)* ) => {
+        {
+            use $crate::virtual_dom::IntoNodes;
+            let mut nodes = Vec::new();
+            $(
+                nodes.append(&mut ($element).into_nodes());
+            )*
+            nodes
+        }
+    };
+}
+
 //#[macro_export]
 //macro_rules! events {
 //    { $($event_str:expr => $handler:expr);+ } => {

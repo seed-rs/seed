@@ -20,12 +20,12 @@ How to make a basic animation with random generators.
 Demonstrates all `AppBuilder`'s methods.
 
 ### [Canvas](canvas)
-How to make a canvas element.
+How to make a canvas element and use `ElRef`s.
 
 ### [Counter](counter)
 Intended as a demo of basic functionality.
 
-### [Drop Zone](drop)
+### [Drop Zone](drop_zone)
 How to create a drop-zone.
 
 ### [Mathjax](mathjax)
@@ -36,7 +36,7 @@ How to perform commands and send messages from `update` function.
 And how to use [gloo](https://github.com/rustwasm/gloo) timers.
 
 ### [Todo MVC](todomvc)
-Classic TodoMVC  example.
+Classic TodoMVC example with Local Storage.
 
 ### [Update from JS](update_from_js)
 How to trigger `update` function from Javascript world.
@@ -45,12 +45,8 @@ You'll also see how to call JS functions from Rust.
 ### [UserMedia](user_media)
 How to show your webcam output in `video` element.
 
-### [Websocket Chat](websocket)
-Example of communicating with a server using Websockets.
-
 ### [Window Events](window_events)
-A demonstration of event-listeners attached to the window directly,
-and a few extras not covered in other examples.
+A demonstration of event-handlers attached to the `window`.
 
 ## Server
 Backend server integration & interaction examples.
@@ -63,4 +59,7 @@ Example of communicating with a server using HTTP requests.
 
 ### [Detailed interaction](server_interaction_detailed)
 A more complicated example of retrieving and using data from a server,
- and outputing multiple wasm files.
+and outputing multiple wasm files.
+
+### [Websocket Chat](websocket)
+Example of communicating with a server using Websockets.

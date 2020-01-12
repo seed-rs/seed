@@ -163,6 +163,13 @@ fn add_el_helper<Ms>(
         .expect("Missing websys el when patching Text to Element");
     virtual_dom_bridge::insert_node(&new_ws, parent, next_node);
 
+    for ref_ in &mut new.refs {
+        ref_.set(new_ws.clone());
+    }
+
+    new.event_handler_manager
+        .attach_listeners(new_ws.clone(), None, mailbox);
+
     new.node_ws.replace(new_ws);
 }
 

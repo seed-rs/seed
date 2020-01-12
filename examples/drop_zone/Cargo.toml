@@ -1,5 +1,5 @@
 [package]
-name = "drop"
+name = "drop_zone"
 version = "0.1.0"
 authors = ["David O'Connor <david.alan.oconnor@gmail.com>"]
 edition = "2018"

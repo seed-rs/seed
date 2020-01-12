@@ -1,16 +1,21 @@
+#![allow(clippy::must_use_candidate)]
+
 use enclose::enc;
 use seed::{prelude::*, *};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 struct Model {
     time_from_js: Option<String>,
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 enum Msg {
     JsReady(bool),
     Tick(String),
@@ -45,32 +50,35 @@ async fn wrap_in_future(f: impl FnOnce()) -> Result<Msg, Msg> {
     Ok(Msg::NoOp)
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> Node<Msg> {
     h1![
         style![
-            "text-align" => "center"
-            "margin-top" => unit!(40, vmin)
-            "font-size" => unit!(10, vmin)
-            "font-family" => "monospace"
+            St::TextAlign => "center"
+            St::MarginTop => unit!(40, vmin)
+            St::FontSize => unit!(10, vmin)
+            St::FontFamily => "monospace"
         ],
         model.time_from_js.clone().unwrap_or_default()
     ]
 }
 
-// Start
+// ------ ------
+//     Start
+// ------ ------
 
 #[wasm_bindgen]
-#[must_use]
 // `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
 pub fn start() -> Box<[JsValue]> {
-    let app = seed::App::builder(update, view).build_and_start();
+    let app = App::builder(update, view).build_and_start();
 
     create_closures_for_js(&app)
 }
 
-fn create_closures_for_js(app: &seed::App<Msg, Model, Node<Msg>>) -> Box<[JsValue]> {
+fn create_closures_for_js(app: &App<Msg, Model, Node<Msg>>) -> Box<[JsValue]> {
     let js_ready = wrap_in_permanent_closure(enc!((app) move |ready| {
         app.update(Msg::JsReady(ready))
     }));

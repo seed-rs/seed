@@ -1,5 +1,5 @@
 use seed::browser::service::fetch;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 use serde::Deserialize;
 use std::borrow::Cow;
 
@@ -12,7 +12,9 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
     "/api/non-existent-endpoint"
 }
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 pub struct Model {
@@ -24,9 +26,10 @@ pub struct ExpectedResponseData {
     something: String,
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 pub enum Msg {
     SendRequest,
     Fetched(fetch::FetchResult<ExpectedResponseData>),
@@ -55,10 +58,13 @@ async fn send_request() -> Result<Msg, Msg> {
         .await
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
-pub fn view(model: &Model) -> impl View<Msg> {
-    vec![
+pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
+    nodes![
+        intro(TITLE, DESCRIPTION),
         match &model.response_with_data_result {
             None => empty![],
             Some(fetch::ResponseWithDataResult { status, data, .. }) => div![
@@ -67,6 +73,6 @@ pub fn view(model: &Model) -> impl View<Msg> {
                 div![format!(r#"Data: "{:#?}""#, data)]
             ],
         },
-        button![simple_ev(Ev::Click, Msg::SendRequest), "Try to Fetch JSON"],
+        button![ev(Ev::Click, |_| Msg::SendRequest), "Try to Fetch JSON"],
     ]
 }

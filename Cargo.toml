@@ -99,8 +99,7 @@ members = [
     "examples/app_builder",
     "examples/counter",
     "examples/canvas",
-    "examples/drop",
-    # "examples/homepage",   # isn't Rust project
+    "examples/drop_zone",
     "examples/mathjax",
     "examples/orders",
     # "examples/server_integration",   # has own workspace

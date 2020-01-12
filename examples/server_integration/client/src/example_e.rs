@@ -1,5 +1,5 @@
 use seed::browser::service::fetch;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 use std::borrow::Cow;
 use std::mem;
 use wasm_bindgen::JsCast;
@@ -17,7 +17,9 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
     "/api/form"
 }
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default, Debug)]
 pub struct Form {
@@ -69,9 +71,10 @@ impl Model {
     }
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 pub enum Msg {
     TitleChanged(String),
     DescriptionChanged(String),
@@ -98,7 +101,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::ServerResponded(Ok(response_data)) => {
             *model = Model::ReadyToSubmit(Form::default());
             clear_file_input();
-            log_2(&"%cResponse data:".into(), &"background: yellow".into());
+            log_2(
+                &"%cResponse data:".into(),
+                &"background: yellow; color: black".into(),
+            );
             log_1(&response_data.into());
         }
         Msg::ServerResponded(Err(fail_reason)) => {
@@ -135,7 +141,9 @@ fn toggle(value: &mut bool) {
     *value = !*value
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view_form_field(mut label: Node<Msg>, control: Node<Msg>) -> Node<Msg> {
     label.add_style("margin-right", unit!(7, px));
@@ -149,17 +157,17 @@ fn view_form_field(mut label: Node<Msg>, control: Node<Msg>) -> Node<Msg> {
     ]
 }
 
-pub fn view(model: &Model) -> impl View<Msg> {
+pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
     let btn_disabled = match model {
         Model::ReadyToSubmit(form) if !form.title.is_empty() => false,
         _ => true,
     };
 
     let form_id = "A_FORM".to_string();
-    form![
+    let form = form![
         style! {
-            "display" => "flex",
-            "flex-direction" => "column",
+            St::Display => "flex",
+            St::FlexDirection => "column",
         },
         ev(Ev::Submit, move |event| {
             event.prevent_default();
@@ -209,7 +217,7 @@ pub fn view(model: &Model) -> impl View<Msg> {
         view_form_field(
             label!["Do you like cocoa?:", attrs! {At::For => "form-answer" }],
             input![
-                simple_ev(Ev::Click, Msg::AnswerChanged),
+                ev(Ev::Click, |_| Msg::AnswerChanged),
                 attrs! {
                     At::Type => "checkbox",
                     At::Id => "form-answer",
@@ -225,5 +233,7 @@ pub fn view(model: &Model) -> impl View<Msg> {
             attrs! {At::Disabled => btn_disabled.as_at_value()},
             "Submit"
         ]
-    ]
+    ];
+
+    nodes![intro(TITLE, DESCRIPTION), form]
 }

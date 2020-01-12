@@ -15,7 +15,7 @@ use std::borrow::Cow;
 ///
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Element)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
-#[derive(Clone, Debug)] // todo: Custom debug implementation where children are on new lines and indented.
+#[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
 pub struct El<Ms: 'static> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
@@ -29,6 +29,22 @@ pub struct El<Ms: 'static> {
     /// The actual DOM element/node.
     pub node_ws: Option<web_sys::Node>,
     pub refs: Vec<SharedNodeWs>,
+}
+
+// @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
+impl<Ms> Clone for El<Ms> {
+    fn clone(&self) -> Self {
+        Self {
+            tag: self.tag.clone(),
+            attrs: self.attrs.clone(),
+            style: self.style.clone(),
+            event_handler_manager: self.event_handler_manager.clone(),
+            children: self.children.clone(),
+            namespace: self.namespace.clone(),
+            node_ws: self.node_ws.clone(),
+            refs: self.refs.clone(),
+        }
+    }
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {

@@ -172,7 +172,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn patch_window_event_handlers(&self) {
         if let Some(window_events) = self.cfg.window_events {
             let new_event_handlers = (window_events)(self.data.model.borrow().as_ref().unwrap());
-            let new_manager = EventHandlerManager::new_with_event_handlers(new_event_handlers);
+            let new_manager = EventHandlerManager::with_event_handlers(new_event_handlers);
 
             let mut old_manager = self.data.window_event_handler_manager.replace(new_manager);
             let mut new_manager = self.data.window_event_handler_manager.borrow_mut();

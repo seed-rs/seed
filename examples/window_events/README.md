@@ -1,7 +1,6 @@
 ## Window events example
 
-A demonstration of event-listeners attached to the window directly,
-and a few extras not covered in other examples.
+A demonstration of event-handlers attached to the `window`.
 
 ---
 

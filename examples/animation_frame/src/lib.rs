@@ -1,7 +1,9 @@
 use rand::prelude::*;
 use seed::{prelude::*, *};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 type CarColor = String;
 
@@ -49,7 +51,9 @@ struct Model {
     car: Car,
 }
 
-// AfterMount
+// ------ ------
+//  After Mount
+// ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders
@@ -58,7 +62,9 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     AfterMount::default()
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
 #[derive(Clone, Copy)]
 enum Msg {
@@ -82,17 +88,20 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.after_next_render(Msg::Rendered);
         }
         Msg::SetViewportWidth => {
-            model.viewport_width = f64::from(seed::body().client_width());
+            model.viewport_width = f64::from(body().client_width());
             orders.skip();
         }
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> Node<Msg> {
-    // scene container, aslo represents sky
+    // scene container, also represents sky
     div![
+        id!("animation"),
         style! {
             St::Overflow => "hidden";
             St::Width => unit!(100, %);
@@ -158,10 +167,14 @@ fn view_wheel(wheel_x: f64, car: &Car) -> Node<Msg> {
     }]
 }
 
+// ------ ------
+//     Start
+// ------ ------
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view)
+    App::builder(update, view)
         .after_mount(after_mount)
-        .window_events(|_| vec![simple_ev(Ev::Resize, Msg::SetViewportWidth)])
+        .window_events(|_| vec![ev(Ev::Resize, |_| Msg::SetViewportWidth)])
         .build_and_start();
 }
