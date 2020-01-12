@@ -104,7 +104,6 @@ members = [
     "examples/orders",
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
-#    "examples/server_interaction_detailed",  # has own workspace
     "examples/todomvc",
     "examples/update_from_js",
     "examples/user_media",
@@ -115,5 +114,4 @@ members = [
 exclude = [
     # it has own workspace
     "examples/server_integration",
-    "examples/server_interaction_detailed",
 ]
