@@ -8,8 +8,25 @@
 - Removed unnecessary error message for comment nodes.
 - [BREAKING] Removed deprecated `update` and `trigger_update_ev`.
 - [BREAKING] Removed the remains of lifecycle hooks.
-- [BREAKING] Removed `category`, `message`, `control_val` and `control_checked` from `Listener`.
-- Fixed `value` and `checked` setting for input elements.
+- Fixed `value` and `checked` setting for input elements (a bug in VirtualDOM patch algorithm).
+- [BREAKING] Removed unpredictable internal input listeners - Seed will not longer react to external input value changes.
+- [BREAKING] Use `EventHandler` instead of `Listener`. (`Listener` is now used as the internal DOM EventListener representation.)
+- [deprecated] - `raw_ev` is deprecated in favor of `ev`. Functionality is the same.
+- Improved performance - rewritten event-handling and other refactors in VirtualDOM.
+- Fixed processing of multiple event-handlers (#138).
+- Added DOM Element references - see `ElRef` and examples (`canvas`, `user_media` or `todomvc`) (#115).
+- Removed `Ms: Clone` restriction as much as possible.
+- [BREAKING] Added or changed `Custom` variant from `Custom(String)` to `Custom(Cow<'static, str>)` 
+  in `Ev`, `Tag`, `At` and `St`. Use function `from` to create custom entities (e.g. `At::from("my-attribute")`) (#208).
+- Added macro `nodes!`. It accepts `Node<Msg>` and `Vec<Node<Msg`, returns flattened `Vec<Node<Msg>`.
+- Refactored all examples.
+- Fixed and rewritten example `todomvc`.
+- Renamed `counter` example to `counter_advanced`.
+- Renamed `drop` example to `drop_zone`.
+- Removed `server_interaction_detailed` example.
+- Added a new simpler `counter` example.
+- Changed example in the main `README.md`.
+- Added flag `#![forbid(unsafe_code)]` so the Seed will be marked as a safe library by the Rust community tools.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
