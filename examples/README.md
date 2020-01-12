@@ -57,9 +57,5 @@ Example of a workspace with [Actix](https://actix.rs/) server.
 ### [Interaction](server_interaction)
 Example of communicating with a server using HTTP requests.
 
-### [Detailed interaction](server_interaction_detailed)
-A more complicated example of retrieving and using data from a server,
-and outputing multiple wasm files.
-
 ### [Websocket Chat](websocket)
 Example of communicating with a server using Websockets.
