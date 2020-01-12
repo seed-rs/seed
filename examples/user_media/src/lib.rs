@@ -2,18 +2,22 @@ use seed::{prelude::*, *};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlMediaElement, MediaStream, MediaStreamConstraints};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 struct Model {
     video: ElRef<HtmlMediaElement>,
 }
 
-// AfterMount
+// ------ ------
+//  After Mount
+// ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.perform_cmd(user_media());
-    AfterMount::new(Model::default())
+    AfterMount::default()
 }
 
 async fn user_media() -> Result<Msg, Msg> {
@@ -34,9 +38,10 @@ async fn user_media() -> Result<Msg, Msg> {
     ))
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone, Debug)]
 enum Msg {
     UserMedia(Result<MediaStream, JsValue>),
 }
@@ -56,7 +61,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> impl View<Msg> {
     video![
@@ -68,6 +75,10 @@ fn view(model: &Model) -> impl View<Msg> {
         }
     ]
 }
+
+// ------ ------
+//     Start
+// ------ ------
 
 #[wasm_bindgen(start)]
 pub fn start() {

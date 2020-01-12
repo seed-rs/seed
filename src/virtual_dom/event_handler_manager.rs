@@ -10,10 +10,19 @@ pub use listener::Listener;
 
 // ------ EventHandlerManager ------
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 /// Manages event handlers and listeners for elements.
 pub struct EventHandlerManager<Ms> {
     groups: BTreeMap<Ev, Group<Ms>>,
+}
+
+// @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
+impl<Ms> Clone for EventHandlerManager<Ms> {
+    fn clone(&self) -> Self {
+        Self {
+            groups: self.groups.clone(),
+        }
+    }
 }
 
 impl<Ms> EventHandlerManager<Ms> {
@@ -26,7 +35,7 @@ impl<Ms> EventHandlerManager<Ms> {
 
     /// Creates a new manager instance with given event handlers.
     /// It doesn't create listeners automatically - you have to call `attach_listeners`.
-    pub fn new_with_event_handlers(event_handlers: Vec<EventHandler<Ms>>) -> Self {
+    pub fn with_event_handlers(event_handlers: Vec<EventHandler<Ms>>) -> Self {
         let mut manager = Self::new();
         manager.add_event_handlers(event_handlers);
         manager
@@ -46,7 +55,10 @@ impl<Ms> EventHandlerManager<Ms> {
             if group.listener.is_none() {
                 group.listener = old_manager
                     .as_mut()
-                    .and_then(|old_manager| old_manager.take_listener(trigger))
+                    .and_then(|old_manager| {
+                        old_manager
+                            .take_and_setup_listener(trigger, Rc::clone(&group.event_handlers))
+                    })
                     .or_else(|| {
                         Some(Listener::new(
                             trigger.clone(),
@@ -78,10 +90,18 @@ impl<Ms> EventHandlerManager<Ms> {
     }
 
     /// This method is used in `attach_listeners` method to move listeners from the old manager.
-    pub fn take_listener(&mut self, trigger: &Ev) -> Option<Listener> {
+    pub fn take_and_setup_listener(
+        &mut self,
+        trigger: &Ev,
+        event_handlers: Rc<RefCell<Vec<EventHandler<Ms>>>>,
+    ) -> Option<Listener<Ms>> {
         self.groups
             .get_mut(trigger)
             .and_then(|group| group.listener.take())
+            .map(|listener| {
+                listener.set_event_handlers(event_handlers);
+                listener
+            })
     }
 }
 
@@ -113,7 +133,7 @@ struct Group<Ms> {
     event_handlers: Rc<RefCell<Vec<EventHandler<Ms>>>>,
     // `listener` is optional because the element where the manager is placed may be pure virtual
     // - i.e. the element hasn't been associated with the DOM yet.
-    listener: Option<Listener>,
+    listener: Option<Listener<Ms>>,
 }
 
 impl<T> Clone for Group<T> {

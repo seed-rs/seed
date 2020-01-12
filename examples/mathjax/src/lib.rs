@@ -2,21 +2,23 @@
 
 use seed::{prelude::*, *};
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 struct Model {
     pub show_description: bool,
 }
 
-// Msg
+// ------ ------
+//    Update
+// ------ ------
 
 #[derive(Clone, Copy)]
 enum Msg {
     ToggleDescription,
 }
-
-// Update
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
@@ -24,7 +26,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn math_tex(expression: &str) -> Node<Msg> {
     custom![
@@ -224,7 +228,11 @@ fn view(model: &Model) -> impl View<Msg> {
     ]
 }
 
+// ------ ------
+//     Start
+// ------ ------
+
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view).build_and_start();
+    App::builder(update, view).build_and_start();
 }

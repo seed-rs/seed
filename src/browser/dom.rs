@@ -120,15 +120,15 @@ pub mod tests {
     #[wasm_bindgen_test]
     pub fn merge_different_attrs() {
         let node = el_to_websys(a![
-            id!["my_id"],
+            id! {"my_id"},
             style!["background-color" => "red"],
             class!["my_class1"],
-            attrs![
+            attrs! {
                 At::Href => "#my_ref";
-            ],
-            attrs![
+            },
+            attrs! {
                 At::Name => "whatever";
-            ],
+            },
         ]);
 
         let mut expected = IndexMap::new();
@@ -192,10 +192,10 @@ pub mod tests {
     #[wasm_bindgen_test]
     pub fn merge_id() {
         let node = el_to_websys(a![
-            id!["my_id1"],
-            attrs![
+            id!("my_id1"),
+            attrs! {
                 At::Id => "my_id2";
-            ]
+            }
         ]);
 
         let mut expected = IndexMap::new();

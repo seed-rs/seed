@@ -1,5 +1,5 @@
-//! Modelled after the todomvc project's [Typescript-React example](https://github.com/tastejs/todomvc/tree/gh-pages/examples/typescript-react)
-
+use enclose::enc;
+use indexmap::IndexMap;
 use seed::{
     browser::service::storage::{self, Storage},
     prelude::*,
@@ -7,357 +7,439 @@ use seed::{
 };
 use serde::{Deserialize, Serialize};
 use std::mem;
+use uuid::Uuid;
+use web_sys::HtmlInputElement;
 
 const ENTER_KEY: u32 = 13;
-const ESCAPE_KEY: u32 = 27;
+const ESC_KEY: u32 = 27;
+const STORAGE_KEY: &str = "seed-todomvc";
 
-#[derive(Clone, Copy, PartialEq)]
-enum Visible {
+type TodoId = Uuid;
+
+// ------ ------
+//     Model
+// ------ ------
+
+// ------ Model ------
+
+struct Model {
+    data: Data,
+    services: Services,
+    refs: Refs,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+struct Data {
+    todos: IndexMap<TodoId, Todo>,
+    filter: TodoFilter,
+    new_todo_title: String,
+    editing_todo: Option<EditingTodo>,
+}
+
+struct Services {
+    local_storage: Storage,
+}
+
+#[derive(Default)]
+struct Refs {
+    editing_todo_input: ElRef<HtmlInputElement>,
+}
+
+// ------ Todo ------
+
+#[derive(Serialize, Deserialize)]
+struct Todo {
+    title: String,
+    completed: bool,
+}
+
+// ------ EditingTodo ------
+
+#[derive(Serialize, Deserialize)]
+struct EditingTodo {
+    id: TodoId,
+    title: String,
+}
+
+// ------ TodoFilter ------
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+enum TodoFilter {
     All,
     Active,
     Completed,
 }
 
-impl ToString for Visible {
-    fn to_string(&self) -> String {
-        match self {
-            Self::All => "".into(),
-            Self::Active => "active".into(),
-            Self::Completed => "completed".into(),
-        }
-    }
-}
-
-// Model
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
-struct Todo {
-    title: String,
-    completed: bool,
-    editing: bool,
-}
-
-impl Todo {
-    fn visible(&self, visible: Visible) -> bool {
-        match visible {
-            Visible::All => true,
-            Visible::Active => !self.completed,
-            Visible::Completed => self.completed,
-        }
-    }
-}
-
-struct Model {
-    todos: Vec<Todo>,
-    visible: Visible,
-    entry_text: String,
-    edit_text: String,
-    local_storage: Storage,
-}
-
-impl Model {
-    fn completed_count(&self) -> usize {
-        let completed: Vec<&Todo> = self.todos.iter().filter(|i| i.completed).collect();
-        completed.len()
-    }
-
-    fn active_count(&self) -> usize {
-        // By process of elimination; active means not completed.
-        self.todos.len() - self.completed_count()
-    }
-
-    fn sync_storage(&self) {
-        // todo: Every item that adds, deletes, or changes a today re-serializes and stores
-        // todo the whole model. Effective, but probably quite slow!
-        storage::store_data(&self.local_storage, "seed-todo-data", &self.todos);
-    }
-}
-
-// Setup a default here, for initialization later.
-impl Default for Model {
+impl Default for TodoFilter {
     fn default() -> Self {
-        let local_storage = storage::get_storage().unwrap();
+        Self::All
+    }
+}
 
-        //        let todos: Vec<Todo> = match local_storage.get_item("seed-todo-data") {
-        //            Some(Ok(tds)) => {
-        //                serde_json::from_str(&tds).unwrap()
-        //            },
-        //            None => Vec::new(),
-        //        };
-
-        //        let x: String = local_storage.get_item("seed-todo-data").unwrap().unwrap();
-        //        let todos: Vec<Todo> = serde_json::from_str(&x).unwrap();
-        //
-        //
-        let todos = Vec::new();
-
-        Self {
-            todos,
-            visible: Visible::All,
-            entry_text: String::new(),
-            edit_text: String::new(),
-            local_storage,
+impl TodoFilter {
+    fn to_url_path(self) -> &'static str {
+        match self {
+            Self::All => "",
+            Self::Active => "active",
+            Self::Completed => "completed",
         }
     }
 }
 
-// Update
-#[derive(Clone)]
+// ------ ------
+//  After Mount
+// ------ ------
+
+fn after_mount(_: Url, _: &mut impl Orders<Msg>) -> AfterMount<Model> {
+    let local_storage = storage::get_storage().expect("get `LocalStorage`");
+    let data = storage::load_data(&local_storage, STORAGE_KEY).unwrap_or_default();
+
+    AfterMount::new(Model {
+        data,
+        services: Services { local_storage },
+        refs: Refs::default(),
+    })
+}
+
+// ------ ------
+//    Routes
+// ------ ------
+
+fn routes(url: Url) -> Option<Msg> {
+    let filter = match url.path.into_iter().next() {
+        Some(path_part) if path_part == TodoFilter::Active.to_url_path() => TodoFilter::Active,
+        Some(path_part) if path_part == TodoFilter::Completed.to_url_path() => {
+            TodoFilter::Completed
+        }
+        _ => TodoFilter::All,
+    };
+    Some(Msg::ChangeFilter(filter))
+}
+
+// ------ ------
+//    Update
+// ------ ------
+
 enum Msg {
-    // usize here corresponds to indicies of todos in the Vec they live in.
+    NewTodoTitleChanged(String),
     ClearCompleted,
-    Destroy(usize),
-    Toggle(usize),
+    ChangeFilter(TodoFilter),
     ToggleAll,
-    NewTodo,
-    EditEntry(String),
 
-    EditItem(usize),
-    EditSubmit(usize),
-    EditChange(String),
-    EditKeyDown(usize, u32), // item position, keycode
+    CreateNewTodo,
+    ToggleTodo(TodoId),
+    RemoveTodo(TodoId),
 
-    ChangeVisibility(Visible),
+    StartTodoEdit(TodoId),
+    EditingTodoTitleChanged(String),
+    SaveEditingTodo,
+    CancelTodoEdit,
+
     NoOp,
 }
 
-/// Called by update function. Split into separate function since we use it twice.
-fn edit_submit(posit: usize, model: &mut Model) {
-    if model.edit_text.is_empty() {
-        model.todos.remove(posit);
-    } else {
-        let mut todo = model.todos.remove(posit);
-        todo.editing = false;
-        todo.title = model.edit_text.clone();
-        model.todos.insert(posit, todo);
-        model.edit_text = model.edit_text.trim().to_string();
-    }
-}
-
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
-    model.sync_storage(); // Doing it here will miss the most recent update...
-
-    // todo has some bugs.
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+    let data = &mut model.data;
     match msg {
+        Msg::NewTodoTitleChanged(title) => {
+            data.new_todo_title = title;
+        }
         Msg::ClearCompleted => {
-            model.todos = model
-                .todos
-                .clone()
-                .into_iter()
-                .filter(|t| !t.completed)
-                .collect();
+            data.todos.retain(|_, todo| !todo.completed);
         }
-        Msg::Destroy(posit) => {
-            model.todos.remove(posit);
+        Msg::ChangeFilter(filter) => {
+            data.filter = filter;
         }
-
-        Msg::Toggle(posit) => model.todos[posit].completed = !model.todos[posit].completed,
-
         Msg::ToggleAll => {
-            let completed = model.active_count() != 0;
-            for todo in &mut model.todos {
-                todo.completed = completed;
+            let all_todos_completed = data.todos.values().all(|todo| todo.completed);
+
+            for (_, todo) in &mut data.todos {
+                todo.completed = !all_todos_completed
             }
         }
-        Msg::NewTodo => {
-            // Add a todo, if the enter key is pressed.
-            if !model.entry_text.is_empty() {
-                model.todos.push(Todo {
-                    title: mem::replace(&mut model.entry_text, "".to_owned()),
+
+        Msg::CreateNewTodo => {
+            data.todos.insert(
+                TodoId::new_v4(),
+                Todo {
+                    title: mem::take(&mut data.new_todo_title),
                     completed: false,
-                    editing: false,
+                },
+            );
+        }
+        Msg::ToggleTodo(todo_id) => {
+            if let Some(todo) = data.todos.get_mut(&todo_id) {
+                todo.completed = !todo.completed;
+            }
+        }
+        Msg::RemoveTodo(todo_id) => {
+            data.todos.shift_remove(&todo_id);
+        }
+
+        Msg::StartTodoEdit(todo_id) => {
+            if let Some(todo) = data.todos.get(&todo_id) {
+                data.editing_todo = Some({
+                    EditingTodo {
+                        id: todo_id,
+                        title: todo.title.clone(),
+                    }
                 });
             }
-        }
-        Msg::EditEntry(entry_text) => model.entry_text = entry_text,
 
-        Msg::EditItem(posit) => {
-            for todo in &mut model.todos {
-                todo.editing = false;
+            let input = model.refs.editing_todo_input.clone();
+            orders.after_next_render(move |_| {
+                input.get().expect("get `editing_todo_input`").select();
+                Msg::NoOp
+            });
+        }
+        Msg::EditingTodoTitleChanged(title) => {
+            if let Some(ref mut editing_todo) = data.editing_todo {
+                editing_todo.title = title
             }
-
-            let mut todo = model.todos.remove(posit);
-            todo.editing = true;
-            model.todos.insert(posit, todo.clone());
-            model.edit_text = todo.title;
         }
-        Msg::EditSubmit(posit) => edit_submit(posit, model),
-        Msg::EditChange(edit_text) => model.edit_text = edit_text,
-        Msg::EditKeyDown(posit, code) => {
-            if code == ESCAPE_KEY {
-                for todo in &mut model.todos {
-                    todo.editing = false;
+        Msg::SaveEditingTodo => {
+            if let Some(editing_todo) = data.editing_todo.take() {
+                if let Some(todo) = data.todos.get_mut(&editing_todo.id) {
+                    todo.title = editing_todo.title;
                 }
-                model.edit_text = model.todos[posit].title.clone();
-            } else if code == ENTER_KEY {
-                edit_submit(posit, model)
             }
         }
-        Msg::ChangeVisibility(visible) => model.visible = visible,
+        Msg::CancelTodoEdit => {
+            data.editing_todo = None;
+        }
+
         Msg::NoOp => (),
     }
+    // Save data into LocalStorage. It should be optimized in a real-world application.
+    storage::store_data(&model.services.local_storage, STORAGE_KEY, &data);
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
-fn todo_item(item: &Todo, posit: usize, edit_text: &str) -> Node<Msg> {
-    let mut att = attrs! {};
-    if item.completed {
-        att.add(At::Class, "completed");
-    }
-    if item.editing {
-        att.add(At::Class, "editing");
-    }
+fn view(model: &Model) -> impl View<Msg> {
+    let data = &model.data;
+    nodes![
+        view_header(&data.new_todo_title),
+        if data.todos.is_empty() {
+            vec![]
+        } else {
+            vec![
+                view_main(
+                    &data.todos,
+                    data.filter,
+                    &data.editing_todo,
+                    &model.refs.editing_todo_input,
+                ),
+                view_footer(&data.todos, data.filter),
+            ]
+        },
+    ]
+}
 
+// ------ header ------
+
+fn view_header(new_todo_title: &str) -> Node<Msg> {
+    header![
+        class!["header"],
+        h1!["todos"],
+        input![
+            class!["new-todo"],
+            attrs! {
+                At::Placeholder => "What needs to be done?";
+                At::AutoFocus => true.as_at_value();
+                At::Value => new_todo_title;
+            },
+            keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                if keyboard_event.key_code() == ENTER_KEY {
+                    Msg::CreateNewTodo
+                } else {
+                    Msg::NoOp
+                }
+            }),
+            input_ev(Ev::Input, Msg::NewTodoTitleChanged),
+        ]
+    ]
+}
+
+// ------ main ------
+
+fn view_main(
+    todos: &IndexMap<TodoId, Todo>,
+    filter: TodoFilter,
+    editing_todo: &Option<EditingTodo>,
+    editing_todo_input: &ElRef<HtmlInputElement>,
+) -> Node<Msg> {
+    let all_todos_completed = todos.values().all(|todo| todo.completed);
+
+    section![
+        class!["main"],
+        input![
+            id!("toggle-all"),
+            class!["toggle-all"],
+            attrs! {
+                At::Type => "checkbox",
+                At::Checked => all_todos_completed.as_at_value(),
+            },
+            ev(Ev::Click, |_| Msg::ToggleAll)
+        ],
+        label![attrs! {At::For => "toggle-all"}, "Mark all as complete"],
+        view_todos(todos, filter, editing_todo, editing_todo_input)
+    ]
+}
+
+fn view_todos(
+    todos: &IndexMap<TodoId, Todo>,
+    filter: TodoFilter,
+    editing_todo: &Option<EditingTodo>,
+    editing_todo_input: &ElRef<HtmlInputElement>,
+) -> Node<Msg> {
+    ul![
+        class!["todo-list"],
+        todos.iter().filter_map(|(todo_id, todo)| {
+            let show_todo = match filter {
+                TodoFilter::All => true,
+                TodoFilter::Active => !todo.completed,
+                TodoFilter::Completed => todo.completed,
+            };
+            // @TODO replace with `bool::then_with` once stable
+            if show_todo {
+                Some(view_todo(todo_id, todo, editing_todo, editing_todo_input))
+            } else {
+                None
+            }
+        })
+    ]
+}
+
+fn view_todo(
+    todo_id: &TodoId,
+    todo: &Todo,
+    editing_todo: &Option<EditingTodo>,
+    editing_todo_input: &ElRef<HtmlInputElement>,
+) -> Node<Msg> {
     li![
-        att,
+        class![
+           "completed" => todo.completed,
+           "editing" => match editing_todo {
+               Some(editing_todo) if &editing_todo.id == todo_id => true,
+               _ => false
+           }
+        ],
         div![
             class!["view"],
             input![
+                class!["toggle"],
                 attrs! {
-                   At::Class => "toggle",
                    At::Type => "checkbox",
-                   At::Checked => item.completed.as_at_value()
+                   At::Checked => todo.completed.as_at_value()
                 },
-                simple_ev(Ev::Click, Msg::Toggle(posit))
+                ev(
+                    Ev::Change,
+                    enc!((todo_id) move |_| Msg::ToggleTodo(todo_id))
+                )
             ],
-            label![simple_ev(Ev::DblClick, Msg::EditItem(posit)), item.title],
-            button![class!["destroy"], simple_ev(Ev::Click, Msg::Destroy(posit))]
-        ],
-        if item.editing {
-            input![
-                attrs! {At::Class => "edit", At::Value => edit_text},
-                simple_ev(Ev::Blur, Msg::EditSubmit(posit)),
-                input_ev(Ev::Input, Msg::EditChange),
-                keyboard_ev(Ev::KeyDown, move |ev| Msg::EditKeyDown(
-                    posit,
-                    ev.key_code()
-                )),
+            label![
+                ev(
+                    Ev::DblClick,
+                    enc!((todo_id) move |_| Msg::StartTodoEdit(todo_id))
+                ),
+                todo.title
+            ],
+            button![
+                class!["destroy"],
+                ev(Ev::Click, enc!((todo_id) move |_| Msg::RemoveTodo(todo_id)))
             ]
-        } else {
-            empty![]
+        ],
+        match editing_todo {
+            Some(editing_todo) if &editing_todo.id == todo_id => {
+                input![
+                    el_ref(editing_todo_input),
+                    class!["edit"],
+                    attrs! {At::Value => editing_todo.title},
+                    ev(Ev::Blur, |_| Msg::SaveEditingTodo),
+                    input_ev(Ev::Input, Msg::EditingTodoTitleChanged),
+                    keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                        // @TODO rafactor to `match` once it can accept constants
+                        let code = keyboard_event.key_code();
+                        if code == ENTER_KEY {
+                            Msg::SaveEditingTodo
+                        } else if code == ESC_KEY {
+                            Msg::CancelTodoEdit
+                        } else {
+                            Msg::NoOp
+                        }
+                    }),
+                ]
+            }
+            _ => empty![],
         }
     ]
 }
 
-fn selection_li(text: &str, visible: Visible, highlighter: Visible) -> Node<Msg> {
-    li![a![
-        attrs! {
-            At::Class => if visible == highlighter {"selected"} else {""}
-            At::Href => "/".to_string() + &highlighter.to_string()
-        },
-        style! {St::Cursor => "pointer"},
-        text
-    ]]
-}
+// ------ footer ------
 
-fn footer(model: &Model) -> Node<Msg> {
-    let optional_s = if model.todos.len() == 1 { "" } else { "s" };
-
-    let clear_button = if model.completed_count() > 0 {
-        button![
-            class!["clear-completed"],
-            simple_ev(Ev::Click, Msg::ClearCompleted),
-            "Clear completed"
-        ]
-    } else {
-        seed::empty()
-    };
+fn view_footer(todos: &IndexMap<TodoId, Todo>, filter: TodoFilter) -> Node<Msg> {
+    let active_count = todos.values().filter(|todo| !todo.completed).count();
 
     footer![
         class!["footer"],
         span![
             class!["todo-count"],
-            strong![model.active_count().to_string()],
-            span![format!(" item{} left", optional_s)]
+            strong![active_count.to_string()],
+            span![format!(
+                " item{} left",
+                if active_count == 1 { "" } else { "s" }
+            )]
         ],
-        ul![
-            class!["filters"],
-            selection_li("All", model.visible, Visible::All),
-            selection_li("Active", model.visible, Visible::Active),
-            selection_li("Completed", model.visible, Visible::Completed)
-        ],
-        clear_button
+        view_filters(filter),
+        view_clear_completed(todos),
     ]
 }
 
-// Top-level component we pass to the virtual dom. Must accept the model as its only argument.
-fn view(model: &Model) -> impl View<Msg> {
-    // We use the item's position in model.todos to identify it, because this allows
-    // simple in-place modification through indexing. This is different from its
-    // position in visible todos, hence the two-step process.
-    let todo_els = model
-        .todos
-        .clone()
-        .into_iter()
-        .enumerate()
-        .filter_map(|(posit, todo)| {
-            if todo.visible(model.visible) {
-                Some(todo_item(&todo, posit, &model.edit_text))
-            } else {
-                None
-            }
-        });
+fn view_filters(filter: TodoFilter) -> Node<Msg> {
+    ul![
+        class!["filters"],
+        view_filter("All", TodoFilter::All, filter),
+        view_filter("Active", TodoFilter::Active, filter),
+        view_filter("Completed", TodoFilter::Completed, filter),
+    ]
+}
 
-    let main = if model.todos.is_empty() {
-        seed::empty()
-    } else {
-        section![
-            class!["main"],
-            input![
-                attrs! {
-                    At::Id => "toggle-all"; At::Class => "toggle-all"; At::Type => "checkbox",
-                    At::Checked => (model.active_count() == 0).as_at_value(),
-                },
-                simple_ev(Ev::Click, Msg::ToggleAll)
-            ],
-            label![attrs! {At::For => "toggle-all"}, "Mark all as complete"],
-            ul![class!["todo-list"], todo_els]
-        ]
-    };
-
-    vec![
-        header![
-            class!["header"],
-            h1!["todos"],
-            input![
-                attrs! {
-                    At::Class => "new-todo";
-                    At::Placeholder => "What needs to be done?";
-                    At::AutoFocus => true;
-                    At::Value => model.entry_text;
-                },
-                keyboard_ev(Ev::KeyDown, |keyboard_event| {
-                    if keyboard_event.key_code() == ENTER_KEY {
-                        Msg::NewTodo
-                    } else {
-                        Msg::NoOp
-                    }
-                }),
-                input_ev(Ev::Input, Msg::EditEntry),
-            ]
-        ],
-        main,
-        if model.active_count() > 0 || model.completed_count() > 0 {
-            footer(model)
-        } else {
-            seed::empty()
+fn view_filter(title: &str, filter: TodoFilter, current_filter: TodoFilter) -> Node<Msg> {
+    li![a![
+        class!["selected" => filter == current_filter],
+        attrs! {
+            At::Href => format!("/{}", filter.to_url_path())
         },
-    ]
+        style! {St::Cursor => "pointer"},
+        title
+    ]]
 }
 
-#[allow(clippy::needless_pass_by_value)]
-fn routes(url: seed::Url) -> Option<Msg> {
-    Some(match url.path.get(0).map(String::as_str) {
-        Some("active") => Msg::ChangeVisibility(Visible::Active),
-        Some("completed") => Msg::ChangeVisibility(Visible::Completed),
-        _ => Msg::ChangeVisibility(Visible::All),
-    })
+fn view_clear_completed(todos: &IndexMap<TodoId, Todo>) -> Node<Msg> {
+    let completed_count = todos.values().filter(|todo| todo.completed).count();
+
+    if completed_count > 0 {
+        button![
+            class!["clear-completed"],
+            ev(Ev::Click, |_| Msg::ClearCompleted),
+            format!("Clear completed ({})", completed_count),
+        ]
+    } else {
+        empty![]
+    }
 }
+
+// ------ ------
+//     Start
+// ------ ------
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view)
+    App::builder(update, view)
+        .after_mount(after_mount)
         .routes(routes)
         .build_and_start();
 }

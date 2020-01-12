@@ -16,20 +16,22 @@ struct SendMessageRequestBody {
     pub message: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct SendMessageResponseBody {
     pub success: bool,
 }
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Branch {
     pub name: String,
     pub commit: Commit,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Commit {
     pub sha: String,
 }
@@ -51,7 +53,19 @@ impl Default for Model {
     }
 }
 
-#[derive(Clone)]
+// ------ ------
+//  After Mount
+// ------ ------
+
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
+    orders.perform_cmd(fetch_repository_info());
+    AfterMount::default()
+}
+
+// ------ ------
+//    Update
+// ------ ------
+
 enum Msg {
     RepositoryInfoFetched(fetch::ResponseDataResult<Branch>),
     SendMessage,
@@ -109,31 +123,32 @@ async fn send_message() -> Result<Msg, Msg> {
         .await
 }
 
+// ------ ------
+//     View
+// ------ ------
+
 fn view(model: &Model) -> Vec<Node<Msg>> {
-    vec![
-        md!["# Repo info"].remove(0),
+    nodes![
+        md!["# Repo info"],
         div![format!(
             "Name: {}, SHA: {}",
             model.branch.name, model.branch.commit.sha
         )],
-        raw!["<hr>"].remove(0),
+        raw!["<hr>"],
         button![
-            simple_ev(Ev::Click, Msg::SendMessage),
+            ev(Ev::Click, |_| Msg::SendMessage),
             "Send an urgent message (see console log)"
         ],
     ]
 }
 
-// Init
-
-fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    orders.perform_cmd(fetch_repository_info());
-    AfterMount::default()
-}
+// ------ ------
+//     Start
+// ------ ------
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    seed::App::builder(update, view)
+    App::builder(update, view)
         .after_mount(after_mount)
         .build_and_start();
 }

@@ -14,6 +14,8 @@ pub fn el_ref<E: Clone>(reference: &ElRef<E>) -> ElRef<E> {
 /// DOM element reference.
 /// You want to use it instead of DOM selectors to get raw DOM elements.
 ///
+/// _Note_: Cloning is cheap, it uses only phantom data and `Rc` under the hood.
+///
 /// # Example
 ///
 /// ```rust,no_run
@@ -69,8 +71,6 @@ impl<E: Clone + JsCast> ElRef<E> {
     /// - An associated DOM element has been already attached during render.
     /// - The DOM element is still a part of the current DOM.
     /// - The DOM element has the same type like `ElRef`.
-    ///
-    /// See `ElRef` for more info.
     pub fn get(&self) -> Option<E> {
         // Has `node_ws` already been assigned by VDOM?
         let node_ws = match self.shared_node_ws.clone_inner() {
@@ -83,6 +83,34 @@ impl<E: Clone + JsCast> ElRef<E> {
         }
         // Try to cast to the chosen element type.
         node_ws.dyn_into::<E>().ok()
+    }
+
+    /// Map `ElRef` type.
+    /// - It just changes type saved in the phantom - it's cheap.
+    ///
+    /// - It's useful when you have, for instance, `ElRef<HtmlInputElement>`
+    /// and want to focus the referenced input. `HtmlInputElement` doesn't have method `focus`,
+    /// but parent interface `HtmlElement` has.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// let input: ElRef<HtmlInputElement> = model.refs.my_input.clone();
+    /// orders.after_next_render(move |_| {
+    ///     input
+    ///         .map_type::<HtmlElement>()
+    ///         .get()
+    ///         .expect("get `my_input`")
+    ///         .focus()
+    ///         .expect("focus 'my_input'");
+    ///     Msg::NoOp
+    ///  });
+    ///
+    pub fn map_type<T>(&self) -> ElRef<T> {
+        ElRef {
+            shared_node_ws: self.shared_node_ws.clone(),
+            phantom: PhantomData,
+        }
     }
 }
 

@@ -63,7 +63,6 @@ fn sink(g_msg: GMsg, _: &mut Model, _: &mut impl Orders<Msg, GMsg>) {
 //    Update
 // ------ ------
 
-#[derive(Clone)]
 enum Msg {
     Clicked,
     UrlChanged(Url),
@@ -96,9 +95,9 @@ fn view(model: &Model) -> impl View<Msg> {
     vec![
         button![
             format!("Clicked: {}", model.clicks),
-            simple_ev(Ev::Click, Msg::Clicked),
+            ev(Ev::Click, |_| Msg::Clicked),
         ],
-        button!["Say hello", simple_ev(Ev::Click, Msg::SayHello),],
+        button!["Say hello", ev(Ev::Click, |_| Msg::SayHello),],
     ]
 }
 

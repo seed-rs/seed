@@ -1,5 +1,5 @@
 use seed::browser::service::fetch;
-use seed::prelude::*;
+use seed::{self, prelude::*, *};
 use std::borrow::Cow;
 
 use shared;
@@ -13,7 +13,9 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
     "/api/send-message"
 }
 
-// Model
+// ------ ------
+//     Model
+// ------ -----
 
 #[derive(Default)]
 pub struct Model {
@@ -21,9 +23,10 @@ pub struct Model {
     pub response_data: Option<shared::SendMessageResponseBody>,
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 pub enum Msg {
     NewMessageChanged(String),
     SendRequest,
@@ -60,19 +63,14 @@ async fn send_request(new_message: String) -> Result<Msg, Msg> {
         .await
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
-pub fn view(model: &Model) -> impl View<Msg> {
-    let message = match &model.response_data {
-        None => empty![],
-        Some(shared::SendMessageResponseBody {
-            ordinal_number,
-            text,
-        }) => div![format!(r#"{}. message: "{}""#, ordinal_number, text)],
-    };
-
-    vec![
-        message,
+pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
+    nodes![
+        intro(TITLE, DESCRIPTION),
+        view_message(&model.response_data),
         input![
             input_ev(Ev::Input, Msg::NewMessageChanged),
             attrs! {
@@ -80,6 +78,17 @@ pub fn view(model: &Model) -> impl View<Msg> {
                 At::AutoFocus => AtValue::None,
             }
         ],
-        button![simple_ev(Ev::Click, Msg::SendRequest), "Send message"],
+        button![ev(Ev::Click, |_| Msg::SendRequest), "Send message"],
     ]
+}
+
+fn view_message(message: &Option<shared::SendMessageResponseBody>) -> Node<Msg> {
+    let message = match message {
+        Some(message) => message,
+        None => return empty![],
+    };
+    div![format!(
+        r#"{}. message: "{}""#,
+        message.ordinal_number, message.text
+    )]
 }

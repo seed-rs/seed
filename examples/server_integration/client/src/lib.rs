@@ -1,9 +1,6 @@
 #![allow(clippy::enum_variant_names, clippy::large_enum_variant)]
 
-#[macro_use]
-extern crate seed;
-
-use seed::prelude::*;
+use seed::{prelude::*, *};
 
 mod example_a;
 mod example_b;
@@ -11,7 +8,9 @@ mod example_c;
 mod example_d;
 mod example_e;
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 struct Model {
@@ -22,9 +21,10 @@ struct Model {
     example_e: example_e::Model,
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 enum Msg {
     ExampleA(example_a::Msg),
     ExampleB(example_b::Msg),
@@ -53,59 +53,38 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> impl View<Msg> {
-    let examples = vec![
-        // example_a
-        view_example_introduction(example_a::TITLE, example_a::DESCRIPTION),
-        example_a::view(&model.example_a)
-            .els()
-            .map_msg(Msg::ExampleA),
-        // example_b
-        view_example_introduction(example_b::TITLE, example_b::DESCRIPTION),
-        example_b::view(&model.example_b)
-            .els()
-            .map_msg(Msg::ExampleB),
-        // example_c
-        view_example_introduction(example_c::TITLE, example_c::DESCRIPTION),
-        example_c::view(&model.example_c)
-            .els()
-            .map_msg(Msg::ExampleC),
-        // example_d
-        view_example_introduction(example_d::TITLE, example_d::DESCRIPTION),
-        example_d::view(&model.example_d)
-            .els()
-            .map_msg(Msg::ExampleD),
-        // example_e
-        view_example_introduction(example_e::TITLE, example_e::DESCRIPTION),
-        example_e::view(&model.example_e)
-            .els()
-            .map_msg(Msg::ExampleE),
-    ]
-    .into_iter()
-    .flatten()
-    .collect::<Vec<Node<Msg>>>();
-
     div![
         style! {
-            "font-family" => "sans-serif";
-            "max-width" => px(460);
-            "margin" => "auto";
+            St::FontFamily => "sans-serif";
+            St::MaxWidth => px(460);
+            St::Margin => "auto";
         },
-        examples
+        example_a::view(&model.example_a, view_intro).map_msg(Msg::ExampleA),
+        example_b::view(&model.example_b, view_intro).map_msg(Msg::ExampleB),
+        example_c::view(&model.example_c, view_intro).map_msg(Msg::ExampleC),
+        example_d::view(&model.example_d, view_intro).map_msg(Msg::ExampleD),
+        example_e::view(&model.example_e, view_intro).map_msg(Msg::ExampleE),
     ]
 }
 
-fn view_example_introduction(title: &str, description: &str) -> Vec<Node<Msg>> {
+fn view_intro<Ms>(title: &str, description: &str) -> Vec<Node<Ms>> {
     vec![
         hr![],
         h2![title],
-        div![style! {"margin-bottom" => px(15);}, description],
+        div![style! {St::MarginBottom => px(15)}, description],
     ]
 }
 
+// ------ ------
+//     Start
+// ------ ------
+
 #[wasm_bindgen(start)]
 pub fn start() {
-    seed::App::builder(update, view).build_and_start();
+    App::builder(update, view).build_and_start();
 }

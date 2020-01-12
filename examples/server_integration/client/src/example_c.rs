@@ -1,5 +1,5 @@
 use seed::browser::service::fetch;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 use std::borrow::Cow;
 
 pub const TITLE: &str = "Example C";
@@ -12,7 +12,9 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
     format!("/api/delayed-response/{}", response_delay_ms)
 }
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 pub struct Model {
@@ -33,9 +35,10 @@ impl Default for Status {
     }
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 pub enum Msg {
     SendRequest,
     AbortRequest,
@@ -68,26 +71,31 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
-pub fn view(model: &Model) -> impl View<Msg> {
-    match model.status {
-        Status::ReadyToSendRequest => vec![
-            view_response_data_result(&model.response_data_result),
-            button![simple_ev(Ev::Click, Msg::SendRequest), "Send request"],
-        ],
-        Status::WaitingForResponse => vec![
-            div!["Waiting for response..."],
-            button![simple_ev(Ev::Click, Msg::AbortRequest), "Abort request"],
-        ],
-        Status::RequestAborted => vec![
-            view_response_data_result(&model.response_data_result),
-            button![
-                attrs! {At::Disabled => false.as_at_value()},
-                "Request aborted"
+pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
+    nodes![
+        intro(TITLE, DESCRIPTION),
+        match model.status {
+            Status::ReadyToSendRequest => vec![
+                view_response_data_result(&model.response_data_result),
+                button![ev(Ev::Click, |_| Msg::SendRequest), "Send request"],
             ],
-        ],
-    }
+            Status::WaitingForResponse => vec![
+                div!["Waiting for response..."],
+                button![ev(Ev::Click, |_| Msg::AbortRequest), "Abort request"],
+            ],
+            Status::RequestAborted => vec![
+                view_response_data_result(&model.response_data_result),
+                button![
+                    attrs! {At::Disabled => false.as_at_value()},
+                    "Request aborted"
+                ],
+            ],
+        }
+    ]
 }
 
 fn view_response_data_result(

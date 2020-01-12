@@ -1,24 +1,36 @@
-use super::{AtValue, CSSValue, St};
+use super::{AtValue, CSSValue, EventHandler, St};
 use crate::app::MessageMapper;
 use std::borrow::Cow;
 
 pub mod el;
+pub mod into_nodes;
 pub mod text;
 
-use crate::EventHandler;
 pub use el::El;
+pub use into_nodes::IntoNodes;
 pub use text::Text;
 
 /// A component in our virtual DOM.
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Node)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Node<Ms: 'static> {
     Element(El<Ms>),
     //    Svg(El<Ms>),  // May be best to handle using namespace field on El
     Text(Text),
     Empty,
+}
+
+// @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
+impl<Ms> Clone for Node<Ms> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Element(element) => Self::Element(element.clone()),
+            Self::Text(text) => Self::Text(text.clone()),
+            Self::Empty => Self::Empty,
+        }
+    }
 }
 
 // Element methods

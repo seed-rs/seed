@@ -13,7 +13,7 @@ pub use attrs::Attrs;
 pub use el_ref::{el_ref, ElRef, SharedNodeWs};
 pub use event_handler_manager::{EventHandler, EventHandlerManager, Listener};
 pub use mailbox::Mailbox;
-pub use node::{El, Node, Text};
+pub use node::{El, IntoNodes, Node, Text};
 pub use style::Style;
 pub use update_el::UpdateEl;
 pub use values::{AsAtValue, AtValue, CSSValue};

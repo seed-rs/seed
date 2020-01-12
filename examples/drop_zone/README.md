@@ -1,4 +1,4 @@
-## Drop example
+## Drop-zone example
 
 How to create a drop-zone.
 

@@ -5,8 +5,11 @@
 use seed::{prelude::*, *};
 use web_sys::HtmlCanvasElement;
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
+#[derive(Default)]
 struct Model {
     fill_color: Color,
     canvas: ElRef<HtmlCanvasElement>,
@@ -27,17 +30,24 @@ impl Color {
     }
 }
 
-// AfterMount
+impl Default for Color {
+    fn default() -> Self {
+        Self::A
+    }
+}
+
+// ------ ------
+//  After Mount
+// ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.after_next_render(|_| Msg::Rendered);
-    AfterMount::new(Model {
-        fill_color: Color::A,
-        canvas: ElRef::new(),
-    })
+    AfterMount::default()
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
 #[derive(Copy, Clone)]
 enum Msg {
@@ -76,7 +86,9 @@ fn draw(canvas: &ElRef<HtmlCanvasElement>, fill_color: Color) {
     ctx.stroke();
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> impl View<Msg> {
     div![
@@ -94,6 +106,10 @@ fn view(model: &Model) -> impl View<Msg> {
         button!["Change color", ev(Ev::Click, |_| Msg::ChangeColor)],
     ]
 }
+
+// ------ ------
+//     Start
+// ------ ------
 
 #[wasm_bindgen(start)]
 pub fn render() {

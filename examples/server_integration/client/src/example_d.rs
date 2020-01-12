@@ -1,5 +1,5 @@
 use seed::browser::service::fetch;
-use seed::prelude::*;
+use seed::{prelude::*, *};
 use std::borrow::Cow;
 
 pub const TITLE: &str = "Example D";
@@ -14,7 +14,9 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
     format!("/api/delayed-response/{}", response_delay_ms)
 }
 
-// Model
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 pub struct Model {
@@ -39,9 +41,10 @@ impl Default for Status {
     }
 }
 
-// Update
+// ------ ------
+//    Update
+// ------ ------
 
-#[derive(Clone)]
 pub enum Msg {
     SendRequest,
     DisableTimeout,
@@ -77,24 +80,29 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-// View
+// ------ ------
+//     View
+// ------ ------
 
-pub fn view(model: &Model) -> impl View<Msg> {
-    match &model.response_result {
-        None => vec![
-            if let Status::WaitingForResponse(_) = model.status {
-                div!["Waiting for response..."]
-            } else {
-                empty![]
-            },
-            view_button(&model.status),
-        ],
-        Some(Ok(response)) => vec![
-            div![format!("Server returned {}.", response.status.text)],
-            view_button(&model.status),
-        ],
-        Some(Err(fail_reason)) => view_fail_reason(fail_reason, &model.status),
-    }
+pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
+    nodes![
+        intro(TITLE, DESCRIPTION),
+        match &model.response_result {
+            None => vec![
+                if let Status::WaitingForResponse(_) = model.status {
+                    div!["Waiting for response..."]
+                } else {
+                    empty![]
+                },
+                view_button(&model.status),
+            ],
+            Some(Ok(response)) => vec![
+                div![format!("Server returned {}.", response.status.text)],
+                view_button(&model.status),
+            ],
+            Some(Err(fail_reason)) => view_fail_reason(fail_reason, &model.status),
+        }
+    ]
 }
 
 fn view_fail_reason(fail_reason: &fetch::FailReason<()>, status: &Status) -> Vec<Node<Msg>> {
@@ -112,11 +120,11 @@ fn view_fail_reason(fail_reason: &fetch::FailReason<()>, status: &Status) -> Vec
 pub fn view_button(status: &Status) -> Node<Msg> {
     match status {
         Status::WaitingForResponse(TimeoutStatus::Enabled) => {
-            button![simple_ev(Ev::Click, Msg::DisableTimeout), "Disable timeout"]
+            button![ev(Ev::Click, |_| Msg::DisableTimeout), "Disable timeout"]
         }
         Status::WaitingForResponse(TimeoutStatus::Disabled) => {
             button![attrs! {"disabled" => true}, "Timeout disabled"]
         }
-        _ => button![simple_ev(Ev::Click, Msg::SendRequest), "Send request"],
+        _ => button![ev(Ev::Click, |_| Msg::SendRequest), "Send request"],
     }
 }
