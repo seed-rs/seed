@@ -168,6 +168,13 @@ impl<Ms> Node<Ms> {
             Node::Empty => (),
         }
     }
+
+    #[cfg(debug_assertions)]
+    pub fn warn_about_script_tags(&self) {
+        if let Node::Element(e) = self {
+            e.warn_about_script_tags();
+        }
+    }
 }
 
 impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {

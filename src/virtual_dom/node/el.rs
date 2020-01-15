@@ -211,6 +211,24 @@ impl<Ms> El<Ms> {
             .collect()
     }
 
+    #[cfg(debug_assertions)]
+    /// Warn user about potential bugs when having scripts and `Takeover` mount type.
+    pub fn warn_about_script_tags(&self) {
+        let script_found = match &self.tag {
+            Tag::Script => true,
+            Tag::Custom(tag) if tag == "script" => true,
+            _ => false,
+        };
+        if script_found {
+            error!("Script tag found inside mount point! \
+                    Please check https://docs.rs/seed/latest/seed/app/builder/struct.Builder.html#examples");
+        }
+
+        for child in &self.children {
+            child.warn_about_script_tags();
+        }
+    }
+
     /// Remove websys nodes.
     pub fn strip_ws_nodes_from_self_and_children(&mut self) {
         self.node_ws.take();

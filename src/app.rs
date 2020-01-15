@@ -246,6 +246,9 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             // not entirely correct).
             // TODO: 1) Please refer to [issue #277](https://github.com/seed-rs/seed/issues/277)
             let mut dom_nodes: El<Ms> = (&self.cfg.mount_point).into();
+            if cfg!(debug_assertions) {
+                dom_nodes.warn_about_script_tags();
+            }
             dom_nodes.strip_ws_nodes_from_self_and_children();
 
             // Replace the root dom with a placeholder tag and move the children from the root element

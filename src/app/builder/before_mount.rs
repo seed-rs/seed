@@ -83,8 +83,14 @@ impl BeforeMount {
     /// mount_point("another_id")
     ///
     /// // argument is `HTMLElement`
-    /// // NOTE: Be careful with mounting into body,
-    /// // it can cause hard-to-debug bugs when there are other scripts in the body.
+    ///
+    /// // NOTE: Be careful with mounting into body!
+    /// // If you render directly into document.body, you risk collisions
+    /// // with scripts that do something with it (e.g. Google Font Loader or
+    /// // third party browser extensions) which produce very weird and hard
+    /// // to debug errors in production.
+    /// // (from https://github.com/facebook/create-react-app/issues/1568)
+    ///
     /// mount_point(seed::body())
     ///
     /// // argument is `Element`
