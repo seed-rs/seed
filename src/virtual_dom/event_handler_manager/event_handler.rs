@@ -8,11 +8,12 @@ pub struct EventHandler<Ms> {
     pub callback: Rc<dyn Fn(web_sys::Event) -> Ms>,
 }
 
+// @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
 impl<Ms> Clone for EventHandler<Ms> {
     fn clone(&self) -> Self {
         Self {
             trigger: self.trigger.clone(),
-            callback: self.callback.clone(),
+            callback: Rc::clone(&self.callback),
         }
     }
 }
