@@ -2,11 +2,19 @@ use crate::app::MessageMapper;
 use crate::virtual_dom::Ev;
 use std::{fmt, rc::Rc};
 
-#[derive(Clone)]
 /// `EventHandler`s are called by DOM event listeners with the same trigger (an event to listen to).
 pub struct EventHandler<Ms> {
     pub trigger: Ev,
     pub callback: Rc<dyn Fn(web_sys::Event) -> Ms>,
+}
+
+impl<Ms> Clone for EventHandler<Ms> {
+    fn clone(&self) -> Self {
+        Self {
+            trigger: self.trigger.clone(),
+            callback: self.callback.clone(),
+        }
+    }
 }
 
 impl<Ms> EventHandler<Ms> {
