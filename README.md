@@ -7,11 +7,14 @@
   <img src="/seed_branding/seed_logo.svg" width="256" title="Seed logo">
 </p>
 
+## Rust framework for creating fast and reliable web apps
 
-## [New homepage](https://seed-rs.org), as of Nov 2019 - We are looking forward to your [feedback](https://github.com/seed-rs/seed/issues/303)!
+- Website - [seed-rs.org](https://seed-rs.org) ([feedback](https://github.com/seed-rs/seed/issues/303))
+- Forum - [seed.discourse.group](https://seed.discourse.group)
+- Chat - [discord.gg](https://discord.gg/JHHcHp5)
+- Quickstarts - [Webpack](https://github.com/seed-rs/seed-quickstart-webpack) | [Rust](https://github.com/seed-rs/seed-quickstart)
 
-The best place to learn is the guide on the homepage - this readme is an excerpt from it.
-
+The best place to learn is the guide on the website - this readme is an excerpt from it.
 
 # Quickstart
 
