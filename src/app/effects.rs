@@ -16,11 +16,14 @@ impl<Ms, GMs> From<Ms> for Effect<Ms, GMs> {
 
 impl<Ms: 'static, OtherMs: 'static, GMs> MessageMapper<Ms, OtherMs> for Effect<Ms, GMs> {
     type SelfWithOtherMs = Effect<OtherMs, GMs>;
-    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Effect<OtherMs, GMs> {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static) -> Effect<OtherMs, GMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
             Effect::Cmd(cmd) => Effect::Cmd(LocalFutureObj::new(Box::new(async {
-                cmd.await.map(f.clone()).map_err(f)
+                match cmd.await {
+                    Ok(msg) => Ok(f(msg)),
+                    Err(msg) => Err(f(msg)),
+                }
             }))),
             Effect::GMsg(g_msg) => Effect::GMsg(g_msg),
             Effect::GCmd(g_cmd) => Effect::GCmd(g_cmd),

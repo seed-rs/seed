@@ -27,6 +27,7 @@
 - Added a new simpler `counter` example.
 - Changed example in the main `README.md`.
 - Added flag `#![forbid(unsafe_code)]` so the Seed will be marked as a safe library by the Rust community tools.
+- Removed `clone` restriction from the method `Effect::map_msg`.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
