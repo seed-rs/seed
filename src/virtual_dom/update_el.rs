@@ -167,3 +167,15 @@ where
         self.for_each(|item| item.update(el));
     }
 }
+
+impl<Ms, I, U, F, II> UpdateEl<El<Ms>> for std::iter::FlatMap<I, II, F>
+where
+    I: Iterator,
+    U: UpdateEl<El<Ms>>,
+    II: IntoIterator<Item = U>,
+    F: FnMut(I::Item) -> II,
+{
+    fn update(self, el: &mut El<Ms>) {
+        self.for_each(|item| item.update(el));
+    }
+}
