@@ -28,6 +28,7 @@
 - Changed example in the main `README.md`.
 - Added flag `#![forbid(unsafe_code)]` so the Seed will be marked as a safe library by the Rust community tools.
 - Removed `clone` restriction from the method `Effect::map_msg`.
+- Implemented `UpdateEl` for `FlatMap`.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
