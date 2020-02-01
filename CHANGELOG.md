@@ -2,6 +2,7 @@
 
 [unreleased]
 
+## v0.6.1
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
 - Added method `El::is_custom(&self)`.
 - Fixed custom elements patching (#325).
