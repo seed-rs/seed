@@ -41,6 +41,7 @@ pub struct FetchObject<T> {
 }
 
 impl<T> FetchObject<T> {
+    #[allow(clippy::missing_errors_doc)]
     /// Get successful `Response` (status code 100-399) or `FailReason`.
     pub fn response(self) -> ResponseResult<T> {
         let response = match self.result {
@@ -69,6 +70,7 @@ impl<T> FetchObject<T> {
         })
     }
 
+    #[allow(clippy::missing_errors_doc)]
     /// Get successful `Response` data or `FailReason`.
     pub fn response_data(self) -> ResponseDataResult<T> {
         self.response().map(|response| response.data)
@@ -116,7 +118,10 @@ impl RequestController {
         self.abort_controller.abort();
     }
     /// Disable request's timeout.
-    /// Returns error if timeout is already disabled.
+    ///
+    /// # Errors
+    ///
+    /// Will return error if timeout is already disabled.
     pub fn disable_timeout(&self) -> Result<(), &'static str> {
         // Cancel timeout by dropping it.
         match self.timeout_handle.replace(None) {

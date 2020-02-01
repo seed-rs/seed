@@ -102,6 +102,10 @@ pub fn request_animation_frame(
 
 /// Simplify getting the value of input elements; required due to the need to cast
 /// from general nodes/elements to `HTML_Elements`.
+///
+/// # Errors
+///
+/// Will return error if it's not possible to call `get_value` for given `target`.
 pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> {
     use web_sys::*;
     macro_rules! get {
@@ -139,6 +143,7 @@ pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> 
     Err("Can't use function `get_value` for given element.")
 }
 
+#[allow(clippy::missing_errors_doc)]
 /// Similar to `get_value`.
 pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'static str> {
     use web_sys::*;
@@ -230,6 +235,7 @@ fn is_active(element: &web_sys::Element) -> bool {
     document().active_element().as_ref() == Some(element)
 }
 
+#[allow(clippy::missing_errors_doc)]
 /// Similar to `get_value`
 #[allow(dead_code)]
 pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, &'static str> {
@@ -248,6 +254,7 @@ pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, &'static str> 
     Err("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `get_checked`.")
 }
 
+#[allow(clippy::missing_errors_doc)]
 /// Similar to `set_value`.
 #[allow(clippy::unit_arg)]
 pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'static str> {
