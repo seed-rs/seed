@@ -1,7 +1,9 @@
 # Changelog
 
 [unreleased]
+- (placeholder)
 
+## v0.6.1
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
 - Added method `El::is_custom(&self)`.
 - Fixed custom elements patching (#325).
@@ -29,7 +31,6 @@
 - Added flag `#![forbid(unsafe_code)]` so the Seed will be marked as a safe library by the Rust community tools.
 - Removed `clone` restriction from the method `Effect::map_msg`.
 - Implemented `UpdateEl` for `FlatMap`.
-- Adapted to Rust 1.41.0.
 
 ## v0.5.1
 - [BREAKING] `MessageMapper::map_message` changed to `MessageMapper::map_msg`.
