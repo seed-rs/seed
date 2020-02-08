@@ -8,7 +8,7 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Add a new route using history's `push_state` method.
 ///
-/// # Refenences
+/// # References
 /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
 pub fn push_route<U: Into<Url>>(url: U) -> Url {
     let url = url.into();
