@@ -25,7 +25,7 @@ pub struct Url {
 impl Url {
     /// Helper that ignores hash, search and title, and converts path to Strings.
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
     pub fn new<T: ToString>(path: Vec<T>) -> Self {
         Self {
@@ -38,7 +38,7 @@ impl Url {
 
     /// Builder-pattern method for defining hash.
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/hash)
     pub fn hash(mut self, hash: &str) -> Self {
         self.hash = Some(hash.into());
