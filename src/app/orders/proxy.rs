@@ -79,7 +79,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     #[allow(clippy::redundant_closure)]
     fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
     where
-        C: Future<Output = Result<Ms, Ms>> + 'static,
+        C: Future<Output = Ms> + 'static,
     {
         let f = self.f.clone();
         let effect = Effect::Cmd(LocalFutureObj::new(Box::new(cmd))).map_msg(move |ms| f(ms));
@@ -95,7 +95,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
 
     fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
     where
-        C: Future<Output = Result<GMs, GMs>> + 'static,
+        C: Future<Output = GMs> + 'static,
     {
         let effect = Effect::GCmd(LocalFutureObj::new(Box::new(g_cmd)));
         self.orders_container.effects.push_back(effect);

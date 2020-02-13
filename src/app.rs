@@ -343,11 +343,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         orders.effects
     }
 
-    fn process_queue_cmd(&self, cmd: LocalFutureObj<'static, Result<Ms, Ms>>) {
+    fn process_queue_cmd(&self, cmd: LocalFutureObj<'static, Ms>) {
         let lazy_schedule_cmd = enclose!((self => s) move |_| {
             // schedule future (cmd) to be executed
             spawn_local(async move {
-                let msg_returned_from_effect = cmd.await.unwrap_or_else(|err_msg| err_msg);
+                let msg_returned_from_effect = cmd.await;
                 // recursive call which can blow the call stack
                 s.update(msg_returned_from_effect);
             })
@@ -356,11 +356,11 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         spawn_local(NextTick::new().map(lazy_schedule_cmd));
     }
 
-    fn process_queue_global_cmd(&self, g_cmd: LocalFutureObj<'static, Result<GMs, GMs>>) {
+    fn process_queue_global_cmd(&self, g_cmd: LocalFutureObj<'static, GMs>) {
         let lazy_schedule_cmd = enclose!((self => s) move |_| {
             // schedule future (g_cmd) to be executed
             spawn_local(async move {
-                let msg_returned_from_effect = g_cmd.await.unwrap_or_else(|err_msg| err_msg);
+                let msg_returned_from_effect = g_cmd.await;
                 // recursive call which can blow the call stack
                 s.sink(msg_returned_from_effect);
             })

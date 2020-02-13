@@ -3,9 +3,9 @@ use futures::future::LocalFutureObj;
 
 pub enum Effect<Ms, GMs> {
     Msg(Ms),
-    Cmd(LocalFutureObj<'static, Result<Ms, Ms>>),
+    Cmd(LocalFutureObj<'static, Ms>),
     GMsg(GMs),
-    GCmd(LocalFutureObj<'static, Result<GMs, GMs>>),
+    GCmd(LocalFutureObj<'static, GMs>),
 }
 
 impl<Ms, GMs> From<Ms> for Effect<Ms, GMs> {
@@ -19,12 +19,7 @@ impl<Ms: 'static, OtherMs: 'static, GMs> MessageMapper<Ms, OtherMs> for Effect<M
     fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static) -> Effect<OtherMs, GMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
-            Effect::Cmd(cmd) => Effect::Cmd(LocalFutureObj::new(Box::new(async {
-                match cmd.await {
-                    Ok(msg) => Ok(f(msg)),
-                    Err(msg) => Err(f(msg)),
-                }
-            }))),
+            Effect::Cmd(cmd) => Effect::Cmd(LocalFutureObj::new(Box::new(async { f(cmd.await) }))),
             Effect::GMsg(g_msg) => Effect::GMsg(g_msg),
             Effect::GCmd(g_cmd) => Effect::GCmd(g_cmd),
         }

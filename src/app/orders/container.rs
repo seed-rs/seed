@@ -65,7 +65,7 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 
     fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
     where
-        C: Future<Output = Result<Ms, Ms>> + 'static,
+        C: Future<Output = Ms> + 'static,
     {
         let effect = Effect::Cmd(LocalFutureObj::new(Box::new(cmd)));
         self.effects.push_back(effect);
@@ -80,7 +80,7 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
 
     fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
     where
-        C: Future<Output = Result<GMs, GMs>> + 'static,
+        C: Future<Output = GMs> + 'static,
     {
         let effect = Effect::GCmd(LocalFutureObj::new(Box::new(g_cmd)));
         self.effects.push_back(effect);
