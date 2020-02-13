@@ -23,7 +23,6 @@ pub use crate::dom_entity_names::{At, Ev, St, Tag};
 
 #[cfg(test)]
 pub mod tests {
-    use futures::future;
     use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
     use web_sys::{self, Element};
@@ -602,7 +601,7 @@ pub mod tests {
                 model.counters.messages_sent += 1;
             }
             if model.counters.commands_scheduled < MESSAGES_TO_SEND {
-                orders.perform_cmd(future::ok(Msg::CommandPerformed));
+                orders.perform_cmd(async { Msg::CommandPerformed });
                 model.counters.commands_scheduled += 1;
             }
 

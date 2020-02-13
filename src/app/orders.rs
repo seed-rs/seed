@@ -56,7 +56,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// ```
     fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
     where
-        C: Future<Output = Result<Ms, Ms>> + 'static;
+        C: Future<Output = Ms> + 'static;
 
     /// Similar to `send_msg`, but calls function `sink` with the given global message.
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self;
@@ -64,7 +64,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// Similar to `perform_cmd`, but result is send to function `sink`.
     fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
     where
-        C: Future<Output = Result<GMs, GMs>> + 'static;
+        C: Future<Output = GMs> + 'static;
 
     /// Get app instance. Cloning is cheap because `App` contains only `Rc` fields.
     fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs>;
