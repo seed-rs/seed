@@ -43,14 +43,14 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn write_exclamation_marks_after_delay() -> Result<Msg, Msg> {
+async fn write_exclamation_marks_after_delay() -> Msg {
     TimeoutFuture::new(1_000).await;
-    Ok(Msg::WriteExclamationMarks)
+    Msg::WriteExclamationMarks
 }
 
-async fn write_emoticon_after_delay(emoticon: String) -> Result<Msg, Msg> {
+async fn write_emoticon_after_delay(emoticon: String) -> Msg {
     TimeoutFuture::new(2_000).await;
-    Ok(Msg::WriteEmoticon(emoticon))
+    Msg::WriteEmoticon(emoticon)
 }
 
 // ------ ------
