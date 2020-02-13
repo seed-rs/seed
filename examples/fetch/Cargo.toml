@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 seed = {path = "../../"}
 wasm-bindgen = "0.2.55"
 serde = { version = "^1.0.103", features = ["derive"] }
+futures = "0.3.4"
