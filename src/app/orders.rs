@@ -47,10 +47,9 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// # Example
     ///
     /// ```rust,no_run
-    ///fn write_emoticon_after_delay() -> impl Future<Item=Msg, Error=Msg> {
-    ///    TimeoutFuture::new(2_000)
-    ///        .map(|_| Msg::WriteEmoticon)
-    ///        .map_err(|_| Msg::TimeoutError)
+    ///async fn write_emoticon_after_delay() -> Msg {
+    ///    TimeoutFuture::new(2_000).await;
+    ///    Msg::WriteEmoticon
     ///}
     ///orders.perform_cmd(write_emoticon_after_delay());
     /// ```
