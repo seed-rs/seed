@@ -1,7 +1,7 @@
 # Changelog
 
 [unreleased]
-- (placeholder)
+- [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
@@ -18,7 +18,7 @@
 - Fixed processing of multiple event-handlers (#138).
 - Added DOM Element references - see `ElRef` and examples (`canvas`, `user_media` or `todomvc`) (#115).
 - Removed `Ms: Clone` restriction as much as possible.
-- [BREAKING] Added or changed `Custom` variant from `Custom(String)` to `Custom(Cow<'static, str>)` 
+- [BREAKING] Added or changed `Custom` variant from `Custom(String)` to `Custom(Cow<'static, str>)`
   in `Ev`, `Tag`, `At` and `St`. Use function `from` to create custom entities (e.g. `At::from("my-attribute")`) (#208).
 - Added macro `nodes!`. It accepts `Node<Msg>` and `Vec<Node<Msg`, returns flattened `Vec<Node<Msg>`.
 - Refactored all examples.
@@ -82,7 +82,7 @@ in place of a closure or function to produce the corresponding `Init` and `After
 ## v0.4.1
 - Added more SVG `At` variants
 - Added the `St` enum, for style keys; similar to `At`
-- Improved ergonomics of `add_child`, `add_attr`, `add_class`, 
+- Improved ergonomics of `add_child`, `add_attr`, `add_class`,
 `add_style`, `replace_text`, and `add_text`, `Node` methods
 
 ## v0.4.0
@@ -123,7 +123,7 @@ a text node, but doesn't remove existing ones. Added `add_class`. (Breaking)
 - Added support for `request​Animation​Frame`, which improves render performance,
 especially for animations
 - Styles no longer implicitly add `px`. Added `unit!` macro in its place
-- `Map` can now be used directly in elements, without needing to annotate type and collect 
+- `Map` can now be used directly in elements, without needing to annotate type and collect
 (ie for child `Elements`, and `Listener`s)
 - Significant changes to MessageMapper
 - Orders hs new methods, `clone_app` and `msg_mapper` that allow access to app instance.
