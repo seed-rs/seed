@@ -103,13 +103,13 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn fetch_repository_info() -> Result<Msg, Msg> {
+async fn fetch_repository_info() -> Msg {
     Request::new(REPOSITORY_URL)
         .fetch_json_data(Msg::RepositoryInfoFetched)
         .await
 }
 
-async fn send_message() -> Result<Msg, Msg> {
+async fn send_message() -> Msg {
     let message = SendMessageRequestBody {
         name: "Mark Watney".into(),
         email: "mark@crypt.kk".into(),

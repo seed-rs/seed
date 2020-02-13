@@ -55,7 +55,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn send_request(new_message: String) -> Result<Msg, Msg> {
+async fn send_request(new_message: String) -> Msg {
     fetch::Request::new(get_request_url())
         .method(fetch::Method::Post)
         .send_json(&shared::SendMessageRequestBody { text: new_message })

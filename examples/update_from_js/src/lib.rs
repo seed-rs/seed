@@ -45,9 +45,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn wrap_in_future(f: impl FnOnce()) -> Result<Msg, Msg> {
+async fn wrap_in_future(f: impl FnOnce()) -> Msg {
     f();
-    Ok(Msg::NoOp)
+    Msg::NoOp
 }
 
 // ------ ------

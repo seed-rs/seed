@@ -20,7 +20,7 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     AfterMount::default()
 }
 
-async fn user_media() -> Result<Msg, Msg> {
+async fn user_media() -> Msg {
     let mut constraints = MediaStreamConstraints::new();
     constraints.video(&JsValue::from(true));
 
@@ -31,11 +31,11 @@ async fn user_media() -> Result<Msg, Msg> {
         .get_user_media_with_constraints(&constraints)
         .unwrap();
 
-    Ok(Msg::UserMedia(
+    Msg::UserMedia(
         JsFuture::from(media_stream_promise)
             .await
             .map(MediaStream::from),
-    ))
+    )
 }
 
 // ------ ------

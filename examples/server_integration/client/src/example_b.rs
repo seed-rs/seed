@@ -52,7 +52,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn send_request() -> Result<Msg, Msg> {
+async fn send_request() -> Msg {
     fetch::Request::new(get_request_url())
         .fetch_json(|fetch_object| Msg::Fetched(fetch_object.result))
         .await
