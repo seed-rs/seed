@@ -442,7 +442,7 @@ impl Request {
     ///        .await
     ///}
     /// ```
-    pub async fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> Result<U, U>
+    pub async fn fetch<U>(self, f: impl FnOnce(FetchObject<()>) -> U) -> U
     where
         U: 'static,
     {
@@ -455,19 +455,19 @@ impl Request {
                 data: Ok(()),
             })
             .map_err(|js_value_error| RequestError::DomException(js_value_error.into()));
-        Ok(f(FetchObject {
+        f(FetchObject {
             request: self,
             result: fetch_result,
-        }))
+        })
     }
 
     /// Same as method `fetch`, but try to convert body to `String` and insert it into `Response` field `data`.
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Body/text]
-    pub async fn fetch_string<U>(self, f: impl FnOnce(FetchObject<String>) -> U) -> Result<U, U>
+    pub async fn fetch_string<U>(self, f: impl FnOnce(FetchObject<String>) -> U) -> U
     where
         U: 'static,
     {
-        let fetch_object = self.fetch(identity).await.unwrap();
+        let fetch_object = self.fetch(identity).await;
         let fetch_result = fetch_object.result;
         let request = fetch_object.request;
 
@@ -520,7 +520,7 @@ impl Request {
                 }
             }
         };
-        Ok(f(fetch_object))
+        f(fetch_object)
     }
 
     /// Fetch and then convert body to `String`. It passes `ResponseDataResult<String>` into callback `f`.
@@ -528,7 +528,7 @@ impl Request {
     pub fn fetch_string_data<U>(
         self,
         f: impl FnOnce(ResponseDataResult<String>) -> U,
-    ) -> impl Future<Output = Result<U, U>>
+    ) -> impl Future<Output = U>
     where
         U: 'static,
     {
@@ -536,12 +536,12 @@ impl Request {
     }
 
     /// Same as method `fetch`, but try to deserialize body and insert it into `Response` field `data`.
-    pub async fn fetch_json<T, U>(self, f: impl FnOnce(FetchObject<T>) -> U) -> Result<U, U>
+    pub async fn fetch_json<T, U>(self, f: impl FnOnce(FetchObject<T>) -> U) -> U
     where
         T: DeserializeOwned + 'static,
         U: 'static,
     {
-        let fetch_object = self.fetch_string(identity).await.unwrap();
+        let fetch_object = self.fetch_string(identity).await;
         let fetch_result = fetch_object.result;
         let request = fetch_object.request;
 
@@ -587,14 +587,14 @@ impl Request {
                 }
             }
         };
-        Ok(f(fetch_object))
+        f(fetch_object)
     }
 
     /// Fetch and then deserialize body to `T`. It passes `ResponseDataResult<T>` into callback `f`.
     pub fn fetch_json_data<T, U>(
         self,
         f: impl FnOnce(ResponseDataResult<T>) -> U,
-    ) -> impl Future<Output = Result<U, U>>
+    ) -> impl Future<Output = U>
     where
         T: DeserializeOwned + 'static,
         U: 'static,
