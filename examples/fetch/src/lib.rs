@@ -6,6 +6,7 @@
 
 use seed::{prelude::*, *};
 use seed::browser::fetch::*;
+use futures::future::FutureExt;
 
 // ------ ------
 //     Model
@@ -46,7 +47,7 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
-            orders.skip().perform_cmd(fetch_foo());
+            orders.skip().perform_cmd(fetch_foo().map(Msg::Fetched));
         },
         Msg::Fetched(Ok(foo)) => {
             model.foo = Some(foo);
@@ -60,11 +61,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn fetch_foo() -> Msg {
-    Msg::Fetched(retreive_foo().await)
-}
-
-async fn retreive_foo() -> Result<Foo, FooError> {
+async fn fetch_foo() -> Result<Foo, FooError> {
     let response = fetch("/foo.json").await.map_err(|_| FooError::ServerError)?;
 
     match response.status() {
