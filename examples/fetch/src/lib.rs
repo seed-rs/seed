@@ -25,9 +25,22 @@ struct Foo {
     bar: usize,
 }
 
+#[derive(serde::Deserialize, Debug)]
+struct FooValidationError {
+    reason: String,
+}
+
+#[derive(Debug)]
+enum FooError {
+    ServerError,
+    SerdeError,
+    StatusError,
+    ValidationError(FooValidationError),
+}
+
 enum Msg {
     SendRequest,
-    Fetched(Foo),
+    Fetched(Result<Foo, FooError>),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -35,16 +48,35 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SendRequest => {
             orders.skip().perform_cmd(fetch_foo());
         },
-        Msg::Fetched(foo) => {
+        Msg::Fetched(Ok(foo)) => {
             model.foo = Some(foo);
         },
+        Msg::Fetched(Err(FooError::ValidationError(FooValidationError{reason}))) => {
+            log!("Invalid foo: {}", reason);
+        },
+        Msg::Fetched(Err(err)) => {
+            error!("It's dead Jim");
+        }
     }
 }
 
 async fn fetch_foo() -> Msg {
-    let response = fetch("/foo.json").await.expect("Request failed");
-    let foo: Foo = response.json().await.expect("Deserialization failed");
-    Msg::Fetched(foo)
+    Msg::Fetched(retreive_foo().await)
+}
+
+async fn retreive_foo() -> Result<Foo, FooError> {
+    let response = fetch("/foo.json").await.map_err(|_| FooError::ServerError)?;
+
+    match response.status() {
+        Status{code: 200, ..} => {
+            response.json::<Foo>().await.map_err(|_| FooError::SerdeError)
+        },
+        Status{code: 418, ..} => {
+            let validation_error = response.json::<FooValidationError>().await.map_err(|_| FooError::SerdeError)?;
+            Err(FooError::ValidationError(validation_error))
+        }
+        _ => Err(FooError::StatusError),
+    }
 }
 
 // ------ ------
