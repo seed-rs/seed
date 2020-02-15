@@ -15,8 +15,8 @@ pub enum Method {
 }
 
 impl Method {
-    pub fn as_str(&self) -> &'static str {
-        match *self {
+    pub fn as_str(self) -> &'static str {
+        match self {
             Method::Get => "GET",
             Method::Head => "HEAD",
             Method::Post => "POST",

@@ -1,12 +1,12 @@
 //! The Request interface of the Fetch API represents a resource request.
 //!
-//! See https://developer.mozilla.org/en-US/docs/Web/API/Request
+//! See [developer.mozilla.org/en-US/docs/Web/API/Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
 
-use super::{Method, FetchError};
+use super::{FetchError, Method};
 use gloo_timers::callback::Timeout;
+use serde::Serialize;
 use std::{borrow::Cow, cell::RefCell, collections::HashMap, rc::Rc};
 use wasm_bindgen::JsValue;
-use serde::Serialize;
 
 /// Its methods configure the request, and handle the response. Many of them return the original
 /// struct, and are intended to be used chained together.
@@ -28,18 +28,24 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(url: &'static str) -> Self {
+    pub fn new(url: impl Into<Cow<'static, str>>) -> Self {
         Self {
-            url: Cow::from(url),
+            url: url.into(),
             ..Self::default()
         }
     }
 
-    pub fn method(mut self, method: Method) -> Self {
+    pub const fn method(mut self, method: Method) -> Self {
         self.method = method;
         self
     }
 
+    // TODO should `json` set header `Content-type: application/json; charset=utf-8`?
+    /// TODO description
+    ///
+    /// # Errors
+    /// 
+    /// TODO describe errors
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self, FetchError> {
         let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
         self.body = Some(body.into());
@@ -128,6 +134,7 @@ impl From<Request> for web_sys::Request {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Clone)]
 /// It allows to abort request or disable request's timeout.
 /// You can get it by calling method `Request.controller`.
