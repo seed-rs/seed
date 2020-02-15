@@ -3,7 +3,7 @@
 
 #![allow(clippy::large_enum_variant)]
 
-use seed::{browser::service::fetch, prelude::*, *};
+use seed::{fetch::*, prelude::*, *};
 use serde::{Deserialize, Serialize};
 
 const REPOSITORY_URL: &str = "https://api.github.com/repos/seed-rs/seed/branches/master";
@@ -67,19 +67,19 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
 // ------ ------
 
 enum Msg {
-    RepositoryInfoFetched(fetch::ResponseDataResult<Branch>),
+    RepositoryInfoFetched(Result<Branch, FetchError>),
     SendMessage,
-    MessageSent(fetch::ResponseDataResult<SendMessageResponseBody>),
+    MessageSent(Result<SendMessageResponseBody, FetchError>),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::RepositoryInfoFetched(Ok(branch)) => model.branch = branch,
 
-        Msg::RepositoryInfoFetched(Err(fail_reason)) => {
+        Msg::RepositoryInfoFetched(Err(fetch_error)) => {
             error!(format!(
                 "Fetch error - Fetching repository info failed - {:#?}",
-                fail_reason
+                fetch_error
             ));
             orders.skip();
         }
@@ -104,9 +104,16 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 async fn fetch_repository_info() -> Msg {
-    Request::new(REPOSITORY_URL)
-        .fetch_json_data(Msg::RepositoryInfoFetched)
-        .await
+    // TODO chain?
+    let response = match fetch(REPOSITORY_URL).await {
+        Err(err) => return Msg::RepositoryInfoFetched(Err(err)),
+        Ok(response) => response,
+    };
+    let branch = match response.json().await {
+        Err(err) => return Msg::RepositoryInfoFetched(Err(err)),
+        Ok(branch) => branch,
+    };
+    Msg::RepositoryInfoFetched(Ok(branch))
 }
 
 async fn send_message() -> Msg {
@@ -116,11 +123,21 @@ async fn send_message() -> Msg {
         message: "I wanna be like Iron Man".into(),
     };
 
-    Request::new(CONTACT_URL)
+    let request = Request::new(CONTACT_URL)
         .method(Method::Post)
-        .send_json(&message)
-        .fetch_json_data(Msg::MessageSent)
-        .await
+        .json(&message)
+        .expect("Serialization failed");
+
+    // TODO chain?
+    let response = match fetch(request).await {
+        Err(err) => return Msg::MessageSent(Err(err)),
+        Ok(response) => response,
+    };
+    let response_message = match response.json().await {
+        Err(err) => return Msg::MessageSent(Err(err)),
+        Ok(response_message) => response_message,
+    };
+    Msg::MessageSent(Ok(response_message))
 }
 
 // ------ ------

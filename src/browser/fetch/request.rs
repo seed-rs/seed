@@ -13,6 +13,7 @@ use wasm_bindgen::JsValue;
 #[derive(Debug, Clone, Default)]
 pub struct Request {
     url: Cow<'static, str>,
+    // TODO cows?
     headers: HashMap<String, String>,
     method: Method,
     body: Option<JsValue>,
@@ -40,13 +41,17 @@ impl Request {
         self
     }
 
-    // TODO should `json` set header `Content-type: application/json; charset=utf-8`?
     /// TODO description
     ///
     /// # Errors
-    /// 
+    ///
     /// TODO describe errors
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self, FetchError> {
+        // TODO set "Content-type"?
+        self.headers.insert(
+            "Content-type".to_owned(),
+            "application/json; charset=utf-8".to_owned(),
+        );
         let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
         self.body = Some(body.into());
         Ok(self)
