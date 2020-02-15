@@ -1,6 +1,6 @@
 //! The Response interface of the Fetch API represents the response to a request.
 //!
-//! See https://developer.mozilla.org/en-US/docs/Web/API/Response
+//! See [developer.mozilla.org/en-US/docs/Web/API/Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 
 use super::{FetchError, Status};
 use serde::de::DeserializeOwned;

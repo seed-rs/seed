@@ -10,6 +10,7 @@ pub struct Status {
     pub category: StatusCategory,
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum StatusCategory {
     /// Code 1xx

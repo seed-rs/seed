@@ -56,6 +56,7 @@ pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response, Fe
     Ok(Response { raw_response })
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum FetchError {
     SerdeError(serde_json::Error),

@@ -2,8 +2,8 @@
 //!
 //! See simple.rs for the most basic usage
 
-// Some Clippy linter rules are ignored for the sake of simplicity.
-#![allow(clippy::needless_pass_by_value, clippy::trivially_copy_pass_by_ref)]
+//// Some Clippy linter rules are ignored for the sake of simplicity.
+//#![allow(clippy::needless_pass_by_value, clippy::trivially_copy_pass_by_ref)]
 
 use seed::{prelude::*, *};
 
