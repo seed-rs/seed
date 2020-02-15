@@ -60,6 +60,18 @@ impl Url {
     }
 }
 
+impl std::fmt::Display for Url {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let path = self.path.join("/");
+        match (&self.search, &self.hash) {
+            (Some(search), Some(hash)) => write!(fmt, "{}?{}#{}", path, search, hash),
+            (Some(search), None) => write!(fmt, "{}?{}", path, search),
+            (None, Some(hash)) => write!(fmt, "{}#{}", path, hash),
+            _ => write!(fmt, "{}", path),
+        }
+    }
+}
+
 impl From<web_sys::Url> for Url {
     fn from(url: web_sys::Url) -> Self {
         let path = {

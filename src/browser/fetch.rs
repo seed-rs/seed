@@ -1,40 +1,59 @@
-#![allow(unused)]
-//! Fetch.
-use super::Url;
+//! Fetch API.
+//!
+//! Our version of the Fetch API is based mostly on regular web one.
+//!
+//! There are several main components:
+//! - `fetch` function
+//! - `Request` struct
+//! - `Response` struct
+//!
+//! There is one entry point: `fetch` function.
+//! It can accept both, String urls as well as `Request`.
+//!
+//! As Rust doesn't have optional arguments we don't have `fetch(url, init)` version,
+//! instead you should use something like this:
+//! ```rust
+//! fetch(Request::new(url).set_method(Method::Post))
+//! ```
 
-use std::future::Future;
-
-use gloo_timers::callback::Timeout;
-use serde::{de::DeserializeOwned, Serialize};
+// use gloo_timers::callback::Timeout;
+use crate::browser::Url;
+use crate::util::window;
 use serde_json;
-use std::{borrow::Cow, cell::RefCell, collections::HashMap, convert::identity, rc::Rc};
-use wasm_bindgen::JsValue;
+use std::borrow::Cow;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
 
-pub struct Request {}
+mod method;
+mod request;
+mod response;
+mod status;
 
-pub struct Response {
-    raw_response: web_sys::Response,
-}
+pub use method::*;
+pub use request::*;
+pub use response::*;
+pub use status::*;
 
-impl Response {
-    pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T, FetchError> {
-        let text = self.raw_response
-            .text()
-            .map(JsFuture::from)
-            .unwrap() // promise
-            .await
-            .unwrap() // json.parse error
-            .as_string()
-            .unwrap(); // as_string
+/// The fetch functions is a main entry point of the Fetch API.
+///
+/// It start the process of fetching a resource from the network,
+/// returning a future which is fulfilled once the response is
+/// available. The future resolves to the Response object representing
+/// the response to your request. The promise does not reject on HTTP
+/// errors — it only rejects on network errors. You must use then
+/// handlers to check for HTTP errors.
+pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response, FetchError> {
+    let promise = match resourse.into() {
+        Resource::String(string) => window().fetch_with_str(&string),
+        Resource::Request(request) => window().fetch_with_request(&request.into()),
+    };
 
-        serde_json::from_str(&text).map_err(FetchError::SerdeError)
-    }
+    let raw_response = JsFuture::from(promise)
+        .await
+        .map(Into::into)
+        .map_err(|js_value_error| FetchError::DomException(js_value_error.into()))?;
 
-    pub fn status(&self) -> Status {
-        Status::from(&self.raw_response)
-    }
+    Ok(Response { raw_response })
 }
 
 #[derive(Debug)]
@@ -43,98 +62,48 @@ pub enum FetchError {
     DomException(web_sys::DomException),
 }
 
-pub async fn fetch(url: &str) -> Result<Response, FetchError> {
-    let mut request = web_sys::RequestInit::new();
-    let fetch_promise = web_sys::window()
-        .expect("fetch: cannot find window")
-        .fetch_with_str_and_init(url, &request);
-
-    let raw_response = JsFuture::from(fetch_promise)
-        .await
-        .map(Into::into)
-        .map_err(|js_value_error| FetchError::DomException(js_value_error.into()))?;
-
-    Ok(Response{raw_response})
-}
-
-#[derive(Debug, Clone)]
-/// Response status.
+/// Wrapper for `fetch` function single argument.
 ///
-/// It's intended to create `Status` from `web_sys::Response` - eg: `Status::from(&raw_response)`.
-pub struct Status {
-    /// Code examples: 200, 404, ...
-    pub code: u16,
-    /// Text examples: "OK", "Not Found", ...
-    pub text: String,
-    pub category: StatusCategory,
+/// Consider using `String` or `Request` instead, because there are
+/// `From` implementations for those types.
+pub enum Resource<'a> {
+    String(Cow<'a, str>),
+    Request(Request),
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum StatusCategory {
-    /// Code 1xx
-    Informational,
-    /// Code 2xx
-    Success,
-    /// Code 3xx
-    Redirection,
-    /// Code 4xx
-    ClientError,
-    /// Code 5xx
-    ServerError,
-    /// Code < 100 || Code >= 600
-    Unknown,
-}
-
-
-#[allow(dead_code)]
-impl Status {
-    /// Is response status category `ClientError` or `ServerError`? (Code 400-599)
-    pub fn is_error(&self) -> bool {
-        match self.category {
-            StatusCategory::ClientError | StatusCategory::ServerError => true,
-            _ => false,
-        }
-    }
-    /// Is response status category `Success`? (Code 200-299)
-    pub fn is_ok(&self) -> bool {
-        self.category == StatusCategory::Success
+impl<'a> From<&'a str> for Resource<'a> {
+    fn from(string: &'a str) -> Resource<'a> {
+        Resource::String(Cow::from(string))
     }
 }
 
-impl From<&web_sys::Response> for Status {
-    fn from(response: &web_sys::Response) -> Self {
-        let text = response.status_text();
-        match response.status() {
-            code @ 100..=199 => Status {
-                code,
-                text,
-                category: StatusCategory::Informational,
-            },
-            code @ 200..=299 => Status {
-                code,
-                text,
-                category: StatusCategory::Success,
-            },
-            code @ 300..=399 => Status {
-                code,
-                text,
-                category: StatusCategory::Redirection,
-            },
-            code @ 400..=499 => Status {
-                code,
-                text,
-                category: StatusCategory::ClientError,
-            },
-            code @ 500..=599 => Status {
-                code,
-                text,
-                category: StatusCategory::ServerError,
-            },
-            code => Status {
-                code,
-                text,
-                category: StatusCategory::Unknown,
-            },
-        }
+impl From<String> for Resource<'_> {
+    fn from(string: String) -> Resource<'static> {
+        Resource::String(Cow::from(string))
+    }
+}
+
+impl From<Url> for Resource<'_> {
+    fn from(url: Url) -> Resource<'static> {
+        Resource::String(Cow::from(url.to_string()))
+    }
+}
+
+impl From<Request> for Resource<'_> {
+    fn from(request: Request) -> Resource<'static> {
+        Resource::Request(request)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fetch() {
+        let _ = fetch("https://seed-rs.org");
+        let _ = fetch(String::from("https://seed-rs.org"));
+        let _ = fetch(Url::from(vec!["/", "foo"]));
+        let _ = fetch(Request::new("https://seed-rs.org"));
     }
 }

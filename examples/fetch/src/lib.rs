@@ -4,9 +4,9 @@
 // Some Clippy linter rules are ignored for the sake of simplicity.
 #![allow(clippy::needless_pass_by_value, clippy::trivially_copy_pass_by_ref)]
 
-use seed::{prelude::*, *};
-use seed::browser::fetch::*;
 use futures::future::FutureExt;
+use seed::browser::fetch::*;
+use seed::{prelude::*, *};
 
 // ------ ------
 //     Model
@@ -48,28 +48,34 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
             orders.skip().perform_cmd(fetch_foo().map(Msg::Fetched));
-        },
+        }
         Msg::Fetched(Ok(foo)) => {
             model.foo = Some(foo);
-        },
-        Msg::Fetched(Err(FooError::ValidationError(FooValidationError{reason}))) => {
+        }
+        Msg::Fetched(Err(FooError::ValidationError(FooValidationError { reason }))) => {
             log!("Invalid foo: {}", reason);
-        },
-        Msg::Fetched(Err(err)) => {
+        }
+        Msg::Fetched(Err(_err)) => {
             error!("It's dead Jim");
         }
     }
 }
 
 async fn fetch_foo() -> Result<Foo, FooError> {
-    let response = fetch("/foo.json").await.map_err(|_| FooError::ServerError)?;
+    let response = fetch("/foo.json")
+        .await
+        .map_err(|_| FooError::ServerError)?;
 
     match response.status() {
-        Status{code: 200, ..} => {
-            response.json::<Foo>().await.map_err(|_| FooError::SerdeError)
-        },
-        Status{code: 418, ..} => {
-            let validation_error = response.json::<FooValidationError>().await.map_err(|_| FooError::SerdeError)?;
+        Status { code: 200, .. } => response
+            .json::<Foo>()
+            .await
+            .map_err(|_| FooError::SerdeError),
+        Status { code: 418, .. } => {
+            let validation_error = response
+                .json::<FooValidationError>()
+                .await
+                .map_err(|_| FooError::SerdeError)?;
             Err(FooError::ValidationError(validation_error))
         }
         _ => Err(FooError::StatusError),
