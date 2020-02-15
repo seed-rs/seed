@@ -46,8 +46,7 @@ pub use crate::{
     browser::dom::cast::{
         to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea,
     },
-    browser::service::fetch,
-    browser::service::fetch::{Method, Request, ResponseDataResult, ResponseResult},
+    browser::fetch,
     browser::service::routing::push_route,
     browser::service::storage,
     browser::url::Url,
@@ -123,7 +122,7 @@ pub mod prelude {
         browser::dom::event_handler::{
             ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
         },
-        browser::fetch::{fetch, FetchError, Request, Response},
+        browser::fetch::fetch,
         browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,

@@ -2,10 +2,11 @@
 //!
 //! See https://developer.mozilla.org/en-US/docs/Web/API/Request
 
-use super::Method;
+use super::{Method, FetchError};
 use gloo_timers::callback::Timeout;
 use std::{borrow::Cow, cell::RefCell, collections::HashMap, rc::Rc};
 use wasm_bindgen::JsValue;
+use serde::Serialize;
 
 /// Its methods configure the request, and handle the response. Many of them return the original
 /// struct, and are intended to be used chained together.
@@ -32,6 +33,17 @@ impl Request {
             url: Cow::from(url),
             ..Self::default()
         }
+    }
+
+    pub fn method(mut self, method: Method) -> Self {
+        self.method = method;
+        self
+    }
+
+    pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self, FetchError> {
+        let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
+        self.body = Some(body.into());
+        Ok(self)
     }
 }
 
