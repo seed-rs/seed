@@ -13,12 +13,14 @@ pub struct Model {
 }
 
 pub enum Msg {
+    NameChanged(String),
     Submit,
     Submited,
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
+        Msg::NameChanged(name) => model.form.name = name,
         Msg::Submit => {
             orders.skip(); // No need to rerender
 
@@ -43,7 +45,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 pub fn view(model: &Model) -> Node<Msg> {
     form![
         ev(Ev::Submit, |_| Msg::Submit),
-        label!["Name", input![attrs! {At::Value => model.form.name}]],
+        label![
+            "Name",
+            input![
+                attrs! {At::Value => model.form.name},
+                input_ev(Ev::Input, Msg::NameChanged),
+            ]
+        ],
         button![
             "Submit",
             ev(Ev::Click, |event| {
