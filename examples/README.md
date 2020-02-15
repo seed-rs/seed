@@ -48,6 +48,9 @@ How to create and use subscriptions, streams, notifications and commands.
 How to write a component in The Elm architecture.
 You'll also learn how to pass messages to the parent component.
 
+### [Fetch](fetch)
+How to make HTTP request using Fetch API.
+
 ### [Todo MVC](todomvc)
 Classic TodoMVC example with Local Storage.
 

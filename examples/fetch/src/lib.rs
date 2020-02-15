@@ -1,105 +1,32 @@
-//! A simple, cliché example demonstrating structure and syntax.
-//! Inspired by [Elm example](https://guide.elm-lang.org/architecture/buttons.html).
+//! Example of the Fetch API.
+//!
+//! See simple.rs for the most basic usage
 
 // Some Clippy linter rules are ignored for the sake of simplicity.
 #![allow(clippy::needless_pass_by_value, clippy::trivially_copy_pass_by_ref)]
 
-use futures::future::FutureExt;
-use seed::browser::fetch::*;
 use seed::{prelude::*, *};
 
-// ------ ------
-//     Model
-// ------ ------
+mod simple;
 
 #[derive(Default)]
 struct Model {
-    foo: Option<Foo>,
-}
-
-// ------ ------
-//    Update
-// ------ ------
-
-#[derive(serde::Deserialize)]
-struct Foo {
-    bar: usize,
-}
-
-#[derive(serde::Deserialize, Debug)]
-struct FooValidationError {
-    reason: String,
-}
-
-#[derive(Debug)]
-enum FooError {
-    ServerError,
-    SerdeError,
-    StatusError,
-    ValidationError(FooValidationError),
+    simple: simple::Model,
 }
 
 enum Msg {
-    SendRequest,
-    Fetched(Result<Foo, FooError>),
+    Simple(simple::Msg),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::SendRequest => {
-            orders.skip().perform_cmd(fetch_foo().map(Msg::Fetched));
-        }
-        Msg::Fetched(Ok(foo)) => {
-            model.foo = Some(foo);
-        }
-        Msg::Fetched(Err(FooError::ValidationError(FooValidationError { reason }))) => {
-            log!("Invalid foo: {}", reason);
-        }
-        Msg::Fetched(Err(_err)) => {
-            error!("It's dead Jim");
-        }
+        Msg::Simple(msg) => simple::update(msg, &mut model.simple, &mut orders.proxy(Msg::Simple)),
     }
 }
-
-async fn fetch_foo() -> Result<Foo, FooError> {
-    let response = fetch("/foo.json")
-        .await
-        .map_err(|_| FooError::ServerError)?;
-
-    match response.status() {
-        Status { code: 200, .. } => response
-            .json::<Foo>()
-            .await
-            .map_err(|_| FooError::SerdeError),
-        Status { code: 418, .. } => {
-            let validation_error = response
-                .json::<FooValidationError>()
-                .await
-                .map_err(|_| FooError::SerdeError)?;
-            Err(FooError::ValidationError(validation_error))
-        }
-        _ => Err(FooError::StatusError),
-    }
-}
-
-// ------ ------
-//     View
-// ------ ------
 
 fn view(model: &Model) -> Node<Msg> {
-    div![
-        button![ev(Ev::Click, |_| Msg::SendRequest), "Fetch"],
-        if let Some(foo) = &model.foo {
-            div![format!("Bar: {}", foo.bar)]
-        } else {
-            empty![]
-        }
-    ]
+    div![div![simple::view(&model.simple).map_msg(Msg::Simple)],]
 }
-
-// ------ ------
-//     Start
-// ------ ------
 
 #[wasm_bindgen(start)]
 pub fn render() {
