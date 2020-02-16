@@ -64,6 +64,7 @@ pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response> {
 pub enum FetchError {
     SerdeError(serde_json::Error),
     DomException(web_sys::DomException),
+    PromiseError(wasm_bindgen::JsValue),
 }
 
 /// Wrapper for `fetch` function single argument.

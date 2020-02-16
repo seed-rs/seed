@@ -11,16 +11,21 @@ pub struct Response {
 }
 
 impl Response {
-    pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
-        let text = self.raw_response
+    pub async fn text(self) -> Result<String> {
+        let js_promise = self.raw_response
             .text()
-            .map(JsFuture::from)
-            .unwrap() // promise
-            .await
-            .unwrap() // json.parse error
-            .as_string()
-            .unwrap(); // as_string
+            .map_err(|err| FetchError::PromiseError(err))?;
 
+        let js_value = JsFuture::from(js_promise)
+            .await
+            .map_err(|err| FetchError::PromiseError(err))?;
+
+        Ok(js_value.as_string().expect("fetch: Response expected `String` after .text()"))
+    }
+
+
+    pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
+        let text = self.text().await?;
         serde_json::from_str(&text).map_err(FetchError::SerdeError)
     }
 
