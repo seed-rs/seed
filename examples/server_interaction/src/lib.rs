@@ -58,7 +58,11 @@ impl Default for Model {
 // ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    orders.perform_cmd(fetch_repository_info());
+    orders.perform_cmd(
+        fetch(REPOSITORY_URL)
+            .and_then(Response::json)
+            .map(Msg::RepositoryInfoFetched)
+    );
     AfterMount::default()
 }
 
@@ -85,7 +89,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
 
         Msg::SendMessage => {
-            orders.skip().perform_cmd(send_message());
+            orders.skip().perform_cmd(send_message().map(Msg::MessageSent));
         }
 
         Msg::MessageSent(Ok(response_data)) => {
@@ -103,20 +107,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn fetch_repository_info() -> Msg {
-    // TODO chain?
-    let response = match fetch(REPOSITORY_URL).await {
-        Err(err) => return Msg::RepositoryInfoFetched(Err(err)),
-        Ok(response) => response,
-    };
-    let branch = match response.json().await {
-        Err(err) => return Msg::RepositoryInfoFetched(Err(err)),
-        Ok(branch) => branch,
-    };
-    Msg::RepositoryInfoFetched(Ok(branch))
-}
-
-async fn send_message() -> Msg {
+async fn send_message() -> Result<SendMessageResponseBody, FetchError> {
     let message = SendMessageRequestBody {
         name: "Mark Watney".into(),
         email: "mark@crypt.kk".into(),
@@ -128,16 +119,8 @@ async fn send_message() -> Msg {
         .json(&message)
         .expect("Serialization failed");
 
-    // TODO chain?
-    let response = match fetch(request).await {
-        Err(err) => return Msg::MessageSent(Err(err)),
-        Ok(response) => response,
-    };
-    let response_message = match response.json().await {
-        Err(err) => return Msg::MessageSent(Err(err)),
-        Ok(response_message) => response_message,
-    };
-    Msg::MessageSent(Ok(response_message))
+    let response = fetch(request).await?;
+    response.json().await
 }
 
 // ------ ------
