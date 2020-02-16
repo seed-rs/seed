@@ -41,6 +41,11 @@ impl Request {
         self
     }
 
+    pub fn header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
+        self.headers.insert(name.into(), value.into());
+        self
+    }
+
     /// TODO description
     ///
     /// # Errors
