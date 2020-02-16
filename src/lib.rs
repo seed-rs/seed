@@ -56,6 +56,7 @@ pub use crate::{
     },
     virtual_dom::{Attrs, EventHandler, Style},
 };
+pub use futures::future::{FutureExt, TryFutureExt};
 use wasm_bindgen::{closure::Closure, JsCast};
 
 #[macro_use]
