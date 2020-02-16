@@ -1,6 +1,6 @@
 //! Fetch POST example.
 
-use seed::{fetch::*, prelude::*, *};
+use seed::{prelude::*, *};
 
 #[derive(serde::Serialize, Default)]
 pub struct Form {
