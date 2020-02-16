@@ -2,7 +2,7 @@
 //!
 //! See [developer.mozilla.org/en-US/docs/Web/API/Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
 
-use super::{FetchError, Method};
+use super::{FetchError, Method, Result};
 use gloo_timers::callback::Timeout;
 use serde::Serialize;
 use std::{borrow::Cow, cell::RefCell, collections::HashMap, rc::Rc};
@@ -46,7 +46,7 @@ impl Request {
     /// # Errors
     ///
     /// TODO describe errors
-    pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self, FetchError> {
+    pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
         // TODO set "Content-type"?
         self.headers.insert(
             "Content-type".to_owned(),
@@ -162,7 +162,7 @@ impl RequestController {
     /// # Errors
     ///
     /// Will return error if timeout is already disabled.
-    pub fn disable_timeout(&self) -> Result<(), &'static str> {
+    pub fn disable_timeout(&self) -> std::result::Result<(), &'static str> {
         // Cancel timeout by dropping it.
         match self.timeout_handle.replace(None) {
             Some(_) => Ok(()),

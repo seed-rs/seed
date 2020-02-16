@@ -34,6 +34,9 @@ pub use request::*;
 pub use response::*;
 pub use status::*;
 
+/// Convenient type alias.
+pub type Result<T> = std::result::Result<T, FetchError>;
+
 /// The fetch functions is a main entry point of the Fetch API.
 ///
 /// It start the process of fetching a resource from the network,
@@ -42,7 +45,7 @@ pub use status::*;
 /// the response to your request. The promise does not reject on HTTP
 /// errors — it only rejects on network errors. You must use then
 /// handlers to check for HTTP errors.
-pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response, FetchError> {
+pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response> {
     let promise = match resourse.into() {
         Resource::String(string) => window().fetch_with_str(&string),
         Resource::Request(request) => window().fetch_with_request(&request.into()),
