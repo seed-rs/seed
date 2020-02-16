@@ -2,7 +2,7 @@
 //!
 //! See [developer.mozilla.org/en-US/docs/Web/API/Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 
-use super::{FetchError, Status};
+use super::{FetchError, Result, Status};
 use serde::de::DeserializeOwned;
 use wasm_bindgen_futures::JsFuture;
 
@@ -11,7 +11,7 @@ pub struct Response {
 }
 
 impl Response {
-    pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T, FetchError> {
+    pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
         let text = self.raw_response
             .text()
             .map(JsFuture::from)

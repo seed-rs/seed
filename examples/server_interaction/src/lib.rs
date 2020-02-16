@@ -3,7 +3,7 @@
 
 #![allow(clippy::large_enum_variant)]
 
-use seed::{fetch::*, prelude::*, *};
+use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
 const REPOSITORY_URL: &str = "https://api.github.com/repos/seed-rs/seed/branches/master";
@@ -61,7 +61,7 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.perform_cmd(
         fetch(REPOSITORY_URL)
             .and_then(Response::json)
-            .map(Msg::RepositoryInfoFetched)
+            .map(Msg::RepositoryInfoFetched),
     );
     AfterMount::default()
 }
@@ -71,9 +71,9 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
 // ------ ------
 
 enum Msg {
-    RepositoryInfoFetched(Result<Branch, FetchError>),
+    RepositoryInfoFetched(fetch::Result<Branch>),
     SendMessage,
-    MessageSent(Result<SendMessageResponseBody, FetchError>),
+    MessageSent(fetch::Result<SendMessageResponseBody>),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -89,7 +89,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
 
         Msg::SendMessage => {
-            orders.skip().perform_cmd(send_message().map(Msg::MessageSent));
+            orders
+                .skip()
+                .perform_cmd(async { Msg::MessageSent(send_message().await) });
         }
 
         Msg::MessageSent(Ok(response_data)) => {
@@ -107,7 +109,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn send_message() -> Result<SendMessageResponseBody, FetchError> {
+async fn send_message() -> fetch::Result<SendMessageResponseBody> {
     let message = SendMessageRequestBody {
         name: "Mark Watney".into(),
         email: "mark@crypt.kk".into(),
