@@ -9,6 +9,26 @@ use crate::browser::{
 };
 use std::borrow::Cow;
 
+// ------ ElKey ------
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ElKey(String);
+
+#[allow(clippy::module_name_repetitions)]
+/// Attach given `key` to the `El`.
+///
+/// ## Warning
+///
+/// WIP
+///  - it doesn't patch elements with the different keys, BUT it replace the old element with the new one.
+///  - `key` restriction (have to implements `ToString`) will be probably relaxed in the future.
+pub fn el_key(key: &impl ToString) -> ElKey {
+    ElKey(key.to_string())
+}
+
+// ------ El ------
+
 /// A component in our virtual DOM.
 ///
 /// _Note:_ `Listener`s in `El`'s `event_handler_manager` are not cloned, but recreated during VDOM patching.
@@ -29,6 +49,7 @@ pub struct El<Ms: 'static> {
     /// The actual DOM element/node.
     pub node_ws: Option<web_sys::Node>,
     pub refs: Vec<SharedNodeWs>,
+    pub key: Option<ElKey>,
 }
 
 // @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
@@ -43,6 +64,7 @@ impl<Ms> Clone for El<Ms> {
             namespace: self.namespace.clone(),
             node_ws: self.node_ws.clone(),
             refs: self.refs.clone(),
+            key: self.key.clone(),
         }
     }
 }
@@ -71,6 +93,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             namespace: self.namespace,
             event_handler_manager: self.event_handler_manager.map_msg(f),
             refs: self.refs,
+            key: self.key,
         }
     }
 }
@@ -94,6 +117,7 @@ impl<Ms> El<Ms> {
             namespace: None,
             node_ws: None,
             refs: Vec::new(),
+            key: None,
         }
     }
 

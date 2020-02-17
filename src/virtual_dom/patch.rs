@@ -27,7 +27,8 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
     // Custom elements can't be patched, because we need to reinit them (Issue #325). (@TODO is there a better way?)
     // Something about this element itself is different: patch it.
-    if old.tag != new.tag || old.namespace != new.namespace || old.is_custom() {
+    if old.tag != new.tag || old.namespace != new.namespace || old.is_custom() || old.key != new.key
+    {
         let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");
 
         // We don't use assign_nodes directly here, since we only have access to

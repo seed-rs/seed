@@ -6,7 +6,7 @@ pub mod el;
 pub mod into_nodes;
 pub mod text;
 
-pub use el::El;
+pub use el::{el_key, El, ElKey};
 pub use into_nodes::IntoNodes;
 pub use text::Text;
 

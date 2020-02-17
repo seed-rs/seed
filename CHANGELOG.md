@@ -2,6 +2,7 @@
 
 [unreleased]
 - [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
+- Added `el_key` method for adding keys to `El`s [WIP].
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
