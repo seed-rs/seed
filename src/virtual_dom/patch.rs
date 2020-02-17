@@ -1,76 +1,236 @@
 //! This module contains code related to patching the VDOM. It can be considered
 //! a subset of the `vdom` module.
 
-use super::{El, IntoNodes, Mailbox, Node};
+use super::{El, IntoNodes, Mailbox, Node, Text};
 use crate::app::App;
 use crate::browser::dom::virtual_dom_bridge;
 use wasm_bindgen::JsCast;
 use web_sys::Document;
 
+mod patch_gen;
+use patch_gen::{PatchCommand, PatchGen};
+
+// We assume that when we run this, the new vdom doesn't have assigned `web_sys::Node`s -
+// assign them here when we create them.
+
+fn append_el<'a, Ms>(
+    document: &Document,
+    new: &'a mut El<Ms>,
+    parent: &web_sys::Node,
+    mailbox: &Mailbox<Ms>,
+) -> Option<&'a web_sys::Node> {
+    virtual_dom_bridge::assign_ws_nodes_to_el(document, new);
+    virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
+    new.node_ws.as_ref()
+}
+
+fn append_text<'a>(
+    document: &Document,
+    new: &'a mut Text,
+    parent: &web_sys::Node,
+) -> Option<&'a web_sys::Node> {
+    virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
+    virtual_dom_bridge::attach_text_node(new, parent);
+    new.node_ws.as_ref()
+}
+
+fn insert_el<'a, Ms>(
+    document: &Document,
+    new: &'a mut El<Ms>,
+    parent: &web_sys::Node,
+    next_node: web_sys::Node,
+    mailbox: &Mailbox<Ms>,
+) -> Option<&'a web_sys::Node> {
+    virtual_dom_bridge::assign_ws_nodes_to_el(document, new);
+    virtual_dom_bridge::attach_children(new, mailbox);
+    let new_node = new
+        .node_ws
+        .take()
+        .expect("Missing websys el when patching Text to Element");
+    virtual_dom_bridge::insert_node(&new_node, parent, Some(next_node));
+
+    for ref_ in &mut new.refs {
+        ref_.set(new_node.clone());
+    }
+
+    new.event_handler_manager
+        .attach_listeners(new_node.clone(), None, mailbox);
+
+    new.node_ws.replace(new_node);
+
+    new.node_ws.as_ref()
+}
+
+fn insert_text<'a>(
+    document: &Document,
+    new: &'a mut Text,
+    parent: &web_sys::Node,
+    next_node: web_sys::Node,
+) -> Option<&'a web_sys::Node> {
+    virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
+    let new_node_ws = new
+        .node_ws
+        .as_ref()
+        .expect("new_node_ws missing when patching Empty to Text");
+    virtual_dom_bridge::insert_node(new_node_ws, parent, Some(next_node));
+    new.node_ws.as_ref()
+}
+
 fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
+    document: &Document,
+    mut old: El<Ms>,
+    new: &'a mut El<Ms>,
+    mailbox: &Mailbox<Ms>,
+    app: &App<Ms, Mdl, INodes, GMs>,
+) -> Option<&'a web_sys::Node> {
+    // At this step, we already assume we have the right element with matching namespace, tag and
+    // el_key - either by entering this func directly for the top-level, or recursively after
+    // analyzing children.
+
+    // Assume old el vdom's elements are still attached.
+
+    let old_el_ws = old
+        .node_ws
+        .as_ref()
+        .expect("missing old el_ws when patching non-empty el")
+        .clone();
+    virtual_dom_bridge::patch_el_details(&mut old, new, &old_el_ws, mailbox);
+
+    for ref_ in &mut new.refs {
+        ref_.set(old_el_ws.clone());
+    }
+
+    let old_children_iter = old.children.into_iter();
+    let new_children_iter = new.children.iter_mut();
+
+    patch_els(
+        document,
+        mailbox,
+        app,
+        &old_el_ws,
+        old_children_iter,
+        new_children_iter,
+    );
+    new.node_ws = Some(old_el_ws);
+
+    new.node_ws.as_ref()
+}
+
+fn patch_text(mut old: Text, new: &mut Text) -> Option<&web_sys::Node> {
+    let old_node_ws = old
+        .node_ws
+        .take()
+        .expect("old_node_ws missing when changing text");
+
+    if new != &old {
+        old_node_ws.set_text_content(Some(&new.text));
+    }
+    new.node_ws.replace(old_node_ws);
+    new.node_ws.as_ref()
+}
+
+fn replace_by_el<'a, Ms>(
+    document: &Document,
+    old_node: web_sys::Node,
+    new: &'a mut El<Ms>,
+    parent: &web_sys::Node,
+    mailbox: &Mailbox<Ms>,
+) -> Option<&'a web_sys::Node> {
+    let new_node = virtual_dom_bridge::make_websys_el(new, document);
+    for ref_ in &mut new.refs {
+        ref_.set(new_node.clone());
+    }
+    new.node_ws = Some(new_node);
+    for mut child in &mut new.children {
+        virtual_dom_bridge::assign_ws_nodes(document, &mut child);
+    }
+    virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
+
+    let new_ws = new.node_ws.as_ref().expect("Missing websys el");
+    virtual_dom_bridge::replace_child(new_ws, &old_node, parent);
+
+    std::mem::drop(old_node);
+
+    Some(new_ws)
+}
+
+fn replace_by_text<'a>(
+    document: &Document,
+    old_node: web_sys::Node,
+    new: &'a mut Text,
+    parent: &web_sys::Node,
+) -> Option<&'a web_sys::Node> {
+    // Can't just use assign_ws_nodes; borrow-checker issues.
+    new.node_ws = Some(
+        document
+            .create_text_node(&new.text)
+            .dyn_into::<web_sys::Node>()
+            .expect("Problem casting Text as Node."),
+    );
+
+    let new_node_ws = new
+        .node_ws
+        .as_ref()
+        .expect("old el_ws missing when replacing with text node");
+
+    virtual_dom_bridge::replace_child(new_node_ws, &old_node, parent);
+
+    std::mem::drop(old_node);
+
+    new.node_ws.as_ref()
+}
+
+fn replace_el_by_el<'a, Ms>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, INodes, GMs>,
 ) -> Option<&'a web_sys::Node> {
-    // At this step, we already assume we have the right element - either
-    // by entering this func directly for the top-level, or recursively after
-    // analyzing children
+    let old_node = old
+        .node_ws
+        .take()
+        .expect("old el_ws missing when replacing element with new element");
+    replace_by_el(document, old_node, new, parent, mailbox)
+}
 
-    // If the tag's different, we must redraw the element and its children; there's
-    // no way to patch one element type into another.
+fn replace_el_by_text<'a, Ms>(
+    document: &Document,
+    mut old: El<Ms>,
+    new: &'a mut Text,
+    parent: &web_sys::Node,
+) -> Option<&'a web_sys::Node> {
+    let old_node = old
+        .node_ws
+        .take()
+        .expect("old el_ws missing when replacing element with text node");
+    replace_by_text(document, old_node, new, parent)
+}
 
-    // Assume old el vdom's elements are still attached.
+fn replace_text_by_el<'a, Ms>(
+    document: &Document,
+    mut old: Text,
+    new: &'a mut El<Ms>,
+    parent: &web_sys::Node,
+    mailbox: &Mailbox<Ms>,
+) -> Option<&'a web_sys::Node> {
+    let old_node = old
+        .node_ws
+        .take()
+        .expect("old el_ws missing when replacing text node with element");
+    replace_by_el(document, old_node, new, parent, mailbox)
+}
 
-    // Namespaces can't be patched, since they involve create_element_ns instead of create_element.
-    // Custom elements can't be patched, because we need to reinit them (Issue #325). (@TODO is there a better way?)
-    // Something about this element itself is different: patch it.
-    if old.tag != new.tag || old.namespace != new.namespace || old.is_custom() {
-        let old_el_ws = old.node_ws.as_ref().expect("Missing websys el");
+fn remove_el<Ms>(mut old: El<Ms>, parent: &web_sys::Node) {
+    let old_node = old.node_ws.take().expect("Missing child node_ws");
+    virtual_dom_bridge::remove_node(&old_node, parent);
+    old.node_ws.replace(old_node);
+}
 
-        // We don't use assign_nodes directly here, since we only have access to
-        // the El, not wrapping node.
-        let new_node_ws = virtual_dom_bridge::make_websys_el(new, document);
-        for ref_ in &mut new.refs {
-            ref_.set(new_node_ws.clone());
-        }
-        new.node_ws = Some(new_node_ws);
-        for mut child in &mut new.children {
-            virtual_dom_bridge::assign_ws_nodes(document, &mut child);
-        }
-        virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
-
-        let new_ws = new.node_ws.as_ref().expect("Missing websys el");
-        virtual_dom_bridge::replace_child(new_ws, old_el_ws, parent);
-    } else {
-        // Patch parts of the Element.
-        let old_el_ws = old
-            .node_ws
-            .as_ref()
-            .expect("missing old el_ws when patching non-empty el")
-            .clone();
-        virtual_dom_bridge::patch_el_details(&mut old, new, &old_el_ws, mailbox);
-
-        for ref_ in &mut new.refs {
-            ref_.set(old_el_ws.clone());
-        }
-
-        let old_children_iter = old.children.into_iter();
-        let new_children_iter = new.children.iter_mut();
-
-        patch_els(
-            document,
-            mailbox,
-            app,
-            &old_el_ws,
-            old_children_iter,
-            new_children_iter,
-        );
-        new.node_ws = Some(old_el_ws);
-    }
-    new.node_ws.as_ref()
+fn remove_text(mut old: Text, parent: &web_sys::Node) {
+    let old_node = old.node_ws.take().expect("Missing child node_ws");
+    virtual_dom_bridge::remove_node(&old_node, parent);
+    old.node_ws.replace(old_node);
 }
 
 pub(crate) fn patch_els<'a, Ms, Mdl, INodes, GMs, OI, NI>(
@@ -82,99 +242,48 @@ pub(crate) fn patch_els<'a, Ms, Mdl, INodes, GMs, OI, NI>(
     new_children_iter: NI,
 ) where
     INodes: IntoNodes<Ms>,
-    OI: ExactSizeIterator<Item = Node<Ms>>,
-    NI: ExactSizeIterator<Item = &'a mut Node<Ms>>,
+    OI: Iterator<Item = Node<Ms>>,
+    NI: Iterator<Item = &'a mut Node<Ms>>,
 {
-    let mut old_children_iter = old_children_iter.peekable();
-    let mut new_children_iter = new_children_iter.peekable();
-    let mut last_visited_node: Option<web_sys::Node> = None;
-
-    // Not using .zip() here to make sure we don't miss any of the children when one array is
-    // longer than the other.
-    while let (Some(_), Some(_)) = (old_children_iter.peek(), new_children_iter.peek()) {
-        let child_old = old_children_iter.next().unwrap();
-        let child_new = new_children_iter.next().unwrap();
-
-        // Don't compare equality here; we do that at the top of this function
-        // in the recursion.
-        if let Some(new_el_ws) = patch(
-            document,
-            child_old,
-            child_new,
-            old_el_ws,
-            match last_visited_node.as_ref() {
-                Some(node) => node.next_sibling(),
-                None => old_el_ws.first_child(),
-            },
-            mailbox,
-            app,
-        ) {
-            last_visited_node = Some(new_el_ws.clone());
-        }
-    }
-
-    // Now one of the iterators is entirely consumed, and any items left in one iterator
-    // don't have any matching items in the other.
-    // We ran out of old children to patch; create new ones.
-    for child_new in new_children_iter {
-        virtual_dom_bridge::assign_ws_nodes(document, child_new);
-
-        match child_new {
-            Node::Element(child_new_el) => {
-                virtual_dom_bridge::attach_el_and_children(child_new_el, old_el_ws, mailbox);
+    for command in PatchGen::new(old_children_iter, new_children_iter) {
+        match command {
+            PatchCommand::AppendEl { el_new } => append_el(document, el_new, old_el_ws, mailbox),
+            PatchCommand::AppendText { text_new } => append_text(document, text_new, old_el_ws),
+            PatchCommand::InsertEl { el_new, next_node } => {
+                insert_el(document, el_new, old_el_ws, next_node, mailbox)
             }
-            Node::Text(child_new_text) => {
-                virtual_dom_bridge::attach_text_node(child_new_text, old_el_ws);
+            PatchCommand::InsertText {
+                text_new,
+                next_node,
+            } => insert_text(document, text_new, old_el_ws, next_node),
+            PatchCommand::PatchEl { el_old, el_new } => {
+                patch_el(document, el_old, el_new, mailbox, app)
             }
-            Node::Empty => (),
-        }
-    }
-
-    // Now purge any existing no-longer-needed children; they're not part of the new vdom.
-    // while let Some(mut child) = old_children_iter.next() {
-    for child in old_children_iter {
-        match child {
-            Node::Element(mut child_el) => {
-                let child_ws = child_el.node_ws.take().expect("Missing child el_ws");
-                virtual_dom_bridge::remove_node(&child_ws, old_el_ws);
-                child_el.node_ws.replace(child_ws);
+            PatchCommand::PatchText { text_old, text_new } => patch_text(text_old, text_new),
+            PatchCommand::ReplaceElByEl { el_old, el_new } => {
+                replace_el_by_el(document, el_old, el_new, old_el_ws, mailbox)
             }
-            Node::Text(mut child_text) => {
-                let child_ws = child_text.node_ws.take().expect("Missing child node_ws");
-                virtual_dom_bridge::remove_node(&child_ws, old_el_ws);
-                child_text.node_ws.replace(child_ws);
+            PatchCommand::ReplaceTextByEl { text_old, el_new } => {
+                replace_text_by_el(document, text_old, el_new, old_el_ws, mailbox)
             }
-            Node::Empty => (),
-        }
+            PatchCommand::ReplaceElByText { el_old, text_new } => {
+                replace_el_by_text(document, el_old, text_new, old_el_ws)
+            }
+            PatchCommand::RemoveEl { el_old } => {
+                remove_el(el_old, old_el_ws);
+                None
+            }
+            PatchCommand::RemoveText { text_old } => {
+                remove_text(text_old, old_el_ws);
+                None
+            }
+        };
     }
 }
 
-// Reduces code repetition
-fn add_el_helper<Ms>(
-    new: &mut El<Ms>,
-    parent: &web_sys::Node,
-    next_node: Option<web_sys::Node>,
-    mailbox: &Mailbox<Ms>,
-) {
-    virtual_dom_bridge::attach_children(new, mailbox);
-    let new_ws = new
-        .node_ws
-        .take()
-        .expect("Missing websys el when patching Text to Element");
-    virtual_dom_bridge::insert_node(&new_ws, parent, next_node);
-
-    for ref_ in &mut new.refs {
-        ref_.set(new_ws.clone());
-    }
-
-    new.event_handler_manager
-        .attach_listeners(new_ws.clone(), None, mailbox);
-
-    new.node_ws.replace(new_ws);
-}
-
-/// Routes patching through different channels, depending on the Node variant
-/// of old and new.
+/// Routes patching through different channels, depending on the Node variant of old and new.
+/// Tries to updates the `old` node to become the `new` one.
+#[cfg(test)]
 pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
     document: &Document,
     old: Node<Ms>,
@@ -191,92 +300,55 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
 
     // We assume that when we run this, the new vdom doesn't have assigned `web_sys::Node`s -
     // assign them here when we create them.
+
+    // @TODO Do we realy need this function? This function could be replaced by calling
+    // `patch_els` with `std::iter::once` for old and new nodes.
     match old {
-        Node::Element(mut old_el) => {
-            match new {
-                Node::Element(new_el) => patch_el(document, old_el, new_el, parent, mailbox, app),
-                Node::Text(new_text) => {
-                    // Can't just use assign_ws_nodes; borrow-checker issues.
-                    new_text.node_ws = Some(
-                        document
-                            .create_text_node(&new_text.text)
-                            .dyn_into::<web_sys::Node>()
-                            .expect("Problem casting Text as Node."),
-                    );
-
-                    let old_node_ws = old_el
-                        .node_ws
-                        .take()
-                        .expect("old el_ws missing when replacing with text node");
-                    let new_node_ws = new_text
-                        .node_ws
-                        .as_ref()
-                        .expect("old el_ws missing when replacing with text node");
-
-                    virtual_dom_bridge::replace_child(new_node_ws, &old_node_ws, parent);
-                    new_text.node_ws.as_ref()
-                }
-                Node::Empty => {
-                    let old_el_ws = old_el
-                        .node_ws
-                        .take()
-                        .expect("old el_ws missing when patching Element to Empty");
-                    virtual_dom_bridge::remove_node(&old_el_ws, parent);
-                    None
+        Node::Element(old_el) => match new {
+            Node::Element(new_el) => {
+                if patch_gen::el_can_be_patched(&old_el, new_el) {
+                    patch_el(document, old_el, new_el, mailbox, app)
+                } else {
+                    replace_el_by_el(document, old_el, new_el, parent, mailbox)
                 }
             }
-        }
+            Node::Text(new_text) => replace_el_by_text(document, old_el, new_text, parent),
+            Node::Empty => {
+                remove_el(old_el, parent);
+                None
+            }
+        },
         Node::Empty => {
-            // If the old node's empty, assign and attach web_sys nodes.
-            virtual_dom_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
-                    add_el_helper(new_el, parent, next_node, mailbox);
-                    new_el.node_ws.as_ref()
+                    if let Some(next) = next_node {
+                        insert_el(document, new_el, parent, next, mailbox)
+                    } else {
+                        append_el(document, new_el, parent, mailbox)
+                    }
                 }
                 Node::Text(new_text) => {
-                    let new_node_ws = new_text
-                        .node_ws
-                        .as_ref()
-                        .expect("new_node_ws missing when patching Empty to Text");
-                    virtual_dom_bridge::insert_node(new_node_ws, parent, next_node);
-                    new_text.node_ws.as_ref()
+                    if let Some(next) = next_node {
+                        insert_text(document, new_text, parent, next)
+                    } else {
+                        append_text(document, new_text, parent)
+                    }
                 }
                 // If new and old are empty, we don't need to do anything.
                 Node::Empty => None,
             }
         }
-        Node::Text(mut old_text) => {
+        Node::Text(old_text) => {
             virtual_dom_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
-                    add_el_helper(new_el, parent, next_node, mailbox);
-
-                    virtual_dom_bridge::remove_node(
-                        &old_text.node_ws.expect("Can't find node from Text"),
-                        parent,
-                    );
-                    new_el.node_ws.as_ref()
+                    replace_text_by_el(document, old_text, new_el, parent, mailbox)
                 }
                 Node::Empty => {
-                    virtual_dom_bridge::remove_node(
-                        &old_text.node_ws.expect("Can't find old text"),
-                        parent,
-                    );
+                    remove_text(old_text, parent);
                     None
                 }
-                Node::Text(new_text) => {
-                    let old_node_ws = old_text
-                        .node_ws
-                        .take()
-                        .expect("old_node_ws missing when changing text");
-
-                    if new_text != &old_text {
-                        old_node_ws.set_text_content(Some(&new_text.text));
-                    }
-                    new_text.node_ws.replace(old_node_ws);
-                    new_text.node_ws.as_ref()
-                }
+                Node::Text(new_text) => patch_text(old_text, new_text),
             }
         }
     }

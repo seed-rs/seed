@@ -7,7 +7,7 @@ macro_rules! make_tags {
 
         /// The Tag enum restricts element-creation to only valid tags, as defined here:
         /// [https://developer.mozilla.org/en-US/docs/Web/HTML/Element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element)
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
         pub enum Tag {
             $(
                 $tag_camel,

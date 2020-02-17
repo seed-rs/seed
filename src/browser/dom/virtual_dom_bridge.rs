@@ -24,18 +24,19 @@ pub(crate) fn assign_ws_nodes_to_el<Ms>(document: &Document, el: &mut El<Ms>) {
         assign_ws_nodes(document, &mut child);
     }
 }
+pub(crate) fn assign_ws_nodes_to_text(document: &Document, text: &mut Text) {
+    text.node_ws = Some(
+        document
+            .create_text_node(&text.text)
+            .dyn_into::<web_sys::Node>()
+            .expect("Problem casting Text as Node."),
+    );
+}
 /// Recursively create `web_sys::Node`s, and place them in the vdom Nodes' fields.
 pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>) {
     match node {
         Node::Element(el) => assign_ws_nodes_to_el(document, el),
-        Node::Text(text) => {
-            text.node_ws = Some(
-                document
-                    .create_text_node(&text.text)
-                    .dyn_into::<web_sys::Node>()
-                    .expect("Problem casting Text as Node."),
-            );
-        }
+        Node::Text(text) => assign_ws_nodes_to_text(document, text),
         Node::Empty => (),
     }
 }

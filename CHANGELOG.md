@@ -1,5 +1,6 @@
 # Changelog
 [unreleased]
+- Added `el_key` method for adding keys to `El`s (#354).
 - Enabled all additional markdown [extensions](https://docs.rs/pulldown-cmark/latest/pulldown_cmark/struct.Options.html).
 - Removed `'static` bound from `El` and `Node`.
 - [BREAKING] Changed `perform_cmd` and `seed::browser::service::fetch` return type to `T` instead of `Result<T, T>`.

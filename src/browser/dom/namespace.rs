@@ -1,5 +1,5 @@
 /// Common Namespaces
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Namespace {
     Html,
     Svg,

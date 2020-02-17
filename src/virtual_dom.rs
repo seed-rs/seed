@@ -14,7 +14,7 @@ pub use attrs::Attrs;
 pub use el_ref::{el_ref, ElRef, SharedNodeWs};
 pub use event_handler_manager::{EventHandler, EventHandlerManager, Listener};
 pub use mailbox::Mailbox;
-pub use node::{El, IntoNodes, Node, Text};
+pub use node::{el_key, El, ElKey, IntoNodes, Node, Text};
 pub use style::Style;
 pub use to_classes::ToClasses;
 pub use update_el::{UpdateEl, UpdateElForIterator};
@@ -553,6 +553,202 @@ pub mod tests {
             .expect("not a Text node")
             .clone();
         assert_eq!(text.text_content().unwrap(), "abc");
+    }
+
+    /// Test that the element with the key inserted and removed in the middle correctly.
+    #[wasm_bindgen_test]
+    fn el_key_insert_remove() {
+        let app = create_app();
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = Node::Element(El::empty(Tag::Div));
+        virtual_dom_bridge::assign_ws_nodes(&doc, &mut vdom);
+        // clone so we can keep using it after vdom is modified
+        if let Node::Element(vdom_el) = vdom.clone() {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 0);
+
+            // First add two children nodes using the vdom
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![li!["first"], li!["last"]]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 2);
+
+            let first = old_ws.child_nodes().item(0).unwrap();
+            let last = old_ws.child_nodes().item(1).unwrap();
+
+            // Then insert the child node in the middle
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![
+                    li!["first"],
+                    li![el_key(&"middle"), "middle"],
+                    li!["last"]
+                ]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 3);
+
+            assert!(first.is_same_node(old_ws.child_nodes().item(0).as_ref()));
+            assert!(last.is_same_node(old_ws.child_nodes().item(2).as_ref()));
+
+            // And then remove the child node in the middle
+            call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![li!["first"], li!["last"]]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 2);
+
+            assert!(first.is_same_node(old_ws.child_nodes().item(0).as_ref()));
+            assert!(last.is_same_node(old_ws.child_nodes().item(1).as_ref()));
+        } else {
+            panic!("Node not Element")
+        }
+    }
+
+    /// Test that the element with the key is replaced correctly.
+    #[wasm_bindgen_test]
+    fn el_key_replace() {
+        let app = create_app();
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = Node::Element(El::empty(Tag::Div));
+        virtual_dom_bridge::assign_ws_nodes(&doc, &mut vdom);
+        // clone so we can keep using it after vdom is modified
+        if let Node::Element(vdom_el) = vdom.clone() {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 0);
+
+            // First add three children nodes using the vdom
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![
+                    li![el_key(&"first"), "first"],
+                    li![el_key(&"variant-A"), "middle"],
+                    li![el_key(&"last"), "last"]
+                ]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 3);
+
+            let first = old_ws.child_nodes().item(0).unwrap();
+            let middle = old_ws.child_nodes().item(1).unwrap();
+            let last = old_ws.child_nodes().item(2).unwrap();
+
+            // Then replace the middle elements.
+            call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![
+                    li![el_key(&"first"), "first"],
+                    li![el_key(&"variant-B"), "middle"],
+                    li![el_key(&"last"), "last"],
+                ]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 3);
+
+            assert!(first.is_same_node(old_ws.child_nodes().item(0).as_ref()));
+            assert!(!middle.is_same_node(old_ws.child_nodes().item(1).as_ref()));
+            assert!(last.is_same_node(old_ws.child_nodes().item(2).as_ref()));
+        } else {
+            panic!("Node not Element")
+        }
+    }
+
+    /// Test that the elements with the keys are swaped correctly.
+    #[wasm_bindgen_test]
+    fn el_key_swap() {
+        let app = create_app();
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
+
+        let doc = util::document();
+        let parent = doc.create_element("div").unwrap();
+
+        let mut vdom = Node::Element(El::empty(Tag::Div));
+        virtual_dom_bridge::assign_ws_nodes(&doc, &mut vdom);
+        // clone so we can keep using it after vdom is modified
+        if let Node::Element(vdom_el) = vdom.clone() {
+            let old_ws = vdom_el.node_ws.as_ref().unwrap().clone();
+            parent.append_child(&old_ws).unwrap();
+
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 0);
+
+            // First add two children nodes using the vdom
+            vdom = call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![
+                    li![el_key(&"first"), "first"],
+                    li![el_key(&"last"), "last"]
+                ]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 2);
+
+            let first = old_ws.child_nodes().item(0).unwrap();
+            let last = old_ws.child_nodes().item(1).unwrap();
+
+            // Then swap the first and last elements.
+            call_patch(
+                &doc,
+                &parent,
+                &mailbox,
+                vdom,
+                div![vec![
+                    li![el_key(&"last"), "last"],
+                    li![el_key(&"first"), "first"]
+                ]],
+                &app,
+            );
+            assert_eq!(parent.children().length(), 1);
+            assert_eq!(old_ws.child_nodes().length(), 2);
+
+            assert!(
+                first.is_same_node(old_ws.child_nodes().item(1).as_ref())
+                    || last.is_same_node(old_ws.child_nodes().item(0).as_ref())
+            );
+        } else {
+            panic!("Node not Element")
+        }
     }
 
     /// Tests an update() function that repeatedly sends messages or performs commands.

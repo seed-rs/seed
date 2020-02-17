@@ -1,4 +1,4 @@
-use super::{Attrs, El, ElRef, EventHandler, Node, Style, Tag, Text};
+use super::{Attrs, El, ElKey, ElRef, EventHandler, Node, Style, Tag, Text};
 
 // ------ Traits ------
 
@@ -64,6 +64,12 @@ impl<Ms> UpdateEl<Ms> for Tag {
 impl<Ms, E: Clone> UpdateEl<Ms> for ElRef<E> {
     fn update_el(self, el: &mut El<Ms>) {
         el.refs.push(self.shared_node_ws);
+    }
+}
+
+impl<Ms> UpdateEl<Ms> for ElKey {
+    fn update_el(self, el: &mut El<Ms>) {
+        el.key = Some(self);
     }
 }
 

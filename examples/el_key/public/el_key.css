@@ -1,0 +1,231 @@
+/*
+ * The size of the card is defined by variable and can be changed.
+ * The radius of the spinner's circle is releative to the size of the card.
+ * The stroke length is equal to the circumference of the spinner.
+ * By animating the dashoffset, we create an spinner's animation similar to a clock.
+ * Search for "SVG spinner animation" for more info.
+ */
+:root {
+  --card__size: 64px;
+  --spinner__radius: calc(var(--card__size) * 0.8 / 2);
+  --spinner__stroke-lenght: calc(
+    var(--spinner__radius) * 2 * 3.141592653589793
+  );
+}
+
+body {
+  background-color: LightGray;
+}
+
+#app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  margin: auto;
+  min-height: 95vh;
+}
+#content {
+  flex-grow: 1;
+  max-width: 460px;
+  padding-left: 64px;
+  padding-right: 64px;
+  padding-top: 32px;
+  padding-bottom: 64px;
+  background-color: white;
+  color: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#content > * {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#title {
+  text-align: center;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+#card-table {
+  width: 100%;
+}
+
+#card-table__grid--enabled {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, calc(var(--card__size) + 8px));
+  grid-gap: 2px;
+  justify-content: center;
+}
+#card-table__grid--disabled {
+  margin-top: 5px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 1.5em);
+  grid-gap: 5px;
+  justify-content: center;
+}
+
+.card-table__card {
+  cursor: pointer;
+}
+.card-table__card * {
+  pointer-events: none;
+}
+
+.card-table__card--disabled {
+  text-align: center;
+}
+
+.card-table__card--enabled,
+.card-table__card--enabled * {
+  transition: transform 0.5s ease-in-out, fill 0.5s ease-in-out,
+    stroke 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+.card-table__card--enabled,
+.card-table__card--enabled svg {
+  width: calc(var(--card__size) + 8px);
+  height: calc(var(--card__size) + 8px);
+  transform-origin: 50% 50%;
+}
+
+/*
+ * Animation of flashing red border of a card.
+ * This animation plays when the card is initialized or replaced,
+ * Doesn't trigger when the card is patched.
+ */
+@keyframes card__redraw-animation {
+  from {
+    stroke: rgba(255, 0, 0, 0);
+  }
+  25% {
+    stroke: rgba(255, 0, 0, 255);
+  }
+  to {
+    stroke: rgba(255, 0, 0, 0);
+  }
+}
+.card-table__card--enabled .card-table__card-background {
+  x: 4px;
+  y: 4px;
+  width: var(--card__size);
+  height: var(--card__size);
+  rx: 8px;
+  stroke-width: 4px;
+
+  animation-duration: 1s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+  animation-name: card__redraw-animation;
+}
+
+/*
+ * Drag and drop effects.
+ */
+.card-table__card--enabled.card-table__card--dragover,
+.card-table__card--enabled.card-table__card--dragged {
+  transform: scale(0.9);
+  opacity: 50%;
+}
+
+.card-table__card--enabled .card-table__card-text {
+  transform-origin: 50% 50%;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  stroke: none;
+  font-size: calc(var(--card__size) * 0.666);
+}
+.card-table__card--enabled.card-table__card--selected .card-table__card-text {
+  transform: scale(1.4);
+}
+.card-table__card--disabled.card-table__card--selected {
+  font-weight: bold;
+}
+
+@keyframes card-table__card-spinner-animation {
+  from {
+    stroke-dashoffset: var(--spinner__stroke-lenght);
+  }
+  to {
+    stroke-dashoffset: calc(var(--spinner__stroke-lenght) * -1);
+  }
+}
+.card-table__card--enabled .card-table__card-spinner {
+  cx: 50%;
+  cy: 50%;
+  r: var(--spinner__radius);
+  transform-origin: 50% 50%;
+  transform: rotate(-90deg);
+
+  fill: none;
+  stroke-width: calc(var(--spinner__radius) / 10);
+  stroke-dasharray: var(--spinner__stroke-lenght);
+
+  animation-duration: 60s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-name: card-table__card-spinner-animation;
+  animation-play-state: running;
+}
+.card-table__card--enabled.card-table__card--selected
+  .card-table__card-spinner {
+  stroke-width: calc(var(--spinner__radius) / 20);
+  opacity: 30%;
+  transform: rotate(-90deg) scale(1.15);
+}
+
+#control-buttons button {
+  margin: 2px;
+}
+
+#control-buttons__order-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-items: stretch;
+  align-items: center;
+}
+#control-buttons__order-buttons div {
+  text-align: right;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+#control-buttons__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+}
+
+#options {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+}
+#options > div {
+  margin-right: 5px;
+}
+
+#readme {
+  width: 100%;
+  display: block;
+}
+#readme code {
+  background-color: #e5e5ff;
+  padding: 3px;
+}
+#readme img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}

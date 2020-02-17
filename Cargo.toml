@@ -108,6 +108,7 @@ members = [
     "examples/canvas",
     "examples/custom_elements",
     "examples/drop_zone",
+    "examples/el_key",
     "examples/graphql",
     "examples/markdown",
     "examples/fetch",
