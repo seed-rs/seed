@@ -34,6 +34,9 @@ How to create and use custom elements.
 ### [Drop Zone](drop_zone)
 How to create a drop-zone.
 
+### [Element Key](el_key)
+How to control a DOM update using element keys and empty nodes.
+
 ### [Markdown](markdown)
 How to render markdown.
 

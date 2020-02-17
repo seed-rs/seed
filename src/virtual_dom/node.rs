@@ -6,7 +6,7 @@ pub mod el;
 pub mod into_nodes;
 pub mod text;
 
-pub use el::El;
+pub use el::{el_key, El, ElKey};
 pub use into_nodes::IntoNodes;
 pub use text::Text;
 
@@ -113,6 +113,14 @@ impl<Ms> Node<Ms> {
             _ => "".to_string(),
         }
     }
+
+    /// Retrive `key` attached to the `El`
+    pub fn el_key(&self) -> Option<&ElKey> {
+        match self {
+            Node::Element(el) => el.key.as_ref(),
+            _ => None,
+        }
+    }
 }
 
 // Convenience methods
@@ -173,6 +181,15 @@ impl<Ms> Node<Ms> {
     pub fn warn_about_script_tags(&self) {
         if let Node::Element(e) = self {
             e.warn_about_script_tags();
+        }
+    }
+
+    pub fn node_ws(&self) -> Option<&web_sys::Node> {
+        match self {
+            Self::Element(El { node_ws: val, .. }) | Self::Text(Text { node_ws: val, .. }) => {
+                val.as_ref()
+            }
+            _ => None,
         }
     }
 }
