@@ -1,16 +1,19 @@
 //! The Response interface of the Fetch API represents the response to a request.
-//!
-//! See [developer.mozilla.org/en-US/docs/Web/API/Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 
 use super::{FetchError, Result, Status};
 use serde::de::DeserializeOwned;
 use wasm_bindgen_futures::JsFuture;
 
+/// Response of the fetch request.
+/// To get one you need to use [`fetch`](./fn.fetch.html) function.
+///
+/// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 pub struct Response {
     pub(crate) raw_response: web_sys::Response,
 }
 
 impl Response {
+    /// Get a `String` from response body.
     pub async fn text(self) -> Result<String> {
         let js_promise = self.raw_response.text().map_err(FetchError::PromiseError)?;
 
@@ -23,12 +26,24 @@ impl Response {
             .expect("fetch: Response expected `String` after .text()"))
     }
 
+    /// JSON parse response body into provided type.
     pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
         let text = self.text().await?;
         serde_json::from_str(&text).map_err(FetchError::SerdeError)
     }
 
+    /// Get request status.
     pub fn status(&self) -> Status {
         Status::from(&self.raw_response)
+    }
+
+    /// Get underlying `web_sys::Response`.
+    ///
+    /// This is an escape path if current API can't handle your needs.
+    /// Should you find yourself using it, please consider [opening an issue][issue].
+    ///
+    /// [issue]: https://github.com/seed-rs/seed/issues
+    pub const fn raw_response(&self) -> &web_sys::Response {
+        &self.raw_response
     }
 }
