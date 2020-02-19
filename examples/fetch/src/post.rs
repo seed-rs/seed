@@ -24,9 +24,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::Submit => {
             orders.skip(); // No need to rerender
 
+            let token = "YWxhZGRpbjpvcGVuc2VzYW1l";
             // Created outside async block for lifetime reasons.
             let request = Request::new("/")
                 .method(Method::Post)
+                .header(header::custom("Accept-Language", "Rust"))
+                .header(header::custom("Authorization", format!("Basic {}", token)))
                 .json(&model.form)
                 .expect("Serialization failed");
 

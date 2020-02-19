@@ -123,7 +123,7 @@ pub mod prelude {
         browser::dom::event_handler::{
             ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev,
         },
-        browser::fetch::{self, fetch, Method, Request, Response, Status},
+        browser::fetch::{self, fetch, header, Method, Request, Response, Status},
         browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
