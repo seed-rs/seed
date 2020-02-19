@@ -1,3 +1,8 @@
+#![deprecated(
+    since = "0.7.0",
+    note = "Please use [`seed::browser::fetch`](../../fetch/index.html) module instead"
+)]
+
 //! High-level interface for `web_sys` HTTP requests.
 use std::future::Future;
 
