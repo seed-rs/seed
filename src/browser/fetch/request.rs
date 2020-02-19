@@ -24,7 +24,7 @@ pub struct Request {
     referrer: Option<String>,
     referrer_policy: Option<web_sys::ReferrerPolicy>,
     timeout: Option<u32>,
-    // controller: RequestController,
+    controller: RequestController,
 }
 
 impl Request {
@@ -151,6 +151,12 @@ impl Request {
         self.integrity = Some(integrity);
         self
     }
+
+    /// Set request timeout in milliseconds.
+    pub fn timeout(mut self, timeout: u32) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
 }
 
 impl From<Request> for web_sys::Request {
@@ -209,19 +215,18 @@ impl From<Request> for web_sys::Request {
             init.referrer_policy(referrer_policy);
         }
 
-        // TODO: fixme
-        // // timeout
-        // if let Some(timeout) = &request.timeout {
-        //     let abort_controller = request.controller.clone();
-        //     *request.controller.timeout_handle.borrow_mut() = Some(
-        //         // abort request on timeout
-        //         Timeout::new(*timeout, move || abort_controller.abort()),
-        //     );
-        // }
+        // timeout
+        if let Some(timeout) = &request.timeout {
+            let abort_controller = request.controller.clone();
+            *request.controller.timeout_handle.borrow_mut() = Some(
+                // abort request on timeout
+                Timeout::new(*timeout, move || abort_controller.abort()),
+            );
+        }
 
-        // // controller
-        // // https://developer.mozilla.org/en-US/docs/Web/API/AbortController/signal
-        // init.signal(Some(&request.controller.abort_controller.signal()));
+        // controller
+        // https://developer.mozilla.org/en-US/docs/Web/API/AbortController/signal
+        init.signal(Some(&request.controller.abort_controller.signal()));
 
         // It seems that the only reason why Request constructor can
         // fail is when Url contains credentials.  I assume that this
