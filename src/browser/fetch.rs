@@ -2,19 +2,32 @@
 //!
 //! Our version of the Fetch API is based mostly on regular web one.
 //!
-//! There are several main components:
-//! - `fetch` function
-//! - `Request` struct
-//! - `Response` struct
+//! There is one entry point: [`fetch`][fetch] function.
+//! It can accept both, String urls as well as [`Request`][request].
 //!
-//! There is one entry point: `fetch` function.
-//! It can accept both, String urls as well as `Request`.
+//! To get a [`Response`][response] you need to `.await` fetch:
+//! ```rust
+//! let response = fetch("/foo").await?;
+//! ```
 //!
-//! As Rust doesn't have optional arguments we don't have `fetch(url, init)` version,
+//! Then you can check [`Status`][status] and extract body in various formats:
+//! ```rust
+//! let response = fetch("/foo").await?;
+//! assert!(response.status().is_ok());
+//! let body: FooStruct = response.json().await?;
+//! ```
+//!
+//! As Rust doesn't have optional arguments we have no `fetch(url, init)` version,
 //! instead you should use something like this:
 //! ```rust
-//! fetch(Request::new(url).set_method(Method::Post))
+//! fetch(Request::new(url).method(Method::Post)).await
 //! ```
+//!
+//!
+//! [fetch]: ./fn.fetch.html
+//! [request]: ./struct.Request.html
+//! [response]: ./struct.Response.html
+//! [status]: ./struct.Status.html
 
 // use gloo_timers::callback::Timeout;
 use crate::browser::Url;

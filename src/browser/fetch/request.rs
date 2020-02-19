@@ -1,6 +1,4 @@
-//! The Request interface of the Fetch API represents a resource request.
-//!
-//! See [developer.mozilla.org/en-US/docs/Web/API/Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+//! The Request of the Fetch API.
 
 use super::{FetchError, Method, Result};
 use gloo_timers::callback::Timeout;
@@ -29,6 +27,11 @@ pub struct Request {
 
 impl Request {
     /// Create new request based on the provided url.
+    ///
+    /// To get a [`Response`](./struct.Response.html) you need to pass
+    /// `Request` to the [`fetch`](./fn.fetch.html) function.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request)
     pub fn new(url: impl Into<Cow<'static, str>>) -> Self {
         Self {
             url: url.into(),
