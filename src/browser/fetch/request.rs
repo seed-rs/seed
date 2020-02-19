@@ -13,8 +13,7 @@ use wasm_bindgen::JsValue;
 #[derive(Debug, Clone, Default)]
 pub struct Request {
     url: Cow<'static, str>,
-    // TODO cows?
-    headers: HashMap<String, String>,
+    headers: Headers,
     method: Method,
     body: Option<JsValue>,
     cache: Option<web_sys::RequestCache>,
@@ -29,6 +28,7 @@ pub struct Request {
 }
 
 impl Request {
+    /// Create new request based on the provided url.
     pub fn new(url: impl Into<Cow<'static, str>>) -> Self {
         Self {
             url: url.into(),
@@ -36,30 +36,120 @@ impl Request {
         }
     }
 
-    pub const fn method(mut self, method: Method) -> Self {
-        self.method = method;
+    // TODO: remove when https://github.com/rust-lang/rust-clippy/issues/4979 will be fixed
+    #[allow(clippy::missing_const_for_fn)]
+    /// Set headers for this request.
+    /// It will replace any existing headers.
+    pub fn headers(mut self, headers: Headers) -> Self {
+        self.headers = headers;
         self
     }
 
+    /// Set specific header.
     pub fn header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
         self.headers.insert(name.into(), value.into());
         self
     }
 
-    /// TODO description
+    /// Set HTTP method. Default method is `GET`.
+    pub const fn method(mut self, method: Method) -> Self {
+        self.method = method;
+        self
+    }
+
+    /// Set request body to provided `JsValue`. Consider using `json` or `text` methods instead.
+    ///
+    /// Note that a request using the GET or HEAD method cannot have a body.
+    pub fn body(mut self, body: JsValue) -> Self {
+        self.body = Some(body);
+
+        #[cfg(debug_assertions)]
+        match self.method {
+            Method::Get | Method::Head => {
+                error!("GET and HEAD requests shoudn't have a body");
+            }
+            _ => {}
+        }
+
+        self
+    }
+
+    /// Set request body by JSON encoding provided data.
+    /// It will also set `Content-Type` header to `application/json; charset=utf-8`.
     ///
     /// # Errors
     ///
-    /// TODO describe errors
+    /// This method can fail if JSON serialization fail. It will then
+    /// return `FetchError::SerdeError`.
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
-        // TODO set "Content-type"?
         self.headers.insert(
-            "Content-type".to_owned(),
+            "Content-Type".to_owned(),
             "application/json; charset=utf-8".to_owned(),
         );
         let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
         self.body = Some(body.into());
         Ok(self)
+    }
+
+    /// Set request body to a provided string.
+    /// It will also set `Content-Type` header to `text/plain; charset=utf-8`.
+    pub fn text(mut self, text: impl AsRef<str>) -> Self {
+        self.headers.insert(
+            "Content-Type".to_owned(),
+            "text/plain; charset=utf-8".to_owned(),
+        );
+        self.body = Some(JsValue::from(text.as_ref()));
+        self
+    }
+
+    /// Set request mode.
+    /// It can either be `cors`, `no-cors`, `same-origin`, or `navigate`.
+    /// The default is `cors`.
+    pub const fn mode(mut self, mode: web_sys::RequestMode) -> Self {
+        self.mode = Some(mode);
+        self
+    }
+
+    /// Set request credentials.
+    /// It can either be `omit`, `same-origin`, or `include`.
+    /// The default is `same-origin`.
+    pub const fn credentials(mut self, credentials: web_sys::RequestCredentials) -> Self {
+        self.credentials = Some(credentials);
+        self
+    }
+
+    /// Set request cache mode.
+    pub const fn cache(mut self, cache: web_sys::RequestCache) -> Self {
+        self.cache = Some(cache);
+        self
+    }
+
+    /// Set request redirect mode.
+    /// It can either be `follow`, `error`, or `manual`.
+    /// The default is `follow`.
+    pub const fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
+        self.redirect = Some(redirect);
+        self
+    }
+
+    /// Set request referrer.
+    /// It can be either `referrer`, `client`, or a `URL`.
+    /// The default is `about:client`.
+    pub fn referrer(mut self, referrer: String) -> Self {
+        self.referrer = Some(referrer);
+        self
+    }
+
+    /// Set request referrer policy.
+    pub const fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
+        self.referrer_policy = Some(referrer_policy);
+        self
+    }
+
+    /// Set request subresource integrity.
+    pub fn integrity(mut self, integrity: String) -> Self {
+        self.integrity = Some(integrity);
+        self
     }
 }
 
@@ -143,6 +233,10 @@ impl From<Request> for web_sys::Request {
             .expect("fetch: Cannot create request")
     }
 }
+
+// TODO cows?
+/// Request headers.
+pub type Headers = HashMap<String, String>;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Clone)]

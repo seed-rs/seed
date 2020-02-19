@@ -12,17 +12,16 @@ pub struct Response {
 
 impl Response {
     pub async fn text(self) -> Result<String> {
-        let js_promise = self.raw_response
-            .text()
-            .map_err(|err| FetchError::PromiseError(err))?;
+        let js_promise = self.raw_response.text().map_err(FetchError::PromiseError)?;
 
         let js_value = JsFuture::from(js_promise)
             .await
-            .map_err(|err| FetchError::PromiseError(err))?;
+            .map_err(FetchError::PromiseError)?;
 
-        Ok(js_value.as_string().expect("fetch: Response expected `String` after .text()"))
+        Ok(js_value
+            .as_string()
+            .expect("fetch: Response expected `String` after .text()"))
     }
-
 
     pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
         let text = self.text().await?;
