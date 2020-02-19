@@ -1,9 +1,9 @@
 //! Fetch API.
 //!
-//! Our version of the Fetch API is based mostly on regular web one.
+//! Seed Fetch API is very similar to the browser [native one][fetch-mdn].
 //!
 //! There is one entry point: [`fetch`][fetch] function.
-//! It can accept both, String urls as well as [`Request`][request].
+//! It can accept both, string urls as well as [`Request`][request].
 //!
 //! To get a [`Response`][response] you need to `.await` fetch:
 //! ```rust
@@ -17,8 +17,7 @@
 //! let body: FooStruct = response.json().await?;
 //! ```
 //!
-//! As Rust doesn't have optional arguments we have no `fetch(url, init)` version,
-//! instead you should use something like this:
+//! Use [`Request`][request] methods to set init options:
 //! ```rust
 //! fetch(Request::new(url).method(Method::Post)).await
 //! ```
@@ -28,6 +27,7 @@
 //! [request]: ./struct.Request.html
 //! [response]: ./struct.Response.html
 //! [status]: ./struct.Status.html
+//! [fetch-mdn]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 
 use crate::browser::Url;
 use crate::util::window;
@@ -51,14 +51,29 @@ pub use status::*;
 /// Convenient type alias.
 pub type Result<T> = std::result::Result<T, FetchError>;
 
-/// The fetch functions is a main entry point of the Fetch API.
+/// The main Fetch API function.
+/// It fires a HTTP request.
 ///
-/// It start the process of fetching a resource from the network,
-/// returning a future which is fulfilled once the response is
-/// available. The future resolves to the Response object representing
-/// the response to your request. The promise does not reject on HTTP
-/// errors — it only rejects on network errors. You must use then
-/// handlers to check for HTTP errors.
+/// ## Examples
+///
+/// Simple `GET` request:
+/// ```rust
+/// let response = fetch("https://seed-rs.org").await?;
+/// let body = response.text().await?;
+/// ```
+///
+/// `POST` request with `JSON` body:
+/// ```rust
+/// let form = Form{email: "foo@example.com"};
+/// let response = fetch(Request::new("/api").method(Method::Post).json(form)).await?;
+/// let data: SubmitResponse = response.json().await?;
+/// ```
+///
+/// ## Errors
+///
+/// `fetch` will return `Err` only on network errors. This means that
+/// even if you get `Ok` from this function, you still need to check
+/// `Response` status for HTTP errors.
 pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response> {
     let promise = match resourse.into() {
         Resource::String(string) => window().fetch_with_str(&string),
@@ -68,7 +83,7 @@ pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response> {
     let raw_response = JsFuture::from(promise)
         .await
         .map(Into::into)
-        .map_err(|js_value_error| FetchError::DomException(js_value_error.into()))?;
+        .map_err(FetchError::NetworkError)?;
 
     Ok(Response { raw_response })
 }
@@ -79,6 +94,8 @@ pub enum FetchError {
     SerdeError(serde_json::Error),
     DomException(web_sys::DomException),
     PromiseError(wasm_bindgen::JsValue),
+    NetworkError(wasm_bindgen::JsValue),
+    StatusError(Status),
 }
 
 /// Wrapper for `fetch` function single argument.
@@ -90,15 +107,12 @@ pub enum Resource<'a> {
     Request(Request<'a>),
 }
 
-impl<'a> From<&'a str> for Resource<'a> {
-    fn from(string: &'a str) -> Resource<'a> {
-        Resource::String(Cow::from(string))
-    }
-}
-
-impl From<String> for Resource<'_> {
-    fn from(string: String) -> Resource<'static> {
-        Resource::String(Cow::from(string))
+impl<'a, T> From<T> for Resource<'a>
+where
+    T: Into<Cow<'a, str>>,
+{
+    fn from(url: T) -> Self {
+        Resource::String(url.into())
     }
 }
 

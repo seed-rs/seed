@@ -37,6 +37,19 @@ impl Response {
         Status::from(&self.raw_response)
     }
 
+    /// Check that response status is ok (2xx).
+    ///
+    /// # Errors
+    /// Returns `FetchError::StatusError` if status isn't 2xx.
+    pub fn check_status(self) -> Result<Self> {
+        let status = self.status();
+        if status.is_ok() {
+            Ok(self)
+        } else {
+            Err(FetchError::StatusError(status))
+        }
+    }
+
     /// Get underlying `web_sys::Response`.
     ///
     /// This is an escape path if current API can't handle your needs.
