@@ -29,7 +29,6 @@
 //! [response]: ./struct.Response.html
 //! [status]: ./struct.Status.html
 
-// use gloo_timers::callback::Timeout;
 use crate::browser::Url;
 use crate::util::window;
 use serde_json;
