@@ -30,25 +30,27 @@ pub struct Header<'a> {
     pub(crate) value: Cow<'a, str>,
 }
 
-/// Create `Content-Type` header.
-pub fn content_type<'a>(value: impl Into<Cow<'a, str>>) -> Header<'a> {
-    custom("Content-Type", value.into())
-}
+impl<'a> Header<'a> {
+    /// Create `Content-Type` header.
+    pub fn content_type(value: impl Into<Cow<'a, str>>) -> Header<'a> {
+        Self::custom("Content-Type", value.into())
+    }
 
-/// Create `Authorization` header.
-pub fn authorization<'a>(value: impl Into<Cow<'a, str>>) -> Header<'a> {
-    custom("Authorization", value)
-}
+    /// Create `Authorization` header.
+    pub fn authorization(value: impl Into<Cow<'a, str>>) -> Header<'a> {
+        Self::custom("Authorization", value)
+    }
 
-/// Create `Authorization: Bearer xxx` header.
-pub fn bearer<'a>(value: impl Into<Cow<'a, str>>) -> Header<'a> {
-    custom("Authorization", format!("Bearer {}", value.into()))
-}
+    /// Create `Authorization: Bearer xxx` header.
+    pub fn bearer(value: impl Into<Cow<'a, str>>) -> Header<'a> {
+        Self::custom("Authorization", format!("Bearer {}", value.into()))
+    }
 
-/// Create custom header.
-pub fn custom<'a>(name: impl Into<Cow<'a, str>>, value: impl Into<Cow<'a, str>>) -> Header<'a> {
-    Header {
-        name: name.into(),
-        value: value.into(),
+    /// Create custom header.
+    pub fn custom(name: impl Into<Cow<'a, str>>, value: impl Into<Cow<'a, str>>) -> Header<'a> {
+        Header {
+            name: name.into(),
+            value: value.into(),
+        }
     }
 }

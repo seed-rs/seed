@@ -1,6 +1,7 @@
 use crate::browser::util;
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use std::fmt;
 
 /// For setting up landing page routing. Unlike normal routing, we can't rely
 /// on the popstate state, so must go off path, hash, and search directly.
@@ -60,14 +61,14 @@ impl Url {
     }
 }
 
-impl std::fmt::Display for Url {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for Url {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let path = self.path.join("/");
         match (&self.search, &self.hash) {
             (Some(search), Some(hash)) => write!(fmt, "{}?{}#{}", path, search, hash),
             (Some(search), None) => write!(fmt, "{}?{}", path, search),
             (None, Some(hash)) => write!(fmt, "{}#{}", path, hash),
-            _ => write!(fmt, "{}", path),
+            (None, None) => write!(fmt, "{}", path),
         }
     }
 }
