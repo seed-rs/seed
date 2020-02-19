@@ -1,6 +1,6 @@
 /// HTTP Method types.
 ///
-/// [https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+/// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 #[derive(Debug, Clone, Copy)]
 pub enum Method {
     Get,

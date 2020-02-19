@@ -28,8 +28,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             // Created outside async block for lifetime reasons.
             let request = Request::new("/")
                 .method(Method::Post)
-                .header(header::custom("Accept-Language", "Rust"))
-                .header(header::custom("Authorization", format!("Basic {}", token)))
+                .header(Header::custom("Accept-Language", "en"))
+                .header(Header::custom("Authorization", format!("Basic {}", token)))
                 .json(&model.form)
                 .expect("Serialization failed");
 

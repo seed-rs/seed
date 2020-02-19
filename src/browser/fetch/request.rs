@@ -1,6 +1,6 @@
 //! The Request of the Fetch API.
 
-use super::{header, FetchError, Header, Headers, Method, Result};
+use super::{FetchError, Header, Headers, Method, Result};
 use gloo_timers::callback::Timeout;
 use serde::Serialize;
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
@@ -62,7 +62,8 @@ impl<'a> Request<'a> {
 
     /// Set request body to provided `JsValue`. Consider using `json` or `text` methods instead.
     ///
-    /// Note that a request using the GET or HEAD method cannot have a body.
+    /// ## Panics
+    /// This method will panic when request method is GET or HEAD.
     pub fn body(mut self, body: JsValue) -> Self {
         self.body = Some(body);
 
@@ -85,20 +86,16 @@ impl<'a> Request<'a> {
     /// This method can fail if JSON serialization fail. It will then
     /// return `FetchError::SerdeError`.
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
-        self.headers
-            .set(header::content_type("application/json; charset=utf-8"));
         let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
         self.body = Some(body.into());
-        Ok(self)
+        Ok(self.header(Header::content_type("application/json; charset=utf-8")))
     }
 
     /// Set request body to a provided string.
     /// It will also set `Content-Type` header to `text/plain; charset=utf-8`.
     pub fn text(mut self, text: impl AsRef<str>) -> Self {
-        self.headers
-            .set(header::content_type("text/plain; charset=utf-8"));
         self.body = Some(JsValue::from(text.as_ref()));
-        self
+        self.header(Header::content_type("text/plain; charset=utf-8"))
     }
 
     /// Set request mode.
@@ -134,8 +131,8 @@ impl<'a> Request<'a> {
     /// Set request referrer.
     /// It can be either `referrer`, `client`, or a `URL`.
     /// The default is `about:client`.
-    pub fn referrer(mut self, referrer: String) -> Self {
-        self.referrer = Some(referrer);
+    pub fn referrer(mut self, referrer: &impl ToString) -> Self {
+        self.referrer = Some(referrer.to_string());
         self
     }
 
@@ -146,8 +143,8 @@ impl<'a> Request<'a> {
     }
 
     /// Set request subresource integrity.
-    pub fn integrity(mut self, integrity: String) -> Self {
-        self.integrity = Some(integrity);
+    pub fn integrity(mut self, integrity: &impl ToString) -> Self {
+        self.integrity = Some(integrity.to_string());
         self
     }
 
