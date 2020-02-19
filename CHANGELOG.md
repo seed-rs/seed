@@ -1,10 +1,9 @@
 # Changelog
-
 [unreleased]
 - Enabled all additional markdown [extensions](https://docs.rs/pulldown-cmark/latest/pulldown_cmark/struct.Options.html).
 - Added `markdown` example.
 - Removed `'static` bound from `El` and `Node`.
-- [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
+- [BREAKING] Changed `perform_cmd` and `seed::browser::service::fetch` return type to `T` instead of `Result<T, T>`.
 - Added Aria attributes.
 - Added example `tea_component`.
 - [BREAKING] `UpdateEl<T>` changed to `UpdateEl<Ms>` and `fn update(self, el: &mut T);` to `fn update_el(self, el: &mut El<Ms>);` (#370).
@@ -30,12 +29,14 @@
 - Updated `todomvc` example to use `C!`, `IF!`, `matches!` and `App::start`.
 - `ev` accepts handlers that return `Msg`, `Option<Msg>` or `()` (#394).
 - [BREAKING] `EventHandler::new` accepts only handlers that return `Option<Msg>`.
-- [BREAKING] `ev`-like functions and some `Orders` method require `'static` bound for generic types (temporary). 
+- [BREAKING] `ev`-like functions and some `Orders` method require `'static` bound for generic types (temporary).
 - `Orders::after_next_render` now accepts callbacks that return `Msg`, `Option<Msg>` or `()`.
 - Updated examples `update_from_js` and `todomvc`.
 - [deprecated] `View` is deprecated in favor of `IntoNodes`.
 - [BREAKING] `View` isn't implemented for `El` and `Vec<El>`.
 - [BREAKING] `Node::add_listener` renamed to `add_event_handler`.
+- Added new Fetch API module. See [`seed::browser::fetch`](https://docs.rs/seed/0.7.0/seed/browser/fetch/index.html) (#353)
+- [deprecated] - `seed::browser::service::fetch` module is deprecated in favor of `seed::browser::fetch`
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
