@@ -1,17 +1,17 @@
 //! The Request of the Fetch API.
 
-use super::{FetchError, Method, Result};
+use super::{header, FetchError, Header, Headers, Method, Result};
 use gloo_timers::callback::Timeout;
 use serde::Serialize;
-use std::{borrow::Cow, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, rc::Rc};
 use wasm_bindgen::JsValue;
 
 /// Its methods configure the request, and handle the response. Many of them return the original
 /// struct, and are intended to be used chained together.
 #[derive(Debug, Clone, Default)]
-pub struct Request {
-    url: Cow<'static, str>,
-    headers: Headers,
+pub struct Request<'a> {
+    url: Cow<'a, str>,
+    headers: Headers<'a>,
     method: Method,
     body: Option<JsValue>,
     cache: Option<web_sys::RequestCache>,
@@ -25,14 +25,14 @@ pub struct Request {
     controller: RequestController,
 }
 
-impl Request {
+impl<'a> Request<'a> {
     /// Create new request based on the provided url.
     ///
     /// To get a [`Response`](./struct.Response.html) you need to pass
     /// `Request` to the [`fetch`](./fn.fetch.html) function.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request)
-    pub fn new(url: impl Into<Cow<'static, str>>) -> Self {
+    pub fn new(url: impl Into<Cow<'a, str>>) -> Self {
         Self {
             url: url.into(),
             ..Self::default()
@@ -43,14 +43,14 @@ impl Request {
     #[allow(clippy::missing_const_for_fn)]
     /// Set headers for this request.
     /// It will replace any existing headers.
-    pub fn headers(mut self, headers: Headers) -> Self {
+    pub fn headers(mut self, headers: Headers<'a>) -> Self {
         self.headers = headers;
         self
     }
 
     /// Set specific header.
-    pub fn header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
-        self.headers.insert(name.into(), value.into());
+    pub fn header(mut self, header: Header<'a>) -> Self {
+        self.headers.set(header);
         self
     }
 
@@ -85,10 +85,8 @@ impl Request {
     /// This method can fail if JSON serialization fail. It will then
     /// return `FetchError::SerdeError`.
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
-        self.headers.insert(
-            "Content-Type".to_owned(),
-            "application/json; charset=utf-8".to_owned(),
-        );
+        self.headers
+            .set(header::content_type("application/json; charset=utf-8"));
         let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
         self.body = Some(body.into());
         Ok(self)
@@ -97,10 +95,8 @@ impl Request {
     /// Set request body to a provided string.
     /// It will also set `Content-Type` header to `text/plain; charset=utf-8`.
     pub fn text(mut self, text: impl AsRef<str>) -> Self {
-        self.headers.insert(
-            "Content-Type".to_owned(),
-            "text/plain; charset=utf-8".to_owned(),
-        );
+        self.headers
+            .set(header::content_type("text/plain; charset=utf-8"));
         self.body = Some(JsValue::from(text.as_ref()));
         self
     }
@@ -162,15 +158,15 @@ impl Request {
     }
 }
 
-impl From<Request> for web_sys::Request {
+impl From<Request<'_>> for web_sys::Request {
     fn from(request: Request) -> Self {
         let mut init = web_sys::RequestInit::new();
 
         // headers
         let headers = web_sys::Headers::new().expect("fetch: cannot create headers");
-        for (name, value) in &request.headers {
+        for header in request.headers {
             headers
-                .append(name.as_str(), value.as_str())
+                .append(&header.name, &header.value)
                 .expect("fetch: cannot create header")
         }
         init.headers(&headers);
@@ -241,10 +237,6 @@ impl From<Request> for web_sys::Request {
             .expect("fetch: Cannot create request")
     }
 }
-
-// TODO cows?
-/// Request headers.
-pub type Headers = HashMap<String, String>;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Clone)]

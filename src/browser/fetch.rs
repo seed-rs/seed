@@ -36,11 +36,13 @@ use std::borrow::Cow;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
 
+pub mod header;
 mod method;
 mod request;
 mod response;
 mod status;
 
+pub use header::{Header, Headers};
 pub use method::*;
 pub use request::*;
 pub use response::*;
@@ -85,7 +87,7 @@ pub enum FetchError {
 /// `From` implementations for those types.
 pub enum Resource<'a> {
     String(Cow<'a, str>),
-    Request(Request),
+    Request(Request<'a>),
 }
 
 impl<'a> From<&'a str> for Resource<'a> {
@@ -106,8 +108,8 @@ impl From<Url> for Resource<'_> {
     }
 }
 
-impl From<Request> for Resource<'_> {
-    fn from(request: Request) -> Resource<'static> {
+impl<'a> From<Request<'a>> for Resource<'a> {
+    fn from(request: Request<'a>) -> Resource<'a> {
         Resource::Request(request)
     }
 }
