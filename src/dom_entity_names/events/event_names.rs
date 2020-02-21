@@ -34,6 +34,9 @@ make_events! {
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
     VolumeChange => "volumechange",
 
+    // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
+    VisibilityChange => "visibilitychange",
+
     // todo finish this
 
     Change => "change",
