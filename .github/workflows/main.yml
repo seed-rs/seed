@@ -32,7 +32,7 @@ jobs:
           toolchain: stable
 
       - name: Install cargo-make
-        uses: davidB/rust-cargo-make@v1
+        run: cargo install cargo-make
 
       - name: Run tests - Windows or Ubuntu
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
