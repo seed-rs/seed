@@ -1,4 +1,6 @@
-// Comprehensive list: https://www.w3schools.com/tags/ref_attributes.asp
+// [Comprehensive list](https://www.w3schools.com/tags/ref_attributes.asp)
+// [Aria attributes](https://www.w3.org/TR/html52/dom.html#state-and-property-attributes)
+
 make_attrs! {
     // Missing data-*
     Accept => "accept", AcceptCharset => "accept-charset", AccessKey => "accesskey", Action => "action",
@@ -127,5 +129,30 @@ make_attrs! {
     Y => "y", Y1 => "y1", Y2 => "y2",
     YchannelSelector => "yChannelSelector", Z => "z", ZoomAndPan => "zoomAndPan",
 
-    Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "viewBox", Fill => "fill"
+    Path => "path", D => "d", Xmlns => "xmlns", ViewBox => "viewBox", Fill => "fill",
+
+    AriaAtomic => "aria-atomic", AriaBusy => "aria-busy", AriaControls => "aria-controls",
+    AriaCurrent => "aria-current", AriaDescribedBy => "aria-describedby", AriaDetails => "aria-details",
+    AriaDisabled => "aria-disabled", AriaDropEffect => "aria-dropeffect", AriaErrorMessage => "aria-errormessage",
+    AriaFlowto => "aria-flowto", AriaGrabbed => "aria-grabbed", AriaHasPopup => "aria-haspopup",
+    AriaHidden => "aria-hidden", AriaInvalid => "aria-invalid", AriaKeyShortcuts => "aria-keyshortcuts",
+    AriaLabel => "aria-label", AriaLabelledBy => "aria-labelledby", AriaLive => "aria-live",
+    AriaOwns => "aria-owns", AriaRelevant => "aria-relevant", AriaRoleDescription => "aria-roledescription",
+
+    AriaExpanded => "aria-expanded", AriaDialog => "aria-dialog", AriaPressed => "aria-pressed",
+    AriaChecked => "aria-checked", AriaColSpan => "aria-colspan", AriaRowIndex => "aria-rowindex",
+    AriaRowSpan => "aria-rowspan",
+
+    AriaSort => "aria-sort", AriaReadonly => "aria-readonly", AriaRequired => "aria-required",
+    AriaSelected => "aria-selected",
+
+    AriaMultiSelectable => "aria-multiselectable", AriaActiveDescendant => "aria-activedescendant",
+    AriaOrientation => "aria-orientation", AriaLevel => "aria-level", AriaPosinset => "aria-posinset",
+    AriaSetsize => "aria-setsize",
+
+    AriaValueMax => "aria-valuemax", AriaValueMin => "aria-valuemin", AriaValueNow => "aria-valuenow",
+    AriaValueText => "aria-valuetext",
+
+    AriaMultiLine => "aria-multiline", AriaPlaceholder => "aria-placeholder"
+
 }
