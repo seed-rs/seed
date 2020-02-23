@@ -19,22 +19,6 @@ impl<Ms> UpdateEl<El<Ms>> for &Attrs {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<Attrs> {
-    fn update(self, el: &mut El<Ms>) {
-        for at in self {
-            el.attrs.merge(at);
-        }
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for Vec<&Attrs> {
-    fn update(self, el: &mut El<Ms>) {
-        for at in self {
-            el.attrs.merge(at.clone());
-        }
-    }
-}
-
 impl<Ms> UpdateEl<El<Ms>> for Style {
     fn update(self, el: &mut El<Ms>) {
         el.style.merge(self);
@@ -47,31 +31,9 @@ impl<Ms> UpdateEl<El<Ms>> for &Style {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<Style> {
-    fn update(self, el: &mut El<Ms>) {
-        for st in self {
-            el.style.merge(st);
-        }
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for Vec<&Style> {
-    fn update(self, el: &mut El<Ms>) {
-        for st in self {
-            el.style.merge(st.clone());
-        }
-    }
-}
-
 impl<Ms> UpdateEl<El<Ms>> for EventHandler<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.event_handler_manager.add_event_handlers(vec![self])
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for Vec<EventHandler<Ms>> {
-    fn update(self, el: &mut El<Ms>) {
-        el.event_handler_manager.add_event_handlers(self);
     }
 }
 
@@ -101,22 +63,9 @@ impl<Ms> UpdateEl<El<Ms>> for El<Ms> {
     }
 }
 
-impl<Ms> UpdateEl<El<Ms>> for Vec<El<Ms>> {
-    fn update(self, el: &mut El<Ms>) {
-        el.children
-            .append(&mut self.into_iter().map(Node::Element).collect());
-    }
-}
-
 impl<Ms> UpdateEl<El<Ms>> for Node<Ms> {
     fn update(self, el: &mut El<Ms>) {
         el.children.push(self)
-    }
-}
-
-impl<Ms> UpdateEl<El<Ms>> for Vec<Node<Ms>> {
-    fn update(mut self, el: &mut El<Ms>) {
-        el.children.append(&mut self);
     }
 }
 
@@ -177,5 +126,84 @@ where
 {
     fn update(self, el: &mut El<Ms>) {
         self.for_each(|item| item.update(el));
+    }
+}
+
+// ----- Containers ------
+
+impl<Ms, T> UpdateEl<El<Ms>> for Option<T>
+where
+    T: UpdateEl<El<Ms>>,
+{
+    fn update(self, el: &mut El<Ms>) {
+        if let Some(val) = self {
+            val.update(el);
+        }
+    }
+}
+
+impl<Ms, T, E> UpdateEl<El<Ms>> for Result<T, E>
+where
+    T: UpdateEl<El<Ms>>,
+    E: UpdateEl<El<Ms>>,
+{
+    fn update(self, el: &mut El<Ms>) {
+        match self {
+            Ok(val) => val.update(el),
+            Err(err) => err.update(el),
+        }
+    }
+}
+
+impl<Ms, T> UpdateEl<El<Ms>> for Vec<T>
+where
+    T: UpdateEl<El<Ms>>,
+{
+    fn update(self, el: &mut El<Ms>) {
+        for item in self {
+            item.update(el);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    fn vec_with_update_el() {
+        use crate::prelude::*;
+
+        let children: Vec<Node<()>> = nodes![h1!["Page title"], div!["body"]];
+
+        let _ = div![
+            // Vec<Attrs>
+            vec![attrs![ At::Title => "Title" ], attrs![ At::Width => 22.0 ],],
+            // Vec<Style>
+            vec![
+                style![ St::Color => "#fff" ],
+                style![ St::Display => "flex" ]
+            ],
+            children,
+        ];
+    }
+
+    #[wasm_bindgen_test]
+    fn option_with_update_el() {
+        let val: Option<Node<()>> = if true { Some(div!["Some value"]) } else { None };
+
+        let _ = div![val];
+    }
+
+    #[wasm_bindgen_test]
+    fn result_with_update_el() {
+        let val: Result<Node<()>, Node<()>> = if true {
+            Ok(div!["Sent successfully"])
+        } else {
+            Err(h2!["Error, invalid input"])
+        };
+
+        let _ = div![val];
     }
 }
