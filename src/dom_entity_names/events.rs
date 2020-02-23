@@ -4,7 +4,7 @@ macro_rules! make_events {
     { $($event_camel:ident => $event:expr),+ } => {
 
         /// The Ev enum restricts element-creation to only valid event names, as defined here:
-        /// [https://developer.mozilla.org/en-US/docs/Web/Evs](https://developer.mozilla.org/en-US/docs/Web/Evs)
+        /// [MDN reference Web/Events](https://developer.mozilla.org/en-US/docs/Web/Events)
         #[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Eq)]
         pub enum Ev {
             $(
