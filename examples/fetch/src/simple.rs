@@ -26,7 +26,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
                 let user = response
                     .check_status() // ensure we've got 2xx status
-                    .await
                     .expect("status check failed")
                     .json::<User>()
                     .await

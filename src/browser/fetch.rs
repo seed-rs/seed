@@ -12,7 +12,7 @@
 //!
 //! Then you can check [`Status`][status] and extract body in various formats:
 //! ```rust
-//! let response = fetch("/foo").await?.check_status().await?;
+//! let response = fetch("/foo").await?.check_status()?;
 //! let body: FooStruct = response.json().await?;
 //! ```
 //!
