@@ -252,4 +252,19 @@ mod tests {
         let actual: Url = "/#/discover".to_string().try_into().unwrap();
         assert_eq!(expected, actual)
     }
+
+    #[wasm_bindgen_test]
+    fn check_url_to_string() {
+        let expected = "/foo/bar?q=42&z=13#/discover";
+
+        let actual = Url {
+            path: vec!["foo".into(), "bar".into()],
+            hash: Some("/discover".into()),
+            search: Some("q=42&z=13".into()),
+            title: None,
+        }
+        .to_string();
+
+        assert_eq!(expected, actual)
+    }
 }
