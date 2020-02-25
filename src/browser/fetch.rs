@@ -12,8 +12,7 @@
 //!
 //! Then you can check [`Status`][status] and extract body in various formats:
 //! ```rust
-//! let response = fetch("/foo").await?;
-//! assert!(response.status().is_ok());
+//! let response = fetch("/foo").await?.check_status().await?;
 //! let body: FooStruct = response.json().await?;
 //! ```
 //!
@@ -29,10 +28,8 @@
 //! [status]: ./struct.Status.html
 //! [fetch-mdn]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 
-use crate::browser::Url;
 use crate::util::window;
 use serde_json;
-use std::borrow::Cow;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
 
@@ -74,11 +71,8 @@ pub type Result<T> = std::result::Result<T, FetchError>;
 /// `fetch` will return `Err` only on network errors. This means that
 /// even if you get `Ok` from this function, you still need to check
 /// `Response` status for HTTP errors.
-pub async fn fetch<'a>(resourse: impl Into<Resource<'a>>) -> Result<Response> {
-    let promise = match resourse.into() {
-        Resource::String(string) => window().fetch_with_str(&string),
-        Resource::Request(request) => window().fetch_with_request(&request.into()),
-    };
+pub async fn fetch<'a>(request: impl Into<Request<'a>>) -> Result<Response> {
+    let promise = window().fetch_with_request(&request.into().into());
 
     let raw_response = JsFuture::from(promise)
         .await
@@ -98,42 +92,15 @@ pub enum FetchError {
     StatusError(Status),
 }
 
-/// Wrapper for `fetch` function single argument.
-///
-/// Consider using `String` or `Request` instead, because there are
-/// `From` implementations for those types.
-pub enum Resource<'a> {
-    String(Cow<'a, str>),
-    Request(Request<'a>),
-}
-
-impl<'a, T> From<T> for Resource<'a>
-where
-    T: Into<Cow<'a, str>>,
-{
-    fn from(url: T) -> Self {
-        Resource::String(url.into())
-    }
-}
-
-impl From<Url> for Resource<'_> {
-    fn from(url: Url) -> Resource<'static> {
-        Resource::String(Cow::from(url.to_string()))
-    }
-}
-
-impl<'a> From<Request<'a>> for Resource<'a> {
-    fn from(request: Request<'a>) -> Resource<'a> {
-        Resource::Request(request)
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+    wasm_bindgen_test_configure!(run_in_browser);
     use super::*;
+    use crate::browser::Url;
 
-    #[test]
-    fn test_fetch() {
+    #[wasm_bindgen_test]
+    fn test_fetch_args() {
         let _ = fetch("https://seed-rs.org");
         let _ = fetch(String::from("https://seed-rs.org"));
         let _ = fetch(Url::from(vec!["/", "foo"]));
