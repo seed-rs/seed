@@ -25,7 +25,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip(); // No need to rerender
 
             let token = "YWxhZGRpbjpvcGVuc2VzYW1l";
-            // Created outside async block for lifetime reasons.
+            // Created outside async block because of lifetime reasons
+            // (we can't use reference to `model.from` in async
+            // function).
             let request = Request::new("/")
                 .method(Method::Post)
                 .header(Header::custom("Accept-Language", "en"))
