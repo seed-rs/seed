@@ -39,17 +39,23 @@ impl Response {
 
     /// Check that response status is ok (2xx).
     ///
-    /// This method is async so it's easy to use it in combinator chains:
+    /// ```rust
+    /// fetch(url).await?.check_status()?
+    ///
+    /// ```
+    ///
+    /// Or with combinators:
+    ///
     /// ```rust
     /// fetch(url)
-    ///     .and_then(Response::check_status)
+    ///     .map(|result| result.and_then(Response::check_status))
     ///     .and_then(Response.json)
     ///     .map(Msg::Fetched)
     /// ```
     ///
     /// # Errors
     /// Returns `FetchError::StatusError` if status isn't 2xx.
-    pub async fn check_status(self) -> Result<Self> {
+    pub fn check_status(self) -> Result<Self> {
         let status = self.status();
         if status.is_ok() {
             Ok(self)

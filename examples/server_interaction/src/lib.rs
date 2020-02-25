@@ -60,7 +60,7 @@ impl Default for Model {
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders.perform_cmd(
         fetch(REPOSITORY_URL)
-            .and_then(Response::check_status)
+            .map(|result| result.and_then(Response::check_status))
             .and_then(Response::json)
             .map(Msg::RepositoryInfoFetched),
     );
