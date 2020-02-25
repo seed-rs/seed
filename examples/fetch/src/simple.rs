@@ -23,10 +23,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip(); // No need to rerender
             orders.perform_cmd(async {
                 let response = fetch("user.json").await.expect("HTTP request failed");
+
                 let user = response
+                    .check_status() // ensure we've got 2xx status
+                    .await
+                    .expect("status check failed")
                     .json::<User>()
                     .await
-                    .expect("Deserialization failed");
+                    .expect("deserialization failed");
+
                 Msg::Received(user)
             });
         }
