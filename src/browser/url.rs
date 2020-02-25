@@ -63,13 +63,17 @@ impl Url {
 
 impl fmt::Display for Url {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let path = self.path.join("/");
-        match (&self.search, &self.hash) {
-            (Some(search), Some(hash)) => write!(fmt, "{}?{}#{}", path, search, hash),
-            (Some(search), None) => write!(fmt, "{}?{}", path, search),
-            (None, Some(hash)) => write!(fmt, "{}#{}", path, hash),
-            (None, None) => write!(fmt, "{}", path),
+        // Url constructor can fail if given invalid URL. Shouldn't be possible in our case?
+        let dummy_base_url = "http://example.com";
+        let url = web_sys::Url::new_with_base(&self.path.join("/"), dummy_base_url)
+            .expect("cannot create url");
+        if let Some(search) = &self.search {
+            url.set_search(search);
         }
+        if let Some(hash) = &self.hash {
+            url.set_hash(hash);
+        }
+        write!(fmt, "{}", &url.href()[dummy_base_url.len()..])
     }
 }
 
