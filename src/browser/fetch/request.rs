@@ -1,6 +1,7 @@
 //! The Request of the Fetch API.
 
 use super::{FetchError, Header, Headers, Method, Result};
+use crate::browser::Url;
 use gloo_timers::callback::Timeout;
 use serde::Serialize;
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
@@ -152,6 +153,18 @@ impl<'a> Request<'a> {
     pub fn timeout(mut self, timeout: u32) -> Self {
         self.timeout = Some(timeout);
         self
+    }
+}
+
+impl<'a, T: Into<Cow<'a, str>>> From<T> for Request<'a> {
+    fn from(s: T) -> Request<'a> {
+        Request::new(s)
+    }
+}
+
+impl<'a> From<Url> for Request<'a> {
+    fn from(url: Url) -> Request<'a> {
+        Request::new(url.to_string())
     }
 }
 
