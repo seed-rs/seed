@@ -10,12 +10,14 @@ pub struct Form {
 #[derive(Default)]
 pub struct Model {
     form: Form,
+    message: Option<String>,
 }
 
 pub enum Msg {
     NameChanged(String),
     Submit,
     Submited,
+    SubmitFailed(String),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -37,12 +39,20 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
             orders.perform_cmd(async {
                 let response = fetch(request).await.expect("HTTP request failed");
-                assert!(response.status().is_ok());
-                Msg::Submited
+
+                if response.status().is_ok() {
+                    Msg::Submited
+                } else {
+                    Msg::SubmitFailed(response.status().text)
+                }
             });
         }
         Msg::Submited => {
             model.form.name = "".into();
+            model.message = Some("Submit succeeded".into());
+        }
+        Msg::SubmitFailed(reason) => {
+            model.message = Some(reason);
         }
     }
 }
@@ -63,6 +73,11 @@ pub fn view(model: &Model) -> Node<Msg> {
                 event.prevent_default();
                 Msg::Submit
             })
-        ]
+        ],
+        if let Some(message) = &model.message {
+            span![message]
+        } else {
+            empty![]
+        },
     ]
 }
