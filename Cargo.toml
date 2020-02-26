@@ -105,6 +105,7 @@ members = [
     "examples/orders",
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
+    "examples/tea_component",
     "examples/todomvc",
     "examples/update_from_js",
     "examples/user_media",

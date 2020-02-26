@@ -2,7 +2,8 @@
 
 [unreleased]
 - [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
-- Added Aria attributes
+- Added Aria attributes.
+- Added example `tea_component`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
