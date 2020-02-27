@@ -30,7 +30,7 @@ macro_rules! element {
                                 #[allow(unused_mut)]
                                 let mut el = El::empty($crate::virtual_dom::Tag::$Tag_camel);
                                 $d (
-                                    $d part.update(&mut el);
+                                    $d part.update_el(&mut el);
                                 )*
                                 $crate::virtual_dom::Node::Element(el)
                             }
@@ -55,7 +55,7 @@ macro_rules! element_svg {
                             {
                                 #[allow(unused_mut)]
                                 let mut el = El::empty_svg($crate::virtual_dom::Tag::$Tag_camel);
-                                $d ( $d part.update(&mut el); )*
+                                $d ( $d part.update_el(&mut el); )*
                                 $crate::virtual_dom::Node::Element(el)
                             }
                         };
@@ -186,7 +186,7 @@ macro_rules! custom {
         {
             let default_tag_name = "missing-tag-name";
             let mut el = El::empty($crate::virtual_dom::Tag::from(default_tag_name));
-            $ ( $part.update(&mut el); )*
+            $ ( $part.update_el(&mut el); )*
 
             if let $crate::virtual_dom::Tag::Custom(tag_name) = &el.tag {
                 let tag_changed = tag_name != default_tag_name;

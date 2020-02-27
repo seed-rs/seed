@@ -68,7 +68,7 @@ fn view(model: &Model) -> impl View<Msg> {
             St::Height => vmin(50),
         ],
         if model.greet_clicked {
-            h1![model.title]
+            h1![&model.title]
         } else {
             div![
                 style![
