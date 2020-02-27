@@ -345,7 +345,7 @@ fn view_todo(
                     Ev::DblClick,
                     enc!((todo_id) move |_| Msg::StartTodoEdit(todo_id))
                 ),
-                todo.title
+                &todo.title
             ],
             button![
                 class!["destroy"],

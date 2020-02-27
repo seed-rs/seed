@@ -15,7 +15,7 @@ pub use event_handler_manager::{EventHandler, EventHandlerManager, Listener};
 pub use mailbox::Mailbox;
 pub use node::{El, IntoNodes, Node, Text};
 pub use style::Style;
-pub use update_el::UpdateEl;
+pub use update_el::{UpdateEl, UpdateElForIterator};
 pub use values::{AsAtValue, AtValue, CSSValue};
 pub use view::View;
 

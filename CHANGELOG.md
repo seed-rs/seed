@@ -4,6 +4,10 @@
 - [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
 - Added Aria attributes.
 - Added example `tea_component`.
+- [BREAKING] `UpdateEl<T>` changed to `UpdateEl<Ms>` and `fn update(self, el: &mut T);` to `fn update_el(self, el: &mut El<Ms>);` (#370).
+- Added trait `UpdateElForIterator<Ms>`.
+- Added support for all `Iterator`s, `Option`, `u32`, `i32`, `usize`, `f64` and references in element creation macros (#365, #128).
+- [BREAKING] `String` implements `UpdateEl<T>`. (References are now required for `String` properties, e.g. `div![&model.title]`.)
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
