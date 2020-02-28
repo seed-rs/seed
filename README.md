@@ -7,105 +7,50 @@
   <img src="/seed_branding/seed_logo.svg" width="256" title="Seed logo">
 </p>
 
-## Rust framework for creating fast and reliable web apps
+### [Website](https://seed-rs.org) | [Forum](https://seed.discourse.group) | [Chat](https://discord.gg/JHHcHp5)
+---
+Seed is a front end Rust framework for creating fast and reliable web apps with an elm-like architecture.
 
-- Website - [seed-rs.org](https://seed-rs.org) ([feedback](https://github.com/seed-rs/seed/issues/303))
-- Forum - [seed.discourse.group](https://seed.discourse.group)
-- Chat - [discord.gg](https://discord.gg/JHHcHp5)
-- Quickstarts - [Webpack](https://github.com/seed-rs/seed-quickstart-webpack) | [Rust](https://github.com/seed-rs/seed-quickstart)
+- All the benefits of Rust and macro based syntax.
+- Minimal overhead, configuration, and boilerplate.
+- Clear documentation made to be accessible regardless of your familiarity with Rust.
+- Written without any [unsafe](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html) code and works with `stable` Rust, no `nightly` required!
 
-The best place to learn is the guide on the website - this readme is an excerpt from it.
+---
 
 # Quickstart
 
-## Setup
+If you are proficient in a front end framework, creating a standalone web app is painless.
 
-This framework requires you to install [Rust](https://www.rust-lang.org/tools/install).
-
-You'll need a recent version of Rust: `rustup update`
-
-The wasm32-unknown-unknown target: `rustup target add wasm32-unknown-unknown`
-
-And cargo-make: `cargo install --force cargo-make`
-
-## The theoretical minimum
-
-To start, clone [the quickstart repo](https://github.com/seed-rs/seed-quickstart):
-`git clone https://github.com/seed-rs/seed-quickstart.git`,
-run `cargo make build` in a terminal to build the app, and `cargo make serve` to start a dev server
-on `127.0.0.0:8000`. If you'd like the compiler to automatically check and recompile when you 
-make changes, run `cargo make watch` instead of `cargo make build`.
-
-
-## A little deeper
-
-Alternatively, create a new lib with Cargo: `cargo new --lib appname`. Here and everywhere it appears in this guide, `appname` should be replaced with the name of your app.
-
-If not using the quickstart repo, create an Html file with a body that contains this:
-
-```html
-<section id="app"></section>
-<script type="module">
-    import init from '/pkg/package.js';
-    init('/pkg/package_bg.wasm');
-</script>
-```
-
-The first line above is an empty element with id: It's where your app will render.
-The subsequent ones load your app's wasm modules.
-
-The quickstart repo includes this file. You will eventually need to modify it to
-change the page's title, add a description, favicon, stylesheet etc.
-
-`Cargo.toml`, which is a file created by Cargo that describes your app, needs `wasm-bindgen`, `web-sys`, and `seed` as dependencies, and crate-type
-of `"cdylib"`. The version in the quickstart repo has these set up already. Example:
-
-```toml
-[package]
-name = "appname"
-version = "0.1.0"
-authors = ["Your Name <email@address.com>"]
-edition = "2018"
-
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
-seed = "^0.6.0"
-wasm-bindgen = "^0.2.50"
-```
-
-## A short example
-
-Here's an example demonstrating structure and syntax; it can be found in working form
-in the [counter example](https://github.com/seed-rs/seed/tree/master/examples/counter).
-Descriptions of its parts are in the
-Guide section below. Its structure follows [The Elm Architecture](https://guide.elm-lang.org/architecture/).
-
-_lib.rs_:
+To get started, you can clone our [quickstart](https://github.com/seed-rs/seed-quickstart) or [webpack quickstart](https://github.com/seed-rs/seed-quickstart-webpack), where we explain in detail.
 
 ```rust
 use seed::{prelude::*, *};
 
+// `Model` describes our app state.
 type Model = i32;
 
+// `Msg` describes the different events you can modify state with.
 enum Msg {
     Increment,
-    Decrement,
 }
 
+// `update` describes how to handle each `Msg`.
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => *model += 1,
-        Msg::Decrement => *model -= 1,
     }
 }
 
+// `view` describes what to display, and can implement the different `Msg`s you define.
 fn view(model: &Model) -> Node<Msg> {
     div![
-        button![ ev(Ev::Click, |_| Msg::Decrement), "-" ],
-        div![ model.to_string() ],
-        button![ ev(Ev::Click, |_| Msg::Increment), "+" ],
+        "This is a counter: ",
+        class!["counter"],
+        button![
+            model.to_string(),
+            ev(Ev::Click, |_| Msg::Increment),
+        ],
     ]
 }
 
@@ -115,146 +60,67 @@ pub fn render() {
 }
 ```
 
-## Building and running
+# Examples
+The examples provided in this repository are a good place to get started. They also act as an integration testing suite we run before every commit to ensure there are no unintended breaking changes to the user space. Because of Rust's compile-time checking, testing is that much more robust and changes can be pushed confidently.
 
-To build your app, run `cargo make build`, and to host on a dev server, run `cargo make serve`.
+Run [examples](examples/) with `cargo make start example_name` from the Seed repository root.
 
-For a more robust starting setup, check out Martin Kavik's [seed-quickstart-webpack repo](https://github.com/seed-rs/seed-quickstart-webpack).
+# Why Use Seed
 
-## Running included examples
+### Rust
+You may prefer writing in Rust and appreciate its benefits, including:
+- Rust **safety**.
+- Rust **compile-time error, type, and immutability checking**.
+- Rust built-in testing.
+- Rust speed.
+- Cleaner code and less runtime errors.
+- Cargo packages.
 
-To run an example located in the [examples folder](https://github.com/seed-rs/seed/tree/master/examples),
-run `cargo make start example_name`, where you replace `example_name` with the example name. Eg:
-`cargo make start counter`.
+### Development
+Our main focus is on developer experience, the benefits of which are currently:
+- Seed has a *batteries-included* approach, meaning less boilerplate and dependencies.
+- Macro syntax removes the need for transpiling and integrates naturally and flexibly with the language. This also means all the pains of something like JSX are avoided; linting, commenting, etc. all work out of the box.
+- Built in elm-like architecture, no need for another state manager.
+- If your backend is in Rust, no switching between two languages or setting up different pipelines.
+- Perhaps you find webpack or other JS tools hard to setup.
+- Maybe you don't want to code business logic in a purely-functional language.
+- Very active development.
 
-Some examples also require to run API server in another terminal window - `cargo make start_server example_name`.
+See more on our [about](https://seed-rs.org/guide/about) page.
 
-When server(s) are running, open [127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+# Why Not Use Seed
+- Seed is under rapid development, so there may be breaking changes at times. However, Seed is more than stable enough for personal projects, and production apps are in development.
+- Finding Rust/WASM/Seed help outside of [Discord](https://discord.gg/JHHcHp5) or [Discourse](https://seed.discourse.group) may be difficult, as tutorials and guides outside the official ones aren't yet prevalent.
+- Seed doesn't have as many existing reusable components that more mature frameworks have (date-pickers, etc.), so you may need to implement them yourself, or adapt them from existing solutions.
 
-## Resources
+# Documentation
+- [Quickstart](https://seed-rs.org/guide/quickstart)
+- [About](https://seed-rs.org/guide/about)
+- [Code Comparison](https://seed-rs.org/guide/code-comparison)
+- [Structure](https://seed-rs.org/guide/structure)
+- [View Macros](https://seed-rs.org/guide/view)
+- [Events](https://seed-rs.org/guide/events)
+- [HTTP Requests](https://seed-rs.org/guide/events)
+- [Routing](https://seed-rs.org/guide/routing)
+- [JavaScript Interaction](https://seed-rs.org/guide/javascript-interaction)
+- [Release and Debugging](https://seed-rs.org/guide/release-and-debugging)
+- [Server Integration](https://seed-rs.org/guide/server-integration)
+- [Support](https://seed-rs.org/guide/support)
+- [Troubleshooting] //TBA
+
+# Resources
+### Seed
 - [Awesome-seed-rs](https://github.com/seed-rs/awesome-seed-rs): A curated list of resources
 - [Seed Realworld](https://github.com/seed-rs/seed-rs-realworld): A detailed realworld example site
-- [Engineering Rust Web Applications](https://erwabook.com/): A book describing full-stack Rust web-development, using Seed for the frontend
+- [Engineering Rust Web Applications](https://erwabook.com/intro/): A book describing full-stack Rust web-development, using Seed for the frontend
 
-# About
+### Rust
+- [Rust Discord](https://discordapp.com/invite/rust-lang)
+- [Rust IRC](https://www.irccloud.com/invite?channel=%23%23rust&hostname=chat.freenode.net&port=6697&ssl=1)
 
-## Goals
+# Future
+- New [Rust-only quickstart](https://github.com/MartinKavik/seeder)
+- For more see the [issue tracker](../../issues/)
 
-- Learning the syntax, creating a project, and building it should be easy - regardless
-  of your familiarity with Rust.
-
-- Complete documentation that always matches the current version. Getting examples working, and
-  starting a project should be painless, and require nothing beyond this guide.
-
-- Expressive, flexible view syntax that's easy to read and write.
-
-## A note on view syntax
-
-This project uses an unconventional approach to describe how to display DOM elements.
-It neither uses completely natural (ie macro-free) Rust code, nor
-an HTML-like abstraction (eg JSX or templates). My intent is to make the code close
-to natural Rust, while streamlining the syntax in a way suited for creating
-a visual layout with minimal repetition. The macros used are thin wrappers
-for constructors, and don't conceal much.
-
-Specifically, the element-creation macros
-allow for accepting a variable number and order of parameters, and the attrs/style marcros are
-essentially HashMap literals, with wrappers that let element macros know how to distinguish
-them.
-
-The lack of resemblance to HTML be offputting, but the learning
-curve is shallow, and I think the macro syntax is close-enough to normal Rust that it's
-easy to reason about how to build views, without compartmentalizing it into logic code and display code.
-This lack of separation in particular is a controversial decision, but I think the benefits
-are worth it.
-
-## Where to start if you're familiar with existing frontend frameworks
-
-The [todomvc example](https://github.com/seed-rs/seed/tree/master/examples/todomvc) is an implementation of the [TodoMVC project](http://todomvc.com/),
-which has example code in other frameworks that produce identitcal apps. Compare the example in this
-project to one on that page that uses a framework you're familiar with.
-
-## Influences
-
-This project is strongly influenced by Elm, React, and Redux. The overall structure
-of Seed apps mimicks that of The Elm Architecture.
-
-## There are already several Rust/WASM frameworks; why add another?
-
-I'm distinguishing Seed through clear examples and documentation, and using `wasm-bindgen`/`web-sys` internally. I started this
-project after being unable to get existing frameworks working
-due to lack of documented examples, and inconsistency between documentation and
-published versions. My intent is for anyone who's proficient in a frontend
-framework to get a standalone app working in the browser within a few minutes, using just the
-quickstart guide.
-
-Seed's different approach to view syntax also distinguishes it:
-rather than use an HTML-like markup similar to JSX,
-it uses Rust builtin types, with thinly-wrapped by macros that allow flexible composition.
-This decision will not appeal to everyone, but I think it integrates more naturally with
-the language.
-
-## Why build a frontend in Rust over Elm, or Javascript-based frameworks?
-
-You may prefer writing in Rust, and using packages from Cargo vice npm. Getting started with
-this framework will in most cases be easier, and require less config and setup overhead than
-with JS frameworks. You may appreciate Rust's compile-time error-checking, and built-in testing.
-
-You may choose this approach over Elm if you're already comfortable with Rust,
-or don't want to code business logic in a purely-functional langauge.
-
-Compared with React, you may appreciate the consistency of how to write apps:
-There's no distinction between logic and display code; no restrictions on comments;
-no distinction between components and normal functions. The API is
-flexible, and avoids OOP boilerplate. Its integrated routing and message system
-avoids the dependency glue-code associated with Redux and React-Router.
-
-Seed has a _batteries-included_ approach, which you may appreciate.
-
-## Why not to use this, and stick with JS
-
-Seed's under rapid development, and breaking changes are likely. Finding Rust/WASM-help,
-both in person, and in online communities will be difficult, and finding help for Seed
-even more so. Seed doesn't have the wealth of existing reusable _components_ that other frameworks
-have, so you will need to implement solved problems (eg date-pickers) yourself, or adapt them
-from existing solutions. There are no existing tutorials or guides outside the official one, and
-few examples.
-
-Seed doesn't have a track-record of production apps. Finding developers experienced with Rust/wasm-bindgen,
-or Seed specifically will be much more difficult than popular JS/compile-to-JS frameworks. Seed's feature-set
-is incomplete compared to JS frameworks. Seed hasn't been benchmarked, and its performance may
-be lower than JS frameworks.
-
-Seed's view syntax is non-standard compared to HTML-templates, or HTML-mockup languages like
-`JSX`.
-
-## What about Gloo ?
-
-We're working closely with the `rustwasm` team on [Gloo](https://github.com/rustwasm/gloo), and
-intend to incorporate `Gloo` crates into Seed as appropriate, as well as contribute Seed
-code into `Gloo` crates. Seed's a cohesive, high-level framework, while `Gloo` will
-be a versatile, standardized toolkit.
-
-### Shoutouts
-
-- The [WASM-Bindgen](https://github.com/rustwasm/wasm-bindgen) team,
-  for building the tools this project relies on
-- Alex Chrichton, for being extraodinarily helpful in the Rust / WASM community
-- The [Elm](https://elm-lang.org/) team, for creating and standardizing the Elm architecture
-- Mozilla, for excellent DOM documentation
-- Denis Kolodin, for creating the inspirational [Yew framework](https://github.com/DenisKolodin/yew)
-- Utkarsh Kukreti, for through his [Draco repo](https://github.com/utkarshkukreti/draco),
-  helping me understand how wasm-bindgen's
-  closure system can be used to update state.
-- Tim Robinson, for being very helpful on the [Rust Gitter](https://gitter.im/rust-lang/rust).
-
-## Reference
-
-- [wasm-bindgen guide](https://rustwasm.github.io/wasm-bindgen/introduction.html)
-- [Mozilla MDN web docs](https://developer.mozilla.org/en-US/)
-- [web-sys api](https://rustwasm.github.io/wasm-bindgen/api/web_sys/) (A good partner for the MDN docs - most DOM items have web-sys equivalents used internally)
-- [Rust book](https://doc.rust-lang.org/book/index.html)
-- [Rust standard library api](https://doc.rust-lang.org/std/)
-- [Seed's API docs](https://docs.rs/seed)
-- [Learn Rust](https://www.rust-lang.org/learn)
-- [Testing in Headless Browsers](https://rustwasm.github.io/wasm-bindgen/wasm-bindgen-test/browsers.html)
+# Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md).
