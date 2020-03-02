@@ -30,6 +30,7 @@ pub mod effects;
 pub mod message_mapper;
 pub mod orders;
 pub mod render_timestamp_delta;
+pub mod sub_manager;
 pub mod types;
 
 pub use builder::{
@@ -41,6 +42,7 @@ pub use effects::Effect;
 pub use message_mapper::MessageMapper;
 pub use orders::{Orders, OrdersContainer, OrdersProxy};
 pub use render_timestamp_delta::RenderTimestampDelta;
+pub use sub_manager::{Notification, SubHandle, SubManager};
 
 pub struct UndefinedGMsg;
 
@@ -143,16 +145,16 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn update(&self, message: Ms) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
         queue.push_front(message.into());
-        self.process_cmd_and_msg_queue(queue);
+        self.process_effect_queue(queue);
     }
 
     pub fn sink(&self, g_msg: GMs) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
         queue.push_front(Effect::GMsg(g_msg));
-        self.process_cmd_and_msg_queue(queue);
+        self.process_effect_queue(queue);
     }
 
-    pub fn process_cmd_and_msg_queue(&self, mut queue: VecDeque<Effect<Ms, GMs>>) {
+    pub fn process_effect_queue(&self, mut queue: VecDeque<Effect<Ms, GMs>>) {
         while let Some(effect) = queue.pop_front() {
             match effect {
                 Effect::Msg(msg) => {
@@ -165,6 +167,10 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 }
                 Effect::Cmd(cmd) => self.process_queue_cmd(cmd),
                 Effect::GCmd(g_cmd) => self.process_queue_global_cmd(g_cmd),
+                Effect::Notification(notification) => {
+                    let mut new_effects = self.process_queue_notification(&notification);
+                    queue.append(&mut new_effects);
+                }
             }
         }
     }
@@ -222,6 +228,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 hashchange_closure: RefCell::new(None),
                 routes: RefCell::new(routes),
                 window_event_handler_manager: RefCell::new(EventHandlerManager::new()),
+                sub_manager: RefCell::new(SubManager::new()),
                 msg_listeners: RefCell::new(Vec::new()),
                 scheduled_render_handle: RefCell::new(None),
                 after_next_render_callbacks: RefCell::new(Vec::new()),
@@ -292,6 +299,16 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         }
 
         new
+    }
+
+    fn process_queue_notification(&self, notification: &Notification) -> VecDeque<Effect<Ms, GMs>> {
+        self.data
+            .sub_manager
+            .borrow()
+            .notify(notification)
+            .into_iter()
+            .map(Effect::Msg)
+            .collect()
     }
 
     fn process_queue_message(&self, message: Ms) -> VecDeque<Effect<Ms, GMs>> {
@@ -426,7 +443,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             RenderTimestampDelta::new(new_render_timestamp - old_render_timestamp)
         });
 
-        self.process_cmd_and_msg_queue(
+        self.process_effect_queue(
             self.data
                 .after_next_render_callbacks
                 .replace(Vec::new())
@@ -520,7 +537,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
         }
 
-        self.process_cmd_and_msg_queue(orders.effects);
+        self.process_effect_queue(orders.effects);
         // TODO: In the future, only run the following line if the above statement:
         //  - didn't force-rerender vdom
         //  - didn't schedule render

@@ -1,10 +1,11 @@
 use crate::app::orders::{proxy::OrdersProxy, Orders};
 use crate::app::{
-    effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, ShouldRender, UndefinedGMsg,
+    effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, Notification, ShouldRender,
+    SubHandle, UndefinedGMsg,
 };
 use crate::virtual_dom::view::View;
 use futures::future::LocalFutureObj;
-use std::{collections::VecDeque, convert::identity, future::Future};
+use std::{any::Any, collections::VecDeque, convert::identity, future::Future};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = UndefinedGMsg> {
@@ -58,6 +59,12 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
         self
     }
 
+    fn notify(&mut self, message: impl Any + Clone) -> &mut Self {
+        self.effects
+            .push_back(Effect::Notification(Notification::new(message)));
+        self
+    }
+
     fn send_msg(&mut self, msg: Ms) -> &mut Self {
         self.effects.push_back(msg.into());
         self
@@ -105,5 +112,12 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
             .borrow_mut()
             .push(Box::new(callback));
         self
+    }
+
+    fn subscribe<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) -> SubHandle {
+        self.app.data.sub_manager.borrow_mut().subscribe(handler)
     }
 }

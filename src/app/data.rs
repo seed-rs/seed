@@ -1,10 +1,8 @@
-use super::{render_timestamp_delta::RenderTimestamp, types::*, RenderTimestampDelta};
+use super::{render_timestamp_delta::RenderTimestamp, types::*, RenderTimestampDelta, SubManager};
 use crate::browser::util;
 use crate::virtual_dom::{El, EventHandlerManager};
 use std::cell::{Cell, RefCell};
 use wasm_bindgen::closure::Closure;
-
-// TODO: Examine what needs to be ref cells, rcs etc
 
 type StoredPopstate = RefCell<Option<Closure<dyn FnMut(web_sys::Event)>>>;
 
@@ -18,6 +16,7 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub hashchange_closure: StoredPopstate,
     pub routes: RefCell<Option<RoutesFn<Ms>>>,
     pub window_event_handler_manager: RefCell<EventHandlerManager<Ms>>,
+    pub sub_manager: RefCell<SubManager<Ms>>,
     pub msg_listeners: RefCell<MsgListeners<Ms>>,
     pub scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
     pub after_next_render_callbacks:

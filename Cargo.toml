@@ -36,6 +36,7 @@ wasm-bindgen-futures = "0.4.5"
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug
 dbg = "1.0.4"
 futures = "0.3.1"
+uuid = { version = "0.8.1", features = ["v4", "wasm-bindgen"] }
 
 [dependencies.web-sys]
 version = "0.3.32"
@@ -105,6 +106,7 @@ members = [
     "examples/orders",
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
+    "examples/subscribe",
     "examples/tea_component",
     "examples/todomvc",
     "examples/update_from_js",
