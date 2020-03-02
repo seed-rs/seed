@@ -4,7 +4,7 @@ use super::{FetchError, Header, Headers, Method, Result};
 use crate::browser::Url;
 use gloo_timers::callback::Timeout;
 use serde::Serialize;
-use std::{borrow::Cow, cell::RefCell, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, convert::TryFrom, rc::Rc};
 use wasm_bindgen::JsValue;
 
 /// Its methods configure the request, and handle the response. Many of them return the original
@@ -174,16 +174,17 @@ impl<'a> From<Url> for Request<'a> {
     }
 }
 
-impl From<Request<'_>> for web_sys::Request {
-    fn from(request: Request) -> Self {
+impl TryFrom<Request<'_>> for web_sys::Request {
+    type Error = FetchError;
+    fn try_from(request: Request) -> std::result::Result<Self, Self::Error> {
         let mut init = web_sys::RequestInit::new();
 
         // headers
-        let headers = web_sys::Headers::new().expect("fetch: cannot create headers");
+        let headers = web_sys::Headers::new().map_err(FetchError::RequestError)?;
         for header in request.headers {
             headers
                 .append(&header.name, &header.value)
-                .expect("fetch: cannot create header")
+                .map_err(FetchError::RequestError)?;
         }
         init.headers(&headers);
 
@@ -250,7 +251,7 @@ impl From<Request<'_>> for web_sys::Request {
         //
         // See https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#Errors
         web_sys::Request::new_with_str_and_init(&request.url, &init)
-            .expect("fetch: Cannot create request")
+            .map_err(FetchError::RequestError)
     }
 }
 

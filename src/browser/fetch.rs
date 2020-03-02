@@ -30,6 +30,7 @@
 
 use crate::util::window;
 use serde_json;
+use std::convert::TryInto;
 use wasm_bindgen_futures::JsFuture;
 use web_sys;
 
@@ -72,7 +73,8 @@ pub type Result<T> = std::result::Result<T, FetchError>;
 /// even if you get `Ok` from this function, you still need to check
 /// `Response` status for HTTP errors.
 pub async fn fetch<'a>(request: impl Into<Request<'a>>) -> Result<Response> {
-    let promise = window().fetch_with_request(&request.into().into());
+    let request = request.into();
+    let promise = window().fetch_with_request(&request.try_into()?);
 
     let raw_response = JsFuture::from(promise)
         .await
@@ -89,6 +91,8 @@ pub enum FetchError {
     DomException(web_sys::DomException),
     PromiseError(wasm_bindgen::JsValue),
     NetworkError(wasm_bindgen::JsValue),
+    /// Request construction failed.
+    RequestError(wasm_bindgen::JsValue),
     StatusError(Status),
 }
 
