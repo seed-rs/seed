@@ -1,6 +1,6 @@
-use super::{App, RenderTimestampDelta, UndefinedGMsg};
+use super::{App, RenderTimestampDelta, SubHandle, UndefinedGMsg};
 use crate::virtual_dom::View;
-use std::future::Future;
+use std::{any::Any, future::Future};
 
 pub mod container;
 pub mod proxy;
@@ -35,6 +35,8 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
 
     /// Don't rerender web page after model update.
     fn skip(&mut self) -> &mut Self;
+
+    fn notify(&mut self, message: impl Any + Clone) -> &mut Self;
 
     /// Call function `update` with the given `msg` after model update.
     /// - You can call this function multiple times - messages will be sent in the same order.
@@ -93,4 +95,10 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         &mut self,
         callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
     ) -> &mut Self;
+
+    #[must_use]
+    fn subscribe<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) -> SubHandle;
 }

@@ -38,6 +38,9 @@ An example using Mathjax, for LaTeX-like math notation.
 How to perform commands and send messages from `update` function.
 And how to use [gloo](https://github.com/rustwasm/gloo) timers.
 
+### [Subscribe](subscribe)
+How to create and use subscriptions.
+
 ### [TEA component](tea_component)
 How to write a component in The Elm architecture.
 You'll also learn how to pass messages to the parent component.

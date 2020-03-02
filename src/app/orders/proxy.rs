@@ -1,11 +1,10 @@
 use super::{
-    super::{App, Effect, MessageMapper, RenderTimestampDelta, UndefinedGMsg},
+    super::{App, RenderTimestampDelta, SubHandle, UndefinedGMsg},
     Orders, OrdersContainer,
 };
 use crate::virtual_dom::View;
-use futures::future::LocalFutureObj;
-use std::future::Future;
-use std::rc::Rc;
+use futures::future::FutureExt;
+use std::{any::Any, future::Future, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersProxy<
@@ -67,12 +66,15 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         self
     }
 
+    fn notify(&mut self, message: impl Any + Clone) -> &mut Self {
+        self.orders_container.notify(message);
+        self
+    }
+
     #[allow(clippy::redundant_closure)]
     fn send_msg(&mut self, msg: Ms) -> &mut Self {
         let f = self.f.clone();
-        self.orders_container
-            .effects
-            .push_back(Effect::Msg(msg).map_msg(move |ms| f(ms)));
+        self.orders_container.send_msg(f(msg));
         self
     }
 
@@ -82,14 +84,13 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         C: Future<Output = Ms> + 'static,
     {
         let f = self.f.clone();
-        let effect = Effect::Cmd(LocalFutureObj::new(Box::new(cmd))).map_msg(move |ms| f(ms));
-        self.orders_container.effects.push_back(effect);
+        // self.orders_container.perform_cmd(cmd.map(move |ms| f(ms)));
+        self.orders_container.perform_cmd(cmd.map(move |ms| f(ms)));
         self
     }
 
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self {
-        let effect = Effect::GMsg(g_msg);
-        self.orders_container.effects.push_back(effect);
+        self.orders_container.send_g_msg(g_msg);
         self
     }
 
@@ -97,8 +98,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     where
         C: Future<Output = GMs> + 'static,
     {
-        let effect = Effect::GCmd(LocalFutureObj::new(Box::new(g_cmd)));
-        self.orders_container.effects.push_back(effect);
+        self.orders_container.perform_g_cmd(g_cmd);
         self
     }
 
@@ -120,5 +120,14 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         self.orders_container
             .after_next_render(move |timestamp_delta| f(callback(timestamp_delta)));
         self
+    }
+
+    fn subscribe<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) -> SubHandle {
+        let f = self.f.clone();
+        self.orders_container
+            .subscribe(move |sub_ms| f(handler(sub_ms)))
     }
 }
