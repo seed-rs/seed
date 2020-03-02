@@ -100,50 +100,56 @@ impl<'a> Request<'a> {
     }
 
     /// Set request mode.
-    /// It can either be `cors`, `no-cors`, `same-origin`, or `navigate`.
-    /// The default is `cors`.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/mode)
     pub const fn mode(mut self, mode: web_sys::RequestMode) -> Self {
         self.mode = Some(mode);
         self
     }
 
     /// Set request credentials.
-    /// It can either be `omit`, `same-origin`, or `include`.
-    /// The default is `same-origin`.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials)
     pub const fn credentials(mut self, credentials: web_sys::RequestCredentials) -> Self {
         self.credentials = Some(credentials);
         self
     }
 
     /// Set request cache mode.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/cache)
     pub const fn cache(mut self, cache: web_sys::RequestCache) -> Self {
         self.cache = Some(cache);
         self
     }
 
     /// Set request redirect mode.
-    /// It can either be `follow`, `error`, or `manual`.
-    /// The default is `follow`.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/redirect)
     pub const fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
         self.redirect = Some(redirect);
         self
     }
 
     /// Set request referrer.
-    /// It can be either `referrer`, `client`, or a `URL`.
-    /// The default is `about:client`.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrer)
     pub fn referrer(mut self, referrer: &impl ToString) -> Self {
         self.referrer = Some(referrer.to_string());
         self
     }
 
     /// Set request referrer policy.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrerPolicy)
     pub const fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
         self.referrer_policy = Some(referrer_policy);
         self
     }
 
     /// Set request subresource integrity.
+    ///
+    /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/integrity)
     pub fn integrity(mut self, integrity: &impl ToString) -> Self {
         self.integrity = Some(integrity.to_string());
         self
