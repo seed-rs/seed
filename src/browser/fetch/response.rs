@@ -14,6 +14,9 @@ pub struct Response {
 
 impl Response {
     /// Get a `String` from response body.
+    ///
+    /// # Errors
+    /// Returns `FetchError::PromiseError`.
     pub async fn text(self) -> Result<String> {
         let js_promise = self.raw_response.text().map_err(FetchError::PromiseError)?;
 
@@ -27,6 +30,9 @@ impl Response {
     }
 
     /// JSON parse response body into provided type.
+    ///
+    /// # Errors
+    /// Returns `FetchError::SerdeError` or `FetchError::PromiseError`.
     pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
         let text = self.text().await?;
         serde_json::from_str(&text).map_err(FetchError::SerdeError)
