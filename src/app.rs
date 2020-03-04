@@ -10,10 +10,11 @@ use builder::{
     init::{Init, InitFn},
     IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
 };
-use enclose::enclose;
+use enclose::{enc, enclose};
 use futures::future::LocalFutureObj;
 use futures::FutureExt;
 use std::{
+    any::Any,
     cell::{Cell, RefCell},
     collections::VecDeque,
     rc::Rc,
@@ -31,6 +32,7 @@ pub mod message_mapper;
 pub mod orders;
 pub mod render_timestamp_delta;
 pub mod sub_manager;
+pub mod subs;
 pub mod types;
 
 pub use builder::{
@@ -145,6 +147,18 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     pub fn update(&self, message: Ms) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
         queue.push_front(message.into());
+        self.process_effect_queue(queue);
+    }
+
+    pub fn notify<SubMs: 'static + Any + Clone>(&self, message: SubMs) {
+        let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
+        queue.push_front(Effect::Notification(Notification::new(message)));
+        self.process_effect_queue(queue);
+    }
+
+    pub fn notify_with_notification(&self, notification: Notification) {
+        let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
+        queue.push_front(Effect::Notification(notification));
         self.process_effect_queue(queue);
     }
 
@@ -502,6 +516,9 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         match url_handling {
             UrlHandling::PassToRoutes => {
                 let url = url::current();
+
+                self.notify(subs::UrlChanged(url.clone()));
+
                 let routing_msg = self
                     .data
                     .routes
@@ -519,23 +536,28 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 
         // Update the state on page load, based
         // on the starting URL. Must be set up on the server as well.
-        if let Some(routes) = *self.data.routes.borrow() {
-            routing::setup_popstate_listener(
-                enclose!((self => s) move |msg| s.update(msg)),
-                enclose!((self => s) move |closure| {
-                    s.data.popstate_closure.replace(Some(closure));
-                }),
-                routes,
-            );
-            routing::setup_hashchange_listener(
-                enclose!((self => s) move |msg| s.update(msg)),
-                enclose!((self => s) move |closure| {
-                    s.data.hashchange_closure.replace(Some(closure));
-                }),
-                routes,
-            );
-            routing::setup_link_listener(enclose!((self => s) move |msg| s.update(msg)), routes);
-        }
+        let routes = *self.data.routes.borrow();
+        routing::setup_popstate_listener(
+            enc!((self => s) move |msg| s.update(msg)),
+            enc!((self => s) move |closure| {
+                s.data.popstate_closure.replace(Some(closure));
+            }),
+            enc!((self => s) move |notification| s.notify_with_notification(notification)),
+            routes,
+        );
+        routing::setup_hashchange_listener(
+            enc!((self => s) move |msg| s.update(msg)),
+            enc!((self => s) move |closure| {
+                s.data.hashchange_closure.replace(Some(closure));
+            }),
+            enc!((self => s) move |notification| s.notify_with_notification(notification)),
+            routes,
+        );
+        routing::setup_link_listener(
+            enc!((self => s) move |msg| s.update(msg)),
+            enc!((self => s) move |notification| s.notify_with_notification(notification)),
+            routes,
+        );
 
         self.process_effect_queue(orders.effects);
         // TODO: In the future, only run the following line if the above statement:

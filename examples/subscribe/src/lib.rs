@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use seed::{prelude::*, *};
 
 mod counter;
@@ -30,10 +31,14 @@ enum Msg {
     Subscribe,
     Notify,
     Unsubscribe,
+
     Counter(counter::Msg),
     ResetCounter,
+
     NumberReceived(i32),
     StringReceived(String),
+    UrlRequested(subs::UrlRequested),
+    UrlChanged(subs::UrlChanged),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -44,6 +49,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 orders.subscribe(Msg::NumberReceived),
                 orders.subscribe(Msg::StringReceived),
                 orders.subscribe(Msg::StringReceived),
+                orders.subscribe(Msg::UrlRequested),
+                orders.subscribe(Msg::UrlChanged),
             ];
         }
         Msg::Notify => {
@@ -64,6 +71,12 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::StringReceived(message) => {
             log!("String Received", message);
         }
+        Msg::UrlRequested(subs::UrlRequested(url, _url_request)) => {
+            log!("Url Requested", url);
+        }
+        Msg::UrlChanged(subs::UrlChanged(url)) => {
+            log!("Url Changed", url);
+        }
     }
 }
 
@@ -80,18 +93,22 @@ fn view(model: &Model) -> impl View<Msg> {
 
     div![
         centered_column.clone(),
+        "Open Console log, please",
         div![
-            button![ev(Ev::Click, |_| Msg::Subscribe), "1. Subscribe"],
-            button![
-                style! {St::Margin => rem(1)},
-                ev(Ev::Click, |_| Msg::Notify),
-                "2. Notify (see console log)"
-            ],
-            button![ev(Ev::Click, |_| Msg::Unsubscribe), "3. Unsubscribe"],
+            style! {St::Margin => rem(2)},
+            vec![
+                button![ev(Ev::Click, |_| Msg::Subscribe), "1. Subscribe"],
+                button![ev(Ev::Click, |_| Msg::Notify), "2. Notify"],
+                a![attrs! {At::Href => "/requested_url"}, "3. Request new URL"],
+                button![ev(Ev::Click, |_| Msg::Unsubscribe), "4. Unsubscribe"],
+            ]
+            .into_iter()
+            .intersperse(span![
+                style! {St::Width => rem(1), St::Display => "inline-block"}
+            ])
         ],
         div![
             centered_column,
-            style! {St::MarginTop => rem(2)},
             counter::view(&model.counter).map_msg(Msg::Counter),
             button![
                 style! {St::MarginTop => rem(0.5)},

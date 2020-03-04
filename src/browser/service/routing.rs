@@ -3,6 +3,7 @@ use super::super::{
     util::{self, ClosureNew},
     Url,
 };
+use crate::app::{subs, Notification};
 use std::convert::{TryFrom, TryInto};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
@@ -40,10 +41,12 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 }
 
 /// Add a listener that handles routing for navigation events like forward and back.
+// pub fn setup_popstate_listener<Ms, SubMs: 'static + Any + Clone>(
 pub fn setup_popstate_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
-    routes: fn(Url) -> Option<Ms>,
+    notify: impl Fn(Notification) + 'static,
+    routes: Option<fn(Url) -> Option<Ms>>,
 ) where
     Ms: 'static,
 {
@@ -60,8 +63,12 @@ pub fn setup_popstate_listener<Ms>(
             None => url::current(),
         };
 
-        if let Some(routing_msg) = routes(url) {
-            update(routing_msg);
+        notify(Notification::new(subs::UrlChanged(url.clone())));
+
+        if let Some(routes) = routes {
+            if let Some(routing_msg) = routes(url) {
+                update(routing_msg);
+            }
         }
     });
 
@@ -76,7 +83,8 @@ pub fn setup_popstate_listener<Ms>(
 pub fn setup_hashchange_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
-    routes: fn(Url) -> Option<Ms>,
+    notify: impl Fn(Notification) + 'static,
+    routes: Option<fn(Url) -> Option<Ms>>,
 ) where
     Ms: 'static,
 {
@@ -91,8 +99,12 @@ pub fn setup_hashchange_listener<Ms>(
             .try_into()
             .expect("cast hashchange event url to `Url`");
 
-        if let Some(routing_msg) = routes(url) {
-            update(routing_msg);
+        notify(Notification::new(subs::UrlChanged(url.clone())));
+
+        if let Some(routes) = routes {
+            if let Some(routing_msg) = routes(url) {
+                update(routing_msg);
+            }
         }
     });
 
@@ -106,8 +118,11 @@ pub fn setup_hashchange_listener<Ms>(
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 #[allow(clippy::option_map_unit_fn)]
-pub fn setup_link_listener<Ms>(update: impl Fn(Ms) + 'static, routes: fn(Url) -> Option<Ms>)
-where
+pub fn setup_link_listener<Ms>(
+    update: impl Fn(Ms) + 'static,
+    notify: impl Fn(Notification) + 'static,
+    routes: Option<fn(Url) -> Option<Ms>>,
+) where
     Ms: 'static,
 {
     let closure = Closure::new(move |event: web_sys::Event| {
@@ -139,11 +154,32 @@ where
                 } else {
                     // Only update when requested for an update by the user.
                     let url = Url::try_from(href).expect("cast link href to `Url`");
-                    if let Some(redirect_msg) = routes(url.clone()) {
-                        // Route internally, overriding the default history
-                        push_route(url);
-                        event.prevent_default(); // Prevent page refresh
-                        update(redirect_msg);
+
+                    let url_request_controller = subs::UrlRequest::default();
+                    notify(Notification::new(subs::UrlRequested(
+                        url.clone(),
+                        url_request_controller.clone(),
+                    )));
+                    match url_request_controller.status() {
+                        subs::UrlRequestStatus::Unhandled => {
+                            push_route(url.clone());
+                            event.prevent_default(); // Prevent page refresh
+                            notify(Notification::new(subs::UrlChanged(url.clone())));
+                        }
+                        subs::UrlRequestStatus::Handled(prevent_default) => {
+                            if prevent_default {
+                                event.prevent_default(); // Prevent page refresh
+                            }
+                        }
+                    }
+
+                    if let Some(routes) = routes {
+                        if let Some(redirect_msg) = routes(url.clone()) {
+                            // Route internally, overriding the default history
+                            push_route(url);
+                            event.prevent_default(); // Prevent page refresh
+                            update(redirect_msg);
+                        }
                     }
                 }
             });

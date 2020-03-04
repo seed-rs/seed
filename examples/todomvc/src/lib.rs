@@ -26,6 +26,7 @@ struct Model {
     data: Data,
     services: Services,
     refs: Refs,
+    _url_changed_handle: SubHandle,
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -90,7 +91,7 @@ impl TodoFilter {
 //  After Mount
 // ------ ------
 
-fn after_mount(_: Url, _: &mut impl Orders<Msg>) -> AfterMount<Model> {
+fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     let local_storage = storage::get_storage().expect("get `LocalStorage`");
     let data = storage::load_data(&local_storage, STORAGE_KEY).unwrap_or_default();
 
@@ -98,22 +99,8 @@ fn after_mount(_: Url, _: &mut impl Orders<Msg>) -> AfterMount<Model> {
         data,
         services: Services { local_storage },
         refs: Refs::default(),
+        _url_changed_handle: orders.subscribe(Msg::UrlChanged),
     })
-}
-
-// ------ ------
-//    Routes
-// ------ ------
-
-fn routes(url: Url) -> Option<Msg> {
-    let filter = match url.path.into_iter().next() {
-        Some(path_part) if path_part == TodoFilter::Active.to_url_path() => TodoFilter::Active,
-        Some(path_part) if path_part == TodoFilter::Completed.to_url_path() => {
-            TodoFilter::Completed
-        }
-        _ => TodoFilter::All,
-    };
-    Some(Msg::ChangeFilter(filter))
 }
 
 // ------ ------
@@ -121,9 +108,10 @@ fn routes(url: Url) -> Option<Msg> {
 // ------ ------
 
 enum Msg {
+    UrlChanged(subs::UrlChanged),
+
     NewTodoTitleChanged(String),
     ClearCompleted,
-    ChangeFilter(TodoFilter),
     ToggleAll,
 
     CreateNewTodo,
@@ -141,14 +129,22 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     let data = &mut model.data;
     match msg {
+        Msg::UrlChanged(subs::UrlChanged(url)) => {
+            data.filter = match url.path.into_iter().next() {
+                Some(path_part) if path_part == TodoFilter::Active.to_url_path() => {
+                    TodoFilter::Active
+                }
+                Some(path_part) if path_part == TodoFilter::Completed.to_url_path() => {
+                    TodoFilter::Completed
+                }
+                _ => TodoFilter::All,
+            };
+        }
         Msg::NewTodoTitleChanged(title) => {
             data.new_todo_title = title;
         }
         Msg::ClearCompleted => {
             data.todos.retain(|_, todo| !todo.completed);
-        }
-        Msg::ChangeFilter(filter) => {
-            data.filter = filter;
         }
         Msg::ToggleAll => {
             let all_todos_completed = data.todos.values().all(|todo| todo.completed);
@@ -440,6 +436,5 @@ fn view_clear_completed(todos: &IndexMap<TodoId, Todo>) -> Node<Msg> {
 pub fn render() {
     App::builder(update, view)
         .after_mount(after_mount)
-        .routes(routes)
         .build_and_start();
 }
