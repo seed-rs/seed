@@ -9,6 +9,8 @@ mod counter;
 
 struct Model {
     sub_handles: Vec<SubHandle>,
+    timer_handle: Option<StreamHandle>,
+    seconds: u32,
     counter: counter::Model,
 }
 
@@ -17,8 +19,14 @@ struct Model {
 // ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
+    orders
+        .subscribe(Msg::UrlRequested)
+        .subscribe(Msg::UrlChanged);
+
     AfterMount::new(Model {
         sub_handles: Vec::new(),
+        seconds: 0,
+        timer_handle: None,
         counter: counter::init(&mut orders.proxy(Msg::Counter)),
     })
 }
@@ -31,6 +39,10 @@ enum Msg {
     Subscribe,
     Notify,
     Unsubscribe,
+
+    StartTimer,
+    StopTimer,
+    OnTick,
 
     Counter(counter::Msg),
     ResetCounter,
@@ -46,11 +58,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::Subscribe => {
             log!("--- Subscribe ---");
             model.sub_handles = vec![
-                orders.subscribe(Msg::NumberReceived),
-                orders.subscribe(Msg::StringReceived),
-                orders.subscribe(Msg::StringReceived),
-                orders.subscribe(Msg::UrlRequested),
-                orders.subscribe(Msg::UrlChanged),
+                orders.subscribe_with_handle(Msg::NumberReceived),
+                orders.subscribe_with_handle(Msg::StringReceived),
+                orders.subscribe_with_handle(Msg::StringReceived),
             ];
         }
         Msg::Notify => {
@@ -60,6 +70,16 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::Unsubscribe => {
             log!("--- Unsubscribe ---");
             model.sub_handles.clear();
+        }
+        Msg::StartTimer => {
+            model.timer_handle =
+                Some(orders.stream_with_handle(streams::interval(1000, || Msg::OnTick)))
+        }
+        Msg::StopTimer => {
+            model.timer_handle = None;
+        }
+        Msg::OnTick => {
+            model.seconds += 1;
         }
         Msg::Counter(msg) => counter::update(msg, &mut model.counter),
         Msg::ResetCounter => {
@@ -94,19 +114,18 @@ fn view(model: &Model) -> impl View<Msg> {
     div![
         centered_column.clone(),
         "Open Console log, please",
-        div![
-            style! {St::Margin => rem(2)},
-            vec![
-                button![ev(Ev::Click, |_| Msg::Subscribe), "1. Subscribe"],
-                button![ev(Ev::Click, |_| Msg::Notify), "2. Notify"],
-                a![attrs! {At::Href => "/requested_url"}, "3. Request new URL"],
-                button![ev(Ev::Click, |_| Msg::Unsubscribe), "4. Unsubscribe"],
-            ]
-            .into_iter()
-            .intersperse(span![
-                style! {St::Width => rem(1), St::Display => "inline-block"}
-            ])
-        ],
+        divider(),
+        // --- Subscribe | Notify | Unsubscribe
+        div![with_spaces(vec![
+            button![ev(Ev::Click, |_| Msg::Subscribe), "1. Subscribe"],
+            button![ev(Ev::Click, |_| Msg::Notify), "2. Notify"],
+            button![ev(Ev::Click, |_| Msg::Unsubscribe), "3. Unsubscribe"],
+        ]),],
+        divider(),
+        // --- Request new URL ---
+        a![attrs! {At::Href => "/requested_url"}, "Request new URL"],
+        divider(),
+        // --- Counter ---
         div![
             centered_column,
             counter::view(&model.counter).map_msg(Msg::Counter),
@@ -115,8 +134,28 @@ fn view(model: &Model) -> impl View<Msg> {
                 ev(Ev::Click, |_| Msg::ResetCounter),
                 "Reset counter"
             ],
+        ],
+        divider(),
+        // --- Seconds ---
+        div![
+            style! {St::Display => "flex"},
+            with_spaces(vec![
+                div!["Seconds: ", model.seconds,],
+                button![ev(Ev::Click, |_| Msg::StartTimer), "Start"],
+                button![ev(Ev::Click, |_| Msg::StopTimer), "Stop"],
+            ]),
         ]
     ]
+}
+
+fn divider() -> Node<Msg> {
+    div![style! {St::Margin => rem(2)}]
+}
+
+fn with_spaces(nodes: Vec<Node<Msg>>) -> impl Iterator<Item = Node<Msg>> {
+    nodes.into_iter().intersperse(span![
+        style! {St::Width => rem(1), St::Display => "inline-block"}
+    ])
 }
 
 // ------ ------

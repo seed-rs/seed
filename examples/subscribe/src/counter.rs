@@ -12,7 +12,7 @@ pub struct DoReset;
 pub fn init(orders: &mut impl Orders<Msg>) -> Model {
     Model {
         value: 0,
-        _sub_handle: orders.subscribe(|_: DoReset| Msg::Reset),
+        _sub_handle: orders.subscribe_with_handle(|_: DoReset| Msg::Reset),
     }
 }
 

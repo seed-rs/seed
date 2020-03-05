@@ -26,7 +26,6 @@ struct Model {
     data: Data,
     services: Services,
     refs: Refs,
-    _url_changed_handle: SubHandle,
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -92,6 +91,8 @@ impl TodoFilter {
 // ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
+    orders.subscribe(Msg::UrlChanged);
+
     let local_storage = storage::get_storage().expect("get `LocalStorage`");
     let data = storage::load_data(&local_storage, STORAGE_KEY).unwrap_or_default();
 
@@ -99,7 +100,6 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
         data,
         services: Services { local_storage },
         refs: Refs::default(),
-        _url_changed_handle: orders.subscribe(Msg::UrlChanged),
     })
 }
 

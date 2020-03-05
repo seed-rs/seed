@@ -1,9 +1,10 @@
 use super::{
-    super::{App, RenderTimestampDelta, SubHandle, UndefinedGMsg},
+    super::{App, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg},
     Orders, OrdersContainer,
 };
 use crate::virtual_dom::View;
 use futures::future::FutureExt;
+use futures::stream::{Stream, StreamExt};
 use std::{any::Any, future::Future, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
@@ -84,7 +85,6 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         C: Future<Output = Ms> + 'static,
     {
         let f = self.f.clone();
-        // self.orders_container.perform_cmd(cmd.map(move |ms| f(ms)));
         self.orders_container.perform_cmd(cmd.map(move |ms| f(ms)));
         self
     }
@@ -125,9 +125,30 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     fn subscribe<SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) -> &mut Self {
+        let f = self.f.clone();
+        self.orders_container
+            .subscribe(move |sub_ms| f(handler(sub_ms)));
+        self
+    }
+
+    fn subscribe_with_handle<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
     ) -> SubHandle {
         let f = self.f.clone();
         self.orders_container
-            .subscribe(move |sub_ms| f(handler(sub_ms)))
+            .subscribe_with_handle(move |sub_ms| f(handler(sub_ms)))
+    }
+
+    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) {
+        let f = self.f.clone();
+        self.orders_container.stream(stream.map(move |ms| f(ms)));
+    }
+
+    fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle {
+        let f = self.f.clone();
+        self.orders_container
+            .stream_with_handle(stream.map(move |ms| f(ms)))
     }
 }
