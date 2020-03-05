@@ -31,6 +31,8 @@ pub mod effects;
 pub mod message_mapper;
 pub mod orders;
 pub mod render_timestamp_delta;
+pub mod stream_manager;
+pub mod streams;
 pub mod sub_manager;
 pub mod subs;
 pub mod types;
@@ -44,6 +46,7 @@ pub use effects::Effect;
 pub use message_mapper::MessageMapper;
 pub use orders::{Orders, OrdersContainer, OrdersProxy};
 pub use render_timestamp_delta::RenderTimestampDelta;
+pub use stream_manager::{StreamHandle, StreamManager};
 pub use sub_manager::{Notification, SubHandle, SubManager};
 
 pub struct UndefinedGMsg;

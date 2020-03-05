@@ -1,5 +1,6 @@
-use super::{App, RenderTimestampDelta, SubHandle, UndefinedGMsg};
+use super::{App, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg};
 use crate::virtual_dom::View;
+use futures::stream::Stream;
 use std::{any::Any, future::Future};
 
 pub mod container;
@@ -96,9 +97,19 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
     ) -> &mut Self;
 
-    #[must_use]
     fn subscribe<SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) -> &mut Self;
+
+    #[must_use]
+    fn subscribe_with_handle<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
     ) -> SubHandle;
+
+    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static);
+
+    #[must_use]
+    fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle;
 }

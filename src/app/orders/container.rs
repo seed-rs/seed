@@ -1,10 +1,11 @@
 use crate::app::orders::{proxy::OrdersProxy, Orders};
 use crate::app::{
     effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, Notification, ShouldRender,
-    SubHandle, UndefinedGMsg,
+    StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
 };
 use crate::virtual_dom::view::View;
 use futures::future::LocalFutureObj;
+use futures::stream::{Stream, StreamExt};
 use std::{any::Any, collections::VecDeque, convert::identity, future::Future};
 
 #[allow(clippy::module_name_repetitions)]
@@ -29,7 +30,7 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
     }
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
+impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
     for OrdersContainer<Ms, Mdl, ElC, GMs>
 {
     type AppMs = Ms;
@@ -117,7 +118,31 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs> Orders<Ms, GMs>
     fn subscribe<SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) -> &mut Self {
+        self.app.data.sub_manager.borrow_mut().subscribe(handler);
+        self
+    }
+
+    fn subscribe_with_handle<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
     ) -> SubHandle {
-        self.app.data.sub_manager.borrow_mut().subscribe(handler)
+        self.app
+            .data
+            .sub_manager
+            .borrow_mut()
+            .subscribe_with_handle(handler)
+    }
+
+    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) {
+        let app = self.app.clone();
+        let stream = stream.map(move |msg| app.update(msg));
+        StreamManager::stream(stream);
+    }
+
+    fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle {
+        let app = self.app.clone();
+        let stream = stream.map(move |msg| app.update(msg));
+        StreamManager::stream_with_handle(stream)
     }
 }

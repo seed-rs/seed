@@ -22,6 +22,20 @@ impl<Ms: 'static> SubManager<Ms> {
     pub fn subscribe<SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+    ) {
+        let sub = Subscription::new(handler);
+        let (type_id, id) = (sub.type_id, sub.id);
+
+        self.subs
+            .borrow_mut()
+            .entry(type_id)
+            .or_insert_with(HashMap::new)
+            .insert(id, sub);
+    }
+
+    pub fn subscribe_with_handle<SubMs: 'static + Clone>(
+        &mut self,
+        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
     ) -> SubHandle {
         let sub = Subscription::new(handler);
         let (type_id, id) = (sub.type_id, sub.id);

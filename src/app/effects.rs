@@ -17,7 +17,7 @@ impl<Ms, GMs> From<Ms> for Effect<Ms, GMs> {
 
 impl<Ms: 'static, OtherMs: 'static, GMs> MessageMapper<Ms, OtherMs> for Effect<Ms, GMs> {
     type SelfWithOtherMs = Effect<OtherMs, GMs>;
-    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static) -> Effect<OtherMs, GMs> {
+    fn map_msg(self, f: impl FnOnce(Ms) -> OtherMs + 'static + Clone) -> Effect<OtherMs, GMs> {
         match self {
             Effect::Msg(msg) => Effect::Msg(f(msg)),
             Effect::Cmd(cmd) => Effect::Cmd(LocalFutureObj::new(Box::new(cmd.map(f)))),
