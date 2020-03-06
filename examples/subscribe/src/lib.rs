@@ -10,6 +10,7 @@ mod counter;
 struct Model {
     sub_handles: Vec<SubHandle>,
     timer_handle: Option<StreamHandle>,
+    timeout_handle: Option<CmdHandle>,
     seconds: u32,
     counter: counter::Model,
 }
@@ -25,8 +26,9 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
 
     AfterMount::new(Model {
         sub_handles: Vec::new(),
-        seconds: 0,
         timer_handle: None,
+        timeout_handle: None,
+        seconds: 0,
         counter: counter::init(&mut orders.proxy(Msg::Counter)),
     })
 }
@@ -51,6 +53,10 @@ enum Msg {
     StringReceived(String),
     UrlRequested(subs::UrlRequested),
     UrlChanged(subs::UrlChanged),
+
+    SetTimeout,
+    OnTimeout,
+    CancelTimeout,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -96,6 +102,18 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::UrlChanged(subs::UrlChanged(url)) => {
             log!("Url Changed", url);
+        }
+        Msg::SetTimeout => {
+            log!("--- Set timeout ---");
+            model.timeout_handle =
+                Some(orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout)));
+        }
+        Msg::OnTimeout => {
+            log!("Timeout!!");
+        }
+        Msg::CancelTimeout => {
+            log!("--- Cancel timeout ---");
+            model.timeout_handle = None;
         }
     }
 }
@@ -143,6 +161,15 @@ fn view(model: &Model) -> impl View<Msg> {
                 div!["Seconds: ", model.seconds,],
                 button![ev(Ev::Click, |_| Msg::StartTimer), "Start"],
                 button![ev(Ev::Click, |_| Msg::StopTimer), "Stop"],
+            ]),
+        ],
+        divider(),
+        // --- Timeout ---
+        div![
+            style! {St::Display => "flex"},
+            with_spaces(vec![
+                button![ev(Ev::Click, |_| Msg::SetTimeout), "Set 2s timeout"],
+                button![ev(Ev::Click, |_| Msg::CancelTimeout), "Cancel"],
             ]),
         ]
     ]

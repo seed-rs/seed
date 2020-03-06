@@ -83,8 +83,9 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 pub mod prelude {
     pub use crate::{
         app::{
-            builder::init::Init, streams, subs, AfterMount, App, BeforeMount, MessageMapper,
-            MountType, Orders, RenderTimestampDelta, StreamHandle, SubHandle, UrlHandling,
+            builder::init::Init, cmds, streams, subs, AfterMount, App, BeforeMount, CmdHandle,
+            MessageMapper, MountType, Orders, RenderTimestampDelta, StreamHandle, SubHandle,
+            UrlHandling,
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{

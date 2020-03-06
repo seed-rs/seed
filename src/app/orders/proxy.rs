@@ -1,11 +1,11 @@
 use super::{
-    super::{App, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg},
+    super::{App, CmdHandle, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg},
     Orders, OrdersContainer,
 };
 use crate::virtual_dom::View;
-use futures::future::FutureExt;
+use futures::future::{Future, FutureExt};
 use futures::stream::{Stream, StreamExt};
-use std::{any::Any, future::Future, rc::Rc};
+use std::{any::Any, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersProxy<
@@ -80,13 +80,16 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     }
 
     #[allow(clippy::redundant_closure)]
-    fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-    where
-        C: Future<Output = Ms> + 'static,
-    {
+    fn perform_cmd(&mut self, cmd: impl Future<Output = Ms> + 'static) -> &mut Self {
         let f = self.f.clone();
         self.orders_container.perform_cmd(cmd.map(move |ms| f(ms)));
         self
+    }
+
+    fn perform_cmd_with_handle(&mut self, cmd: impl Future<Output = Ms> + 'static) -> CmdHandle {
+        let f = self.f.clone();
+        self.orders_container
+            .perform_cmd_with_handle(cmd.map(move |ms| f(ms)))
     }
 
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self {
@@ -94,12 +97,16 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         self
     }
 
-    fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
-    where
-        C: Future<Output = GMs> + 'static,
-    {
+    fn perform_g_cmd(&mut self, g_cmd: impl Future<Output = GMs> + 'static) -> &mut Self {
         self.orders_container.perform_g_cmd(g_cmd);
         self
+    }
+
+    fn perform_g_cmd_with_handle(
+        &mut self,
+        g_cmd: impl Future<Output = GMs> + 'static,
+    ) -> CmdHandle {
+        self.orders_container.perform_g_cmd_with_handle(g_cmd)
     }
 
     fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs> {
@@ -141,9 +148,10 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
             .subscribe_with_handle(move |sub_ms| f(handler(sub_ms)))
     }
 
-    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) {
+    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) -> &mut Self {
         let f = self.f.clone();
         self.orders_container.stream(stream.map(move |ms| f(ms)));
+        self
     }
 
     fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle {

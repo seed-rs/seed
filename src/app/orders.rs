@@ -1,4 +1,4 @@
-use super::{App, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg};
+use super::{App, CmdHandle, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg};
 use crate::virtual_dom::View;
 use futures::stream::Stream;
 use std::{any::Any, future::Future};
@@ -43,6 +43,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// - You can call this function multiple times - messages will be sent in the same order.
     fn send_msg(&mut self, msg: Ms) -> &mut Self;
 
+    /// @TODO
     /// Schedule given future `cmd` to be executed after model update.
     /// - Result is send to function `update`.
     /// - You can call this function multiple times - futures will be scheduled in the same order.
@@ -56,17 +57,22 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///}
     ///orders.perform_cmd(write_emoticon_after_delay());
     /// ```
-    fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-    where
-        C: Future<Output = Ms> + 'static;
+    fn perform_cmd(&mut self, cmd: impl Future<Output = Ms> + 'static) -> &mut Self;
+
+    #[must_use]
+    fn perform_cmd_with_handle(&mut self, cmd: impl Future<Output = Ms> + 'static) -> CmdHandle;
 
     /// Similar to `send_msg`, but calls function `sink` with the given global message.
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self;
 
     /// Similar to `perform_cmd`, but result is send to function `sink`.
-    fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
-    where
-        C: Future<Output = GMs> + 'static;
+    fn perform_g_cmd(&mut self, g_cmd: impl Future<Output = GMs> + 'static) -> &mut Self;
+
+    /// Similar to `perform_g_cmd`, but result is send to function `sink`.
+    fn perform_g_cmd_with_handle(
+        &mut self,
+        g_cmd: impl Future<Output = GMs> + 'static,
+    ) -> CmdHandle;
 
     /// Get app instance. Cloning is cheap because `App` contains only `Rc` fields.
     fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs>;
@@ -108,7 +114,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
     ) -> SubHandle;
 
-    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static);
+    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) -> &mut Self;
 
     #[must_use]
     fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle;

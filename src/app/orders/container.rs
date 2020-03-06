@@ -1,10 +1,10 @@
 use crate::app::orders::{proxy::OrdersProxy, Orders};
 use crate::app::{
-    effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, Notification, ShouldRender,
-    StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
+    effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, CmdHandle, CmdManager,
+    Notification, ShouldRender, StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
 };
 use crate::virtual_dom::view::View;
-use futures::future::LocalFutureObj;
+use futures::future::FutureExt;
 use futures::stream::{Stream, StreamExt};
 use std::{any::Any, collections::VecDeque, convert::identity, future::Future};
 
@@ -71,13 +71,17 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
         self
     }
 
-    fn perform_cmd<C>(&mut self, cmd: C) -> &mut Self
-    where
-        C: Future<Output = Ms> + 'static,
-    {
-        let effect = Effect::Cmd(LocalFutureObj::new(Box::new(cmd)));
-        self.effects.push_back(effect);
+    fn perform_cmd(&mut self, cmd: impl Future<Output = Ms> + 'static) -> &mut Self {
+        let app = self.app.clone();
+        let cmd = cmd.map(move |msg| app.update(msg));
+        CmdManager::perform_cmd(cmd);
         self
+    }
+
+    fn perform_cmd_with_handle(&mut self, cmd: impl Future<Output = Ms> + 'static) -> CmdHandle {
+        let app = self.app.clone();
+        let cmd = cmd.map(move |msg| app.update(msg));
+        CmdManager::perform_cmd_with_handle(cmd)
     }
 
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self {
@@ -86,13 +90,17 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
         self
     }
 
-    fn perform_g_cmd<C>(&mut self, g_cmd: C) -> &mut Self
-    where
-        C: Future<Output = GMs> + 'static,
-    {
-        let effect = Effect::GCmd(LocalFutureObj::new(Box::new(g_cmd)));
-        self.effects.push_back(effect);
+    fn perform_g_cmd(&mut self, cmd: impl Future<Output = GMs> + 'static) -> &mut Self {
+        let app = self.app.clone();
+        let cmd = cmd.map(move |msg| app.sink(msg));
+        CmdManager::perform_cmd(cmd);
         self
+    }
+
+    fn perform_g_cmd_with_handle(&mut self, cmd: impl Future<Output = GMs> + 'static) -> CmdHandle {
+        let app = self.app.clone();
+        let cmd = cmd.map(move |msg| app.sink(msg));
+        CmdManager::perform_cmd_with_handle(cmd)
     }
 
     fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs> {
@@ -134,10 +142,11 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
             .subscribe_with_handle(handler)
     }
 
-    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) {
+    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) -> &mut Self {
         let app = self.app.clone();
         let stream = stream.map(move |msg| app.update(msg));
         StreamManager::stream(stream);
+        self
     }
 
     fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle {

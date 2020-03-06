@@ -26,6 +26,8 @@ use web_sys::Element;
 
 pub mod builder;
 pub mod cfg;
+pub mod cmd_manager;
+pub mod cmds;
 pub mod data;
 pub mod effects;
 pub mod message_mapper;
@@ -41,6 +43,7 @@ pub use builder::{
     AfterMount, BeforeMount, Builder as AppBuilder, MountPoint, MountType, UrlHandling,
 };
 pub use cfg::{AppCfg, AppInitCfg};
+pub use cmd_manager::{CmdHandle, CmdManager};
 pub use data::AppData;
 pub use effects::Effect;
 pub use message_mapper::MessageMapper;

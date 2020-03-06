@@ -4,7 +4,6 @@ use wasm_bindgen_futures::spawn_local;
 
 // ------ StreamManager ------
 
-#[derive(Default)]
 pub struct StreamManager;
 
 impl StreamManager {
