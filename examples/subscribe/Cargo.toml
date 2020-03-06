@@ -12,3 +12,4 @@ seed = {path = "../../"}
 wasm-bindgen = "0.2.59"
 itertools = "0.8.2"
 futures = "0.3.4"
+js-sys = "0.3.36"
