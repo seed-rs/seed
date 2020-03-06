@@ -1,6 +1,8 @@
 use futures::future::{Future, FutureExt};
 use gloo_timers::future::TimeoutFuture;
 
+// ------ Timeout cmd ------
+
 pub fn timeout<Ms>(
     ms: u32,
     handler: impl FnOnce() -> Ms + Clone + 'static,

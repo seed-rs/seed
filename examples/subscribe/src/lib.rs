@@ -1,5 +1,7 @@
 use itertools::Itertools;
+use js_sys;
 use seed::{prelude::*, *};
+use wasm_bindgen::JsCast;
 
 mod counter;
 
@@ -13,6 +15,7 @@ struct Model {
     timeout_handle: Option<CmdHandle>,
     seconds: u32,
     counter: counter::Model,
+    window_size: (f64, f64),
 }
 
 // ------ ------
@@ -22,7 +25,8 @@ struct Model {
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
     orders
         .subscribe(Msg::UrlRequested)
-        .subscribe(Msg::UrlChanged);
+        .subscribe(Msg::UrlChanged)
+        .stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
 
     AfterMount::new(Model {
         sub_handles: Vec::new(),
@@ -30,7 +34,23 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
         timeout_handle: None,
         seconds: 0,
         counter: counter::init(&mut orders.proxy(Msg::Counter)),
+        window_size: window_size(),
     })
+}
+
+fn window_size() -> (f64, f64) {
+    let window = window();
+    let width = window
+        .inner_width()
+        .expect("window width")
+        .unchecked_into::<js_sys::Number>()
+        .value_of();
+    let height = window
+        .inner_height()
+        .expect("window height")
+        .unchecked_into::<js_sys::Number>()
+        .value_of();
+    (width, height)
 }
 
 // ------ ------
@@ -57,6 +77,8 @@ enum Msg {
     SetTimeout,
     OnTimeout,
     CancelTimeout,
+
+    OnResize,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -115,6 +137,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             log!("--- Cancel timeout ---");
             model.timeout_handle = None;
         }
+        Msg::OnResize => {
+            model.window_size = window_size();
+        }
     }
 }
 
@@ -171,7 +196,13 @@ fn view(model: &Model) -> impl View<Msg> {
                 button![ev(Ev::Click, |_| Msg::SetTimeout), "Set 2s timeout"],
                 button![ev(Ev::Click, |_| Msg::CancelTimeout), "Cancel"],
             ]),
-        ]
+        ],
+        divider(),
+        // --- Window size ---
+        {
+            let (width, height) = &model.window_size;
+            format!("Window size: {} x {}", width, height)
+        }
     ]
 }
 

@@ -155,18 +155,18 @@ pub fn setup_link_listener<Ms>(
                     // Only update when requested for an update by the user.
                     let url = Url::try_from(href).expect("cast link href to `Url`");
 
-                    let url_request_controller = subs::UrlRequest::default();
+                    let url_request_controller = subs::url_requested::UrlRequest::default();
                     notify(Notification::new(subs::UrlRequested(
                         url.clone(),
                         url_request_controller.clone(),
                     )));
                     match url_request_controller.status() {
-                        subs::UrlRequestStatus::Unhandled => {
+                        subs::url_requested::UrlRequestStatus::Unhandled => {
                             push_route(url.clone());
                             event.prevent_default(); // Prevent page refresh
                             notify(Notification::new(subs::UrlChanged(url.clone())));
                         }
-                        subs::UrlRequestStatus::Handled(prevent_default) => {
+                        subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
                             if prevent_default {
                                 event.prevent_default(); // Prevent page refresh
                             }
