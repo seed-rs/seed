@@ -3,7 +3,7 @@ use crate::browser::{
     service::routing,
     url,
     util::{self, window, ClosureNew},
-    NextTick, Url,
+    Url,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, Mailbox, Node, Tag, View};
 use builder::{
@@ -11,8 +11,6 @@ use builder::{
     IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
 };
 use enclose::{enc, enclose};
-use futures::future::LocalFutureObj;
-use futures::FutureExt;
 use std::{
     any::Any,
     cell::{Cell, RefCell},
@@ -21,7 +19,6 @@ use std::{
 };
 use types::*;
 use wasm_bindgen::closure::Closure;
-use wasm_bindgen_futures::spawn_local;
 use web_sys::Element;
 
 pub mod builder;
@@ -185,8 +182,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                     let mut new_effects = self.process_queue_global_message(g_msg);
                     queue.append(&mut new_effects);
                 }
-                Effect::Cmd(cmd) => self.process_queue_cmd(cmd),
-                Effect::GCmd(g_cmd) => self.process_queue_global_cmd(g_cmd),
                 Effect::Notification(notification) => {
                     let mut new_effects = self.process_queue_notification(&notification);
                     queue.append(&mut new_effects);
@@ -378,32 +373,6 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             ShouldRender::Skip => (),
         };
         orders.effects
-    }
-
-    fn process_queue_cmd(&self, cmd: LocalFutureObj<'static, Ms>) {
-        let lazy_schedule_cmd = enclose!((self => s) move |_| {
-            // schedule future (cmd) to be executed
-            spawn_local(async move {
-                let msg_returned_from_effect = cmd.await;
-                // recursive call which can blow the call stack
-                s.update(msg_returned_from_effect);
-            })
-        });
-        // we need to clear the call stack by NextTick so we don't exceed it's capacity
-        spawn_local(NextTick::new().map(lazy_schedule_cmd));
-    }
-
-    fn process_queue_global_cmd(&self, g_cmd: LocalFutureObj<'static, GMs>) {
-        let lazy_schedule_cmd = enclose!((self => s) move |_| {
-            // schedule future (g_cmd) to be executed
-            spawn_local(async move {
-                let msg_returned_from_effect = g_cmd.await;
-                // recursive call which can blow the call stack
-                s.sink(msg_returned_from_effect);
-            })
-        });
-        // we need to clear the call stack by NextTick so we don't exceed it's capacity
-        spawn_local(NextTick::new().map(lazy_schedule_cmd));
     }
 
     fn schedule_render(&self) {
