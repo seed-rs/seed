@@ -3,6 +3,13 @@ use gloo_timers::future::IntervalStream;
 
 // ------ Interval stream ------
 
+/// Stream no values on predefined time interval in milliseconds.
+///
+/// # Example
+///
+/// ```rust,no_run
+///orders.stream_with_handle(streams::interval(1000, || Msg::OnTick));
+/// ```
 pub fn interval<Ms>(
     ms: u32,
     handler: impl FnOnce() -> Ms + Clone + 'static,
@@ -12,5 +19,5 @@ pub fn interval<Ms>(
 
 // ------ Window Event stream ------
 
-pub mod window_event;
+mod window_event;
 pub use window_event::window_event;

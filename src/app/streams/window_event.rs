@@ -8,12 +8,28 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{Event, EventTarget};
 
+// ------ Window Event stream ------
+
+/// Stream `Window` `web_sys::Event`s.
+///
+/// # Example
+///
+/// ```rust,no_run
+///orders.stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
+/// ```
 pub fn window_event<Ms>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(Event) -> Ms + Clone + 'static,
 ) -> impl Stream<Item = Ms> {
     EventStream::new(&window(), trigger.into()).map(move |event| handler.clone()(event))
 }
+
+// ------ EventStream ------
+
+// @TODO Replace `mpsc` with `crossbeam`? (And integrate it into the other Seed parts (e.g. `Listener`, `SubManager`)).
+
+// @TODO Update it to support different `web_sys` events
+// during implementation of https://github.com/seed-rs/seed/issues/331
 
 pub struct EventStream<E> {
     node: EventTarget,
@@ -31,6 +47,7 @@ where
 
         let (sender, receiver) = unbounded();
 
+        // @TODO replace with `Closure::new` once stable (or use the Seed's temporary one).
         let callback = Closure::wrap(Box::new(move |event: JsValue| {
             sender.unbounded_send(event.dyn_into().unwrap()).unwrap();
         }) as Box<dyn Fn(JsValue)>);

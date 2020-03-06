@@ -1,6 +1,6 @@
 ## Subscribe example
 
-How to create and use subscriptions.
+How to create and use subscriptions, streams, notifications and commands.
 
 ---
 
