@@ -7,5 +7,15 @@ pub use url_requested::UrlRequested;
 
 // ------ UrlChanged sub ------
 
+/// Subscribe to url changes.
+/// - Url change is fired also on application start by default.
+///
+/// # Example
+///
+/// ```rust,no_run
+///orders.subscribe(Msg::UrlChanged);
+///...
+///update(... Msg::UrlChanged(subs::UrlChanged(url)) =>
+/// ```
 #[derive(Clone)]
 pub struct UrlChanged(pub Url);

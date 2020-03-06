@@ -155,6 +155,7 @@ pub fn setup_link_listener<Ms>(
                     // Only update when requested for an update by the user.
                     let url = Url::try_from(href).expect("cast link href to `Url`");
 
+                    // @TODO refactor while removing `routes`.
                     let url_request_controller = subs::url_requested::UrlRequest::default();
                     notify(Notification::new(subs::UrlRequested(
                         url.clone(),

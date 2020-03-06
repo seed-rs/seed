@@ -3,6 +3,8 @@
 use gloo_timers::future::TimeoutFuture;
 use seed::{prelude::*, *};
 
+// NOTE: See example `subscribe` to learn more about other `Orders` methods.
+
 // ------ ------
 //     Model
 // ------ ------

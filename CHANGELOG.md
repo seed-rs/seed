@@ -9,6 +9,16 @@
 - Added support for all `Iterator`s, `Option`, `u32`, `i32`, `usize`, `f64` and references in element creation macros (#365, #128).
 - [BREAKING] `String` implements `UpdateEl<T>`. (References are now required for `String` properties, e.g. `div![&model.title]`.)
 - Fixed `href` detection to ignore `use` elements (#384).
+- Added methods `subscribe`, `subscribe_with_handle`, `perform_cmd_with_handle`, `stream`, `stream_with_handle` and `notify` into `Orders` (#130).
+- Added `cmds::timeout`, `stream::interval`, `stream::window_event`, `subs::UrlChanged` and `subs::UrlRequested` (#131).
+- Added example `subscribe`.
+- Updated example `todomvc` to use subscription `UrlChanged` instead of `routes`.
+- [BREAKING] Futures in `perform_cmd` and `perform_g_cmd` are executed immediately.
+- Added `App` methods `notify` and `notify_with_notification`.
+- [BREAKING] `App` method `process_cmd_and_msg_queue` renamed to `process_effect_queue`.
+- [BREAKING] Url change listeners are always active (even if `routes` is not defined).
+- Added `cmds`, `streams`, `subs`, `CmdHandle`, `SubHandle` and `StreamHandle` into the Seed's prelude.
+- [BREAKING] Removed module `next_tick`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

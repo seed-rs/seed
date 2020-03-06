@@ -39,7 +39,7 @@ How to perform commands and send messages from `update` function.
 And how to use [gloo](https://github.com/rustwasm/gloo) timers.
 
 ### [Subscribe](subscribe)
-How to create and use subscriptions.
+How to create and use subscriptions, streams, notifications and commands.
 
 ### [TEA component](tea_component)
 How to write a component in The Elm architecture.
