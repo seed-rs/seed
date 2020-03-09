@@ -3,7 +3,7 @@ use super::super::{
     util::{self, ClosureNew},
     Url,
 };
-use std::convert::{identity, TryFrom, TryInto};
+use std::convert::{TryFrom, TryInto};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Add a new route using history's `push_state` method.
@@ -114,10 +114,10 @@ where
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
             .and_then(|el| el.closest("[href]").ok())
-            .and_then(identity)  // Option::flatten not stable (https://github.com/rust-lang/rust/issues/60258)
-            .and_then(|href_el| match href_el.tag_name().as_str() {
-                // Base and Link tags use href for something other than navigation.
-                "Base" | "Link" => None,
+            .flatten()
+            .and_then(|href_el| match href_el.tag_name().to_lowercase().as_str() {
+                // Base, Link and Use tags use href for something other than navigation.
+                "base" | "link" | "use" => None,
                 _ => Some(href_el)
             })
             .and_then(|href_el| href_el.get_attribute("href"))
