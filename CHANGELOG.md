@@ -8,6 +8,7 @@
 - Added trait `UpdateElForIterator<Ms>`.
 - Added support for all `Iterator`s, `Option`, `u32`, `i32`, `usize`, `f64` and references in element creation macros (#365, #128).
 - [BREAKING] `String` implements `UpdateEl<T>`. (References are now required for `String` properties, e.g. `div![&model.title]`.)
+- Fixed `href` detection to ignore `use` elements (#384).
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
