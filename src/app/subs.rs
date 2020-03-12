@@ -8,7 +8,6 @@ pub use url_requested::UrlRequested;
 // ------ UrlChanged sub ------
 
 /// Subscribe to url changes.
-/// - Url change is fired also on application start by default.
 ///
 /// # Example
 ///

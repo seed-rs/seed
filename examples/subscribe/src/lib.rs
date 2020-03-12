@@ -6,6 +6,27 @@ use wasm_bindgen::JsCast;
 mod counter;
 
 // ------ ------
+//     Init
+// ------ ------
+
+fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders
+        .subscribe(Msg::UrlRequested)
+        .subscribe(Msg::UrlChanged)
+        .notify(subs::UrlChanged(url))
+        .stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
+
+    Model {
+        sub_handles: Vec::new(),
+        timer_handle: None,
+        timeout_handle: None,
+        seconds: 0,
+        counter: counter::init(&mut orders.proxy(Msg::Counter)),
+        window_size: window_size(),
+    }
+}
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -16,41 +37,6 @@ struct Model {
     seconds: u32,
     counter: counter::Model,
     window_size: (f64, f64),
-}
-
-// ------ ------
-//  AfterMount
-// ------ ------
-
-fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    orders
-        .subscribe(Msg::UrlRequested)
-        .subscribe(Msg::UrlChanged)
-        .stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
-
-    AfterMount::new(Model {
-        sub_handles: Vec::new(),
-        timer_handle: None,
-        timeout_handle: None,
-        seconds: 0,
-        counter: counter::init(&mut orders.proxy(Msg::Counter)),
-        window_size: window_size(),
-    })
-}
-
-fn window_size() -> (f64, f64) {
-    let window = window();
-    let width = window
-        .inner_width()
-        .expect("window width")
-        .unchecked_into::<js_sys::Number>()
-        .value_of();
-    let height = window
-        .inner_height()
-        .expect("window height")
-        .unchecked_into::<js_sys::Number>()
-        .value_of();
-    (width, height)
 }
 
 // ------ ------
@@ -217,12 +203,29 @@ fn with_spaces(nodes: Vec<Node<Msg>>) -> impl Iterator<Item = Node<Msg>> {
 }
 
 // ------ ------
+//    Helpers
+// ------ ------
+
+fn window_size() -> (f64, f64) {
+    let window = window();
+    let width = window
+        .inner_width()
+        .expect("window width")
+        .unchecked_into::<js_sys::Number>()
+        .value_of();
+    let height = window
+        .inner_height()
+        .expect("window height")
+        .unchecked_into::<js_sys::Number>()
+        .value_of();
+    (width, height)
+}
+
+// ------ ------
 //     Start
 // ------ ------
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    App::builder(update, view)
-        .after_mount(after_mount)
-        .build_and_start();
+pub fn start() {
+    App::start("app", init, update, view);
 }

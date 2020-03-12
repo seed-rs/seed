@@ -93,7 +93,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::AnswerChanged => toggle(&mut model.form_mut().answer),
         Msg::FormSubmitted(id) => {
-            let form = take(model.form_mut());
+            let form = mem::take(model.form_mut());
             orders.perform_cmd(send_request(form.to_form_data().unwrap()));
             *model = Model::WaitingForResponse(form);
             log!(format!("Form {} submitted.", id));
@@ -108,7 +108,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             log_1(&response_data.into());
         }
         Msg::ServerResponded(Err(fail_reason)) => {
-            *model = Model::ReadyToSubmit(take(model.form_mut()));
+            *model = Model::ReadyToSubmit(mem::take(model.form_mut()));
             error!("Request failed!", fail_reason);
         }
     }
@@ -131,10 +131,6 @@ fn clear_file_input() {
             // Note: `file_input.set_files(None)` doesn't work
             file_input.set_value("")
         });
-}
-
-fn take<T: Default>(source: &mut T) -> T {
-    mem::replace(source, T::default())
 }
 
 fn toggle(value: &mut bool) {

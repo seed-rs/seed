@@ -84,8 +84,8 @@ pub mod prelude {
     pub use crate::{
         app::{
             builder::init::Init, cmds, streams, subs, AfterMount, App, BeforeMount, CmdHandle,
-            MessageMapper, MountType, Orders, RenderTimestampDelta, StreamHandle, SubHandle,
-            UrlHandling,
+            GetElement, MessageMapper, MountType, Orders, RenderTimestampDelta, StreamHandle,
+            SubHandle, UrlHandling,
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{
