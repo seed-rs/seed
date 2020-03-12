@@ -36,6 +36,7 @@
 - [deprecated] `View` is deprecated in favor of `IntoNodes`.
 - [BREAKING] `View` isn't implemented for `El` and `Vec<El>`.
 - [BREAKING] `Node::add_listener` renamed to `add_event_handler`.
+- Rewritten `README.md`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

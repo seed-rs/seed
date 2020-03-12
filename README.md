@@ -9,7 +9,7 @@
 
 ### [Website](https://seed-rs.org) | [Forum](https://seed.discourse.group) | [Chat](https://discord.gg/JHHcHp5)
 ---
-Seed is a front end Rust framework for creating fast and reliable web apps with an elm-like architecture.
+Seed is a front-end Rust framework for creating fast and reliable web apps with an elm-like architecture.
 
 - All the benefits of Rust and macro based syntax.
 - Minimal overhead, configuration, and boilerplate.
@@ -18,11 +18,10 @@ Seed is a front end Rust framework for creating fast and reliable web apps with 
 
 ---
 
-# Quickstart
+# Examples
+The examples provided in this repository are a good place to get started. They also act as an integration testing suite we run before every commit to ensure there are no unintended breaking changes to the user space. Because of Rust's compile-time checking, testing is that much more robust and changes can be pushed confidently.
 
-If you are proficient in a front end framework, creating a standalone web app is painless.
-
-To get started, you can clone our [quickstart](https://github.com/seed-rs/seed-quickstart) or [webpack quickstart](https://github.com/seed-rs/seed-quickstart-webpack), where we explain in detail.
+Run [examples](examples/) with `cargo make start example_name` from the Seed repository root. Here's our counter example:
 
 ```rust
 use seed::{prelude::*, *};
@@ -60,10 +59,20 @@ pub fn render() {
 }
 ```
 
-# Examples
-The examples provided in this repository are a good place to get started. They also act as an integration testing suite we run before every commit to ensure there are no unintended breaking changes to the user space. Because of Rust's compile-time checking, testing is that much more robust and changes can be pushed confidently.
+# Quickstart
+If you are proficient in a front-end framework, creating a standalone web app is painless. You'll notice minimal configuration:
 
-Run [examples](examples/) with `cargo make start example_name` from the Seed repository root.
+```
+├── Cargo.toml
+├── Makefile.toml
+├── index.html
+└── src
+    └── lib.rs
+```
+
+We currently have two template repositories:
+- [Quickstart](https://github.com/seed-rs/seed-quickstart)
+- [Webpack quickstart](https://github.com/seed-rs/seed-quickstart-webpack)
 
 # Why Use Seed
 
@@ -75,15 +84,14 @@ You may prefer writing in Rust and appreciate its benefits, including:
 - Rust speed.
 - Cleaner code and less runtime errors.
 - Cargo packages.
+- Potential pipeline/stack language consistency.
 
-### Development
+### Developer Experience
 Our main focus is on developer experience, the benefits of which are currently:
 - Seed has a *batteries-included* approach, meaning less boilerplate and dependencies.
-- Macro syntax removes the need for transpiling and integrates naturally and flexibly with the language. This also means all the pains of something like JSX are avoided; linting, commenting, etc. all work out of the box.
+- Macro syntax removes the need for transpiling and integrates naturally and flexibly with the language. This also means all the pains of embedded HTML are avoided; linting, commenting, etc. all work out of the box.
 - Built in elm-like architecture, no need for another state manager.
-- If your backend is in Rust, no switching between two languages or setting up different pipelines.
-- Perhaps you find webpack or other JS tools hard to setup.
-- Maybe you don't want to code business logic in a purely-functional language.
+- Perhaps you find JS frameworks and tools difficult to set up.
 - Very active development.
 
 See more on our [about](https://seed-rs.org/guide/about) page.
@@ -100,7 +108,7 @@ See more on our [about](https://seed-rs.org/guide/about) page.
 - [Structure](https://seed-rs.org/guide/structure)
 - [View Macros](https://seed-rs.org/guide/view)
 - [Events](https://seed-rs.org/guide/events)
-- [HTTP Requests](https://seed-rs.org/guide/events)
+- [HTTP Requests](https://seed-rs.org/guide/http-requests-and-state)
 - [Routing](https://seed-rs.org/guide/routing)
 - [JavaScript Interaction](https://seed-rs.org/guide/javascript-interaction)
 - [Release and Debugging](https://seed-rs.org/guide/release-and-debugging)
@@ -112,15 +120,15 @@ See more on our [about](https://seed-rs.org/guide/about) page.
 ### Seed
 - [Awesome-seed-rs](https://github.com/seed-rs/awesome-seed-rs): A curated list of resources
 - [Seed Realworld](https://github.com/seed-rs/seed-rs-realworld): A detailed realworld example site
-- [Engineering Rust Web Applications](https://erwabook.com/intro/): A book describing full-stack Rust web-development, using Seed for the frontend
+- [Engineering Rust Web Applications](https://erwabook.com/intro/): A book describing full-stack Rust web-development, using Seed for the front-end
 
 ### Rust
 - [Rust Discord](https://discordapp.com/invite/rust-lang)
 - [Rust IRC](https://www.irccloud.com/invite?channel=%23%23rust&hostname=chat.freenode.net&port=6697&ssl=1)
 
 # Future
+- [Roadmap](https://github.com/seed-rs/seed/milestones)
 - New [Rust-only quickstart](https://github.com/MartinKavik/seeder)
-- For more see the [issue tracker](../../issues/)
 
 # Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md).
