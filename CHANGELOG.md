@@ -19,6 +19,9 @@
 - [BREAKING] Url change listeners are always active (even if `routes` is not defined).
 - Added `cmds`, `streams`, `subs`, `CmdHandle`, `SubHandle` and `StreamHandle` into the Seed's prelude.
 - [BREAKING] Removed module `next_tick`.
+- Added method `App::start` (alternative to `AppBuilder`) (#376, #382).
+- Added trait `GetElemnt` + included in the `prelude` (alternative to `MountPoint`, used in `AppStart`).
+- Updated example `subscribe` to use `App::start`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

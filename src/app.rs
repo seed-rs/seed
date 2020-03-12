@@ -7,7 +7,7 @@ use crate::browser::{
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, Mailbox, Node, Tag, View};
 use builder::{
-    init::{Init, InitFn},
+    init::{Init, InitFn as BuilderInitFn},
     IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
 };
 use enclose::{enc, enclose};
@@ -15,6 +15,7 @@ use std::{
     any::Any,
     cell::{Cell, RefCell},
     collections::VecDeque,
+    marker::PhantomData,
     rc::Rc,
 };
 use types::*;
@@ -27,6 +28,7 @@ pub mod cmd_manager;
 pub mod cmds;
 pub mod data;
 pub mod effects;
+pub mod get_element;
 pub mod message_mapper;
 pub mod orders;
 pub mod render_timestamp_delta;
@@ -37,12 +39,14 @@ pub mod subs;
 pub mod types;
 
 pub use builder::{
-    AfterMount, BeforeMount, Builder as AppBuilder, MountPoint, MountType, UrlHandling,
+    AfterMount, BeforeMount, Builder as AppBuilder, MountPoint, MountType, UndefinedAfterMount,
+    UrlHandling,
 };
 pub use cfg::{AppCfg, AppInitCfg};
 pub use cmd_manager::{CmdHandle, CmdManager};
 pub use data::AppData;
 pub use effects::Effect;
+pub use get_element::GetElement;
 pub use message_mapper::MessageMapper;
 pub use orders::{Orders, OrdersContainer, OrdersProxy};
 pub use render_timestamp_delta::RenderTimestampDelta;
@@ -94,6 +98,91 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
 impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
+    // @TODO: Relax input function restrictions - init: fn => FnOnce, update & view: FnOnce + Clone.
+    // @TODO: Refactor while removing `Builder`.
+    /// Create, mount and start the `App`. It's the standard way to create a Seed app.
+    ///
+    /// _NOTE:_ It tries to hydrate the root element content => you can use it also for prerendered website.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
+    ///     orders
+    ///         .subscribe(Msg::UrlChanged)
+    ///         .notify(subs::UrlChanged(url));
+    ///
+    ///     Model {
+    ///         clicks: 0,
+    ///     }
+    /// }
+    ///
+    ///fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
+    ///   match msg {
+    ///       Msg::Clicked => model.clicks += 1,
+    ///   }
+    ///}
+    ///
+    ///fn view(model: &Model) -> impl View<Msg> {
+    ///   button![
+    ///       format!("Clicked: {}", model.clicks),
+    ///       ev(Ev::Click, |_| Msg::Clicked),
+    ///   ]
+    ///}
+    ///
+    ///#[wasm_bindgen(start)]
+    /// pub fn start() {
+    ///     // Mount to the root element with id "app".
+    ///     // You can pass also `web_sys::Element` or `web_sys::HtmlElement` as a root element.
+    ///     // It's NOT recommended to mount into body or into elements which contain scripts.
+    ///     App::start("app", init, update, view);
+    /// }
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the root element cannot be found.
+    ///
+    pub fn start(
+        root_element: impl GetElement,
+        init: InitFn<Ms, Mdl, ElC, GMs>,
+        update: UpdateFn<Ms, Mdl, ElC, GMs>,
+        view: ViewFn<Mdl, ElC>,
+    ) -> Self {
+        // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
+        // https://github.com/seed-rs/seed/issues/241
+        // https://bugs.webkit.org/show_bug.cgi?id=202881
+        let _ = util::document().query_selector("html");
+
+        // Allows panic messages to output to the browser console.error.
+        console_error_panic_hook::set_once();
+
+        let root_element = root_element.get_element().expect("get root element");
+
+        let app_init_cfg = AppInitCfg {
+            mount_type: MountType::Takeover,
+            phantom: PhantomData,
+            into_after_mount: Box::new(
+                move |url: Url,
+                      orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>|
+                      -> AfterMount<Mdl> {
+                    let model = init(url, orders);
+                    AfterMount::new(model).url_handling(UrlHandling::None)
+                },
+            ) as Box<dyn IntoAfterMount<Ms, Mdl, ElC, GMs>>,
+        };
+        let app = Self::new(
+            update,
+            None,
+            view,
+            root_element,
+            None,
+            None,
+            Some(app_init_cfg),
+        );
+        app.run()
+    }
+
     /// Creates a new `AppBuilder` instance. It's the standard way to create a Seed app.
     ///
     /// Then you can call optional builder methods like `routes` or `sink`.
@@ -551,5 +640,5 @@ type InitAppBuilder<Ms, Mdl, ElC, GMs> = AppBuilder<
     Mdl,
     ElC,
     GMs,
-    MountPointInitInitAPI<UndefinedMountPoint, InitFn<Ms, Mdl, ElC, GMs>>,
+    MountPointInitInitAPI<UndefinedMountPoint, BuilderInitFn<Ms, Mdl, ElC, GMs>>,
 >;
