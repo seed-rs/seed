@@ -47,7 +47,7 @@ pub fn el_ref<E: Clone>(reference: &ElRef<E>) -> ElRef<E> {
 ///         }
 /// // ...
 /// ```
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ElRef<E> {
     pub shared_node_ws: SharedNodeWs,
     // We need to use `phantom` to remember required element type `E`,
