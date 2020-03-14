@@ -237,6 +237,65 @@ macro_rules! class {
      };
 }
 
+/// Add classes into the element.
+///
+/// # Example
+///
+/// ```rust,no_run
+///div![
+///    C!["btn", IF!(active => "active")],
+///    "Button",
+///]
+/// ```
+#[macro_export]
+macro_rules! C {
+    ( $($class:expr $(,)?)* ) => {
+        {
+            let mut all_classes = Vec::new();
+            $(
+                if let Some(classes) = $class.to_classes() {
+                    for class in classes {
+                        if !class.is_empty() {
+                            all_classes.push(class);
+                        }
+                    }
+                }
+            )*
+
+            let mut attrs = $crate::virtual_dom::Attrs::empty();
+            if !all_classes.is_empty() {
+                attrs.add_multiple(At::Class, &all_classes.iter().map(|class| class.as_str()).collect::<Vec<_>>());
+            }
+            attrs
+        }
+    };
+}
+
+/// `IF!(predicate => expression) -> Option<expression value>`
+/// - `expression` is evaluated only when `predicate` is `true` (lazy eval).
+/// - Alternative to `bool::then`.
+///
+/// # Example
+///
+/// ```rust,no_run
+///div![
+///    C!["btn", IF!(active => "active")],
+///    "Button",
+///    IF!(not(disabled) => ev(Ev::Click, Msg::Clicked)),
+///]
+/// ```
+#[macro_export]
+macro_rules! IF {
+    ( $predicate:expr => $value:expr ) => {{
+        // @TODO replace with `bool::then` once stable.
+        if $predicate {
+            Some($value)
+        } else {
+            None
+        }
+    }};
+}
+
 /// Convenience macro, for brevity.
 #[macro_export]
 macro_rules! id {

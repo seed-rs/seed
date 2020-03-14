@@ -135,7 +135,7 @@ impl<Ms, T: UpdateEl<Ms> + Clone> UpdateEl<Ms> for &[T] {
     }
 }
 
-// ------ Tests ------
+// ------ ------ Tests ------ ------
 
 #[cfg(test)]
 mod tests {

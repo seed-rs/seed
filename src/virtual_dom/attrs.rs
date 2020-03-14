@@ -54,7 +54,7 @@ impl Attrs {
     pub fn add_multiple(&mut self, key: At, items: &[&str]) {
         self.add(
             key,
-            &items
+            items
                 .iter()
                 .filter_map(|item| {
                     if item.is_empty() {
