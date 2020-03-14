@@ -23,6 +23,9 @@
 - Added trait `GetElemnt` + included in the `prelude` (alternative to `MountPoint`, used in `AppStart`).
 - Updated example `subscribe` to use `App::start`.
 - Derive `Debug` for `ElRef`.
+- Added macros `C!` and `IF!` and helper `not` (#375).
+- Added trait `ToClasses` + included in the `prelude`.
+- Updated `todomvc` example to use `C!`, `IF!`, `matches!` and `App::start`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

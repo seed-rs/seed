@@ -33,6 +33,7 @@ pub mod shortcuts;
 pub mod app;
 pub mod browser;
 pub mod dom_entity_names;
+pub mod helpers;
 pub mod virtual_dom;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
@@ -96,12 +97,13 @@ pub mod prelude {
             RequestAnimationFrameTime,
         },
         browser::Url,
+        helpers::not,
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
         virtual_dom::{
             el_ref::el_ref, AsAtValue, At, AtValue, CSSValue, El, ElRef, Ev, EventHandler, Node,
-            St, Tag, UpdateEl, UpdateElForIterator, View,
+            St, Tag, ToClasses, UpdateEl, UpdateElForIterator, View,
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.

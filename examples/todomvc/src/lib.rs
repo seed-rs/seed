@@ -87,20 +87,22 @@ impl TodoFilter {
 }
 
 // ------ ------
-//  After Mount
+//     Init
 // ------ ------
 
-fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    orders.subscribe(Msg::UrlChanged);
+fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders
+        .subscribe(Msg::UrlChanged)
+        .notify(subs::UrlChanged(url));
 
     let local_storage = storage::get_storage().expect("get `LocalStorage`");
     let data = storage::load_data(&local_storage, STORAGE_KEY).unwrap_or_default();
 
-    AfterMount::new(Model {
+    Model {
         data,
         services: Services { local_storage },
         refs: Refs::default(),
-    })
+    }
 }
 
 // ------ ------
@@ -238,10 +240,10 @@ fn view(model: &Model) -> impl View<Msg> {
 
 fn view_header(new_todo_title: &str) -> Node<Msg> {
     header![
-        class!["header"],
+        C!["header"],
         h1!["todos"],
         input![
-            class!["new-todo"],
+            C!["new-todo"],
             attrs! {
                 At::Placeholder => "What needs to be done?";
                 At::AutoFocus => true.as_at_value();
@@ -270,10 +272,10 @@ fn view_main(
     let all_todos_completed = todos.values().all(|todo| todo.completed);
 
     section![
-        class!["main"],
+        C!["main"],
         input![
             id!("toggle-all"),
-            class!["toggle-all"],
+            C!["toggle-all"],
             attrs! {
                 At::Type => "checkbox",
                 At::Checked => all_todos_completed.as_at_value(),
@@ -292,23 +294,19 @@ fn view_todos(
     editing_todo_input: &ElRef<HtmlInputElement>,
 ) -> Node<Msg> {
     ul![
-        class!["todo-list"],
+        C!["todo-list"],
         todos.iter().filter_map(|(todo_id, todo)| {
             let show_todo = match filter {
                 TodoFilter::All => true,
                 TodoFilter::Active => !todo.completed,
                 TodoFilter::Completed => todo.completed,
             };
-            // @TODO replace with `bool::then_with` once stable
-            if show_todo {
-                Some(view_todo(todo_id, todo, editing_todo, editing_todo_input))
-            } else {
-                None
-            }
+            IF!(show_todo => view_todo(todo_id, todo, editing_todo, editing_todo_input))
         })
     ]
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn view_todo(
     todo_id: &TodoId,
     todo: &Todo,
@@ -316,17 +314,14 @@ fn view_todo(
     editing_todo_input: &ElRef<HtmlInputElement>,
 ) -> Node<Msg> {
     li![
-        class![
-           "completed" => todo.completed,
-           "editing" => match editing_todo {
-               Some(editing_todo) if &editing_todo.id == todo_id => true,
-               _ => false
-           }
+        C![
+            IF!(todo.completed => "completed"),
+            IF!(matches!(editing_todo, Some(editing_todo) if &editing_todo.id == todo_id) => "editing"),
         ],
         div![
-            class!["view"],
+            C!["view"],
             input![
-                class!["toggle"],
+                C!["toggle"],
                 attrs! {
                    At::Type => "checkbox",
                    At::Checked => todo.completed.as_at_value()
@@ -344,7 +339,7 @@ fn view_todo(
                 &todo.title
             ],
             button![
-                class!["destroy"],
+                C!["destroy"],
                 ev(Ev::Click, enc!((todo_id) move |_| Msg::RemoveTodo(todo_id)))
             ]
         ],
@@ -352,7 +347,7 @@ fn view_todo(
             Some(editing_todo) if &editing_todo.id == todo_id => {
                 input![
                     el_ref(editing_todo_input),
-                    class!["edit"],
+                    C!["edit"],
                     attrs! {At::Value => editing_todo.title},
                     ev(Ev::Blur, |_| Msg::SaveEditingTodo),
                     input_ev(Ev::Input, Msg::EditingTodoTitleChanged),
@@ -380,9 +375,9 @@ fn view_footer(todos: &IndexMap<TodoId, Todo>, filter: TodoFilter) -> Node<Msg> 
     let active_count = todos.values().filter(|todo| !todo.completed).count();
 
     footer![
-        class!["footer"],
+        C!["footer"],
         span![
-            class!["todo-count"],
+            C!["todo-count"],
             strong![active_count.to_string()],
             span![format!(
                 " item{} left",
@@ -396,7 +391,7 @@ fn view_footer(todos: &IndexMap<TodoId, Todo>, filter: TodoFilter) -> Node<Msg> 
 
 fn view_filters(filter: TodoFilter) -> Node<Msg> {
     ul![
-        class!["filters"],
+        C!["filters"],
         view_filter("All", TodoFilter::All, filter),
         view_filter("Active", TodoFilter::Active, filter),
         view_filter("Completed", TodoFilter::Completed, filter),
@@ -405,7 +400,7 @@ fn view_filters(filter: TodoFilter) -> Node<Msg> {
 
 fn view_filter(title: &str, filter: TodoFilter, current_filter: TodoFilter) -> Node<Msg> {
     li![a![
-        class!["selected" => filter == current_filter],
+        C![IF!(filter == current_filter => "selected")],
         attrs! {
             At::Href => format!("/{}", filter.to_url_path())
         },
@@ -414,18 +409,16 @@ fn view_filter(title: &str, filter: TodoFilter, current_filter: TodoFilter) -> N
     ]]
 }
 
-fn view_clear_completed(todos: &IndexMap<TodoId, Todo>) -> Node<Msg> {
+fn view_clear_completed(todos: &IndexMap<TodoId, Todo>) -> Option<Node<Msg>> {
     let completed_count = todos.values().filter(|todo| todo.completed).count();
 
-    if completed_count > 0 {
+    IF!(completed_count > 0 => {
         button![
-            class!["clear-completed"],
+            C!["clear-completed"],
             ev(Ev::Click, |_| Msg::ClearCompleted),
             format!("Clear completed ({})", completed_count),
         ]
-    } else {
-        empty![]
-    }
+    })
 }
 
 // ------ ------
@@ -433,8 +426,6 @@ fn view_clear_completed(todos: &IndexMap<TodoId, Todo>) -> Node<Msg> {
 // ------ ------
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    App::builder(update, view)
-        .after_mount(after_mount)
-        .build_and_start();
+pub fn start() {
+    App::start("app", init, update, view);
 }
