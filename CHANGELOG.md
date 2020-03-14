@@ -22,6 +22,7 @@
 - Added method `App::start` (alternative to `AppBuilder`) (#376, #382).
 - Added trait `GetElemnt` + included in the `prelude` (alternative to `MountPoint`, used in `AppStart`).
 - Updated example `subscribe` to use `App::start`.
+- Derive `Debug` for `ElRef`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
