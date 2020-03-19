@@ -1,0 +1,15 @@
+[package]
+name = "markdown"
+version = "0.1.0"
+authors = ["Florian Warzecha <liketechnik@disroot.org>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[build-dependencies]
+pulldown-cmark = "0.7.0"
+
+[dependencies]
+seed = {path = "../../"}
+wasm-bindgen = "0.2.55"

@@ -102,6 +102,7 @@ members = [
     "examples/counter_advanced",
     "examples/canvas",
     "examples/drop_zone",
+    "examples/markdown",
     "examples/mathjax",
     "examples/orders",
     # "examples/server_integration",   # has own workspace
