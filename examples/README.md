@@ -31,6 +31,9 @@ Intended as a more sophisticated demo of basic functionality.
 ### [Drop Zone](drop_zone)
 How to create a drop-zone.
 
+### [Markdown](markdown)
+How to render markdown.
+
 ### [Mathjax](mathjax)
 An example using Mathjax, for LaTeX-like math notation.
 

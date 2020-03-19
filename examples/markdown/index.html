@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <meta name="description" content="" />
+
+    <link rel="icon" type="image/png" href="/public/favicon.png" />
+
+    <!-- GitHub MD styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.css" integrity="sha256-jyWGtg7ocpUge8Zt/LotwFtPMWE23n7jgkHHw/Ejh+U=" crossorigin="anonymous" />
+
+    <title>Markdown example</title>
+
+    <!-- Because of Edge, see https://github.com/samthor/fast-text-encoding -->
+    <script type="text/javascript" src="/public/text-polyfill.min.js"></script>
+  </head>
+  <body>
+    <section id="app"></section>
+    <script type="module">
+      // https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html
+      import init from '/pkg/package.js';
+      init('/pkg/package_bg.wasm');
+    </script>
+  </body>
+</html>

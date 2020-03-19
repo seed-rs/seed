@@ -1,6 +1,8 @@
 # Changelog
 
 [unreleased]
+- Enabled all additional markdown [extensions](https://docs.rs/pulldown-cmark/latest/pulldown_cmark/struct.Options.html).
+- Added `markdown` example.
 - Removed `'static` bound from `El` and `Node`.
 - [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
 - Added Aria attributes.
@@ -21,7 +23,7 @@
 - Added `cmds`, `streams`, `subs`, `CmdHandle`, `SubHandle` and `StreamHandle` into the Seed's prelude.
 - [BREAKING] Removed module `next_tick`.
 - Added method `App::start` (alternative to `AppBuilder`) (#376, #382).
-- Added trait `GetElemnt` + included in the `prelude` (alternative to `MountPoint`, used in `AppStart`).
+- Added trait `GetElement` + included in the `prelude` (alternative to `MountPoint`, used in `AppStart`).
 - Updated example `subscribe` to use `App::start`.
 - Derive `Debug` for `ElRef`.
 - Added macros `C!` and `IF!` and helper `not` (#375).
