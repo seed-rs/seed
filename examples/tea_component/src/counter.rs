@@ -53,7 +53,7 @@ pub fn update<Ms: 'static, GMs>(
 //     View
 // ------ ------
 
-pub fn view<Ms>(
+pub fn view<Ms: 'static>(
     model: &Model,
     on_click: impl FnOnce() -> Ms + Clone + 'static,
     to_msg: impl FnOnce(Msg) -> Ms + Clone + 'static,

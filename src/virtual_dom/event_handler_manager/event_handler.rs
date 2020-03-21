@@ -5,7 +5,7 @@ use std::{fmt, rc::Rc};
 /// `EventHandler`s are called by DOM event listeners with the same trigger (an event to listen to).
 pub struct EventHandler<Ms> {
     pub trigger: Ev,
-    pub callback: Rc<dyn Fn(web_sys::Event) -> Ms>,
+    pub callback: Rc<dyn Fn(web_sys::Event) -> Option<Ms>>,
 }
 
 // @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
@@ -19,7 +19,10 @@ impl<Ms> Clone for EventHandler<Ms> {
 }
 
 impl<Ms> EventHandler<Ms> {
-    pub fn new(trigger: impl Into<Ev>, callback: impl Fn(web_sys::Event) -> Ms + 'static) -> Self {
+    pub fn new(
+        trigger: impl Into<Ev>,
+        callback: impl Fn(web_sys::Event) -> Option<Ms> + 'static,
+    ) -> Self {
         Self {
             trigger: trigger.into(),
             callback: Rc::new(callback),
@@ -35,8 +38,8 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for EventHandler<
     ) -> EventHandler<OtherMs> {
         let old_callback = self.callback;
         let new_callback = move |event| {
-            let msg = old_callback(event);
-            (msg_mapper.clone())(msg)
+            let msg_mapper = msg_mapper.clone();
+            old_callback(event).map(msg_mapper)
         };
         EventHandler {
             trigger: self.trigger,
