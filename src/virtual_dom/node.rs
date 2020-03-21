@@ -15,7 +15,7 @@ pub use text::Text;
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
-pub enum Node<Ms: 'static> {
+pub enum Node<Ms> {
     Element(El<Ms>),
     //    Svg(El<Ms>),  // May be best to handle using namespace field on El
     Text(Text),

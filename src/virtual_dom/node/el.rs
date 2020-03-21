@@ -16,7 +16,7 @@ use std::borrow::Cow;
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Element)
 /// [`web_sys` reference](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
 #[derive(Debug)] // todo: Custom debug implementation where children are on new lines and indented.
-pub struct El<Ms: 'static> {
+pub struct El<Ms> {
     // Ms is a message type, as in part of TEA.
     // We call this 'El' instead of 'Element' for brevity, and to prevent
     // confusion with web_sys::Element.

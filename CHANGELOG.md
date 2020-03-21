@@ -1,6 +1,7 @@
 # Changelog
 
 [unreleased]
+- Removed `'static` bound from `El` and `Node`.
 - [BREAKING] Changed `perform_cmd` and `fetch` return type to `T` instead of `Result<T, T>`.
 - Added Aria attributes.
 - Added example `tea_component`.
