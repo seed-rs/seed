@@ -21,7 +21,7 @@ impl<Ms: 'static> SubManager<Ms> {
 
     pub fn subscribe<SubMs: 'static + Clone>(
         &mut self,
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> Option<Ms> + Clone + 'static,
     ) {
         let sub = Subscription::new(handler);
         let (type_id, id) = (sub.type_id, sub.id);
@@ -35,7 +35,7 @@ impl<Ms: 'static> SubManager<Ms> {
 
     pub fn subscribe_with_handle<SubMs: 'static + Clone>(
         &mut self,
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> Option<Ms> + Clone + 'static,
     ) -> SubHandle {
         let sub = Subscription::new(handler);
         let (type_id, id) = (sub.type_id, sub.id);
@@ -65,7 +65,7 @@ impl<Ms: 'static> SubManager<Ms> {
             .map(|subscriptions| {
                 subscriptions
                     .values()
-                    .map(|subscription| (&subscription.handler)(&notification.message))
+                    .filter_map(|subscription| (&subscription.handler)(&notification.message))
                     .collect()
             })
             .unwrap_or_default()
@@ -89,13 +89,13 @@ impl Drop for SubHandle {
 struct Subscription<Ms> {
     type_id: TypeId,
     id: Uuid,
-    handler: Box<dyn Fn(&Box<dyn Any>) -> Ms>,
+    handler: Box<dyn Fn(&Box<dyn Any>) -> Option<Ms>>,
 }
 
 impl<Ms: 'static> Subscription<Ms> {
     #[allow(clippy::shadow_unrelated)]
     pub fn new<SubMs: 'static + Clone>(
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> Option<Ms> + Clone + 'static,
     ) -> Self {
         // Convert `FnOnce + Clone` to `Fn`.
         let handler = move |sub_msg: SubMs| handler.clone()(sub_msg);

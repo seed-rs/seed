@@ -6,7 +6,12 @@ use crate::app::{
 use crate::virtual_dom::view::View;
 use futures::future::FutureExt;
 use futures::stream::{Stream, StreamExt};
-use std::{any::Any, collections::VecDeque, convert::identity, future::Future};
+use std::{
+    any::{Any, TypeId},
+    collections::VecDeque,
+    convert::identity,
+    future::Future,
+};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = UndefinedGMsg> {
@@ -123,18 +128,44 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
         self
     }
 
-    fn subscribe<SubMs: 'static + Clone>(
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn subscribe<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> &mut Self {
+        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+        let t_type = TypeId::of::<MsU>();
+        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+            panic!("Handler can return only Msg or ()!");
+        }
+        let handler = move |sub_ms| {
+            let output = &mut Some(handler.clone()(sub_ms)) as &mut dyn Any;
+            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
+        };
+
         self.app.data.sub_manager.borrow_mut().subscribe(handler);
         self
     }
 
-    fn subscribe_with_handle<SubMs: 'static + Clone>(
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn subscribe_with_handle<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> SubHandle {
+        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+        let t_type = TypeId::of::<MsU>();
+        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+            panic!("Handler can return only Msg or ()!");
+        }
+        let handler = move |sub_ms| {
+            let output = &mut Some(handler.clone()(sub_ms)) as &mut dyn Any;
+            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
+        };
+
         self.app
             .data
             .sub_manager
