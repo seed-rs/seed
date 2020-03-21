@@ -137,11 +137,13 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
 
     /// Subscribe for messages with the `handler`s input type.
     ///
+    /// Handler has to return `Msg` or `()`.
+    ///
     /// # Example
     ///
     /// ```rust,no_run
     ///orders.subscribe(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
-    ///orders.subscribe(|greeting: &'static str| { log!(greeting); Msg::NoOp });
+    ///orders.subscribe(|greeting: &'static str| { log!(greeting) });
     ///orders.subscribe(Msg::UrlChanged)  // `update(... Msg::UrlChanged(subs::UrlChanged(url)) =>`
     /// ...
     ///orders.notify(counter::DoReset);
@@ -149,29 +151,45 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// ```
     ///
     /// _Note:_: Use the alternative `subscribe_with_handle` to control `sub`'s lifetime.
-    fn subscribe<SubMs: 'static + Clone>(
+    ///
+    /// # Panics
+    ///
+    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn subscribe<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> &mut Self;
 
     /// Subscribe for messages with the `handler`s input type.
     /// - Returns `SubHandle` that you should save to your `Model`.
     ///   The `sub` is cancelled on the handle drop.
     ///
+    /// Handler has to return `Msg` or `()`.
+    ///
     /// # Example
     ///
     /// ```rust,no_run
     ///let sub_handle = orders.subscribe_with_handle(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
-    ///orders.subscribe_with_handle(|greeting: &'static str| { log!(greeting); Msg::NoOp });
+    ///orders.subscribe_with_handle(|greeting: &'static str| { log!(greeting) });
     ///let url_changed_handle = orders.subscribe_with_handle(Msg::UrlChanged)  // `update(... Msg::UrlChanged(subs::UrlChanged(url)) =>`
     /// ...
     ///orders.notify(counter::DoReset);
     ///orders.notify("Hello!");
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[must_use = "subscription is cancelled on its handle drop"]
-    fn subscribe_with_handle<SubMs: 'static + Clone>(
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn subscribe_with_handle<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
-        handler: impl FnOnce(SubMs) -> Ms + Clone + 'static,
+        handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> SubHandle;
 
     /// Stream `Msg`s.

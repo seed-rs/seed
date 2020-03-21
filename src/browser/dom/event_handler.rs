@@ -124,6 +124,12 @@ pub fn raw_ev<Ms: 'static, MsU: 'static>(
 
 /// Create an event handler that accepts a closure, and passes a `web_sys::Event`, allowing full control of
 /// event-handling.
+///
+/// Handler has to return `Msg` or `()`.
+///
+/// # Panics
+///
+/// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 #[allow(clippy::shadow_unrelated)]
 // @TODO remove `'static`s once `optin_builtin_traits`
 // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
