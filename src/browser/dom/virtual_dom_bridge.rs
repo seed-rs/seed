@@ -25,10 +25,7 @@ pub(crate) fn assign_ws_nodes_to_el<Ms>(document: &Document, el: &mut El<Ms>) {
     }
 }
 /// Recursively create `web_sys::Node`s, and place them in the vdom Nodes' fields.
-pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>)
-where
-    Ms: 'static,
-{
+pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>) {
     match node {
         Node::Element(el) => assign_ws_nodes_to_el(document, el),
         Node::Text(text) => {
