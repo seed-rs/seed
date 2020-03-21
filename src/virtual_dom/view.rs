@@ -1,6 +1,6 @@
 use super::{El, Node};
 
-pub trait View<Ms: 'static> {
+pub trait View<Ms> {
     fn els(self) -> Vec<Node<Ms>>;
 }
 
@@ -16,13 +16,13 @@ impl<Ms> View<Ms> for Vec<El<Ms>> {
     }
 }
 
-impl<Ms: 'static> View<Ms> for Node<Ms> {
+impl<Ms> View<Ms> for Node<Ms> {
     fn els(self) -> Vec<Node<Ms>> {
         vec![self]
     }
 }
 
-impl<Ms: 'static> View<Ms> for Vec<Node<Ms>> {
+impl<Ms> View<Ms> for Vec<Node<Ms>> {
     fn els(self) -> Vec<Node<Ms>> {
         self
     }
