@@ -31,6 +31,10 @@ jobs:
           profile: minimal
           toolchain: stable
 
+      # @TODO remove once https://github.com/rustwasm/wasm-pack/pull/819 released
+      - name: Install wasm-pack
+        run: cargo install --git https://github.com/dalcde/wasm-pack
+
       - name: Install cargo-make
         run: cargo install cargo-make
 
