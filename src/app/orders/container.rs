@@ -76,16 +76,51 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
         self
     }
 
-    fn perform_cmd(&mut self, cmd: impl Future<Output = Ms> + 'static) -> &mut Self {
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn perform_cmd<MsU: 'static>(&mut self, cmd: impl Future<Output = MsU> + 'static) -> &mut Self {
         let app = self.app.clone();
-        let cmd = cmd.map(move |msg| app.update(msg));
+        let cmd = cmd.map(move |msg_or_unit| {
+            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+            let t_type = TypeId::of::<MsU>();
+            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+                panic!("Cmds can return only Msg or ()!");
+            }
+            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
+            if let Some(msg) = msg_or_unit
+                .downcast_mut::<Option<Ms>>()
+                .and_then(Option::take)
+            {
+                app.update(msg)
+            }
+        });
         CmdManager::perform_cmd(cmd);
         self
     }
 
-    fn perform_cmd_with_handle(&mut self, cmd: impl Future<Output = Ms> + 'static) -> CmdHandle {
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn perform_cmd_with_handle<MsU: 'static>(
+        &mut self,
+        cmd: impl Future<Output = MsU> + 'static,
+    ) -> CmdHandle {
         let app = self.app.clone();
-        let cmd = cmd.map(move |msg| app.update(msg));
+        let cmd = cmd.map(move |msg_or_unit| {
+            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+            let t_type = TypeId::of::<MsU>();
+            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+                panic!("Cmds can return only Msg or ()!");
+            }
+            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
+            if let Some(msg) = msg_or_unit
+                .downcast_mut::<Option<Ms>>()
+                .and_then(Option::take)
+            {
+                app.update(msg)
+            }
+        });
         CmdManager::perform_cmd_with_handle(cmd)
     }
 

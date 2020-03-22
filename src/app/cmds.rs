@@ -11,10 +11,15 @@ use gloo_timers::future::TimeoutFuture;
 ///
 /// ```rust,no_run
 ///orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout));
+///orders.perform_cmd(cmds::timeout(1000, || log!("Tick!")));
 /// ```
-pub fn timeout<Ms>(
+///
+/// # Panics
+///
+/// Panics when command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+pub fn timeout<MsU>(
     ms: u32,
-    handler: impl FnOnce() -> Ms + Clone + 'static,
-) -> impl Future<Output = Ms> {
+    handler: impl FnOnce() -> MsU + Clone + 'static,
+) -> impl Future<Output = MsU> {
     TimeoutFuture::new(ms).map(move |_| handler())
 }
