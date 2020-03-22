@@ -19,7 +19,6 @@ struct Model {
 enum Msg {
     JsReady(bool),
     Tick(String),
-    NoOp,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -35,19 +34,13 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 //
                 // _Note:_ Create an issue in Seed's repo if this solution is not usable for you,
                 // we can find another one or try to integrate some locks.
-                orders.perform_cmd(wrap_in_future(enableClock));
+                orders.perform_cmd(async { enableClock() });
             } else {
                 log!("JS is NOT ready!");
             }
         }
         Msg::Tick(time) => model.time_from_js = Some(time),
-        Msg::NoOp => (),
     }
-}
-
-async fn wrap_in_future(f: impl FnOnce()) -> Msg {
-    f();
-    Msg::NoOp
 }
 
 // ------ ------
