@@ -173,16 +173,51 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
             .subscribe_with_handle(handler)
     }
 
-    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) -> &mut Self {
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn stream<MsU: 'static>(&mut self, stream: impl Stream<Item = MsU> + 'static) -> &mut Self {
         let app = self.app.clone();
-        let stream = stream.map(move |msg| app.update(msg));
+        let stream = stream.map(move |msg_or_unit| {
+            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+            let t_type = TypeId::of::<MsU>();
+            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+                panic!("Streams can stream only Msg or ()!");
+            }
+            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
+            if let Some(msg) = msg_or_unit
+                .downcast_mut::<Option<Ms>>()
+                .and_then(Option::take)
+            {
+                app.update(msg)
+            }
+        });
         StreamManager::stream(stream);
         self
     }
 
-    fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle {
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn stream_with_handle<MsU: 'static>(
+        &mut self,
+        stream: impl Stream<Item = MsU> + 'static,
+    ) -> StreamHandle {
         let app = self.app.clone();
-        let stream = stream.map(move |msg| app.update(msg));
+        let stream = stream.map(move |msg_or_unit| {
+            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+            let t_type = TypeId::of::<MsU>();
+            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+                panic!("Streams can stream only Msg or ()!");
+            }
+            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
+            if let Some(msg) = msg_or_unit
+                .downcast_mut::<Option<Ms>>()
+                .and_then(Option::take)
+            {
+                app.update(msg)
+            }
+        });
         StreamManager::stream_with_handle(stream)
     }
 }
