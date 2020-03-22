@@ -18,7 +18,7 @@ use gloo_timers::future::TimeoutFuture;
 ///
 /// # Panics
 ///
-/// Panics when command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+/// Panics when the command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 pub fn timeout<MsU>(
     ms: u32,
     handler: impl FnOnce() -> MsU + Clone + 'static,

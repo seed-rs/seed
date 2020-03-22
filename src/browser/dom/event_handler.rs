@@ -129,7 +129,7 @@ pub fn raw_ev<Ms: 'static, MsU: 'static>(
 ///
 /// # Panics
 ///
-/// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+/// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 #[allow(clippy::shadow_unrelated)]
 // @TODO remove `'static`s once `optin_builtin_traits`
 // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
