@@ -5,15 +5,22 @@ use gloo_timers::future::IntervalStream;
 
 /// Stream no values on predefined time interval in milliseconds.
 ///
+/// Handler has to return `Msg` or `()`.
+///
 /// # Example
 ///
 /// ```rust,no_run
-///orders.stream_with_handle(streams::interval(1000, || Msg::OnTick));
+///orders.stream(streams::interval(1000, || Msg::OnTick));
+///orders.stream_with_handle(streams::interval(1000, || log!("Tick!")));
 /// ```
-pub fn interval<Ms>(
+///
+/// # Panics
+///
+/// Panics when stream doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+pub fn interval<MsU>(
     ms: u32,
-    handler: impl FnOnce() -> Ms + Clone + 'static,
-) -> impl Stream<Item = Ms> {
+    handler: impl FnOnce() -> MsU + Clone + 'static,
+) -> impl Stream<Item = MsU> {
     IntervalStream::new(ms).map(move |_| handler.clone()())
 }
 

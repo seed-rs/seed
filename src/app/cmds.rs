@@ -7,6 +7,8 @@ use gloo_timers::future::TimeoutFuture;
 
 /// Set timeout in milliseconds.
 ///
+/// Handler has to return `Msg` or `()`.
+///
 /// # Example
 ///
 /// ```rust,no_run
