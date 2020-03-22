@@ -20,6 +20,6 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub msg_listeners: RefCell<MsgListeners<Ms>>,
     pub scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
     pub after_next_render_callbacks:
-        RefCell<Vec<Box<dyn FnOnce(Option<RenderTimestampDelta>) -> Ms>>>,
+        RefCell<Vec<Box<dyn FnOnce(Option<RenderTimestampDelta>) -> Option<Ms>>>>,
     pub render_timestamp: Cell<Option<RenderTimestamp>>,
 }

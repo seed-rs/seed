@@ -526,7 +526,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
                 .after_next_render_callbacks
                 .replace(Vec::new())
                 .into_iter()
-                .map(|callback| Effect::Msg(callback(timestamp_delta)))
+                .filter_map(|callback| callback(timestamp_delta).map(Effect::Msg))
                 .collect(),
         );
     }
