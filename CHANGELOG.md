@@ -31,7 +31,7 @@
 - Updated `todomvc` example to use `C!`, `IF!`, `matches!` and `App::start`.
 - `ev` accepts handlers which return `Msg` and `()` (#394).
 - [BREAKING] `EventHandler::new` accepts only handlers which return `Option<Msg>`.
-- [BREAKING] `ev`-like functions require `'static` bound for generic types (temporary). 
+- [BREAKING] `ev`-like functions and some `Orders` method require `'static` bound for generic types (temporary). 
 - `Orders::after_next_render` now accepts callbacks with returns `Msg` or `()`.
 - Updated examples `update_from_js` and `todomvc`.
 
