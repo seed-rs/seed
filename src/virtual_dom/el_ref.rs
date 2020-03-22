@@ -103,7 +103,6 @@ impl<E: Clone + JsCast> ElRef<E> {
     ///         .expect("get `my_input`")
     ///         .focus()
     ///         .expect("focus 'my_input'");
-    ///     Msg::NoOp
     ///  });
     ///
     pub fn map_type<T>(&self) -> ElRef<T> {

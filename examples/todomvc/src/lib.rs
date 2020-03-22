@@ -187,7 +187,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let input = model.refs.editing_todo_input.clone();
             orders.after_next_render(move |_| {
                 input.get().expect("get `editing_todo_input`").select();
-                Msg::NoOp
             });
         }
         Msg::EditingTodoTitleChanged(title) => {

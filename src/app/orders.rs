@@ -145,12 +145,20 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// - It's useful when you want to use DOM API or make animations.
     /// - You can call this function multiple times - callbacks will be executed in the same order.
+    /// - Callback has to return `Msg` or `()`.
     ///
     /// _Note:_ [performance.now()](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now)
     ///  is used under the hood to get timestamps.
-    fn after_next_render(
+    ///
+    /// # Panics
+    ///
+    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn after_next_render<MsU: 'static>(
         &mut self,
-        callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
+        callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
     ) -> &mut Self;
 
     /// Subscribe for messages with the `handler`s input type.

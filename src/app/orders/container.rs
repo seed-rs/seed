@@ -151,10 +151,23 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
         Box::new(identity)
     }
 
-    fn after_next_render(
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn after_next_render<MsU: 'static>(
         &mut self,
-        callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
+        callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
     ) -> &mut Self {
+        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+        let t_type = TypeId::of::<MsU>();
+        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+            panic!("Callback can return only Msg or ()!");
+        }
+        let callback = move |delta| {
+            let output = &mut Some(callback(delta)) as &mut dyn Any;
+            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
+        };
+
         self.app
             .data
             .after_next_render_callbacks

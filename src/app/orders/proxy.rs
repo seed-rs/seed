@@ -163,13 +163,31 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         Box::new(move |ms| f(ms))
     }
 
-    fn after_next_render(
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn after_next_render<MsU: 'static>(
         &mut self,
-        callback: impl FnOnce(Option<RenderTimestampDelta>) -> Ms + 'static,
+        callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
     ) -> &mut Self {
+        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+        let t_type = TypeId::of::<MsU>();
+        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+            panic!("Callback can return only Msg or ()!");
+        }
+        let callback = move |timestamp_delta| {
+            let output = &mut Some(callback(timestamp_delta)) as &mut dyn Any;
+            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
+        };
+
         let f = self.f.clone();
-        self.orders_container
-            .after_next_render(move |timestamp_delta| f(callback(timestamp_delta)));
+        self.clone_app()
+            .data
+            .after_next_render_callbacks
+            .borrow_mut()
+            .push(Box::new(move |timestamp_delta| {
+                callback(timestamp_delta).map(|ms| f(ms))
+            }));
         self
     }
 
