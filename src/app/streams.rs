@@ -16,7 +16,7 @@ use gloo_timers::future::IntervalStream;
 ///
 /// # Panics
 ///
-/// Panics when stream doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+/// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 pub fn interval<MsU>(
     ms: u32,
     handler: impl FnOnce() -> MsU + Clone + 'static,

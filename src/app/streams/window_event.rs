@@ -23,7 +23,7 @@ use web_sys::{Event, EventTarget};
 ///
 /// # Panics
 ///
-/// Panics when stream doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+/// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 pub fn window_event<MsU>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(Event) -> MsU + Clone + 'static,

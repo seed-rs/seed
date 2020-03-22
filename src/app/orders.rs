@@ -49,7 +49,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///orders.notify("Hello!");
     /// ...
     ///orders.subscribe(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
-    ///orders.subscribe(|greeting: &'static str| { log!(greeting) });
+    ///orders.subscribe(|greeting: &'static str| log!(greeting));
     /// ```
     ///
     /// _Note:_: All notifications are pushed to the queue - i.e. `update` function is NOT called immediately.
@@ -98,7 +98,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[must_use = "cmd is aborted on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`
@@ -152,7 +152,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -169,7 +169,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// ```rust,no_run
     ///orders.subscribe(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
-    ///orders.subscribe(|greeting: &'static str| { log!(greeting) });
+    ///orders.subscribe(|greeting: &'static str| log!(greeting));
     ///orders.subscribe(Msg::UrlChanged)  // `update(... Msg::UrlChanged(subs::UrlChanged(url)) =>`
     /// ...
     ///orders.notify(counter::DoReset);
@@ -180,7 +180,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -199,7 +199,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// ```rust,no_run
     ///let sub_handle = orders.subscribe_with_handle(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
-    ///orders.subscribe_with_handle(|greeting: &'static str| { log!(greeting) });
+    ///orders.subscribe_with_handle(|greeting: &'static str| log!(greeting));
     ///let url_changed_handle = orders.subscribe_with_handle(Msg::UrlChanged)  // `update(... Msg::UrlChanged(subs::UrlChanged(url)) =>`
     /// ...
     ///orders.notify(counter::DoReset);
@@ -208,7 +208,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[must_use = "subscription is cancelled on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`
@@ -231,7 +231,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -250,7 +250,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[must_use = "stream is stopped on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`
