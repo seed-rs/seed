@@ -1,10 +1,6 @@
 use enclose::enc;
 use indexmap::IndexMap;
-use seed::{
-    browser::service::storage::{self, Storage},
-    prelude::*,
-    *,
-};
+use seed::{browser::service::web_storage::WebStorage, prelude::*, *};
 use serde::{Deserialize, Serialize};
 use std::mem;
 use uuid::Uuid;
@@ -37,7 +33,7 @@ struct Data {
 }
 
 struct Services {
-    local_storage: Storage,
+    local_storage: WebStorage,
 }
 
 #[derive(Default)]
@@ -95,8 +91,8 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         .subscribe(Msg::UrlChanged)
         .notify(subs::UrlChanged(url));
 
-    let local_storage = storage::get_storage().expect("get `LocalStorage`");
-    let data = storage::load_data(&local_storage, STORAGE_KEY).unwrap_or_default();
+    let local_storage = web_storage::get_local_storage().expect("get `LocalStorage`");
+    let data = local_storage.load(STORAGE_KEY).unwrap_or_default();
 
     Model {
         data,
@@ -204,7 +200,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
     }
     // Save data into LocalStorage. It should be optimized in a real-world application.
-    storage::store_data(&model.services.local_storage, STORAGE_KEY, &data);
+    model.services.local_storage.save(STORAGE_KEY, &data);
 }
 
 // ------ ------

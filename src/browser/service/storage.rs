@@ -10,6 +10,7 @@ extern crate serde_json;
 
 pub type Storage = web_sys::Storage;
 
+#[deprecated(since = "0.7.0", note = "Use web_storage::get_local_storage")]
 #[allow(clippy::module_name_repetitions)]
 pub fn get_storage() -> Option<Storage> {
     web_sys::window()
@@ -20,6 +21,7 @@ pub fn get_storage() -> Option<Storage> {
 }
 
 /// Create a new store, from a serializable data structure.
+#[deprecated(since = "0.7.0", note = "use WebStorage.store_data")]
 pub fn store_data<T>(storage: &Storage, name: &str, data: &T)
 where
     T: serde::Serialize,
@@ -31,6 +33,7 @@ where
 }
 
 /// Load a store, to a deserializable data structure.
+#[deprecated(since = "0.7.0", note = "use WebStorage.load_data")]
 pub fn load_data<T>(storage: &Storage, name: &str) -> Option<T>
 where
     T: serde::de::DeserializeOwned,
