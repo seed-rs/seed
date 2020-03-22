@@ -1,6 +1,7 @@
 use super::{
     super::{
-        App, CmdHandle, RenderTimestampDelta, StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
+        App, CmdHandle, CmdManager, RenderTimestampDelta, StreamHandle, StreamManager, SubHandle,
+        UndefinedGMsg,
     },
     Orders, OrdersContainer,
 };
@@ -85,16 +86,54 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
     }
 
     #[allow(clippy::redundant_closure)]
-    fn perform_cmd(&mut self, cmd: impl Future<Output = Ms> + 'static) -> &mut Self {
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn perform_cmd<MsU: 'static>(&mut self, cmd: impl Future<Output = MsU> + 'static) -> &mut Self {
         let f = self.f.clone();
-        self.orders_container.perform_cmd(cmd.map(move |ms| f(ms)));
+        let app = self.clone_app();
+        let cmd = cmd.map(move |msg_or_unit| {
+            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+            let t_type = TypeId::of::<MsU>();
+            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+                panic!("Cmds can return only Msg or ()!");
+            }
+            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
+            if let Some(msg) = msg_or_unit
+                .downcast_mut::<Option<Ms>>()
+                .and_then(Option::take)
+            {
+                app.update(f(msg))
+            }
+        });
+        CmdManager::perform_cmd(cmd);
         self
     }
 
-    fn perform_cmd_with_handle(&mut self, cmd: impl Future<Output = Ms> + 'static) -> CmdHandle {
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn perform_cmd_with_handle<MsU: 'static>(
+        &mut self,
+        cmd: impl Future<Output = MsU> + 'static,
+    ) -> CmdHandle {
         let f = self.f.clone();
-        self.orders_container
-            .perform_cmd_with_handle(cmd.map(move |ms| f(ms)))
+        let app = self.clone_app();
+        let cmd = cmd.map(move |msg_or_unit| {
+            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
+            let t_type = TypeId::of::<MsU>();
+            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
+                panic!("Cmds can return only Msg or ()!");
+            }
+            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
+            if let Some(msg) = msg_or_unit
+                .downcast_mut::<Option<Ms>>()
+                .and_then(Option::take)
+            {
+                app.update(f(msg))
+            }
+        });
+        CmdManager::perform_cmd_with_handle(cmd)
     }
 
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self {

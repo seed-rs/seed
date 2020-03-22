@@ -49,7 +49,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///orders.notify("Hello!");
     /// ...
     ///orders.subscribe(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
-    ///orders.subscribe(|greeting: &'static str| { log!(greeting); Msg::NoOp });
+    ///orders.subscribe(|greeting: &'static str| { log!(greeting) });
     /// ```
     ///
     /// _Note:_: All notifications are pushed to the queue - i.e. `update` function is NOT called immediately.
@@ -72,11 +72,18 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// ```rust,no_run
     ///orders.perform_cmd(cmds::timeout(2000, || Msg::OnTimeout)));
-    ///orders.perform_cmd(async { log!("Hello!"); Msg::NoOp });
+    ///orders.perform_cmd(async { log!("Hello!") });
     /// ```
     ///
     /// _Note:_: Use the alternative `perform_cmd_with_handle` to control `cmd`'s lifetime.
-    fn perform_cmd(&mut self, cmd: impl Future<Output = Ms> + 'static) -> &mut Self;
+    ///
+    /// # Panics
+    ///
+    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn perform_cmd<MsU: 'static>(&mut self, cmd: impl Future<Output = MsU> + 'static) -> &mut Self;
 
     /// Execute given future `cmd` and send its output (`Msg`) to `update` function.
     /// - Returns `CmdHandle` that you should save to your `Model`.
@@ -86,10 +93,20 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// ```rust,no_run
     ///let timeout_handle = orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout)));
-    ///let cmd_handle = orders.perform_cmd_with_handle(async { log!("Hello!"); Msg::NoOp });
+    ///let cmd_handle = orders.perform_cmd_with_handle(async { log!("Hello!") });
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics when command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[must_use = "cmd is aborted on its handle drop"]
-    fn perform_cmd_with_handle(&mut self, cmd: impl Future<Output = Ms> + 'static) -> CmdHandle;
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn perform_cmd_with_handle<MsU: 'static>(
+        &mut self,
+        cmd: impl Future<Output = MsU> + 'static,
+    ) -> CmdHandle;
 
     /// Similar to `send_msg`, but calls function `sink` with the given global message.
     fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self;
@@ -100,6 +117,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// Similar to `perform_g_cmd`, but result is send to function `sink`.
     /// - Returns `CmdHandle` that you should save to your `Model`.
     ///   `cmd` is aborted on the handle drop.
+    ///
     #[must_use = "cmd is aborted on its handle drop"]
     fn perform_g_cmd_with_handle(
         &mut self,
