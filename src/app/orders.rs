@@ -192,7 +192,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> SubHandle;
 
-    /// Stream `Msg`s.
+    /// Stream `Msg`s or `()`s.
     ///
     /// # Example
     ///
@@ -202,9 +202,16 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// ```
     ///
     /// _Note:_: Use the alternative `stream_with_handle` to control `stream`'s lifetime.
-    fn stream(&mut self, stream: impl Stream<Item = Ms> + 'static) -> &mut Self;
+    ///
+    /// # Panics
+    ///
+    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn stream<MsU: 'static>(&mut self, stream: impl Stream<Item = MsU> + 'static) -> &mut Self;
 
-    /// Stream `Msg`s.
+    /// Stream `Msg`s or `()`s.
     /// - Returns `StreamHandle` that you should save to your `Model`.
     ///   The `stream` is cancelled on the handle drop.
     ///
@@ -214,6 +221,16 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///let timer_handler = orders.stream_with_handle(streams::interval(1000, || Msg::OnTick)));
     ///let stream_handler = orders.stream_with_handle(streams::window_event(Ev::Resize, |_| Msg::OnResize));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
     #[must_use = "stream is stopped on its handle drop"]
-    fn stream_with_handle(&mut self, stream: impl Stream<Item = Ms> + 'static) -> StreamHandle;
+    #[allow(clippy::shadow_unrelated)]
+    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
+    fn stream_with_handle<MsU: 'static>(
+        &mut self,
+        stream: impl Stream<Item = MsU> + 'static,
+    ) -> StreamHandle;
 }
