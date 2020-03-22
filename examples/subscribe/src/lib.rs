@@ -55,13 +55,11 @@ enum Msg {
     Counter(counter::Msg),
     ResetCounter,
 
-    NumberReceived(i32),
     StringReceived(String),
     UrlRequested(subs::UrlRequested),
     UrlChanged(subs::UrlChanged),
 
     SetTimeout,
-    OnTimeout,
     CancelTimeout,
 
     OnResize,
@@ -72,7 +70,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::Subscribe => {
             log!("--- Subscribe ---");
             model.sub_handles = vec![
-                orders.subscribe_with_handle(Msg::NumberReceived),
+                orders.subscribe_with_handle(|number: i32| log!("Number Received", number)),
                 orders.subscribe_with_handle(Msg::StringReceived),
                 orders.subscribe_with_handle(Msg::StringReceived),
             ];
@@ -99,9 +97,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::ResetCounter => {
             orders.notify(counter::DoReset);
         }
-        Msg::NumberReceived(message) => {
-            log!("Number Received", message);
-        }
         Msg::StringReceived(message) => {
             log!("String Received", message);
         }
@@ -114,10 +109,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SetTimeout => {
             log!("--- Set timeout ---");
             model.timeout_handle =
-                Some(orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout)));
-        }
-        Msg::OnTimeout => {
-            log!("Timeout!!");
+                Some(orders.perform_cmd_with_handle(cmds::timeout(2000, || log!("Timeout!!"))));
         }
         Msg::CancelTimeout => {
             log!("--- Cancel timeout ---");
@@ -144,7 +136,7 @@ fn view(model: &Model) -> impl View<Msg> {
         centered_column.clone(),
         "Open Console log, please",
         divider(),
-        // --- Subscribe | Notify | Unsubscribe
+        // --- Subscribe | Notify | Unsubscribe ---
         div![with_spaces(vec![
             button![ev(Ev::Click, |_| Msg::Subscribe), "1. Subscribe"],
             button![ev(Ev::Click, |_| Msg::Notify), "2. Notify"],
@@ -161,6 +153,7 @@ fn view(model: &Model) -> impl View<Msg> {
             button![
                 style! {St::MarginTop => rem(0.5)},
                 ev(Ev::Click, |_| Msg::ResetCounter),
+                ev(Ev::Click, |_| log!("Reset counter!")),
                 "Reset counter"
             ],
         ],

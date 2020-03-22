@@ -12,15 +12,22 @@ use web_sys::{Event, EventTarget};
 
 /// Stream `Window` `web_sys::Event`s.
 ///
+/// Handler has to return `Msg` or `()`.
+///
 /// # Example
 ///
 /// ```rust,no_run
 ///orders.stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
+///orders.stream_with_handle(streams::window_event(Ev::Click, |_| log!("Clicked!")));
 /// ```
-pub fn window_event<Ms>(
+///
+/// # Panics
+///
+/// Panics when stream doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+pub fn window_event<MsU>(
     trigger: impl Into<Ev>,
-    handler: impl FnOnce(Event) -> Ms + Clone + 'static,
-) -> impl Stream<Item = Ms> {
+    handler: impl FnOnce(Event) -> MsU + Clone + 'static,
+) -> impl Stream<Item = MsU> {
     EventStream::new(&window(), trigger.into()).map(move |event| handler.clone()(event))
 }
 
