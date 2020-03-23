@@ -10,6 +10,7 @@ use futures::future::{Future, FutureExt};
 use futures::stream::{Stream, StreamExt};
 use std::{
     any::{Any, TypeId},
+    convert::identity,
     rc::Rc,
 };
 
@@ -86,23 +87,19 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
     }
 
     #[allow(clippy::redundant_closure)]
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn perform_cmd<MsU: 'static>(&mut self, cmd: impl Future<Output = MsU> + 'static) -> &mut Self {
         let f = self.f.clone();
         let app = self.clone_app();
-        let cmd = cmd.map(move |msg_or_unit| {
-            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-            let t_type = TypeId::of::<MsU>();
-            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-                panic!("Cmds can return only Msg or ()!");
-            }
-            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
-            if let Some(msg) = msg_or_unit
-                .downcast_mut::<Option<Ms>>()
-                .and_then(Option::take)
-            {
+
+        let handler = map_callback_return_to_option_ms!(
+            dyn Fn(MsU) -> Option<Ms>,
+            identity,
+            "Cmds can return only Msg, Option<Msg> or ()!",
+            Box
+        );
+
+        let cmd = cmd.map(move |msg| {
+            if let Some(msg) = handler(msg) {
                 app.update(f(msg))
             }
         });
@@ -110,26 +107,22 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
         self
     }
 
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn perform_cmd_with_handle<MsU: 'static>(
         &mut self,
         cmd: impl Future<Output = MsU> + 'static,
     ) -> CmdHandle {
         let f = self.f.clone();
         let app = self.clone_app();
-        let cmd = cmd.map(move |msg_or_unit| {
-            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-            let t_type = TypeId::of::<MsU>();
-            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-                panic!("Cmds can return only Msg or ()!");
-            }
-            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
-            if let Some(msg) = msg_or_unit
-                .downcast_mut::<Option<Ms>>()
-                .and_then(Option::take)
-            {
+
+        let handler = map_callback_return_to_option_ms!(
+            dyn Fn(MsU) -> Option<Ms>,
+            identity,
+            "Cmds can return only Msg, Option<Msg> or ()!",
+            Box
+        );
+
+        let cmd = cmd.map(move |msg| {
+            if let Some(msg) = handler(msg) {
                 app.update(f(msg))
             }
         });
@@ -163,22 +156,16 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
         Box::new(move |ms| f(ms))
     }
 
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn after_next_render<MsU: 'static>(
         &mut self,
         callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
     ) -> &mut Self {
-        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-        let t_type = TypeId::of::<MsU>();
-        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-            panic!("Callback can return only Msg or ()!");
-        }
-        let callback = move |timestamp_delta| {
-            let output = &mut Some(callback(timestamp_delta)) as &mut dyn Any;
-            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-        };
+        let callback = map_callback_return_to_option_ms!(
+            dyn FnOnce(Option<RenderTimestampDelta>) -> Option<Ms>,
+            callback,
+            "Callback can return only Msg, Option<Msg> or ()!",
+            Box
+        );
 
         let f = self.f.clone();
         self.clone_app()
@@ -191,25 +178,18 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
         self
     }
 
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn subscribe<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> &mut Self {
+        let handler = map_callback_return_to_option_ms!(
+            dyn Fn(SubMs) -> Option<Ms>,
+            handler.clone(),
+            "Handler can return only Msg, Option<Msg> or ()!",
+            Rc
+        );
+
         let f = self.f.clone();
-
-        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-        let t_type = TypeId::of::<MsU>();
-        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-            panic!("Handler can return only Msg or ()!");
-        }
-        let handler = move |sub_ms| {
-            let output = &mut Some(handler.clone()(sub_ms)) as &mut dyn Any;
-            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-        };
-
         self.clone_app()
             .data
             .sub_manager
@@ -218,25 +198,18 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
         self
     }
 
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn subscribe_with_handle<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> SubHandle {
+        let handler = map_callback_return_to_option_ms!(
+            dyn Fn(SubMs) -> Option<Ms>,
+            handler.clone(),
+            "Handler can return only Msg, Option<Msg> or ()!",
+            Rc
+        );
+
         let f = self.f.clone();
-
-        // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-        let t_type = TypeId::of::<MsU>();
-        if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-            panic!("Handler can return only Msg or ()!");
-        }
-        let handler = move |sub_ms| {
-            let output = &mut Some(handler.clone()(sub_ms)) as &mut dyn Any;
-            output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-        };
-
         self.clone_app()
             .data
             .sub_manager
@@ -244,23 +217,19 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
             .subscribe_with_handle(move |sub_ms| handler(sub_ms).map(|ms| f(ms)))
     }
 
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn stream<MsU: 'static>(&mut self, stream: impl Stream<Item = MsU> + 'static) -> &mut Self {
         let f = self.f.clone();
         let app = self.clone_app();
-        let stream = stream.map(move |msg_or_unit| {
-            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-            let t_type = TypeId::of::<MsU>();
-            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-                panic!("Streams can stream only Msg or ()!");
-            }
-            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
-            if let Some(msg) = msg_or_unit
-                .downcast_mut::<Option<Ms>>()
-                .and_then(Option::take)
-            {
+
+        let handler = map_callback_return_to_option_ms!(
+            dyn Fn(MsU) -> Option<Ms>,
+            identity,
+            "Streams can stream only Msg, Option<Msg> or ()!",
+            Box
+        );
+
+        let stream = stream.map(move |msg| {
+            if let Some(msg) = handler(msg) {
                 app.update(f(msg))
             }
         });
@@ -268,26 +237,22 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
         self
     }
 
-    #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
-    // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn stream_with_handle<MsU: 'static>(
         &mut self,
         stream: impl Stream<Item = MsU> + 'static,
     ) -> StreamHandle {
         let f = self.f.clone();
         let app = self.clone_app();
-        let stream = stream.map(move |msg_or_unit| {
-            // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-            let t_type = TypeId::of::<MsU>();
-            if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-                panic!("Streams can stream only Msg or ()!");
-            }
-            let msg_or_unit = &mut Some(msg_or_unit) as &mut dyn Any;
-            if let Some(msg) = msg_or_unit
-                .downcast_mut::<Option<Ms>>()
-                .and_then(Option::take)
-            {
+
+        let handler = map_callback_return_to_option_ms!(
+            dyn Fn(MsU) -> Option<Ms>,
+            identity,
+            "Streams can stream only Msg, Option<Msg> or ()!",
+            Box
+        );
+
+        let stream = stream.map(move |msg| {
+            if let Some(msg) = handler(msg) {
                 app.update(f(msg))
             }
         });

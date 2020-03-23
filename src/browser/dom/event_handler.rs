@@ -4,27 +4,22 @@
 use super::super::util;
 use crate::virtual_dom::{Ev, EventHandler};
 use std::any::{Any, TypeId};
+use std::rc::Rc;
 use wasm_bindgen::JsCast;
 
 /// Create an event that passes a String of field text, for fast input handling.
 #[allow(clippy::shadow_unrelated)]
-// @TODO remove `'static`s once `optin_builtin_traits`
-// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
 pub fn input_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(String) -> MsU + 'static + Clone,
 ) -> EventHandler<Ms> {
-    // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-    let t_type = TypeId::of::<MsU>();
-    if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-        panic!("Handler can return only Msg or ()!");
-    }
-    let handler = move |text| {
-        let output = &mut Some(handler.clone()(text)) as &mut dyn Any;
-        output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-    };
-
-    let closure_handler = move |event: web_sys::Event| {
+    let handler = map_callback_return_to_option_ms!(
+        dyn Fn(String) -> Option<Ms>,
+        handler.clone(),
+        "Handler can return only Msg, Option<Msg> or ()!",
+        Rc
+    );
+    let handler = move |event: web_sys::Event| {
         let value = event
             .target()
             .as_ref()
@@ -34,87 +29,67 @@ pub fn input_ev<Ms: 'static, MsU: 'static>(
             .unwrap_or_default();
         handler(value)
     };
-    EventHandler::new(trigger, closure_handler)
+    EventHandler::new(trigger, handler)
 }
 
 /// Create an event that passes a `web_sys::KeyboardEvent`, allowing easy access
 /// to items like `key_code`() and key().
 #[allow(clippy::shadow_unrelated)]
-// @TODO remove `'static`s once `optin_builtin_traits`
-// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
 pub fn keyboard_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::KeyboardEvent) -> MsU + 'static + Clone,
 ) -> EventHandler<Ms> {
-    // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-    let t_type = TypeId::of::<MsU>();
-    if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-        panic!("Handler can return only Msg or ()!");
-    }
-    let handler = move |event| {
-        let output = &mut Some(handler.clone()(event)) as &mut dyn Any;
-        output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-    };
-
-    let closure_handler = move |event: web_sys::Event| {
+    let handler = map_callback_return_to_option_ms!(
+        dyn Fn(web_sys::KeyboardEvent) -> Option<Ms>,
+        handler.clone(),
+        "Handler can return only Msg, Option<Msg> or ()!",
+        Rc
+    );
+    let handler = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::KeyboardEvent>().unwrap().clone())
     };
-    EventHandler::new(trigger, closure_handler)
+    EventHandler::new(trigger, handler)
 }
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
-// @TODO remove `'static`s once `optin_builtin_traits`
-// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
 pub fn mouse_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::MouseEvent) -> MsU + 'static + Clone,
 ) -> EventHandler<Ms> {
-    // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-    let t_type = TypeId::of::<MsU>();
-    if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-        panic!("Handler can return only Msg or ()!");
-    }
-    let handler = move |event| {
-        let output = &mut Some(handler.clone()(event)) as &mut dyn Any;
-        output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-    };
-
-    let closure_handler = move |event: web_sys::Event| {
+    let handler = map_callback_return_to_option_ms!(
+        dyn Fn(web_sys::MouseEvent) -> Option<Ms>,
+        handler.clone(),
+        "Handler can return only Msg, Option<Msg> or ()!",
+        Rc
+    );
+    let handler = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::MouseEvent>().unwrap().clone())
     };
-    EventHandler::new(trigger, closure_handler)
+    EventHandler::new(trigger, handler)
 }
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
-// @TODO remove `'static`s once `optin_builtin_traits`
-// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
 pub fn pointer_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::PointerEvent) -> MsU + 'static + Clone,
 ) -> EventHandler<Ms> {
-    // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-    let t_type = TypeId::of::<MsU>();
-    if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-        panic!("Handler can return only Msg or ()!");
-    }
-    let handler = move |event| {
-        let output = &mut Some(handler.clone()(event)) as &mut dyn Any;
-        output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-    };
-
-    let closure_handler = move |event: web_sys::Event| {
+    let handler = map_callback_return_to_option_ms!(
+        dyn Fn(web_sys::PointerEvent) -> Option<Ms>,
+        handler.clone(),
+        "Handler can return only Msg, Option<Msg> or ()!",
+        Rc
+    );
+    let handler = move |event: web_sys::Event| {
         handler(event.dyn_ref::<web_sys::PointerEvent>().unwrap().clone())
     };
-    EventHandler::new(trigger, closure_handler)
+    EventHandler::new(trigger, handler)
 }
 
 /// Create an event that accepts a closure, and passes a `web_sys::Event`, allowing full control of
 /// event-handling.
 #[deprecated(since = "0.6.0", note = "Use `ev` instead.")]
-// @TODO remove `'static`s once `optin_builtin_traits`
-// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
 pub fn raw_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::Event) -> MsU + 'static + Clone,
@@ -125,30 +100,23 @@ pub fn raw_ev<Ms: 'static, MsU: 'static>(
 /// Create an event handler that accepts a closure, and passes a `web_sys::Event`, allowing full control of
 /// event-handling.
 ///
-/// Handler has to return `Msg` or `()`.
+/// Handler has to return `Msg`, `Option<Msg>` or `()`.
 ///
 /// # Panics
 ///
 /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 #[allow(clippy::shadow_unrelated)]
-// @TODO remove `'static`s once `optin_builtin_traits`
-// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
 pub fn ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::Event) -> MsU + 'static + Clone,
 ) -> EventHandler<Ms> {
-    // @TODO refactor once `optin_builtin_traits` is stable (https://github.com/seed-rs/seed/issues/391)
-    let t_type = TypeId::of::<MsU>();
-    if t_type != TypeId::of::<Ms>() && t_type != TypeId::of::<()>() {
-        panic!("Handler can return only Msg or ()!");
-    }
-    let handler = move |event| {
-        let output = &mut Some(handler.clone()(event)) as &mut dyn Any;
-        output.downcast_mut::<Option<Ms>>().and_then(Option::take)
-    };
-
-    let closure_handler = move |event: web_sys::Event| handler(event);
-    EventHandler::new(trigger, closure_handler)
+    let handler = map_callback_return_to_option_ms!(
+        dyn Fn(web_sys::Event) -> Option<Ms>,
+        handler.clone(),
+        "Handler can return only Msg, Option<Msg> or ()!",
+        Rc
+    );
+    EventHandler::new(trigger, move |event| handler(event))
 }
 
 /// Create an event that passes no data, other than it occurred. Foregoes using a closure,
