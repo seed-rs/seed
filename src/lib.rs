@@ -9,6 +9,37 @@
 )]
 #![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
 
+// @TODO Refactor once `optin_builtin_traits` or `negative_impls`
+// @TODO is stable (https://github.com/seed-rs/seed/issues/391).
+// --
+// @TODO Remove `'static` bound from all `MsU`s once `optin_builtin_traits`, `negative_impls`
+// @TODO or https://github.com/rust-lang/rust/issues/41875 is stable.
+macro_rules! map_callback_return_to_option_ms {
+    ($cb_type:ty, $callback:expr, $panic_text:literal, $output_type:tt) => {{
+        let t_type = TypeId::of::<MsU>();
+        if t_type == TypeId::of::<Ms>() {
+            $output_type::new(move |value| {
+                (&mut Some($callback(value)) as &mut dyn Any)
+                    .downcast_mut::<Option<Ms>>()
+                    .and_then(Option::take)
+            })
+        } else if t_type == TypeId::of::<Option<Ms>>() {
+            $output_type::new(move |value| {
+                (&mut $callback(value) as &mut dyn Any)
+                    .downcast_mut::<Option<Ms>>()
+                    .and_then(Option::take)
+            })
+        } else if t_type == TypeId::of::<()>() {
+            $output_type::new(move |value| {
+                $callback(value);
+                None
+            }) as $output_type<$cb_type>
+        } else {
+            panic!($panic_text);
+        }
+    }};
+}
+
 // @TODO move to prelude (?)
 pub use crate::{
     app::{App, AppBuilder},

@@ -40,7 +40,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// Don't rerender web page after model update.
     fn skip(&mut self) -> &mut Self;
 
-    /// Notify all subscription handlers which listen for messages with the `message`'s type.
+    /// Notify all subscription handlers that listen for messages with the `message`'s type.
     ///
     /// # Example
     ///
@@ -66,7 +66,9 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// _Note:_: All `msg`s are pushed to the queue - i.e. `update` function is NOT called immediately.
     fn send_msg(&mut self, msg: Ms) -> &mut Self;
 
-    /// Execute given future `cmd` and send its output (`Msg`) to `update` function.
+    /// Execute `cmd` and send its output (if it's `Msg`) to `update` function.
+    ///
+    /// Output has to be `Msg`, `Option<Msg>` or `()`.
     ///
     /// # Example
     ///
@@ -79,15 +81,18 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the output isn't `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn perform_cmd<MsU: 'static>(&mut self, cmd: impl Future<Output = MsU> + 'static) -> &mut Self;
 
-    /// Execute given future `cmd` and send its output (`Msg`) to `update` function.
+    /// Execute given `cmd` and send its output (if it's `Msg`) to `update` function.
     /// - Returns `CmdHandle` that you should save to your `Model`.
     ///   The `cmd` is aborted on the handle drop.
+    ///
+    /// Output has to be `Msg`, `Option<Msg>` or `()`.
     ///
     /// # Example
     ///
@@ -98,10 +103,11 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when the command doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the output isn't `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[must_use = "cmd is aborted on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn perform_cmd_with_handle<MsU: 'static>(
         &mut self,
@@ -127,7 +133,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// Get app instance. Cloning is cheap because `App` contains only `Rc` fields.
     fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs>;
 
-    /// Get function which maps module's `Msg` to app's (root's) one.
+    /// Get the function that maps module's `Msg` to app's (root's) one.
     ///
     /// # Example
     ///
@@ -145,16 +151,17 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// - It's useful when you want to use DOM API or make animations.
     /// - You can call this function multiple times - callbacks will be executed in the same order.
-    /// - Callback has to return `Msg` or `()`.
+    /// - Callback has to return `Msg`, `Option<Msg>` or `()`.
     ///
     /// _Note:_ [performance.now()](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now)
     ///  is used under the hood to get timestamps.
     ///
     /// # Panics
     ///
-    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn after_next_render<MsU: 'static>(
         &mut self,
@@ -163,7 +170,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
 
     /// Subscribe for messages with the `handler`s input type.
     ///
-    /// Handler has to return `Msg` or `()`.
+    /// Handler has to return `Msg`, `Option<Msg>` or `()`.
     ///
     /// # Example
     ///
@@ -180,9 +187,10 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn subscribe<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
@@ -193,7 +201,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// - Returns `SubHandle` that you should save to your `Model`.
     ///   The `sub` is cancelled on the handle drop.
     ///
-    /// Handler has to return `Msg` or `()`.
+    /// Handler has to return `Msg`, `Option<Msg>` or `()`.
     ///
     /// # Example
     ///
@@ -208,17 +216,18 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[must_use = "subscription is cancelled on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn subscribe_with_handle<MsU: 'static, SubMs: 'static + Clone>(
         &mut self,
         handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> SubHandle;
 
-    /// Stream `Msg`s or `()`s.
+    /// Stream `Msg`, `Option<Msg>` or `()`.
     ///
     /// # Example
     ///
@@ -231,13 +240,14 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn stream<MsU: 'static>(&mut self, stream: impl Stream<Item = MsU> + 'static) -> &mut Self;
 
-    /// Stream `Msg`s or `()`s.
+    /// Stream `Msg`, `Option<Msg>` or `()`.
     /// - Returns `StreamHandle` that you should save to your `Model`.
     ///   The `stream` is cancelled on the handle drop.
     ///
@@ -250,10 +260,11 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ///
     /// # Panics
     ///
-    /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+    /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+    /// (It will be changed to a compile-time error).
     #[must_use = "stream is stopped on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
-    // @TODO remove `'static`s once `optin_builtin_traits`
+    // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn stream_with_handle<MsU: 'static>(
         &mut self,
