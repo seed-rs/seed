@@ -82,7 +82,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::add_event_handler`
-    pub fn add_listener(&mut self, event_handler: EventHandler<Ms>) -> &mut Self {
+    pub fn add_event_handler(&mut self, event_handler: EventHandler<Ms>) -> &mut Self {
         if let Node::Element(el) = self {
             el.add_event_handler(event_handler);
         }
