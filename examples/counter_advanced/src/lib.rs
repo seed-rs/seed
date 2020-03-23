@@ -46,8 +46,8 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 
 /// The top-level view we pass to the virtual dom.
 ///  - Must accept the model as its only argument.
-///  - Output has to implement trait `ElContainer` (e.g. `Node<Msg>` or `Vec<Node<Msg>`).
-fn view(model: &Model) -> impl View<Msg> {
+///  - Output has to implement trait `IntoNodes` (e.g. `Node<Msg>` or `Vec<Node<Msg>`).
+fn view(model: &Model) -> impl IntoNodes<Msg> {
     let plural = if model.count.abs() == 1 { "" } else { "s" };
     let text = format!("{} {}{} so far", model.count, model.what_we_count, plural);
 

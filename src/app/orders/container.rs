@@ -3,7 +3,7 @@ use crate::app::{
     effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, CmdHandle, CmdManager,
     Notification, ShouldRender, StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
 };
-use crate::virtual_dom::view::View;
+use crate::virtual_dom::IntoNodes;
 use futures::future::FutureExt;
 use futures::stream::{Stream, StreamExt};
 use std::{
@@ -14,14 +14,14 @@ use std::{
 };
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersContainer<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs = UndefinedGMsg> {
+pub struct OrdersContainer<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>, GMs = UndefinedGMsg> {
     pub(crate) should_render: ShouldRender,
     pub(crate) effects: VecDeque<Effect<Ms, GMs>>,
-    app: App<Ms, Mdl, ElC, GMs>,
+    app: App<Ms, Mdl, INodes, GMs>,
 }
 
-impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
-    pub fn new(app: App<Ms, Mdl, ElC, GMs>) -> Self {
+impl<Ms, Mdl, INodes: IntoNodes<Ms>, GMs> OrdersContainer<Ms, Mdl, INodes, GMs> {
+    pub fn new(app: App<Ms, Mdl, INodes, GMs>) -> Self {
         Self {
             should_render: ShouldRender::Render,
             effects: VecDeque::new(),
@@ -35,18 +35,18 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> OrdersContainer<Ms, Mdl, ElC, GMs> {
     }
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
-    for OrdersContainer<Ms, Mdl, ElC, GMs>
+impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
+    for OrdersContainer<Ms, Mdl, INodes, GMs>
 {
     type AppMs = Ms;
     type Mdl = Mdl;
-    type ElC = ElC;
+    type INodes = INodes;
 
     #[allow(clippy::redundant_closure)]
     fn proxy<ChildMs: 'static>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
-    ) -> OrdersProxy<ChildMs, Ms, Mdl, ElC, GMs> {
+    ) -> OrdersProxy<ChildMs, Ms, Mdl, INodes, GMs> {
         OrdersProxy::new(self, move |child_ms| f.clone()(child_ms))
     }
 
@@ -143,7 +143,7 @@ impl<Ms: 'static, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
         CmdManager::perform_cmd_with_handle(cmd)
     }
 
-    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs> {
+    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs> {
         self.app.clone()
     }
 

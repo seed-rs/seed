@@ -102,8 +102,8 @@ pub mod prelude {
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
         shortcuts::*,
         virtual_dom::{
-            el_ref::el_ref, AsAtValue, At, AtValue, CSSValue, El, ElRef, Ev, EventHandler, Node,
-            St, Tag, ToClasses, UpdateEl, UpdateElForIterator, View,
+            el_ref::el_ref, AsAtValue, At, AtValue, CSSValue, El, ElRef, Ev, EventHandler,
+            IntoNodes, Node, St, Tag, ToClasses, UpdateEl, UpdateElForIterator, View,
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.

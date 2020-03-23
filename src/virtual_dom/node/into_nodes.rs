@@ -1,6 +1,10 @@
 use super::Node;
 
+/// Items that implement `IntoNodes`:
+/// - Can be used in `nodes!`.
+/// - Can be returned from `view`.
 pub trait IntoNodes<Ms> {
+    /// Converts item or items to `Vec<Node<Ms>`.
     fn into_nodes(self) -> Vec<Node<Ms>>;
 }
 

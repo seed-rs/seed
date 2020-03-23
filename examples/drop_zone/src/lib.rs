@@ -74,7 +74,7 @@ macro_rules! stop_and_prevent {
      };
 }
 
-fn view(model: &Model) -> impl View<Msg> {
+fn view(model: &Model) -> impl IntoNodes<Msg> {
     div![
         style![
             St::Height => px(200),

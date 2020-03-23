@@ -1,6 +1,6 @@
 use super::super::OrdersContainer;
 use crate::browser::Url;
-use crate::virtual_dom::View;
+use crate::virtual_dom::IntoNodes;
 
 #[allow(clippy::module_name_repetitions)]
 pub struct UndefinedAfterMount;
@@ -52,34 +52,34 @@ impl<Mdl> AfterMount<Mdl> {
 // ------ IntoAfterMount ------
 
 #[allow(clippy::module_name_repetitions)]
-pub trait IntoAfterMount<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
+pub trait IntoAfterMount<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs> {
     fn into_after_mount(
         self: Box<Self>,
         init_url: Url,
-        orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
+        orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
     ) -> AfterMount<Mdl>;
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> IntoAfterMount<Ms, Mdl, ElC, GMs> for F
+impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs, F> IntoAfterMount<Ms, Mdl, INodes, GMs> for F
 where
-    F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> AfterMount<Mdl>,
+    F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> AfterMount<Mdl>,
 {
     fn into_after_mount(
         self: Box<Self>,
         init_url: Url,
-        orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
+        orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
     ) -> AfterMount<Mdl> {
         self(init_url, orders)
     }
 }
 
-impl<Ms: 'static, Mdl: Default, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs>
+impl<Ms: 'static, Mdl: Default, INodes: IntoNodes<Ms>, GMs> IntoAfterMount<Ms, Mdl, INodes, GMs>
     for UndefinedAfterMount
 {
     fn into_after_mount(
         self: Box<Self>,
         _: Url,
-        _: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
+        _: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
     ) -> AfterMount<Mdl> {
         AfterMount::default()
     }
