@@ -12,7 +12,7 @@ use web_sys::{Event, EventTarget};
 
 /// Stream `Window` `web_sys::Event`s.
 ///
-/// Handler has to return `Msg` or `()`.
+/// Handler has to return `Msg`, `Option<Msg>` or `()`.
 ///
 /// # Example
 ///
@@ -23,7 +23,8 @@ use web_sys::{Event, EventTarget};
 ///
 /// # Panics
 ///
-/// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+/// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+/// (It will be changed to a compile-time error).
 pub fn window_event<MsU>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(Event) -> MsU + Clone + 'static,
