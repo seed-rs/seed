@@ -91,7 +91,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg, GMsg>) {
 //     View
 // ------ ------
 
-fn view(model: &Model) -> impl View<Msg> {
+fn view(model: &Model) -> impl IntoNodes<Msg> {
     vec![
         button![
             format!("Clicked: {}", model.clicks),

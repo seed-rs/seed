@@ -74,7 +74,7 @@ fn _dirac_3(left: &str, middle: &str, right: &str) -> String {
 }
 
 #[allow(clippy::too_many_lines)]
-fn view(model: &Model) -> impl View<Msg> {
+fn view(model: &Model) -> impl IntoNodes<Msg> {
     div![
         style!{
             St::MaxWidth => px(750),

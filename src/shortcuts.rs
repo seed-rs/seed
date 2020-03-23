@@ -329,6 +329,8 @@ macro_rules! style {
 #[macro_export]
 /// Converts items to `Vec<Node<Ms>` and returns flattened `Vec<Node<Ms>`.
 ///
+/// Items have to implement the trait `IntoNodes`.
+///
 /// # Example
 ///
 /// ```rust,no_run

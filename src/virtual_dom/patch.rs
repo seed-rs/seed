@@ -1,19 +1,19 @@
 //! This module contains code related to patching the VDOM. It can be considered
 //! a subset of the `vdom` module.
 
-use super::{El, Mailbox, Node, View};
+use super::{El, IntoNodes, Mailbox, Node};
 use crate::app::App;
 use crate::browser::dom::virtual_dom_bridge;
 use wasm_bindgen::JsCast;
 use web_sys::Document;
 
-fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
+fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC, GMs>,
+    app: &App<Ms, Mdl, INodes, GMs>,
 ) -> Option<&'a web_sys::Node> {
     // At this step, we already assume we have the right element - either
     // by entering this func directly for the top-level, or recursively after
@@ -73,15 +73,15 @@ fn patch_el<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
     new.node_ws.as_ref()
 }
 
-pub(crate) fn patch_els<'a, Ms, Mdl, ElC, GMs, OI, NI>(
+pub(crate) fn patch_els<'a, Ms, Mdl, INodes, GMs, OI, NI>(
     document: &Document,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC, GMs>,
+    app: &App<Ms, Mdl, INodes, GMs>,
     old_el_ws: &web_sys::Node,
     old_children_iter: OI,
     new_children_iter: NI,
 ) where
-    ElC: View<Ms>,
+    INodes: IntoNodes<Ms>,
     OI: ExactSizeIterator<Item = Node<Ms>>,
     NI: ExactSizeIterator<Item = &'a mut Node<Ms>>,
 {
@@ -175,14 +175,14 @@ fn add_el_helper<Ms>(
 
 /// Routes patching through different channels, depending on the Node variant
 /// of old and new.
-pub(crate) fn patch<'a, Ms, Mdl, ElC: View<Ms>, GMs>(
+pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
     document: &Document,
     old: Node<Ms>,
     new: &'a mut Node<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, ElC, GMs>,
+    app: &App<Ms, Mdl, INodes, GMs>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // We go through each combination of new and old variants to determine how to patch.

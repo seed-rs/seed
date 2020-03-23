@@ -1,6 +1,6 @@
 use super::{super::OrdersContainer, AfterMount, IntoAfterMount, MountType, UrlHandling};
 use crate::browser::Url;
-use crate::virtual_dom::View;
+use crate::virtual_dom::IntoNodes;
 
 pub struct UndefinedInitAPI;
 #[allow(clippy::module_name_repetitions)]
@@ -66,34 +66,39 @@ impl<Mdl> Init<Mdl> {
     since = "0.5.0",
     note = "Part of old Init API. Use `AfterMount` instead."
 )]
-pub type InitFn<Ms, Mdl, ElC, GMs> =
-    Box<dyn FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>>;
+pub type InitFn<Ms, Mdl, INodes, GMs> =
+    Box<dyn FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Init<Mdl>>;
 
 #[allow(clippy::module_name_repetitions)]
 #[deprecated(
     since = "0.5.0",
     note = "Part of old Init API. Use `IntoAfterMount` and `IntoBeforeMount` instead."
 )]
-pub trait IntoInit<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
-    fn into_init(self, init_url: Url, ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>;
+pub trait IntoInit<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs> {
+    fn into_init(self, init_url: Url, ord: &mut OrdersContainer<Ms, Mdl, INodes, GMs>)
+        -> Init<Mdl>;
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs, F> IntoInit<Ms, Mdl, ElC, GMs> for F
+impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs, F> IntoInit<Ms, Mdl, INodes, GMs> for F
 where
-    F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl>,
+    F: FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Init<Mdl>,
 {
-    fn into_init(self, init_url: Url, ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> {
+    fn into_init(
+        self,
+        init_url: Url,
+        ord: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
+    ) -> Init<Mdl> {
         self(init_url, ord)
     }
 }
 
-impl<Ms: 'static, Mdl, ElC: View<Ms>, GMs> IntoAfterMount<Ms, Mdl, ElC, GMs>
-    for (Init<Mdl>, OrdersContainer<Ms, Mdl, ElC, GMs>)
+impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs> IntoAfterMount<Ms, Mdl, INodes, GMs>
+    for (Init<Mdl>, OrdersContainer<Ms, Mdl, INodes, GMs>)
 {
     fn into_after_mount(
         self: Box<Self>,
         _: Url,
-        ord: &mut OrdersContainer<Ms, Mdl, ElC, GMs>,
+        ord: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
     ) -> AfterMount<Mdl> {
         let (init, old_ord) = *self;
         ord.merge(old_ord);

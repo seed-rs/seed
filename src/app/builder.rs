@@ -1,6 +1,6 @@
 use super::{types::*, App, AppInitCfg, OrdersContainer};
 use crate::browser::{url, Url};
-use crate::virtual_dom::View;
+use crate::virtual_dom::IntoNodes;
 use std::marker::PhantomData;
 
 pub mod after_mount;
@@ -35,9 +35,9 @@ impl Default for BeforeAfterInitAPI<UndefinedAfterMount> {
 }
 
 // TODO Remove when removing the other `InitAPI`s.
-pub trait InitAPI<Ms: 'static, Mdl, ElC: View<Ms>, GMs> {
+pub trait InitAPI<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs> {
     type Builder;
-    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, INodes, GMs>;
 }
 
 // TODO Remove when removing the other `InitAPI`s.
@@ -61,9 +61,9 @@ pub trait InitAPIData {
     fn after_mount<
         Ms: 'static,
         Mdl,
-        ElC: View<Ms>,
+        INodes: IntoNodes<Ms>,
         GMs,
-        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+        NewIAM: IntoAfterMount<Ms, Mdl, INodes, GMs>,
     >(
         self,
         into_after_mount: NewIAM,
@@ -73,7 +73,7 @@ pub trait InitAPIData {
         since = "0.5.0",
         note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
     )]
-    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+    fn init<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs, NewII: IntoInit<Ms, Mdl, INodes, GMs>>(
         self,
         into_init: NewII,
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII>;
@@ -95,14 +95,14 @@ pub trait InitAPIData {
 impl<
         Ms: 'static,
         Mdl: 'static,
-        ElC: 'static + View<Ms>,
+        INodes: 'static + IntoNodes<Ms>,
         GMs: 'static,
         MP: MountPoint,
-        II: IntoInit<Ms, Mdl, ElC, GMs>,
-    > InitAPI<Ms, Mdl, ElC, GMs> for MountPointInitInitAPI<MP, II>
+        II: IntoInit<Ms, Mdl, INodes, GMs>,
+    > InitAPI<Ms, Mdl, INodes, GMs> for MountPointInitInitAPI<MP, II>
 {
-    type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
-    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
+    type Builder = Builder<Ms, Mdl, INodes, GMs, Self>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, INodes, GMs> {
         let MountPointInitInitAPI {
             into_init,
             mount_point,
@@ -134,13 +134,13 @@ impl<
 impl<
         Ms: 'static,
         Mdl: 'static,
-        ElC: 'static + View<Ms>,
+        INodes: 'static + IntoNodes<Ms>,
         GMs: 'static,
-        IAM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>,
-    > InitAPI<Ms, Mdl, ElC, GMs> for BeforeAfterInitAPI<IAM>
+        IAM: 'static + IntoAfterMount<Ms, Mdl, INodes, GMs>,
+    > InitAPI<Ms, Mdl, INodes, GMs> for BeforeAfterInitAPI<IAM>
 {
-    type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
-    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
+    type Builder = Builder<Ms, Mdl, INodes, GMs, Self>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, INodes, GMs> {
         let BeforeAfterInitAPI {
             before_mount_handler,
             into_after_mount,
@@ -167,11 +167,11 @@ impl<
     }
 }
 // TODO Remove when removing the other `InitAPI`s.
-impl<Ms: 'static, Mdl: 'static + Default, ElC: 'static + View<Ms>, GMs: 'static>
-    InitAPI<Ms, Mdl, ElC, GMs> for UndefinedInitAPI
+impl<Ms: 'static, Mdl: 'static + Default, INodes: 'static + IntoNodes<Ms>, GMs: 'static>
+    InitAPI<Ms, Mdl, INodes, GMs> for UndefinedInitAPI
 {
-    type Builder = Builder<Ms, Mdl, ElC, GMs, Self>;
-    fn build(builder: Self::Builder) -> App<Ms, Mdl, ElC, GMs> {
+    type Builder = Builder<Ms, Mdl, INodes, GMs, Self>;
+    fn build(builder: Self::Builder) -> App<Ms, Mdl, INodes, GMs> {
         BeforeAfterInitAPI::build(Builder {
             update: builder.update,
             view: builder.view,
@@ -206,9 +206,9 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
     fn after_mount<
         Ms: 'static,
         Mdl,
-        ElC: View<Ms>,
+        INodes: IntoNodes<Ms>,
         GMs,
-        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+        NewIAM: IntoAfterMount<Ms, Mdl, INodes, GMs>,
     >(
         self,
         into_after_mount: NewIAM,
@@ -219,7 +219,7 @@ impl<MP, II> InitAPIData for MountPointInitInitAPI<MP, II> {
         }
     }
 
-    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+    fn init<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs, NewII: IntoInit<Ms, Mdl, INodes, GMs>>(
         self,
         into_init: NewII,
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
@@ -256,9 +256,9 @@ impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
     fn after_mount<
         Ms: 'static,
         Mdl,
-        ElC: View<Ms>,
+        INodes: IntoNodes<Ms>,
         GMs,
-        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+        NewIAM: IntoAfterMount<Ms, Mdl, INodes, GMs>,
     >(
         self,
         into_after_mount: NewIAM,
@@ -269,7 +269,7 @@ impl<IAM> InitAPIData for BeforeAfterInitAPI<IAM> {
         }
     }
 
-    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+    fn init<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs, NewII: IntoInit<Ms, Mdl, INodes, GMs>>(
         self,
         into_init: NewII,
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
@@ -306,9 +306,9 @@ impl InitAPIData for UndefinedInitAPI {
     fn after_mount<
         Ms: 'static,
         Mdl,
-        ElC: View<Ms>,
+        INodes: IntoNodes<Ms>,
         GMs,
-        NewIAM: IntoAfterMount<Ms, Mdl, ElC, GMs>,
+        NewIAM: IntoAfterMount<Ms, Mdl, INodes, GMs>,
     >(
         self,
         into_after_mount: NewIAM,
@@ -319,7 +319,7 @@ impl InitAPIData for UndefinedInitAPI {
         }
     }
 
-    fn init<Ms: 'static, Mdl, ElC: View<Ms>, GMs, NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+    fn init<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs, NewII: IntoInit<Ms, Mdl, INodes, GMs>>(
         self,
         into_init: NewII,
     ) -> MountPointInitInitAPI<Self::MountPoint, NewII> {
@@ -340,21 +340,23 @@ impl InitAPIData for UndefinedInitAPI {
 }
 
 /// Used to create and store initial app configuration, ie items passed by the app creator.
-pub struct Builder<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs, InitAPIType> {
-    update: UpdateFn<Ms, Mdl, ElC, GMs>,
-    view: ViewFn<Mdl, ElC>,
+pub struct Builder<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>, GMs, InitAPIType> {
+    update: UpdateFn<Ms, Mdl, INodes, GMs>,
+    view: ViewFn<Mdl, INodes>,
 
     routes: Option<RoutesFn<Ms>>,
     window_events: Option<WindowEventsFn<Ms, Mdl>>,
-    sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
+    sink: Option<SinkFn<Ms, Mdl, INodes, GMs>>,
 
     // TODO: Remove when removing legacy init fields.
     init_api: InitAPIType,
 }
 
-impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs, UndefinedInitAPI> {
+impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static>
+    Builder<Ms, Mdl, INodes, GMs, UndefinedInitAPI>
+{
     /// Constructs the Builder.
-    pub(super) fn new(update: UpdateFn<Ms, Mdl, ElC, GMs>, view: ViewFn<Mdl, ElC>) -> Self {
+    pub(super) fn new(update: UpdateFn<Ms, Mdl, INodes, GMs>, view: ViewFn<Mdl, INodes>) -> Self {
         Builder {
             update,
             view,
@@ -371,22 +373,22 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> Builder<Ms, Mdl, ElC, GMs, 
 impl<
         Ms,
         Mdl,
-        ElC: View<Ms> + 'static,
+        INodes: IntoNodes<Ms> + 'static,
         GMs: 'static,
         IAM: 'static,
         MP,
         II,
         InitAPIType: InitAPIData<IntoInit = II, MountPoint = MP, IntoAfterMount = IAM>,
-    > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
+    > Builder<Ms, Mdl, INodes, GMs, InitAPIType>
 {
     #[deprecated(
         since = "0.5.0",
         note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
     )]
-    pub fn init<NewII: IntoInit<Ms, Mdl, ElC, GMs>>(
+    pub fn init<NewII: IntoInit<Ms, Mdl, INodes, GMs>>(
         self,
         new_init: NewII,
-    ) -> Builder<Ms, Mdl, ElC, GMs, MountPointInitInitAPI<MP, NewII>> {
+    ) -> Builder<Ms, Mdl, INodes, GMs, MountPointInitInitAPI<MP, NewII>> {
         Builder {
             update: self.update,
             view: self.view,
@@ -423,7 +425,7 @@ impl<
     pub fn mount<NewMP: MountPoint>(
         self,
         new_mount_point: NewMP,
-    ) -> Builder<Ms, Mdl, ElC, GMs, MountPointInitInitAPI<NewMP, II>> {
+    ) -> Builder<Ms, Mdl, INodes, GMs, MountPointInitInitAPI<NewMP, II>> {
         Builder {
             update: self.update,
             view: self.view,
@@ -452,7 +454,7 @@ impl<
     pub fn before_mount(
         self,
         before_mount: impl FnOnce(Url) -> BeforeMount + 'static,
-    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<IAM>> {
+    ) -> Builder<Ms, Mdl, INodes, GMs, BeforeAfterInitAPI<IAM>> {
         Builder {
             update: self.update,
             view: self.view,
@@ -477,10 +479,10 @@ impl<
     ///    AfterMount::new(model).url_handling(UrlHandling::None)
     ///}
     /// ```
-    pub fn after_mount<AM: 'static + IntoAfterMount<Ms, Mdl, ElC, GMs>>(
+    pub fn after_mount<AM: 'static + IntoAfterMount<Ms, Mdl, INodes, GMs>>(
         self,
         after_mount: AM,
-    ) -> Builder<Ms, Mdl, ElC, GMs, BeforeAfterInitAPI<AM>> {
+    ) -> Builder<Ms, Mdl, INodes, GMs, BeforeAfterInitAPI<AM>> {
         Builder {
             update: self.update,
             view: self.view,
@@ -541,7 +543,7 @@ impl<
     ///    }
     ///}
     /// ```
-    pub fn sink(mut self, sink: SinkFn<Ms, Mdl, ElC, GMs>) -> Self {
+    pub fn sink(mut self, sink: SinkFn<Ms, Mdl, INodes, GMs>) -> Self {
         self.sink = Some(sink);
         self
     }
@@ -550,13 +552,13 @@ impl<
 impl<
         Ms: 'static,
         Mdl,
-        ElC: View<Ms> + 'static,
+        INodes: IntoNodes<Ms> + 'static,
         GMs: 'static,
-        InitAPIType: InitAPI<Ms, Mdl, ElC, GMs, Builder = Self>,
-    > Builder<Ms, Mdl, ElC, GMs, InitAPIType>
+        InitAPIType: InitAPI<Ms, Mdl, INodes, GMs, Builder = Self>,
+    > Builder<Ms, Mdl, INodes, GMs, InitAPIType>
 {
     /// Build, mount and start the app.
-    pub fn build_and_start(self) -> App<Ms, Mdl, ElC, GMs> {
+    pub fn build_and_start(self) -> App<Ms, Mdl, INodes, GMs> {
         InitAPIType::build(self).run()
     }
 }
@@ -564,18 +566,18 @@ impl<
 impl<
         Ms: 'static,
         Mdl,
-        ElC: View<Ms> + 'static,
+        INodes: IntoNodes<Ms> + 'static,
         GMs: 'static,
         MP: MountPoint,
-        II: IntoInit<Ms, Mdl, ElC, GMs>,
-    > Builder<Ms, Mdl, ElC, GMs, MountPointInitInitAPI<MP, II>>
+        II: IntoInit<Ms, Mdl, INodes, GMs>,
+    > Builder<Ms, Mdl, INodes, GMs, MountPointInitInitAPI<MP, II>>
 {
     /// Turn this [`Builder`] into an [`App`] which is ready to run.
     ///
     /// [`Builder`]: struct.Builder.html
     /// [`App`]: struct.App.html
     #[deprecated(since = "0.4.2", note = "Please use `.build_and_start` instead")]
-    pub fn finish(self) -> App<Ms, Mdl, ElC, GMs> {
+    pub fn finish(self) -> App<Ms, Mdl, INodes, GMs> {
         MountPointInitInitAPI::build(self)
     }
 }

@@ -1,5 +1,5 @@
 use super::{App, CmdHandle, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg};
-use crate::virtual_dom::View;
+use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
 use std::{any::Any, future::Future};
 
@@ -15,7 +15,7 @@ pub use proxy::OrdersProxy;
 pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     type AppMs: 'static;
     type Mdl: 'static;
-    type ElC: View<Self::AppMs> + 'static;
+    type INodes: IntoNodes<Self::AppMs> + 'static;
 
     /// Automatically map message type. It allows you to pass `Orders` into child module.
     ///
@@ -29,7 +29,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     fn proxy<ChildMs: 'static>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
-    ) -> OrdersProxy<ChildMs, Self::AppMs, Self::Mdl, Self::ElC, GMs>;
+    ) -> OrdersProxy<ChildMs, Self::AppMs, Self::Mdl, Self::INodes, GMs>;
 
     /// Schedule web page rerender after model update. It's the default behaviour.
     fn render(&mut self) -> &mut Self;
@@ -125,7 +125,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     ) -> CmdHandle;
 
     /// Get app instance. Cloning is cheap because `App` contains only `Rc` fields.
-    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs>;
+    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs>;
 
     /// Get function which maps module's `Msg` to app's (root's) one.
     ///

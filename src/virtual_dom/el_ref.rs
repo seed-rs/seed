@@ -24,7 +24,7 @@ pub fn el_ref<E: Clone>(reference: &ElRef<E>) -> ElRef<E> {
 ///     canvas: ElRef<web_sys::HtmlCanvasElement>,
 /// }
 ///
-/// fn view(model: &Model) -> impl View<Msg> {
+/// fn view(model: &Model) -> impl IntoNodes<Msg> {
 ///     canvas![
 ///         el_ref(&model.canvas),
 ///         attrs![

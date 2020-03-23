@@ -5,7 +5,7 @@ use super::{
     },
     Orders, OrdersContainer,
 };
-use crate::virtual_dom::View;
+use crate::virtual_dom::IntoNodes;
 use futures::future::{Future, FutureExt};
 use futures::stream::{Stream, StreamExt};
 use std::{
@@ -19,18 +19,18 @@ pub struct OrdersProxy<
     Ms,
     AppMs: 'static,
     Mdl: 'static,
-    ElC: View<AppMs>,
+    INodes: IntoNodes<AppMs>,
     GMs: 'static = UndefinedGMsg,
 > {
-    orders_container: &'a mut OrdersContainer<AppMs, Mdl, ElC, GMs>,
+    orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes, GMs>,
     f: Rc<dyn Fn(Ms) -> AppMs>,
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs>, GMs>
-    OrdersProxy<'a, Ms, AppMs, Mdl, ElC, GMs>
+impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs>, GMs>
+    OrdersProxy<'a, Ms, AppMs, Mdl, INodes, GMs>
 {
     pub fn new(
-        orders_container: &'a mut OrdersContainer<AppMs, Mdl, ElC, GMs>,
+        orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes, GMs>,
         f: impl Fn(Ms) -> AppMs + 'static,
     ) -> Self {
         OrdersProxy {
@@ -40,17 +40,17 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs>, GMs>
     }
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orders<Ms, GMs>
-    for OrdersProxy<'a, Ms, AppMs, Mdl, ElC, GMs>
+impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, GMs> Orders<Ms, GMs>
+    for OrdersProxy<'a, Ms, AppMs, Mdl, INodes, GMs>
 {
     type AppMs = AppMs;
     type Mdl = Mdl;
-    type ElC = ElC;
+    type INodes = INodes;
 
     fn proxy<ChildMs: 'static>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
-    ) -> OrdersProxy<ChildMs, AppMs, Mdl, ElC, GMs> {
+    ) -> OrdersProxy<ChildMs, AppMs, Mdl, INodes, GMs> {
         let previous_f = self.f.clone();
         OrdersProxy {
             orders_container: self.orders_container,
@@ -153,7 +153,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, ElC: View<AppMs> + 'static, GMs> Orde
         self.orders_container.perform_g_cmd_with_handle(g_cmd)
     }
 
-    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::ElC, GMs> {
+    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs> {
         self.orders_container.clone_app()
     }
 

@@ -5,7 +5,7 @@ use crate::browser::{
     util::{self, window, ClosureNew},
     Url,
 };
-use crate::virtual_dom::{patch, El, EventHandlerManager, Mailbox, Node, Tag, View};
+use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
 use builder::{
     init::{Init, InitFn as BuilderInitFn},
     IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
@@ -55,8 +55,8 @@ pub use sub_manager::{Notification, SubHandle, SubManager};
 
 pub struct UndefinedGMsg;
 
-type OptDynInitCfg<Ms, Mdl, ElC, GMs> =
-    Option<AppInitCfg<Ms, Mdl, ElC, GMs, dyn IntoAfterMount<Ms, Mdl, ElC, GMs>>>;
+type OptDynInitCfg<Ms, Mdl, INodes, GMs> =
+    Option<AppInitCfg<Ms, Mdl, INodes, GMs, dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>>;
 
 /// Determines if an update should cause the `VDom` to rerender or not.
 pub enum ShouldRender {
@@ -65,27 +65,29 @@ pub enum ShouldRender {
     Skip,
 }
 
-pub struct App<Ms, Mdl, ElC, GMs = UndefinedGMsg>
+pub struct App<Ms, Mdl, INodes, GMs = UndefinedGMsg>
 where
     Ms: 'static,
     Mdl: 'static,
-    ElC: View<Ms>,
+    INodes: IntoNodes<Ms>,
 {
     /// Temporary app configuration that is removed after app begins running.
-    pub init_cfg: OptDynInitCfg<Ms, Mdl, ElC, GMs>,
+    pub init_cfg: OptDynInitCfg<Ms, Mdl, INodes, GMs>,
     /// App configuration available for the entire application lifetime.
-    pub cfg: Rc<AppCfg<Ms, Mdl, ElC, GMs>>,
+    pub cfg: Rc<AppCfg<Ms, Mdl, INodes, GMs>>,
     /// Mutable app state
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, ElC: View<Ms>, GMs> ::std::fmt::Debug for App<Ms, Mdl, ElC, GMs> {
+impl<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>, GMs> ::std::fmt::Debug
+    for App<Ms, Mdl, INodes, GMs>
+{
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "App")
     }
 }
 
-impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, INodes: IntoNodes<Ms>, GMs> Clone for App<Ms, Mdl, INodes, GMs> {
     fn clone(&self) -> Self {
         Self {
             init_cfg: None,
@@ -97,7 +99,7 @@ impl<Ms, Mdl, ElC: View<Ms>, GMs> Clone for App<Ms, Mdl, ElC, GMs> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
+impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes, GMs> {
     // @TODO: Relax input function restrictions - init: fn => FnOnce, update & view: FnOnce + Clone.
     // @TODO: Refactor while removing `Builder`.
     /// Create, mount and start the `App`. It's the standard way to create a Seed app.
@@ -123,7 +125,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     ///   }
     ///}
     ///
-    ///fn view(model: &Model) -> impl View<Msg> {
+    ///fn view(model: &Model) -> impl IntoNodes<Msg> {
     ///   button![
     ///       format!("Clicked: {}", model.clicks),
     ///       ev(Ev::Click, |_| Msg::Clicked),
@@ -145,9 +147,9 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     ///
     pub fn start(
         root_element: impl GetElement,
-        init: InitFn<Ms, Mdl, ElC, GMs>,
-        update: UpdateFn<Ms, Mdl, ElC, GMs>,
-        view: ViewFn<Mdl, ElC>,
+        init: InitFn<Ms, Mdl, INodes, GMs>,
+        update: UpdateFn<Ms, Mdl, INodes, GMs>,
+        view: ViewFn<Mdl, INodes>,
     ) -> Self {
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
         // https://github.com/seed-rs/seed/issues/241
@@ -164,12 +166,12 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
             phantom: PhantomData,
             into_after_mount: Box::new(
                 move |url: Url,
-                      orders: &mut OrdersContainer<Ms, Mdl, ElC, GMs>|
+                      orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
                       -> AfterMount<Mdl> {
                     let model = init(url, orders);
                     AfterMount::new(model).url_handling(UrlHandling::None)
                 },
-            ) as Box<dyn IntoAfterMount<Ms, Mdl, ElC, GMs>>,
+            ) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
         };
         let app = Self::new(
             update,
@@ -199,7 +201,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     ///   }
     ///}
     ///
-    ///fn view(model: &Model) -> impl View<Msg> {
+    ///fn view(model: &Model) -> impl IntoNodes<Msg> {
     ///   vec![
     ///       button![
     ///           format!("Clicked: {}", model.clicks),
@@ -211,9 +213,9 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
     ///App::builder(update, view)
     /// ```
     pub fn builder(
-        update: UpdateFn<Ms, Mdl, ElC, GMs>,
-        view: ViewFn<Mdl, ElC>,
-    ) -> AppBuilder<Ms, Mdl, ElC, GMs, UndefinedInitAPI> {
+        update: UpdateFn<Ms, Mdl, INodes, GMs>,
+        view: ViewFn<Mdl, INodes>,
+    ) -> AppBuilder<Ms, Mdl, INodes, GMs, UndefinedInitAPI> {
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
         // https://github.com/David-OConnor/seed/issues/241
         // https://bugs.webkit.org/show_bug.cgi?id=202881
@@ -303,13 +305,13 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 
     #[allow(clippy::too_many_arguments)]
     pub(super) fn new(
-        update: UpdateFn<Ms, Mdl, ElC, GMs>,
-        sink: Option<SinkFn<Ms, Mdl, ElC, GMs>>,
-        view: ViewFn<Mdl, ElC>,
+        update: UpdateFn<Ms, Mdl, INodes, GMs>,
+        sink: Option<SinkFn<Ms, Mdl, INodes, GMs>>,
+        view: ViewFn<Mdl, INodes>,
         mount_point: Element,
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEventsFn<Ms, Mdl>>,
-        init_cfg: OptDynInitCfg<Ms, Mdl, ElC, GMs>,
+        init_cfg: OptDynInitCfg<Ms, Mdl, INodes, GMs>,
     ) -> Self {
         let window = util::window();
         let document = window.document().expect("Can't find the window's document");
@@ -488,7 +490,7 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         // Create a new vdom: The top element, and all its children. Does not yet
         // have associated web_sys elements.
         let mut new = El::empty(Tag::Placeholder);
-        new.children = (self.cfg.view)(self.data.model.borrow().as_ref().unwrap()).els();
+        new.children = (self.cfg.view)(self.data.model.borrow().as_ref().unwrap()).into_nodes();
 
         let old = self
             .data
@@ -542,10 +544,10 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
         note = "Use `builder` with `AppBuilder::{after_mount, before_mount}` instead."
     )]
     pub fn build(
-        init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, ElC, GMs>) -> Init<Mdl> + 'static,
-        update: UpdateFn<Ms, Mdl, ElC, GMs>,
-        view: ViewFn<Mdl, ElC>,
-    ) -> InitAppBuilder<Ms, Mdl, ElC, GMs> {
+        init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Init<Mdl> + 'static,
+        update: UpdateFn<Ms, Mdl, INodes, GMs>,
+        view: ViewFn<Mdl, INodes>,
+    ) -> InitAppBuilder<Ms, Mdl, INodes, GMs> {
         Self::builder(update, view).init(Box::new(init))
     }
 
@@ -635,10 +637,10 @@ impl<Ms, Mdl, ElC: View<Ms> + 'static, GMs: 'static> App<Ms, Mdl, ElC, GMs> {
 }
 
 #[deprecated(since = "0.5.0", note = "Part of the old Init API.")]
-type InitAppBuilder<Ms, Mdl, ElC, GMs> = AppBuilder<
+type InitAppBuilder<Ms, Mdl, INodes, GMs> = AppBuilder<
     Ms,
     Mdl,
-    ElC,
+    INodes,
     GMs,
-    MountPointInitInitAPI<UndefinedMountPoint, BuilderInitFn<Ms, Mdl, ElC, GMs>>,
+    MountPointInitInitAPI<UndefinedMountPoint, BuilderInitFn<Ms, Mdl, INodes, GMs>>,
 >;

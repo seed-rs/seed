@@ -34,6 +34,8 @@
 - [BREAKING] `ev`-like functions and some `Orders` method require `'static` bound for generic types (temporary). 
 - `Orders::after_next_render` now accepts callbacks which return `Msg` or `()`.
 - Updated examples `update_from_js` and `todomvc`.
+- [deprecated] `View` is deprecated in favor of `IntoNodes`.
+- [BREAKING] `View` isn't implemented for `El` and `Vec<El>`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
@@ -45,7 +47,7 @@
 - Fixed `value` and `checked` setting for input elements (a bug in VirtualDOM patch algorithm).
 - [BREAKING] Removed unpredictable internal input listeners - Seed will not longer react to external input value changes.
 - [BREAKING] Use `EventHandler` instead of `Listener`. (`Listener` is now used as the internal DOM EventListener representation.)
-- [deprecated] - `raw_ev` is deprecated in favor of `ev`. Functionality is the same.
+- [deprecated] `raw_ev` is deprecated in favor of `ev`. Functionality is the same.
 - Improved performance - rewritten event-handling and other refactors in VirtualDOM.
 - Fixed processing of multiple event-handlers (#138).
 - Added DOM Element references - see `ElRef` and examples (`canvas`, `user_media` or `todomvc`) (#115).
