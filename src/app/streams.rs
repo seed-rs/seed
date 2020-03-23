@@ -5,7 +5,7 @@ use gloo_timers::future::IntervalStream;
 
 /// Stream no values on predefined time interval in milliseconds.
 ///
-/// Handler has to return `Msg` or `()`.
+/// Handler has to return `Msg`, `Option<Msg>` or `()`.
 ///
 /// # Example
 ///
@@ -16,7 +16,8 @@ use gloo_timers::future::IntervalStream;
 ///
 /// # Panics
 ///
-/// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
+/// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+/// (It will be changed to a compile-time error).
 pub fn interval<MsU>(
     ms: u32,
     handler: impl FnOnce() -> MsU + Clone + 'static,
