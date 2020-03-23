@@ -124,8 +124,6 @@ enum Msg {
     EditingTodoTitleChanged(String),
     SaveEditingTodo,
     CancelTodoEdit,
-
-    NoOp,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -204,8 +202,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::CancelTodoEdit => {
             data.editing_todo = None;
         }
-
-        Msg::NoOp => (),
     }
     // Save data into LocalStorage. It should be optimized in a real-world application.
     storage::store_data(&model.services.local_storage, STORAGE_KEY, &data);
@@ -249,11 +245,7 @@ fn view_header(new_todo_title: &str) -> Node<Msg> {
                 At::Value => new_todo_title;
             },
             keyboard_ev(Ev::KeyDown, |keyboard_event| {
-                if keyboard_event.key_code() == ENTER_KEY {
-                    Msg::CreateNewTodo
-                } else {
-                    Msg::NoOp
-                }
+                IF!(keyboard_event.key_code() == ENTER_KEY => Msg::CreateNewTodo)
             }),
             input_ev(Ev::Input, Msg::NewTodoTitleChanged),
         ]
@@ -351,14 +343,10 @@ fn view_todo(
                     ev(Ev::Blur, |_| Msg::SaveEditingTodo),
                     input_ev(Ev::Input, Msg::EditingTodoTitleChanged),
                     keyboard_ev(Ev::KeyDown, |keyboard_event| {
-                        // @TODO rafactor to `match` once it can accept constants
-                        let code = keyboard_event.key_code();
-                        if code == ENTER_KEY {
-                            Msg::SaveEditingTodo
-                        } else if code == ESC_KEY {
-                            Msg::CancelTodoEdit
-                        } else {
-                            Msg::NoOp
+                        match keyboard_event.key_code() {
+                            ENTER_KEY => Some(Msg::SaveEditingTodo),
+                            ESC_KEY => Some(Msg::CancelTodoEdit),
+                            _ => None,
                         }
                     }),
                 ]
