@@ -89,7 +89,19 @@ impl<Ms> UpdateEl<Ms> for u32 {
     }
 }
 
+impl<Ms> UpdateEl<Ms> for u64 {
+    fn update_el(self, el: &mut El<Ms>) {
+        self.to_string().update_el(el);
+    }
+}
+
 impl<Ms> UpdateEl<Ms> for i32 {
+    fn update_el(self, el: &mut El<Ms>) {
+        self.to_string().update_el(el);
+    }
+}
+
+impl<Ms> UpdateEl<Ms> for i64 {
     fn update_el(self, el: &mut El<Ms>) {
         self.to_string().update_el(el);
     }
@@ -299,6 +311,34 @@ mod tests {
     #[wasm_bindgen_test]
     fn update_el_ref_i32() {
         let number: &i32 = &-259;
+        let _el: Node<Ms> = div![number];
+        assert!(true);
+    }
+
+    #[wasm_bindgen_test]
+    fn update_el_u64() {
+        let number: u64 = 100;
+        let _el: Node<Ms> = div![number];
+        assert!(true);
+    }
+
+    #[wasm_bindgen_test]
+    fn update_el_ref_u64() {
+        let number: &u64 = &1009;
+        let _el: Node<Ms> = div![number];
+        assert!(true);
+    }
+
+    #[wasm_bindgen_test]
+    fn update_el_i64() {
+        let number: i64 = -25;
+        let _el: Node<Ms> = div![number];
+        assert!(true);
+    }
+
+    #[wasm_bindgen_test]
+    fn update_el_ref_i64() {
+        let number: &i64 = &-259;
         let _el: Node<Ms> = div![number];
         assert!(true);
     }

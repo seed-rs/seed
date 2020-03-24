@@ -1,0 +1,33 @@
+query QContinents {
+    continents {
+        code
+        name
+    }
+}
+
+query QContinent($code: String) {
+    continent(code: $code) {
+        countries {
+            code
+            name
+        }
+    }
+}
+
+query QCountry($code: String) {
+    country(code: $code) {
+        code
+        name
+        native
+        phone
+        currency
+        languages {
+            name
+            native
+            rtl
+        }
+        states {
+            name
+        }
+    }
+}
