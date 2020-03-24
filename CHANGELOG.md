@@ -37,7 +37,9 @@
 - [BREAKING] `Node::add_listener` renamed to `add_event_handler`.
 - Rewritten `README.md`.
 - Added new Fetch API module. See [`seed::browser::fetch`](https://docs.rs/seed/0.7.0/seed/browser/fetch/index.html) (#353)
-- [deprecated] - `seed::browser::service::fetch` module is deprecated in favor of `seed::browser::fetch`
+- [deprecated] - `seed::browser::service::fetch` module is deprecated in favor of `seed::browser::fetch`.
+- Added example `fetch`.
+- Implemented `IntoNodes` for `Option<Node<Msg>>` and `Option<Vec<Node<Msg>>>`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

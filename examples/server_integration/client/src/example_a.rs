@@ -1,4 +1,3 @@
-use seed::browser::service::fetch;
 use seed::{self, prelude::*, *};
 use std::borrow::Cow;
 
@@ -30,7 +29,7 @@ pub struct Model {
 pub enum Msg {
     NewMessageChanged(String),
     SendRequest,
-    Fetched(fetch::ResponseDataResult<shared::SendMessageResponseBody>),
+    Fetched(fetch::Result<shared::SendMessageResponseBody>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -39,28 +38,29 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.new_message = message;
         }
         Msg::SendRequest => {
-            orders
-                .skip()
-                .perform_cmd(send_request(model.new_message.clone()));
+            orders.skip().perform_cmd({
+                let message = model.new_message.clone();
+                async { Msg::Fetched(send_message(message).await) }
+            });
         }
 
         Msg::Fetched(Ok(response_data)) => {
             model.response_data = Some(response_data);
         }
 
-        Msg::Fetched(Err(fail_reason)) => {
-            log!("Example_A error:", fail_reason);
+        Msg::Fetched(Err(fetch_error)) => {
+            log!("Example_A error:", fetch_error);
             orders.skip();
         }
     }
 }
 
-async fn send_request(new_message: String) -> Msg {
-    fetch::Request::new(get_request_url())
-        .method(fetch::Method::Post)
-        .send_json(&shared::SendMessageRequestBody { text: new_message })
-        .fetch_json_data(Msg::Fetched)
-        .await
+async fn send_message(new_message: String) -> fetch::Result<shared::SendMessageResponseBody> {
+    let request = Request::new(get_request_url())
+        .method(Method::Post)
+        .json(&shared::SendMessageRequestBody { text: new_message })?;
+
+    fetch(request).await?.check_status()?.json().await
 }
 
 // ------ ------

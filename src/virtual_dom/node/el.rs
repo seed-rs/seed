@@ -242,11 +242,6 @@ impl<Ms> El<Ms> {
 
     /// Is it a custom element?
     pub fn is_custom(&self) -> bool {
-        // @TODO: replace with `matches!` macro once stable
-        if let Tag::Custom(_) = self.tag {
-            true
-        } else {
-            false
-        }
+        matches!(self.tag, Tag::Custom(_))
     }
 }

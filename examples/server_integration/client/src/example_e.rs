@@ -1,4 +1,3 @@
-use seed::browser::service::fetch;
 use seed::{prelude::*, *};
 use std::borrow::Cow;
 use std::mem;
@@ -81,7 +80,7 @@ pub enum Msg {
     FileChanged(Option<File>),
     AnswerChanged,
     FormSubmitted(String),
-    ServerResponded(fetch::ResponseDataResult<String>),
+    ServerResponded(fetch::Result<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -94,7 +93,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::AnswerChanged => toggle(&mut model.form_mut().answer),
         Msg::FormSubmitted(id) => {
             let form = mem::take(model.form_mut());
-            orders.perform_cmd(send_request(form.to_form_data().unwrap()));
+            let form_data = form.to_form_data().expect("create from data from form");
+            orders.perform_cmd(async { Msg::ServerResponded(send_request(form_data).await) });
             *model = Model::WaitingForResponse(form);
             log!(format!("Form {} submitted.", id));
         }
@@ -107,19 +107,19 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             );
             log_1(&response_data.into());
         }
-        Msg::ServerResponded(Err(fail_reason)) => {
+        Msg::ServerResponded(Err(fetch_error)) => {
             *model = Model::ReadyToSubmit(mem::take(model.form_mut()));
-            error!("Request failed!", fail_reason);
+            error!("Request failed!", fetch_error);
         }
     }
 }
 
-async fn send_request(form: FormData) -> Msg {
-    fetch::Request::new(get_request_url())
+async fn send_request(form: FormData) -> fetch::Result<String> {
+    let request = Request::new(get_request_url())
         .method(fetch::Method::Post)
-        .body(form.into())
-        .fetch_string_data(Msg::ServerResponded)
-        .await
+        .body(form.into());
+
+    fetch(request).await?.text().await
 }
 
 #[allow(clippy::option_map_unit_fn)]
