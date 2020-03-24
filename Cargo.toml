@@ -102,6 +102,7 @@ members = [
     "examples/counter_advanced",
     "examples/canvas",
     "examples/drop_zone",
+    "examples/graphql",
     "examples/markdown",
     "examples/fetch",
     "examples/mathjax",

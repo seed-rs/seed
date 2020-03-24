@@ -67,6 +67,9 @@ A demonstration of event-handlers attached to the `window`.
 ## Server
 Backend server integration & interaction examples.
 
+### [GraphQL](graphql)
+How to communicate with a GraphQL backend.
+
 ### [Integration](server_integration)
 Example of a workspace with [Actix](https://actix.rs/) server.
 
