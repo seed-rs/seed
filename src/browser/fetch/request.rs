@@ -1,6 +1,6 @@
 //! The Request of the Fetch API.
 
-use super::{FetchError, Header, Headers, Method, Result};
+use super::{fetch, FetchError, Header, Headers, Method, Response, Result};
 use crate::browser::Url;
 use gloo_timers::callback::Timeout;
 use serde::Serialize;
@@ -171,6 +171,31 @@ impl<'a> Request<'a> {
     pub fn controller(self) -> (Self, RequestController) {
         let controller = self.controller.clone();
         (self, controller)
+    }
+
+    /// Fetch request. It's a chainable alternative to `fetch(request)`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// orders.perform_cmd({
+    ///     let message = model.new_message.clone();
+    ///     async { Msg::Fetched(send_message(message).await) }
+    /// });
+    /// ...
+    /// async fn send_message(new_message: String) -> fetch::Result<shared::SendMessageResponseBody> {
+    ///     Request::new(get_request_url())
+    ///         .method(Method::Post)
+    ///         .json(&shared::SendMessageRequestBody { text: new_message })?
+    ///         .fetch()
+    ///         .await?
+    ///         .check_status()?
+    ///         .json()
+    ///         .await
+    /// }
+    /// ```
+    pub async fn fetch(self) -> Result<Response> {
+        fetch(self).await
     }
 }
 

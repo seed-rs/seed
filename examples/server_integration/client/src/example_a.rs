@@ -56,11 +56,14 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 async fn send_message(new_message: String) -> fetch::Result<shared::SendMessageResponseBody> {
-    let request = Request::new(get_request_url())
+    Request::new(get_request_url())
         .method(Method::Post)
-        .json(&shared::SendMessageRequestBody { text: new_message })?;
-
-    fetch(request).await?.check_status()?.json().await
+        .json(&shared::SendMessageRequestBody { text: new_message })?
+        .fetch()
+        .await?
+        .check_status()?
+        .json()
+        .await
 }
 
 // ------ ------
