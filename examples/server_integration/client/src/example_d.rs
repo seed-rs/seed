@@ -1,4 +1,3 @@
-use seed::browser::service::fetch;
 use seed::{prelude::*, *};
 use std::borrow::Cow;
 
@@ -20,7 +19,7 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
 
 #[derive(Default)]
 pub struct Model {
-    pub response_result: Option<fetch::ResponseResult<()>>,
+    pub fetch_result: Option<fetch::Result<String>>,
     pub request_controller: Option<fetch::RequestController>,
     pub status: Status,
 }
@@ -48,34 +47,35 @@ impl Default for Status {
 pub enum Msg {
     SendRequest,
     DisableTimeout,
-    Fetched(fetch::FetchObject<()>),
+    Fetched(fetch::Result<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
-            model.status = Status::WaitingForResponse(TimeoutStatus::Enabled);
-            model.response_result = None;
+            let (request, controller) = Request::new(get_request_url())
+                .timeout(TIMEOUT)
+                .controller();
 
-            let request = fetch::Request::new(get_request_url())
-                .controller(|controller| model.request_controller = Some(controller))
-                .timeout(TIMEOUT);
-            orders.perform_cmd(request.fetch(Msg::Fetched));
+            model.status = Status::WaitingForResponse(TimeoutStatus::Enabled);
+            model.fetch_result = None;
+            model.request_controller = Some(controller);
+
+            orders.perform_cmd(async {
+                Msg::Fetched(async { fetch(request).await?.text().await }.await)
+            });
         }
 
         Msg::DisableTimeout => {
-            model
-                .request_controller
-                .take()
-                .ok_or("Msg:DisableTimeout: request controller cannot be None")
-                .and_then(|controller| controller.disable_timeout())
-                .unwrap_or_else(|err| log!(err));
+            if let Some(controller) = &model.request_controller {
+                controller.disable_timeout().expect("disable timeout");
+            }
             model.status = Status::WaitingForResponse(TimeoutStatus::Disabled)
         }
 
-        Msg::Fetched(fetch_object) => {
+        Msg::Fetched(fetch_result) => {
             model.status = Status::ReadyToSendRequest;
-            model.response_result = Some(fetch_object.response());
+            model.fetch_result = Some(fetch_result);
         }
     }
 }
@@ -87,34 +87,14 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
     nodes![
         intro(TITLE, DESCRIPTION),
-        match &model.response_result {
-            None => vec![
-                if let Status::WaitingForResponse(_) = model.status {
-                    div!["Waiting for response..."]
-                } else {
-                    empty![]
-                },
-                view_button(&model.status),
-            ],
-            Some(Ok(response)) => vec![
-                div![format!("Server returned {}.", response.status.text)],
-                view_button(&model.status),
-            ],
-            Some(Err(fail_reason)) => view_fail_reason(fail_reason, &model.status),
-        }
+        match &model.fetch_result {
+            None =>
+                IF!(matches!(model.status, Status::WaitingForResponse(_)) => div!["Waiting for response..."]),
+            Some(Ok(result)) => Some(div![format!("Server returned: {:#?}", result)]),
+            Some(Err(fetch_error)) => Some(div![format!("{:#?}", fetch_error)]),
+        },
+        view_button(&model.status),
     ]
-}
-
-fn view_fail_reason(fail_reason: &fetch::FailReason<()>, status: &Status) -> Vec<Node<Msg>> {
-    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception), _) =
-        fail_reason
-    {
-        if dom_exception.name() == "AbortError" {
-            return vec![div!["Request aborted."], view_button(status)];
-        }
-    }
-    log!("Example_D error:", fail_reason);
-    vec![]
 }
 
 pub fn view_button(status: &Status) -> Node<Msg> {

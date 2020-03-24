@@ -160,6 +160,18 @@ impl<'a> Request<'a> {
         self.timeout = Some(timeout);
         self
     }
+
+    /// Get the request controller that allows to abort request or disable request's timeout.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// let (request, controller) = Request::new("http://example.com").controller();
+    /// ```
+    pub fn controller(self) -> (Self, RequestController) {
+        let controller = self.controller.clone();
+        (self, controller)
+    }
 }
 
 impl<'a, T: Into<Cow<'a, str>>> From<T> for Request<'a> {
@@ -234,10 +246,10 @@ impl TryFrom<Request<'_>> for web_sys::Request {
         // timeout
         if let Some(timeout) = &request.timeout {
             let abort_controller = request.controller.clone();
-            *request.controller.timeout_handle.borrow_mut() = Some(
+            request.controller.timeout_handle.replace(Some(
                 // abort request on timeout
                 Timeout::new(*timeout, move || abort_controller.abort()),
-            );
+            ));
         }
 
         // controller

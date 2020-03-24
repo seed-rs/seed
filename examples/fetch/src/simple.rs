@@ -43,10 +43,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 pub fn view(model: &Model) -> Node<Msg> {
     div![
         button![ev(Ev::Click, |_| Msg::Fetch), "Fetch user"],
-        if let Some(user) = &model.user {
-            div![format!("User: {}", user.name)]
-        } else {
-            empty![]
-        }
+        model
+            .user
+            .as_ref()
+            .map(|user| div![format!("User: {}", user.name)])
     ]
 }

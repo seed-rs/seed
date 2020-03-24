@@ -1,4 +1,4 @@
-use seed::browser::service::fetch;
+// use seed::browser::service::fetch;
 use seed::{prelude::*, *};
 use std::borrow::Cow;
 
@@ -18,7 +18,7 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
 
 #[derive(Default)]
 pub struct Model {
-    pub response_data_result: Option<fetch::ResponseDataResult<String>>,
+    pub fetch_result: Option<fetch::Result<String>>,
     pub request_controller: Option<fetch::RequestController>,
     pub status: Status,
 }
@@ -42,31 +42,31 @@ impl Default for Status {
 pub enum Msg {
     SendRequest,
     AbortRequest,
-    Fetched(fetch::ResponseDataResult<String>),
+    Fetched(fetch::Result<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
+            let (request, controller) = Request::new(get_request_url()).controller();
             model.status = Status::WaitingForResponse;
-            model.response_data_result = None;
-            let request = fetch::Request::new(get_request_url())
-                .controller(|controller| model.request_controller = Some(controller));
-            orders.perform_cmd(request.fetch_string_data(Msg::Fetched));
+            model.fetch_result = None;
+            model.request_controller = Some(controller);
+            orders.perform_cmd(async {
+                Msg::Fetched(async { fetch(request).await?.text().await }.await)
+            });
         }
 
         Msg::AbortRequest => {
-            model
-                .request_controller
-                .take()
-                .expect("AbortRequest: request_controller hasn't been set!")
-                .abort();
+            if let Some(controller) = &model.request_controller {
+                controller.abort();
+            }
             model.status = Status::RequestAborted;
         }
 
-        Msg::Fetched(response_data_result) => {
+        Msg::Fetched(fetch_result) => {
             model.status = Status::ReadyToSendRequest;
-            model.response_data_result = Some(response_data_result);
+            model.fetch_result = Some(fetch_result);
         }
     }
 }
@@ -79,16 +79,22 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
     nodes![
         intro(TITLE, DESCRIPTION),
         match model.status {
-            Status::ReadyToSendRequest => vec![
-                view_response_data_result(&model.response_data_result),
+            Status::ReadyToSendRequest => nodes![
+                model
+                    .fetch_result
+                    .as_ref()
+                    .map(|result| div![format!("{:#?}", result)]),
                 button![ev(Ev::Click, |_| Msg::SendRequest), "Send request"],
             ],
-            Status::WaitingForResponse => vec![
+            Status::WaitingForResponse => nodes![
                 div!["Waiting for response..."],
                 button![ev(Ev::Click, |_| Msg::AbortRequest), "Abort request"],
             ],
-            Status::RequestAborted => vec![
-                view_response_data_result(&model.response_data_result),
+            Status::RequestAborted => nodes![
+                model
+                    .fetch_result
+                    .as_ref()
+                    .map(|result| div![format!("{:#?}", result)]),
                 button![
                     attrs! {At::Disabled => false.as_at_value()},
                     "Request aborted"
@@ -96,29 +102,4 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
             ],
         }
     ]
-}
-
-fn view_response_data_result(
-    response_data_result: &Option<fetch::ResponseDataResult<String>>,
-) -> Node<Msg> {
-    match &response_data_result {
-        None => empty![],
-        Some(Ok(response_data)) => div![format!(r#"Response String body: "{}""#, response_data)],
-        Some(Err(fail_reason)) => view_fail_reason(fail_reason),
-    }
-}
-
-fn view_fail_reason(fail_reason: &fetch::FailReason<String>) -> Node<Msg> {
-    if let fetch::FailReason::RequestError(fetch::RequestError::DomException(dom_exception), _) =
-        fail_reason
-    {
-        if dom_exception.name() == "AbortError" {
-            return div![
-                div![format!(r#"Error name: "{}""#, dom_exception.name())],
-                div![format!(r#"Error message: "{}""#, dom_exception.message())]
-            ];
-        }
-    }
-    log!("Example_C error:", fail_reason);
-    empty![]
 }

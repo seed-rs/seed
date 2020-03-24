@@ -1,4 +1,3 @@
-use seed::browser::service::fetch;
 use seed::{prelude::*, *};
 use serde::Deserialize;
 use std::borrow::Cow;
@@ -6,7 +5,7 @@ use std::borrow::Cow;
 pub const TITLE: &str = "Example B";
 pub const DESCRIPTION: &str =
     "Click button 'Try to Fetch JSON' to send request to non-existent endpoint.
-    Server will return 404 with empty body and Serde then fail to decode body into predefined JSON.";
+    Server will return status 404 with empty body. `Response::check_status` then return error.";
 
 fn get_request_url() -> impl Into<Cow<'static, str>> {
     "/api/non-existent-endpoint"
@@ -18,10 +17,10 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
 
 #[derive(Default)]
 pub struct Model {
-    pub response_with_data_result: Option<fetch::ResponseWithDataResult<ExpectedResponseData>>,
+    pub fetch_result: Option<fetch::Result<ExpectedResponseData>>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize)]
 pub struct ExpectedResponseData {
     something: String,
 }
@@ -32,30 +31,23 @@ pub struct ExpectedResponseData {
 
 pub enum Msg {
     SendRequest,
-    Fetched(fetch::FetchResult<ExpectedResponseData>),
+    Fetched(fetch::Result<ExpectedResponseData>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
-            orders.skip().perform_cmd(send_request());
+            orders.skip().perform_cmd(async {
+                Msg::Fetched(
+                    async { fetch(get_request_url()).await?.check_status()?.json().await }.await,
+                )
+            });
         }
 
-        Msg::Fetched(Ok(response_with_data_result)) => {
-            model.response_with_data_result = Some(response_with_data_result);
-        }
-
-        Msg::Fetched(Err(request_error)) => {
-            log!("Example_B error:", request_error);
-            orders.skip();
+        Msg::Fetched(fetch_result) => {
+            model.fetch_result = Some(fetch_result);
         }
     }
-}
-
-async fn send_request() -> Msg {
-    fetch::Request::new(get_request_url())
-        .fetch_json(|fetch_object| Msg::Fetched(fetch_object.result))
-        .await
 }
 
 // ------ ------
@@ -65,14 +57,10 @@ async fn send_request() -> Msg {
 pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
     nodes![
         intro(TITLE, DESCRIPTION),
-        match &model.response_with_data_result {
-            None => empty![],
-            Some(fetch::ResponseWithDataResult { status, data, .. }) => div![
-                div![format!("Status code: {}", status.code)],
-                div![format!(r#"Status text: "{}""#, status.text)],
-                div![format!(r#"Data: "{:#?}""#, data)]
-            ],
-        },
+        model
+            .fetch_result
+            .as_ref()
+            .map(|result| div![format!("{:#?}", result)]),
         button![ev(Ev::Click, |_| Msg::SendRequest), "Try to Fetch JSON"],
     ]
 }
