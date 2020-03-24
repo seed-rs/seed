@@ -3,7 +3,7 @@
 //! Seed Fetch API is very similar to the browser [native one][fetch-mdn].
 //!
 //! There is one entry point: [`fetch`][fetch] function.
-//! It can accept both, string urls as well as [`Request`][request].
+//! It can accept both string urls as well as [`Request`][request].
 //!
 //! To get a [`Response`][response] you need to `.await` fetch:
 //! ```rust

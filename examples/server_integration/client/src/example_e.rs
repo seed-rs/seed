@@ -115,11 +115,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 async fn send_request(form: FormData) -> fetch::Result<String> {
-    let request = Request::new(get_request_url())
+    Request::new(get_request_url())
         .method(fetch::Method::Post)
-        .body(form.into());
-
-    fetch(request).await?.text().await
+        .body(form.into())
+        .fetch()
+        .await?
+        .text()
+        .await
 }
 
 #[allow(clippy::option_map_unit_fn)]

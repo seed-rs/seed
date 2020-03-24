@@ -28,8 +28,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
             let token = "YWxhZGRpbjpvcGVuc2VzYW1l";
             // Created outside async block because of lifetime reasons
-            // (we can't use reference to `model.from` in async
-            // function).
+            // (we can't use reference to `model.form` in async function).
             let request = Request::new("/")
                 .method(Method::Post)
                 .header(Header::custom("Accept-Language", "en"))
