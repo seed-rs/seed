@@ -10,7 +10,14 @@ impl<'a> Headers<'a> {
     /// Sets a new value for an existing header or adds the header if
     /// it does not already exist.
     pub fn set(&mut self, header: Header<'a>) {
-        self.0.retain(|Header { name, .. }| &header.name != name);
+        self.0.retain(|old_header| header.name != old_header.name);
+        self.0.push(header);
+    }
+
+    /// Add the header.
+    ///
+    /// Headers with the same name are not modified or removed.
+    pub fn add(&mut self, header: Header<'a>) {
         self.0.push(header);
     }
 }
@@ -33,7 +40,7 @@ pub struct Header<'a> {
 impl<'a> Header<'a> {
     /// Create `Content-Type` header.
     pub fn content_type(value: impl Into<Cow<'a, str>>) -> Header<'a> {
-        Self::custom("Content-Type", value.into())
+        Self::custom("Content-Type", value)
     }
 
     /// Create `Authorization` header.
@@ -42,8 +49,8 @@ impl<'a> Header<'a> {
     }
 
     /// Create `Authorization: Bearer xxx` header.
-    pub fn bearer(value: impl Into<Cow<'a, str>>) -> Header<'a> {
-        Self::custom("Authorization", format!("Bearer {}", value.into()))
+    pub fn bearer(token: &str) -> Header<'a> {
+        Self::custom("Authorization", format!("Bearer {}", token))
     }
 
     /// Create custom header.

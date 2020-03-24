@@ -32,7 +32,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let request = Request::new("/")
                 .method(Method::Post)
                 .header(Header::custom("Accept-Language", "en"))
-                .header(Header::custom("Authorization", format!("Basic {}", token)))
+                .header(Header::bearer(token))
                 .json(&model.form)
                 .expect("Serialization failed");
 
