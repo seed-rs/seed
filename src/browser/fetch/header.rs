@@ -49,8 +49,8 @@ impl<'a> Header<'a> {
     }
 
     /// Create `Authorization: Bearer xxx` header.
-    pub fn bearer(token: &str) -> Header<'a> {
-        Self::custom("Authorization", format!("Bearer {}", token))
+    pub fn bearer(token: impl Into<Cow<'a, str>>) -> Header<'a> {
+        Self::custom("Authorization", format!("Bearer {}", token.into()))
     }
 
     /// Create custom header.
