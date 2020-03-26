@@ -1,7 +1,6 @@
 use crate::browser::dom::virtual_dom_bridge;
 use crate::browser::{
     service::routing,
-    url,
     util::{self, window, ClosureNew},
     Url,
 };
@@ -579,13 +578,13 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         let AfterMount {
             model,
             url_handling,
-        } = into_after_mount.into_after_mount(url::current(), &mut orders);
+        } = into_after_mount.into_after_mount(Url::current(), &mut orders);
 
         self.data.model.replace(Some(model));
 
         match url_handling {
             UrlHandling::PassToRoutes => {
-                let url = url::current();
+                let url = Url::current();
 
                 self.notify(subs::UrlChanged(url.clone()));
 
@@ -628,6 +627,13 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
             routes,
         );
+
+        orders.subscribe(enc!((self => s) move |url_requested| {
+            routing::url_request_handler(
+                url_requested,
+                move |notification| s.notify_with_notification(notification)
+            )
+        }));
 
         self.process_effect_queue(orders.effects);
         // TODO: In the future, only run the following line if the above statement:

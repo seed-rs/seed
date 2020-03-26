@@ -13,6 +13,28 @@ macro_rules! with_dollar_sign {
     }
 }
 
+#[macro_export]
+macro_rules! struct_urls {
+    () => {
+        pub struct Urls<'a> {
+            url: std::borrow::Cow<'a, $crate::browser::Url>,
+        }
+
+        impl<'a> Urls<'a> {
+            pub fn with_base(
+                base_url: impl Into<std::borrow::Cow<'a, $crate::browser::Url>>,
+            ) -> Self {
+                Self {
+                    url: base_url.into(),
+                }
+            }
+            pub fn url(self) -> $crate::browser::Url {
+                self.url.into_owned()
+            }
+        }
+    };
+}
+
 /// Create macros exposed to the package that allow shortcuts for Dom elements.
 /// In the matching pattern below, we match the name we want to use with the name under
 /// the `seed::virtual_dom::Tag` enum. Eg the div! macro uses `seed::virtual_dom::Tag::Div`.

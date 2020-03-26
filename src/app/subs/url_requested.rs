@@ -1,5 +1,6 @@
 use crate::browser::Url;
 use std::{cell::Cell, rc::Rc};
+use web_sys::Event;
 
 pub type PreventDefault = bool;
 
@@ -18,6 +19,12 @@ pub type PreventDefault = bool;
 #[derive(Clone)]
 pub struct UrlRequested(pub Url, pub UrlRequest);
 
+impl UrlRequested {
+    pub fn new(url: Url) -> Self {
+        Self(url, UrlRequest::default())
+    }
+}
+
 // --- UrlRequestStatus ---
 
 #[derive(Copy, Clone)]
@@ -26,14 +33,35 @@ pub enum UrlRequestStatus {
     Handled(PreventDefault),
 }
 
+impl Default for UrlRequestStatus {
+    fn default() -> Self {
+        Self::Unhandled
+    }
+}
+
 // --- UrlRequest ---
 
 #[derive(Clone)]
-pub struct UrlRequest(Rc<Cell<UrlRequestStatus>>);
+pub struct UrlRequest {
+    pub(crate) status: Rc<Cell<UrlRequestStatus>>,
+    pub(crate) event: Rc<Cell<Option<Event>>>,
+}
+
+impl UrlRequest {
+    pub(crate) fn new(status: UrlRequestStatus, event: Option<Event>) -> Self {
+        Self {
+            status: Rc::new(Cell::new(status)),
+            event: Rc::new(Cell::new(event)),
+        }
+    }
+}
 
 impl Default for UrlRequest {
     fn default() -> Self {
-        UrlRequest(Rc::new(Cell::new(UrlRequestStatus::Unhandled)))
+        Self {
+            status: Rc::new(Cell::new(UrlRequestStatus::default())),
+            event: Rc::new(Cell::new(None)),
+        }
     }
 }
 
@@ -42,22 +70,22 @@ impl UrlRequest {
     /// - Seed prevents page refresh, pushes the route and fires `UrlChanged` notification.
     /// - It's the default behaviour.
     pub fn unhandled(self) {
-        self.0.set(UrlRequestStatus::Unhandled);
+        self.status.set(UrlRequestStatus::Unhandled);
     }
 
     /// Flag the url request as handled.
     /// - Seed doesn't intercept or modify the click event and doesn't fire `UrlChanged` notification.
     pub fn handled(self) {
-        self.0.set(UrlRequestStatus::Handled(false));
+        self.status.set(UrlRequestStatus::Handled(false));
     }
 
     /// Flag the url request as handled and prevent page refresh.
     /// - It's almost the same like `handled()` method, but Seed calls `prevent_default` on the click event.
     pub fn handled_and_prevent_refresh(self) {
-        self.0.set(UrlRequestStatus::Handled(true));
+        self.status.set(UrlRequestStatus::Handled(true));
     }
 
-    pub fn status(self) -> UrlRequestStatus {
-        self.0.get()
+    pub fn status(&self) -> UrlRequestStatus {
+        self.status.get()
     }
 }

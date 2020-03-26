@@ -1,5 +1,5 @@
 use super::{types::*, App, AppInitCfg, OrdersContainer};
-use crate::browser::{url, Url};
+use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 use std::marker::PhantomData;
 
@@ -119,7 +119,7 @@ impl<
         );
 
         let mut initial_orders = OrdersContainer::new(app.clone());
-        let init = into_init.into_init(url::current(), &mut initial_orders);
+        let init = into_init.into_init(Url::current(), &mut initial_orders);
 
         app.init_cfg.replace(AppInitCfg {
             mount_type: init.mount_type,
@@ -149,7 +149,7 @@ impl<
         let BeforeMount {
             mount_point_getter,
             mount_type,
-        } = before_mount_handler(url::current());
+        } = before_mount_handler(Url::current());
 
         App::new(
             builder.update,
