@@ -260,13 +260,33 @@ pub fn patch_el_details<Ms>(
         })
     }
     // Remove attributes that aren't in the new vdom.
-    for name in old.attrs.vals.keys() {
-        if new.attrs.vals.get(name).is_none() {
+    for (key, old_val) in &old.attrs.vals {
+        if new.attrs.vals.get(key).is_none() {
             // todo get to the bottom of this
             match old_el_ws.dyn_ref::<web_sys::Element>() {
-                Some(el) => el
-                    .remove_attribute(name.as_str())
-                    .expect("Removing an attribute"),
+                Some(el) => {
+                    el.remove_attribute(key.as_str())
+                        .expect("Removing an attribute");
+
+                    // We handle value in the vdom using attributes, but the DOM needs
+                    // to use set_value or set_checked.
+                    match key {
+                        At::Value => match old_val {
+                            AtValue::Some(_) => crate::util::set_value(old_el_ws, ""),
+                            _ => Ok(()),
+                        },
+                        At::Checked => match old_val {
+                            AtValue::Some(_) | AtValue::None => {
+                                crate::util::set_checked(old_el_ws, false)
+                            }
+                            _ => Ok(()),
+                        },
+                        _ => Ok(()),
+                    }
+                    .unwrap_or_else(|err| {
+                        crate::error(err);
+                    })
+                }
                 None => {
                     crate::error("Minor error on html element (setting attrs)");
                 }
