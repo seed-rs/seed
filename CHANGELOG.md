@@ -42,6 +42,7 @@
 - Implemented `IntoNodes` for `Option<Node<Msg>>` and `Option<Vec<Node<Msg>>>`.
 - Added example `graphql` (#400).
 - Implemented `UpdateEl` for `i64` and `u64`.
+- Reset properties `checked` and `value` on attribute remove (#405). 
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
