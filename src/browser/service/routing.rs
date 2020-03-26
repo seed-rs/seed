@@ -1,10 +1,8 @@
 use super::super::{
-    url,
     util::{self, ClosureNew},
     Url,
 };
 use crate::app::{subs, Notification};
-use std::convert::{TryFrom, TryInto};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Add a new route using history's `push_state` method.
@@ -17,25 +15,8 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
     let data =
         JsValue::from_str(&serde_json::to_string(&url).expect("Problem serializing route data"));
 
-    // title is currently unused by Firefox.
-    let title = match &url.title {
-        Some(t) => t,
-        None => "",
-    };
-
-    // Prepending / means replace
-    // the existing path. Not doing so will add the path to the existing one.
-    let mut path = String::from("/") + &url.path.join("/");
-    if let Some(search) = &url.search {
-        path = path + "?" + search;
-    }
-
-    if let Some(hash) = &url.hash {
-        path = path + "#" + hash;
-    }
-
     util::history()
-        .push_state_with_url(&data, title, Some(&path))
+        .push_state_with_url(&data, "", Some(&url.to_string()))
         .expect("Problem pushing state");
     url
 }
@@ -60,7 +41,7 @@ pub fn setup_popstate_listener<Ms>(
                 serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
             }
             // Only update when requested for an update by the user.
-            None => url::current(),
+            None => Url::current(),
         };
 
         notify(Notification::new(subs::UrlChanged(url.clone())));
@@ -94,10 +75,8 @@ pub fn setup_hashchange_listener<Ms>(
             .dyn_ref::<web_sys::HashChangeEvent>()
             .expect("Problem casting as hashchange event");
 
-        let url: Url = ev
-            .new_url()
-            .try_into()
-            .expect("cast hashchange event url to `Url`");
+        let url =
+            Url::relative_from_str(&ev.new_url()).expect("cast hashchange event url to `Url`");
 
         notify(Notification::new(subs::UrlChanged(url.clone())));
 
@@ -113,6 +92,30 @@ pub fn setup_hashchange_listener<Ms>(
         .expect("Problem adding hashchange listener");
 
     updated_listener(closure);
+}
+
+pub(crate) fn url_request_handler(
+    sub_data: subs::UrlRequested,
+    notify: impl Fn(Notification) + 'static,
+) {
+    let subs::UrlRequested(url, request) = sub_data;
+
+    match request.status() {
+        subs::url_requested::UrlRequestStatus::Unhandled => {
+            push_route(url.clone());
+            if let Some(event) = request.event.take() {
+                event.prevent_default(); // Prevent page refresh
+            }
+            notify(Notification::new(subs::UrlChanged(url.clone())));
+        }
+        subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
+            if prevent_default {
+                if let Some(event) = request.event.take() {
+                    event.prevent_default(); // Prevent page refresh
+                }
+            }
+        }
+    }
 }
 
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
@@ -153,26 +156,15 @@ pub fn setup_link_listener<Ms>(
                     event.prevent_default(); // Prevent page refresh
                 } else {
                     // Only update when requested for an update by the user.
-                    let url = Url::try_from(href).expect("cast link href to `Url`");
+                    let url = Url::relative_from_str(&href).expect("cast link href to `Url`");
 
-                    // @TODO refactor while removing `routes`.
-                    let url_request_controller = subs::url_requested::UrlRequest::default();
                     notify(Notification::new(subs::UrlRequested(
                         url.clone(),
-                        url_request_controller.clone(),
+                        subs::url_requested::UrlRequest::new(
+                            subs::url_requested::UrlRequestStatus::default(),
+                            Some(event.clone()),
+                        ),
                     )));
-                    match url_request_controller.status() {
-                        subs::url_requested::UrlRequestStatus::Unhandled => {
-                            push_route(url.clone());
-                            event.prevent_default(); // Prevent page refresh
-                            notify(Notification::new(subs::UrlChanged(url.clone())));
-                        }
-                        subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
-                            if prevent_default {
-                                event.prevent_default(); // Prevent page refresh
-                            }
-                        }
-                    }
 
                     if let Some(routes) = routes {
                         if let Some(redirect_msg) = routes(url.clone()) {

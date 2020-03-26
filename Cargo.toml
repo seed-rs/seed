@@ -108,6 +108,7 @@ members = [
     "examples/markdown",
     "examples/fetch",
     "examples/mathjax",
+    "examples/navigation",
     "examples/orders",
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",

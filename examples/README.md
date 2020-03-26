@@ -40,6 +40,9 @@ How to render markdown.
 ### [Mathjax](mathjax)
 An example using Mathjax, for LaTeX-like math notation.
 
+### [Navigation](navigation)
+How to create and browse multiple pages in your app.
+
 ### [Orders](orders)
 How to perform commands and send messages from `update` function.
 And how to use [gloo](https://github.com/rustwasm/gloo) timers.
