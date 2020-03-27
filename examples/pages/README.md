@@ -1,4 +1,4 @@
-## Navigation
+## Pages
 
 How to create and browse multiple pages in your app.
 

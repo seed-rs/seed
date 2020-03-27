@@ -16,6 +16,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         ctx: Context {
             logged_user: "John Doe",
         },
+        base_url: url.to_base_url(),
         page: Page::new(url),
     }
 }
@@ -26,6 +27,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 
 struct Model {
     ctx: Context,
+    base_url: Url,
     page: Page,
 }
 
@@ -87,10 +89,26 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 //     View
 // ------ ------
 
-fn view(model: &Model) -> Node<Msg> {
-    match &model.page {
-        Page::Home => div!["Welcome home!"],
-        Page::Admin(admin_model) => page::admin::view(admin_model, &model.ctx),
-        Page::NotFound => div!["404"],
-    }
+fn view(model: &Model) -> impl IntoNodes<Msg> {
+    vec![
+        header(&model.base_url),
+        match &model.page {
+            Page::Home => div!["Welcome home!"],
+            Page::Admin(admin_model) => page::admin::view(admin_model, &model.ctx),
+            Page::NotFound => div!["404"],
+        },
+    ]
+}
+
+fn header(base_url: &Url) -> Node<Msg> {
+    ul![
+        li![a![
+            attrs! { At::Href => Urls::with_base(base_url).home() },
+            "Home",
+        ]],
+        li![a![
+            attrs! { At::Href => Urls::with_base(base_url).admin_urls().report_urls().default() },
+            "Report",
+        ]],
+    ]
 }

@@ -12,9 +12,9 @@ mod page;
 pub fn init(mut url: Url) -> Option<Model> {
     Some(Model {
         report_page: match url.next_path_part() {
-            Some(REPORT) => page::report::init(url),
-            _ => None,
-        }?,
+            Some(REPORT) => page::report::init(url)?,
+            _ => None?,
+        },
     })
 }
 
