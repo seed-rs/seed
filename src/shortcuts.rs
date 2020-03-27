@@ -14,10 +14,26 @@ macro_rules! with_dollar_sign {
 }
 
 #[macro_export]
+macro_rules! start {
+    () => {
+        #[wasm_bindgen(start)]
+        pub fn start() {
+            App::start("app", init, update, view);
+        }
+    };
+    ($root_element:expr) => {
+        #[wasm_bindgen(start)]
+        pub fn start() {
+            App::start($root_element, init, update, view);
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! struct_urls {
     () => {
         pub struct Urls<'a> {
-            url: std::borrow::Cow<'a, $crate::browser::Url>,
+            base_url: std::borrow::Cow<'a, $crate::browser::Url>,
         }
 
         impl<'a> Urls<'a> {
@@ -25,11 +41,11 @@ macro_rules! struct_urls {
                 base_url: impl Into<std::borrow::Cow<'a, $crate::browser::Url>>,
             ) -> Self {
                 Self {
-                    url: base_url.into(),
+                    base_url: base_url.into(),
                 }
             }
-            pub fn url(self) -> $crate::browser::Url {
-                self.url.into_owned()
+            pub fn base_url(self) -> $crate::browser::Url {
+                self.base_url.into_owned()
             }
         }
     };
