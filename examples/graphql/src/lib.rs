@@ -1,6 +1,11 @@
-#![allow(clippy::filter_map)]
+#![allow(
+    clippy::filter_map,
+    clippy::large_enum_variant,
+    clippy::cognitive_complexity
+)]
 
 use graphql_client::{GraphQLQuery, Response as GQLResponse};
+use itertools::Itertools;
 use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
@@ -61,9 +66,9 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
 
 #[derive(Default)]
 struct Model {
-    continents: Option<Vec<Option<q_continents::QContinentsContinents>>>,
+    continents: Option<Vec<q_continents::QContinentsContinents>>,
     selected_continent: Option<Code>,
-    countries: Option<Vec<Option<q_continent::QContinentContinentCountries>>>,
+    countries: Option<Vec<q_continent::QContinentContinentCountries>>,
     selected_country: Option<Code>,
     country: Option<q_country::QCountryCountry>,
 }
@@ -85,34 +90,30 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::ContinentsFetched(Ok(GQLResponse {
             data: Some(data), ..
         })) => {
-            model.continents = data.continents;
+            model.continents = Some(data.continents);
         }
         Msg::ContinentsFetched(error) => log!(error),
         Msg::ContinentClicked(code) => {
             model.selected_continent = Some(code.clone());
             orders.perform_cmd(async {
                 Msg::CountriesFetched(
-                    send_graphql_request(&QContinent::build_query(q_continent::Variables {
-                        code: Some(code),
-                    }))
-                    .await,
+                    send_graphql_request(&QContinent::build_query(q_continent::Variables { code }))
+                        .await,
                 )
             });
         }
         Msg::CountriesFetched(Ok(GQLResponse {
             data: Some(data), ..
         })) => {
-            model.countries = data.continent.and_then(|continent| continent.countries);
+            model.countries = data.continent.map(|continent| continent.countries);
         }
         Msg::CountriesFetched(error) => log!(error),
         Msg::CountryClicked(code) => {
             model.selected_country = Some(code.clone());
             orders.perform_cmd(async {
                 Msg::CountryFetched(
-                    send_graphql_request(&QCountry::build_query(q_country::Variables {
-                        code: Some(code),
-                    }))
-                    .await,
+                    send_graphql_request(&QCountry::build_query(q_country::Variables { code }))
+                        .await,
                 )
             });
         }
@@ -133,16 +134,16 @@ fn view(model: &Model) -> Node<Msg> {
     let continents = model.continents.as_ref().map(|continents| {
         continents
             .iter()
-            .filter_map(Option::as_ref)
-            .map(|continent| continent_row(continent, &model.selected_continent))
+            .sorted_by(|a, b| Ord::cmp(&a.name, &b.name))
+            .map(|continent| continent_row(continent, model.selected_continent.as_ref()))
             .collect::<Vec<_>>()
     });
 
     let countries = model.countries.as_ref().map(|countries| {
         countries
             .iter()
-            .filter_map(Option::as_ref)
-            .map(|country| country_row(country, &model.selected_country))
+            .sorted_by(|a, b| Ord::cmp(&a.name, &b.name))
+            .map(|country| country_row(country, model.selected_country.as_ref()))
             .collect::<Vec<_>>()
     });
 
@@ -166,7 +167,7 @@ fn column(title: &str, content: impl IntoNodes<Msg>) -> Node<Msg> {
                 C!["menu"],
                 p![C!["menu-label"], title,],
                 ul![
-                    C!["menu-list"],
+                    C!["menu-list", "content"],
                     style! {
                         St::MaxHeight => vh(80),
                         St::OverflowY => "auto",
@@ -180,36 +181,32 @@ fn column(title: &str, content: impl IntoNodes<Msg>) -> Node<Msg> {
 
 fn continent_row(
     continent: &q_continents::QContinentsContinents,
-    selected: &Option<Code>,
+    selected: Option<&Code>,
 ) -> Node<Msg> {
+    let code = continent.code.clone();
     li![a![
-        C![IF!(&continent.code == selected => "is-active")],
+        // @TODO use `Option::contains` once stable
+        C![IF!(Some(&code) == selected => "is-active")],
         &continent.name,
-        continent
-            .code
-            .clone()
-            .map(|code| ev(Ev::Click, move |_| Msg::ContinentClicked(code))),
+        ev(Ev::Click, move |_| Msg::ContinentClicked(code)),
     ],]
 }
 
 fn country_row(
     country: &q_continent::QContinentContinentCountries,
-    selected: &Option<Code>,
+    selected: Option<&Code>,
 ) -> Node<Msg> {
+    let code = country.code.clone();
     li![a![
-        C![IF!(&country.code == selected => "is-active")],
+        // @TODO use `Option::contains` once stable
+        C![IF!(Some(&code) == selected => "is-active")],
         &country.name,
-        country
-            .code
-            .clone()
-            .map(|code| ev(Ev::Click, move |_| Msg::CountryClicked(code))),
+        ev(Ev::Click, move |_| Msg::CountryClicked(code)),
     ],]
 }
 
-#[allow(clippy::cognitive_complexity)]
-fn country_detail(country: &q_country::QCountryCountry) -> Node<Msg> {
-    div![
-        C!["content"],
+fn country_detail(country: &q_country::QCountryCountry) -> Vec<Node<Msg>> {
+    nodes![
         p![C!["title", "is-5"], &country.name],
         p![
             "Code: ",
@@ -220,6 +217,10 @@ fn country_detail(country: &q_country::QCountryCountry) -> Node<Msg> {
             span![C!["has-text-weight-semibold"], &country.native]
         ],
         p![
+            "Capital: ",
+            span![C!["has-text-weight-semibold"], &country.capital]
+        ],
+        p![
             "Currency: ",
             span![C!["has-text-weight-semibold"], &country.currency]
         ],
@@ -227,30 +228,19 @@ fn country_detail(country: &q_country::QCountryCountry) -> Node<Msg> {
             "Phone prefix: ",
             span![C!["has-text-weight-semibold"], &country.phone]
         ],
-        country
-            .languages
-            .as_ref()
-            .map(|languages| { p!["Languages: ", view_languages(languages)] }),
-        country.states.as_ref().and_then(|states| {
-            IF!(not(states.is_empty()) => p!["States: ", view_states(states)])
-        })
+        p!["Languages: ", view_languages(&country.languages)],
+        IF!(not(country.states.is_empty()) => p!["States: ", view_states(&country.states)]),
     ]
 }
 
-fn view_languages(languages: &[Option<q_country::QCountryCountryLanguages>]) -> Node<Msg> {
-    ul![languages.iter().filter_map(Option::as_ref).map(|lang| {
-        li![
-            &lang.name,
-            IF!(matches!(lang.rtl, Some(rtl) if rtl == 1) => " (RTL)"),
-        ]
-    })]
+fn view_languages(languages: &[q_country::QCountryCountryLanguages]) -> Node<Msg> {
+    ul![languages
+        .iter()
+        .map(|lang| { li![&lang.name, IF!(lang.rtl => " (RTL)"),] })]
 }
 
-fn view_states(states: &[Option<q_country::QCountryCountryStates>]) -> Node<Msg> {
-    ul![states
-        .iter()
-        .filter_map(Option::as_ref)
-        .map(|state| li![&state.name])]
+fn view_states(states: &[q_country::QCountryCountryStates]) -> Node<Msg> {
+    ul![states.iter().map(|state| li![&state.name])]
 }
 
 // ------ ------
