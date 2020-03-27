@@ -50,10 +50,10 @@ enum Frequency {
 struct_urls!();
 impl<'a> Urls<'a> {
     pub fn daily(self) -> Url {
-        self.url().add_path_part(DAILY)
+        self.base_url().add_path_part(DAILY)
     }
     pub fn weekly(self) -> Url {
-        self.url().add_path_part(WEEKLY)
+        self.base_url().add_path_part(WEEKLY)
     }
 }
 
