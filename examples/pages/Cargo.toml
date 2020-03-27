@@ -1,5 +1,5 @@
 [package]
-name = "navigation"
+name = "pages"
 version = "0.1.0"
 authors = ["Martin Kavík <martin@kavik.cz>"]
 edition = "2018"
@@ -9,4 +9,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-wasm-bindgen = "0.2.59"
+wasm-bindgen = "0.2.60"

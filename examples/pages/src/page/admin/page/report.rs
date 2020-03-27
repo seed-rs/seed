@@ -13,12 +13,12 @@ pub fn init(mut url: Url) -> Option<Model> {
 
     let frequency = match url.remaining_path_parts().as_slice() {
         [] => {
-            Urls::with_base(&base_url).daily().go_and_replace();
-            Frequency::Daily
+            Urls::with_base(&base_url).default().go_and_replace();
+            Frequency::default()
         }
         [DAILY] => Frequency::Daily,
         [WEEKLY] => Frequency::Weekly,
-        _ => return None,
+        _ => None?,
     };
 
     Some(Model {
@@ -43,12 +43,21 @@ enum Frequency {
     Weekly,
 }
 
+impl Default for Frequency {
+    fn default() -> Self {
+        Self::Daily
+    }
+}
+
 // ------ ------
 //     Urls
 // ------ ------
 
 struct_urls!();
 impl<'a> Urls<'a> {
+    pub fn default(self) -> Url {
+        self.daily()
+    }
     pub fn daily(self) -> Url {
         self.base_url().add_path_part(DAILY)
     }
