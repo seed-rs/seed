@@ -11,13 +11,18 @@ const ADMIN: &str = "admin";
 start!();
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders.subscribe(Msg::UrlChanged);
+    let base_url = url.to_base_url();
+    orders
+        .subscribe(Msg::UrlChanged)
+        .notify(subs::UrlChanged(url));
+
     Model {
         ctx: Context {
             logged_user: "John Doe",
         },
-        base_url: url.to_base_url(),
-        page: Page::init(url),
+        base_url,
+        page_id: None,
+        admin_model: None,
     }
 }
 
@@ -28,7 +33,8 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 struct Model {
     ctx: Context,
     base_url: Url,
-    page: Page,
+    page_id: Option<PageId>,
+    admin_model: Option<page::admin::Model>,
 }
 
 // ------ Context ------
@@ -37,22 +43,12 @@ pub struct Context {
     pub logged_user: &'static str,
 }
 
-// ------ Page ------
+// ------ PageId ------
 
-enum Page {
+#[derive(Copy, Clone, Eq, PartialEq)]
+enum PageId {
     Home,
-    Admin(page::admin::Model),
-    NotFound,
-}
-
-impl Page {
-    fn init(mut url: Url) -> Self {
-        match url.next_path_part() {
-            None => Self::Home,
-            Some(ADMIN) => page::admin::init(url).map_or(Self::NotFound, Self::Admin),
-            _ => Self::NotFound,
-        }
-    }
+    Admin,
 }
 
 // ------ ------
@@ -79,8 +75,14 @@ enum Msg {
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::UrlChanged(subs::UrlChanged(url)) => {
-            model.page = Page::init(url);
+        Msg::UrlChanged(subs::UrlChanged(mut url)) => {
+            model.page_id = match url.next_path_part() {
+                None => Some(PageId::Home),
+                Some(ADMIN) => {
+                    page::admin::init(url, &mut model.admin_model).map(|_| PageId::Admin)
+                }
+                _ => None,
+            };
         }
     }
 }
@@ -89,13 +91,15 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 //     View
 // ------ ------
 
-fn view(model: &Model) -> impl IntoNodes<Msg> {
+fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
         header(&model.base_url),
-        match &model.page {
-            Page::Home => div!["Welcome home!"],
-            Page::Admin(admin_model) => page::admin::view(admin_model, &model.ctx),
-            Page::NotFound => div!["404"],
+        match model.page_id {
+            Some(PageId::Home) => div!["Welcome home!"],
+            Some(PageId::Admin) => {
+                page::admin::view(model.admin_model.as_ref().expect("admin model"), &model.ctx)
+            }
+            None => div!["404"],
         },
     ]
 }
@@ -107,7 +111,7 @@ fn header(base_url: &Url) -> Node<Msg> {
             "Home",
         ]],
         li![a![
-            attrs! { At::Href => Urls::with_base(base_url).admin_urls().report_urls().default() },
+            attrs! { At::Href => Urls::with_base(base_url).admin_urls().report_urls().root() },
             "Report",
         ]],
     ]
