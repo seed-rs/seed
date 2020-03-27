@@ -5,7 +5,7 @@ query QContinents {
     }
 }
 
-query QContinent($code: String) {
+query QContinent($code: ID!) {
     continent(code: $code) {
         countries {
             code
@@ -14,13 +14,14 @@ query QContinent($code: String) {
     }
 }
 
-query QCountry($code: String) {
+query QCountry($code: ID!) {
     country(code: $code) {
         code
         name
         native
-        phone
+        capital
         currency
+        phone
         languages {
             name
             native
