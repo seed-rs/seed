@@ -47,6 +47,10 @@ And how to use [gloo](https://github.com/rustwasm/gloo) timers.
 ### [Pages](pages)
 How to create and browse multiple pages in your app.
 
+### [Pages-keep-state](pages_keep_state)
+How to create and browse multiple pages in your app.
+Pages keep their state.
+
 ### [Subscribe](subscribe)
 How to create and use subscriptions, streams, notifications and commands.
 
