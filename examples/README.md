@@ -28,6 +28,9 @@ Intended as a demo of basic functionality.
 ### [Counter Advanced](counter_advanced)
 Intended as a more sophisticated demo of basic functionality.
 
+### [Custom Elements](custom_elements)
+How to create and use custom elements.
+
 ### [Drop Zone](drop_zone)
 How to create a drop-zone.
 
