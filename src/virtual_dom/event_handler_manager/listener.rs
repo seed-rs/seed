@@ -45,9 +45,8 @@ impl<Ms> Listener<Ms> {
                     event_handlers
                 });
                 for handler_callback in handler_callbacks {
-                    if let Some(msg) = handler_callback(event.clone()) {
-                        mailbox.send(msg);
-                    }
+                    let msg = handler_callback(event.clone());
+                    mailbox.send(msg);
                 }
             }),
         );
