@@ -46,7 +46,7 @@ pub mod tests {
             &mut node,
             &parent,
             None,
-            &Mailbox::new(|_: Msg| {}),
+            &Mailbox::new(|_: Option<Msg>| {}),
             &app,
         );
 

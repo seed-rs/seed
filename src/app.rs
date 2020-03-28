@@ -534,8 +534,12 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
     }
 
     fn mailbox(&self) -> Mailbox<Ms> {
-        Mailbox::new(enclose!((self => s) move |message| {
-            s.update(message);
+        Mailbox::new(enclose!((self => s) move |option_message| {
+            if let Some(message) = option_message {
+                s.update(message);
+            } else {
+                s.rerender_vdom();
+            }
         }))
     }
 
@@ -630,6 +634,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         //  - didn't force-rerender vdom
         //  - didn't schedule render
         //  - doesn't want to skip render
+
         self.rerender_vdom();
 
         self

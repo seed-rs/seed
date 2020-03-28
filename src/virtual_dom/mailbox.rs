@@ -1,17 +1,17 @@
 use std::rc::Rc;
 
 pub struct Mailbox<Message: 'static> {
-    func: Rc<dyn Fn(Message)>,
+    func: Rc<dyn Fn(Option<Message>)>,
 }
 
 impl<Ms> Mailbox<Ms> {
-    pub fn new(func: impl Fn(Ms) + 'static) -> Self {
+    pub fn new(func: impl Fn(Option<Ms>) + 'static) -> Self {
         Mailbox {
             func: Rc::new(func),
         }
     }
 
-    pub fn send(&self, message: Ms) {
+    pub fn send(&self, message: Option<Ms>) {
         (self.func)(message)
     }
 }

@@ -74,7 +74,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn el_added() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").expect("parent");
@@ -146,7 +146,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn el_removed() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -185,7 +185,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn el_changed() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -246,7 +246,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn els_changed_correct_order() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -274,7 +274,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn attr_disabled() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -356,7 +356,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn empty_changed_in_front() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -408,7 +408,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn empty_changed_in_the_middle() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -459,7 +459,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn root_empty_changed() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -493,7 +493,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn root_empty_to_empty() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
@@ -507,7 +507,7 @@ pub mod tests {
     #[wasm_bindgen_test]
     fn text_to_element_to_text() {
         let app = create_app();
-        let mailbox = Mailbox::new(|_msg: Msg| {});
+        let mailbox = Mailbox::new(|_msg: Option<Msg>| {});
 
         let doc = util::document();
         let parent = doc.create_element("div").unwrap();
