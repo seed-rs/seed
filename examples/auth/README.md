@@ -1,6 +1,6 @@
-## Pages example
+## Auth example
 
-How to create and browse multiple pages in your app.
+How to implement login / logout.
 
 ---
 

@@ -77,6 +77,9 @@ A demonstration of event-handlers attached to the `window`.
 ## Server
 Backend server integration & interaction examples.
 
+### [Auth](auth)
+How to implement login / logout.
+
 ### [GraphQL](graphql)
 How to communicate with a GraphQL backend.
 
