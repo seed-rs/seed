@@ -1,7 +1,7 @@
-## Pages
+## Pages-keep-state example
 
 How to create and browse multiple pages in your app.
-Lazy load Pages and keep their state.
+Lazy load pages and keep their state.
 
 ---
 

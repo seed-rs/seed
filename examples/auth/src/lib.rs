@@ -1,0 +1,230 @@
+use seed::{prelude::*, *};
+use serde::{Deserialize, Serialize};
+
+const LOGIN: &str = "login";
+const API_URL: &str = "https://martinkavik-seed-auth-example.builtwithdark.com/api";
+
+// ------ ------
+//     Init
+// ------ ------
+
+start!();
+
+fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders.subscribe(Msg::UrlChanged);
+    Model {
+        user: None,
+        email: "john@example.com".to_owned(),
+        password: "1234".to_owned(),
+        base_url: url.to_base_url(),
+        page: Page::init(url, None, orders),
+        secret_message: None,
+    }
+}
+
+// ------ ------
+//     Model
+// ------ ------
+
+struct Model {
+    user: Option<LoggedUser>,
+    email: String,
+    password: String,
+    base_url: Url,
+    page: Page,
+    secret_message: Option<String>,
+}
+
+// ------ LoggedUser ------
+
+#[derive(Deserialize)]
+#[allow(dead_code)]
+pub struct LoggedUser {
+    id: usize,
+    email: String,
+    username: String,
+    token: String,
+}
+
+// ------ Page ------
+
+enum Page {
+    Home,
+    Login,
+    NotFound,
+}
+
+impl Page {
+    fn init(mut url: Url, user: Option<&LoggedUser>, orders: &mut impl Orders<Msg>) -> Self {
+        match url.next_path_part() {
+            None => {
+                if let Some(user) = user {
+                    let token = user.token.clone();
+                    orders.perform_cmd(async {
+                        Msg::TopSecretFetched(
+                            async {
+                                Request::new(format!("{}/top_secret", API_URL))
+                                    .header(Header::bearer(token))
+                                    .fetch()
+                                    .await?
+                                    .check_status()?
+                                    .text()
+                                    .await
+                            }
+                            .await,
+                        )
+                    });
+                };
+                Self::Home
+            }
+            Some(LOGIN) => Self::Login,
+            _ => Self::NotFound,
+        }
+    }
+}
+
+// ------ ------
+//     Urls
+// ------ ------
+
+struct_urls!();
+impl<'a> Urls<'a> {
+    pub fn home(self) -> Url {
+        self.base_url()
+    }
+    pub fn login(self) -> Url {
+        self.base_url().add_path_part(LOGIN)
+    }
+}
+
+// ------ ------
+//    Update
+// ------ ------
+
+enum Msg {
+    UrlChanged(subs::UrlChanged),
+    EmailChanged(String),
+    PasswordChanged(String),
+    LoginClicked,
+    LoginFetched(fetch::Result<LoggedUser>),
+    LogoutClicked,
+    TopSecretFetched(fetch::Result<String>),
+}
+
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+    match msg {
+        Msg::UrlChanged(subs::UrlChanged(url)) => {
+            model.page = Page::init(url, model.user.as_ref(), orders);
+        }
+        Msg::EmailChanged(email) => model.email = email,
+        Msg::PasswordChanged(password) => model.password = password,
+        Msg::LoginClicked => {
+            let request = Request::new(format!("{}/users/login", API_URL))
+                .method(Method::Post)
+                .json(&LoginRequestBody {
+                    email: &model.email,
+                    password: &model.password,
+                });
+            orders.perform_cmd(async {
+                Msg::LoginFetched(
+                    async { request?.fetch().await?.check_status()?.json().await }.await,
+                )
+            });
+        }
+        Msg::LoginFetched(Ok(logged_user)) => {
+            model.user = Some(logged_user);
+            orders.notify(subs::UrlRequested::new(
+                Urls::with_base(&model.base_url).home(),
+            ));
+        }
+        Msg::LoginFetched(Err(error)) => log!(error),
+        Msg::LogoutClicked => {
+            model.user = None;
+            model.secret_message = None;
+        }
+        Msg::TopSecretFetched(Ok(secret_message)) => {
+            model.secret_message = Some(secret_message);
+        }
+        Msg::TopSecretFetched(Err(error)) => log!(error),
+    }
+}
+
+#[derive(Serialize)]
+struct LoginRequestBody<'a> {
+    email: &'a str,
+    password: &'a str,
+}
+
+// ------ ------
+//     View
+// ------ ------
+
+fn view(model: &Model) -> impl IntoNodes<Msg> {
+    vec![
+        header(&model.base_url, model.user.as_ref()),
+        match &model.page {
+            Page::Home => div![
+                format!(
+                    "Welcome home {}!",
+                    model
+                        .user
+                        .as_ref()
+                        .map(|user| user.username.to_owned())
+                        .unwrap_or_default()
+                ),
+                div![&model.secret_message],
+            ],
+            Page::Login => form![
+                style! {
+                    St::Display => "flex",
+                    St::FlexDirection => "column",
+                },
+                label!["Email"],
+                input![
+                    attrs! {
+                        At::Value => model.email
+                    },
+                    input_ev(Ev::Input, Msg::EmailChanged)
+                ],
+                label!["Password"],
+                input![
+                    attrs! {
+                        At::Value => model.password,
+                        At::Type => "password",
+                    },
+                    input_ev(Ev::Input, Msg::PasswordChanged)
+                ],
+                button![
+                    "Login",
+                    ev(Ev::Click, |event| {
+                        event.prevent_default();
+                        Msg::LoginClicked
+                    })
+                ],
+                "Note: Errors are logged into the console log.",
+            ],
+            Page::NotFound => div!["404"],
+        },
+    ]
+}
+
+fn header(base_url: &Url, user: Option<&LoggedUser>) -> Node<Msg> {
+    ul![
+        li![a![
+            attrs! { At::Href => Urls::with_base(base_url).home() },
+            "Home",
+        ]],
+        if user.is_none() {
+            li![a![
+                attrs! { At::Href => Urls::with_base(base_url).login() },
+                "Login",
+            ]]
+        } else {
+            li![a![
+                attrs! { At::Href => "" },
+                "Logout",
+                ev(Ev::Click, |_| Msg::LogoutClicked),
+            ]]
+        }
+    ]
+}
