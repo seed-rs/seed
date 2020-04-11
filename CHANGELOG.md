@@ -44,6 +44,7 @@
 - Implemented `UpdateEl` for `i64` and `u64`.
 - Reset properties `checked` and `value` on attribute remove (#405). 
 - Added example `custom_elements`.
+- Updated example `drop_zone`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
