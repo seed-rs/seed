@@ -25,6 +25,8 @@ make_events! {
     PointerCancel => "pointercancel", PointerOut => "pointerout", PointerLeave => "pointerleave",
     GotPointerCapture => "gotpointercapture", LostPointerCapture => "lostpointercapture",
 
+    TouchStart => "touchstart", TouchEnd => "touchend", TouchCancel => "touchcancel", TouchMove => "touchmove",
+
     Drag => "drag", DragEnd => "dragend", DragEnter => "dragenter", DragStart => "dragstart", DragLeave => "dragleave",
     DragOver => "dragover", Drop => "drop",
 
