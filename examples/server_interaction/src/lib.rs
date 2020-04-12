@@ -58,12 +58,11 @@ impl Default for Model {
 // ------ ------
 
 fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    orders.perform_cmd(
-        fetch(REPOSITORY_URL)
-            .map(|result| result.and_then(Response::check_status))
-            .and_then(Response::json)
-            .map(Msg::RepositoryInfoFetched),
-    );
+    orders.perform_cmd(async {
+        Msg::RepositoryInfoFetched(
+            async { fetch(REPOSITORY_URL).await?.check_status()?.json().await }.await,
+        )
+    });
     AfterMount::default()
 }
 
