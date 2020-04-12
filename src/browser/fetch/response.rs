@@ -17,14 +17,14 @@ impl Response {
     ///
     /// # Errors
     /// Returns `FetchError::PromiseError`.
-    pub async fn text(self) -> Result<String> {
-        let js_promise = self.raw_response.text().map_err(FetchError::PromiseError)?;
-
-        let js_value = JsFuture::from(js_promise)
+    pub async fn text(&self) -> Result<String> {
+        Ok(self
+            .raw_response
+            .text()
+            .map_err(FetchError::PromiseError)
+            .map(JsFuture::from)?
             .await
-            .map_err(FetchError::PromiseError)?;
-
-        Ok(js_value
+            .map_err(FetchError::PromiseError)?
             .as_string()
             .expect("fetch: Response expected `String` after .text()"))
     }
@@ -33,9 +33,25 @@ impl Response {
     ///
     /// # Errors
     /// Returns `FetchError::SerdeError` or `FetchError::PromiseError`.
-    pub async fn json<T: DeserializeOwned + 'static>(self) -> Result<T> {
+    pub async fn json<T: DeserializeOwned + 'static>(&self) -> Result<T> {
         let text = self.text().await?;
         serde_json::from_str(&text).map_err(FetchError::SerdeError)
+    }
+
+    /// Return response body as `Vec<u8>`.
+    ///
+    /// # Errors
+    /// Returns `FetchError::PromiseError`.
+    pub async fn bytes(&self) -> Result<Vec<u8>> {
+        Ok(self
+            .raw_response
+            .array_buffer()
+            .map_err(FetchError::PromiseError)
+            .map(JsFuture::from)?
+            .await
+            .map_err(FetchError::PromiseError)
+            .map(js_sys::Uint8Array::from)?
+            .to_vec())
     }
 
     /// Get request status.
