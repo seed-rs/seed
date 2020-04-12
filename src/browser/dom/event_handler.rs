@@ -71,6 +71,24 @@ pub fn mouse_ev<Ms: 'static, MsU: 'static>(
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
+pub fn touch_ev<Ms: 'static, MsU: 'static>(
+    trigger: impl Into<Ev>,
+    handler: impl FnOnce(web_sys::TouchEvent) -> MsU + 'static + Clone,
+) -> EventHandler<Ms> {
+    let handler = map_callback_return_to_option_ms!(
+        dyn Fn(web_sys::TouchEvent) -> Option<Ms>,
+        handler.clone(),
+        "Handler can return only Msg, Option<Msg> or ()!",
+        Rc
+    );
+    let handler = move |event: web_sys::Event| {
+        handler(event.dyn_ref::<web_sys::TouchEvent>().unwrap().clone())
+    };
+    EventHandler::new(trigger, handler)
+}
+
+/// See `keyboard_ev`
+#[allow(clippy::shadow_unrelated)]
 pub fn pointer_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::PointerEvent) -> MsU + 'static + Clone,

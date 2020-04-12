@@ -43,3 +43,10 @@ pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
         .dyn_ref::<web_sys::MouseEvent>()
         .expect("Unable to cast as a mouse event")
 }
+
+/// See `to_kbevent`
+pub fn to_touch_event(event: &web_sys::Event) -> &web_sys::TouchEvent {
+    event
+        .dyn_ref::<web_sys::TouchEvent>()
+        .expect("Unable to cast as a touch event")
+}
