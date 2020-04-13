@@ -12,7 +12,7 @@
 - [BREAKING] `String` implements `UpdateEl<T>`. (References are now required for `String` properties, e.g. `div![&model.title]`.)
 - Fixed `href` detection to ignore `use` elements (#384).
 - Added methods `subscribe`, `subscribe_with_handle`, `perform_cmd_with_handle`, `stream`, `stream_with_handle` and `notify` into `Orders` (#130).
-- Added `cmds::timeout`, `stream::interval`, `stream::window_event`, `subs::UrlChanged` and `subs::UrlRequested` (#131).
+- Added `cmds::timeout`, `stream::interval`, `stream::window_event`, `stream::document_event`, `subs::UrlChanged` and `subs::UrlRequested` (#131).
 - Added example `subscribe`.
 - Updated example `todomvc` to use subscription `UrlChanged` instead of `routes`.
 - [BREAKING] Futures in `perform_cmd` and `perform_g_cmd` are executed immediately.

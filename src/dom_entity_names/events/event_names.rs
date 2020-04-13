@@ -36,6 +36,7 @@ make_events! {
 
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
+    SelectionChange => "selectionchange",
 
     // todo finish this
 

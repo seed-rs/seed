@@ -1,36 +1,11 @@
-use crate::browser::util::window;
 use crate::virtual_dom::Ev;
 use futures::channel::mpsc::{unbounded, UnboundedReceiver};
-use futures::stream::{Stream, StreamExt};
+use futures::stream::Stream;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{Event, EventTarget};
-
-// ------ Window Event stream ------
-
-/// Stream `Window` `web_sys::Event`s.
-///
-/// Handler has to return `Msg`, `Option<Msg>` or `()`.
-///
-/// # Example
-///
-/// ```rust,no_run
-///orders.stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
-///orders.stream_with_handle(streams::window_event(Ev::Click, |_| log!("Clicked!")));
-/// ```
-///
-/// # Panics
-///
-/// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
-/// (It will be changed to a compile-time error).
-pub fn window_event<MsU>(
-    trigger: impl Into<Ev>,
-    handler: impl FnOnce(Event) -> MsU + Clone + 'static,
-) -> impl Stream<Item = MsU> {
-    EventStream::new(&window(), trigger.into()).map(move |event| handler.clone()(event))
-}
+use web_sys::EventTarget;
 
 // ------ EventStream ------
 
