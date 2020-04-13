@@ -39,7 +39,7 @@ futures = "0.3.4"
 uuid = { version = "0.8.1", features = ["v4", "wasm-bindgen"] }
 
 [dependencies.web-sys]
-version = "0.3.36"
+version = "0.3.37"
 features = [
     "AbortController",
     "AbortSignal",
@@ -85,6 +85,7 @@ features = [
     "RequestMode",
     "RequestRedirect",
     "Response",
+    "Selection",
     "Storage",
     "Text",
     "console",

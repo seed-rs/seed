@@ -14,7 +14,10 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         .subscribe(Msg::UrlRequested)
         .subscribe(Msg::UrlChanged)
         .notify(subs::UrlChanged(url))
-        .stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
+        .stream(streams::window_event(Ev::Resize, |_| Msg::OnResize))
+        .stream(streams::document_event(Ev::SelectionChange, |_| {
+            Msg::OnSelection
+        }));
 
     Model {
         sub_handles: Vec::new(),
@@ -63,6 +66,7 @@ enum Msg {
     CancelTimeout,
 
     OnResize,
+    OnSelection,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -117,6 +121,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::OnResize => {
             model.window_size = window_size();
+        }
+        Msg::OnSelection => {
+            if let Some(selection) = document().get_selection().expect("get selection") {
+                let selection = selection
+                    .to_string()
+                    .as_string()
+                    .expect("cast JsString to String");
+                if not(selection.is_empty()) {
+                    log!("Selection", selection);
+                }
+            }
         }
     }
 }
