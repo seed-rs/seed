@@ -73,7 +73,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// # Example
     ///
     /// ```rust,no_run
-    ///orders.perform_cmd(cmds::timeout(2000, || Msg::OnTimeout)));
+    ///orders.perform_cmd(cmds::timeout(2000, || Msg::OnTimeout));
     ///orders.perform_cmd(async { log!("Hello!") });
     /// ```
     ///
@@ -97,7 +97,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// # Example
     ///
     /// ```rust,no_run
-    ///let timeout_handle = orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout)));
+    ///let timeout_handle = orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout));
     ///let cmd_handle = orders.perform_cmd_with_handle(async { log!("Hello!") });
     /// ```
     ///
@@ -232,7 +232,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// # Example
     ///
     /// ```rust,no_run
-    ///orders.stream(streams::interval(1000, || Msg::OnTick)));
+    ///orders.stream(streams::interval(1000, || Msg::OnTick));
     ///orders.stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
     /// ```
     ///
@@ -254,7 +254,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     /// # Example
     ///
     /// ```rust,no_run
-    ///let timer_handler = orders.stream_with_handle(streams::interval(1000, || Msg::OnTick)));
+    ///let timer_handler = orders.stream_with_handle(streams::interval(1000, || Msg::OnTick));
     ///let stream_handler = orders.stream_with_handle(streams::window_event(Ev::Resize, |_| Msg::OnResize));
     /// ```
     ///
