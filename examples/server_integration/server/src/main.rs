@@ -13,6 +13,7 @@ use count_actor::{CountActor, MsgIncrement};
 
 // ---- Apis ("/api/*") ----
 
+#[allow(clippy::needless_pass_by_value)]
 #[post("send-message")]
 fn send_message(
     state: web::Data<State>,
@@ -32,7 +33,7 @@ fn send_message(
 
 #[get("delayed-response/{delay}")]
 fn delayed_response(
-    delay: web::Path<(u64)>,
+    delay: web::Path<u64>,
 ) -> impl Future<Item = String, Error = tokio_timer::Error> {
     tokio_timer::sleep(time::Duration::from_millis(*delay))
         .and_then(move |()| Ok(format!("Delay was set to {}ms.", delay)))

@@ -8,7 +8,7 @@
 **/node_modules
 **/target
 **/pkg/*
-Cargo.lock
+**/Cargo.lock
 
 # --- IDE metadata ---
 **/.idea
