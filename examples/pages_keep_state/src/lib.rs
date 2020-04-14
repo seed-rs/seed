@@ -8,8 +8,6 @@ const ADMIN: &str = "admin";
 //     Init
 // ------ ------
 
-start!();
-
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     let base_url = url.to_base_url();
     orders
@@ -115,4 +113,13 @@ fn header(base_url: &Url) -> Node<Msg> {
             "Report",
         ]],
     ]
+}
+
+// ------ ------
+//     Start
+// ------ ------
+
+#[wasm_bindgen(start)]
+pub fn start() {
+    App::start("app", init, update, view);
 }

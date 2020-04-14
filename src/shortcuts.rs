@@ -14,22 +14,6 @@ macro_rules! with_dollar_sign {
 }
 
 #[macro_export]
-macro_rules! start {
-    () => {
-        #[wasm_bindgen(start)]
-        pub fn start() {
-            App::start("app", init, update, view);
-        }
-    };
-    ($root_element:expr) => {
-        #[wasm_bindgen(start)]
-        pub fn start() {
-            App::start($root_element, init, update, view);
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! struct_urls {
     () => {
         pub struct Urls<'a> {
