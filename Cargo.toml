@@ -111,6 +111,7 @@ members = [
     "examples/mathjax",
     "examples/orders",
     "examples/pages",
+    "examples/pages_hash_routing",
     "examples/pages_keep_state",
     # "examples/server_integration",   # has own workspace
     "examples/server_interaction",
