@@ -26,6 +26,11 @@ Run [examples](examples/) with `cargo make start example_name` from the Seed rep
 ```rust
 use seed::{prelude::*, *};
 
+// `init` describes what should happen when your app started.
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
+
 // `Model` describes our app state.
 type Model = i32;
 
@@ -41,21 +46,22 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     }
 }
 
-// `view` describes what to display, and can implement the different `Msg`s you define.
+// `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
     div![
         "This is a counter: ",
-        class!["counter"],
+        C!["counter"],
         button![
-            model.to_string(),
+            model,
             ev(Ev::Click, |_| Msg::Increment),
         ],
     ]
 }
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    App::builder(update, view).build_and_start();
+pub fn start() {
+    // Mount the `app` to the element with the `id` "app".
+    App::start("app", init, update, view);
 }
 ```
 
