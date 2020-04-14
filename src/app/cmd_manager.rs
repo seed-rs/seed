@@ -24,6 +24,7 @@ impl CmdManager {
 
 // ------ CmdHandle ------
 
+#[derive(Debug)]
 pub struct CmdHandle(AbortHandle);
 
 impl Drop for CmdHandle {

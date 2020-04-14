@@ -14,6 +14,7 @@ use web_sys::EventTarget;
 // @TODO Update it to support different `web_sys` events
 // during implementation of https://github.com/seed-rs/seed/issues/331
 
+#[derive(Debug)]
 pub struct EventStream<E> {
     node: EventTarget,
     trigger: Ev,

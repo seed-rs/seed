@@ -16,5 +16,5 @@ pub use url_requested::UrlRequested;
 ///...
 ///update(... Msg::UrlChanged(subs::UrlChanged(url)) =>
 /// ```
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct UrlChanged(pub Url);

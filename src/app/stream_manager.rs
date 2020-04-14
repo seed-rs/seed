@@ -25,6 +25,7 @@ impl StreamManager {
 
 // ------ StreamHandle ------
 
+#[derive(Debug)]
 pub struct StreamHandle(AbortHandle);
 
 impl Drop for StreamHandle {

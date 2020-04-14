@@ -103,14 +103,14 @@ pub(crate) fn url_request_handler(
     match request.status() {
         subs::url_requested::UrlRequestStatus::Unhandled => {
             push_route(url.clone());
-            if let Some(event) = request.event.take() {
+            if let Some(event) = request.event.borrow_mut().take() {
                 event.prevent_default(); // Prevent page refresh
             }
             notify(Notification::new(subs::UrlChanged(url.clone())));
         }
         subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
             if prevent_default {
-                if let Some(event) = request.event.take() {
+                if let Some(event) = request.event.borrow_mut().take() {
                     event.prevent_default(); // Prevent page refresh
                 }
             }
