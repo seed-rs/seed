@@ -1,5 +1,5 @@
 use crate::browser::Url;
-use std::{cell::Cell, rc::Rc};
+use std::{cell::{Cell, RefCell}, rc::Rc};
 use web_sys::Event;
 
 pub type PreventDefault = bool;
@@ -16,7 +16,7 @@ pub type PreventDefault = bool;
 ///update(... Msg::UrlRequested(subs::UrlRequested(url, url_request))) =>
 /// ```
 /// See `UrlRequest` for more info.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct UrlRequested(pub Url, pub UrlRequest);
 
 impl UrlRequested {
@@ -27,7 +27,7 @@ impl UrlRequested {
 
 // --- UrlRequestStatus ---
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum UrlRequestStatus {
     Unhandled,
     Handled(PreventDefault),
@@ -41,17 +41,17 @@ impl Default for UrlRequestStatus {
 
 // --- UrlRequest ---
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct UrlRequest {
     pub(crate) status: Rc<Cell<UrlRequestStatus>>,
-    pub(crate) event: Rc<Cell<Option<Event>>>,
+    pub(crate) event: Rc<RefCell<Option<Event>>>,
 }
 
 impl UrlRequest {
     pub(crate) fn new(status: UrlRequestStatus, event: Option<Event>) -> Self {
         Self {
             status: Rc::new(Cell::new(status)),
-            event: Rc::new(Cell::new(event)),
+            event: Rc::new(RefCell::new(event)),
         }
     }
 }
@@ -60,7 +60,7 @@ impl Default for UrlRequest {
     fn default() -> Self {
         Self {
             status: Rc::new(Cell::new(UrlRequestStatus::default())),
-            event: Rc::new(Cell::new(None)),
+            event: Rc::new(RefCell::new(None)),
         }
     }
 }

@@ -2,6 +2,7 @@ use indexmap::IndexMap;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
+use std::fmt;
 use uuid::Uuid;
 
 // ------ SubManager ------
@@ -91,6 +92,14 @@ impl<Ms: 'static> SubManager<Ms> {
 
 pub struct SubHandle {
     unsubscriber: Box<dyn Fn()>,
+}
+
+impl fmt::Debug for SubHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SubHandle")
+            .field("unsubscriber", &"Box<dyn Fn()>")
+            .finish()
+    }
 }
 
 impl Drop for SubHandle {
