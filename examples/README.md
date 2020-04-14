@@ -47,7 +47,11 @@ And how to use [gloo](https://github.com/rustwasm/gloo) timers.
 ### [Pages](pages)
 How to create and browse multiple pages in your app.
 
-### [Pages-keep-state](pages_keep_state)
+### [Pages with hash routing](pages_hash_routing)
+How to create and browse multiple pages in your app.
+This example uses hash routing.
+
+### [Pages that keep their state](pages_keep_state)
 How to create and browse multiple pages in your app.
 Pages keep their state.
 
