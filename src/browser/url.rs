@@ -4,13 +4,14 @@ use std::{borrow::Cow, fmt};
 use wasm_bindgen::JsValue;
 
 /// Contains all information used in pushing and handling routes.
-/// Based on [React-Reason's router](https://github.com/reasonml/reason-react/blob/master/docs/router.md).
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Url {
     next_path_part_index: usize,
+    next_hash_path_part_index: usize,
     path: Vec<String>,
-    search: Option<String>,
+    hash_path: Vec<String>,
     hash: Option<String>,
+    search: Option<String>,
 }
 
 impl Url {
@@ -18,7 +19,9 @@ impl Url {
     pub fn new() -> Self {
         Self {
             next_path_part_index: 0,
+            next_hash_path_part_index: 0,
             path: Vec::new(),
+            hash_path: Vec::new(),
             hash: None,
             search: None,
         }
@@ -96,6 +99,22 @@ impl Url {
             }
         };
 
+        let hash_path = {
+            if let Some(hash) = &hash {
+                hash.split('/')
+                    .filter_map(|path_part| {
+                        if path_part.is_empty() {
+                            None
+                        } else {
+                            Some(path_part.to_owned())
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            }
+        };
+
         let search = {
             let mut search = url.search();
             if search.is_empty() {
@@ -109,7 +128,9 @@ impl Url {
 
         Self {
             next_path_part_index: 0,
+            next_hash_path_part_index: 0,
             path,
+            hash_path,
             hash,
             search,
         }
@@ -140,6 +161,25 @@ impl Url {
         path_part.map(String::as_str)
     }
 
+    /// Advances the internal hash path iterator and returns the next hash path part as `Option<&str>`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///match url.next_hash_path_part() {
+    ///    None => Page::Home,
+    ///    Some("report") => Page::Report(page::report::init(url)),
+    ///    _ => Page::Unknown(url),
+    ///}
+    /// ````
+    pub fn next_hash_path_part(&mut self) -> Option<&str> {
+        let hash_path_part = self.hash_path.get(self.next_hash_path_part_index);
+        if hash_path_part.is_some() {
+            self.next_hash_path_part_index += 1;
+        }
+        hash_path_part.map(String::as_str)
+    }
+
     /// Collects the internal path iterator and returns it as `Vec<&str>`.
     ///
     /// # Example
@@ -166,6 +206,32 @@ impl Url {
             .collect()
     }
 
+    /// Collects the internal hash path iterator and returns it as `Vec<&str>`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///match url.remaining_hash_path_parts().as_slice() {
+    ///    [""] | [] => Page::Home,
+    ///    ["report", rest @ ..] => {
+    ///        match rest {
+    ///            ["day"] => Page::ReportDay,
+    ///            _ => Page::ReportWeek,
+    ///        }
+    ///    },
+    ///    _ => Page::NotFound,
+    ///}
+    /// ````
+    pub fn remaining_hash_path_parts(&mut self) -> Vec<&str> {
+        let hash_path_part_index = self.next_hash_path_part_index;
+        self.next_hash_path_part_index = self.hash_path.len();
+        self.hash_path
+            .iter()
+            .skip(hash_path_part_index)
+            .map(String::as_str)
+            .collect()
+    }
+
     /// Adds given path part and returns updated `Url`.
     ///
     /// # Example
@@ -178,9 +244,31 @@ impl Url {
         self
     }
 
+    /// Adds given hash path part and returns updated `Url`.
+    /// It also changes `hash`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    ///let link_to_blog = url.add_hash_path_part("blog");
+    /// ````
+    pub fn add_hash_path_part(mut self, hash_path_part: impl ToString) -> Self {
+        self.hash_path.push(hash_path_part.to_string());
+        self.hash = Some(self.hash_path.join("/"));
+        self
+    }
+
+    /// Clone the `Url` and strip remaining path parts.
     pub fn to_base_url(&self) -> Self {
         let mut url = self.clone();
         url.path.truncate(self.next_path_part_index);
+        url
+    }
+
+    /// Clone the `Url` and strip remaining hash path parts.
+    pub fn to_hash_base_url(&self) -> Self {
+        let mut url = self.clone();
+        url.hash_path.truncate(self.next_hash_path_part_index);
         url
     }
 
@@ -194,12 +282,27 @@ impl Url {
         self
     }
 
+    /// Sets hash path and returns updated `Url`.
+    /// It also resets internal hash path iterator and sets `hash`.
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
+    pub fn set_hash_path<T: ToString>(mut self, hash_path_iterator: impl Iterator<Item = T>) -> Self {
+        self.hash_path = hash_path_iterator.map(|p| p.to_string()).collect();
+        self.next_hash_path_part_index = 0;
+        self.hash = Some(self.hash_path.join("/"));
+        self
+    }
+
     /// Sets hash and returns updated `Url`.
+    /// I also sets `hash_path`.
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
     pub fn set_hash(mut self, hash: impl ToString) -> Self {
-        self.hash = Some(hash.to_string());
+        let hash = hash.to_string();
+        self.hash_path = hash.split("/").map(ToOwned::to_owned).collect();
+        self.hash = Some(hash);
         self
     }
 
@@ -217,6 +320,11 @@ impl Url {
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
     pub fn path(&self) -> &[String] {
+        &self.path
+    }
+
+    /// Get hash path.
+    pub fn hash_path(&self) -> &[String] {
         &self.path
     }
 

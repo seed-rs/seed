@@ -14,7 +14,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         ctx: Context {
             logged_user: "John Doe",
         },
-        base_url: url.to_base_url(),
+        base_url: url.to_hash_base_url(),
         page: Page::init(url),
     }
 }
@@ -45,7 +45,7 @@ enum Page {
 
 impl Page {
     fn init(mut url: Url) -> Self {
-        match url.next_path_part() {
+        match url.next_hash_path_part() {
             None => Self::Home,
             Some(ADMIN) => page::admin::init(url).map_or(Self::NotFound, Self::Admin),
             _ => Self::NotFound,
@@ -63,7 +63,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn admin_urls(self) -> page::admin::Urls<'a> {
-        page::admin::Urls::with_base(self.base_url().add_path_part(ADMIN))
+        page::admin::Urls::with_base(self.base_url().add_hash_path_part(ADMIN))
     }
 }
 
