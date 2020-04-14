@@ -10,6 +10,9 @@ use seed::{prelude::*, *};
 //     Init
 // ------ ------
 
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
 
 // ------ ------
 //     Model
@@ -40,7 +43,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 fn view(model: &Model) -> Node<Msg> {
     div![
         button![ev(Ev::Click, |_| Msg::Decrement), "-"],
-        div![model.to_string()],
+        div![model],
         button![ev(Ev::Click, |_| Msg::Increment), "+"],
     ]
 }
@@ -50,7 +53,6 @@ fn view(model: &Model) -> Node<Msg> {
 // ------ ------
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    let initial_value = 8;
-    App::start("app", move |_, _| initial_value, update, view);
+pub fn start() {
+    App::start("app", init, update, view);
 }
