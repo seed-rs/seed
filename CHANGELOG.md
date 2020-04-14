@@ -46,6 +46,7 @@
 - Added example `custom_elements`.
 - Added examples `pages`, `pages_hash_routing`, `pages_keep_state` and `auth`.
 - Updated example `drop_zone`.
+- Removed example `app_builder`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
