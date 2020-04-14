@@ -2,7 +2,6 @@ use super::OrdersContainer;
 use crate::browser::Url;
 use crate::virtual_dom::EventHandler;
 
-pub type InitFn<Ms, Mdl, INodes, GMs> = fn(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Mdl;
 pub type UpdateFn<Ms, Mdl, INodes, GMs> =
     fn(Ms, &mut Mdl, &mut OrdersContainer<Ms, Mdl, INodes, GMs>);
 pub type SinkFn<Ms, Mdl, INodes, GMs> =

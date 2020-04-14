@@ -7,6 +7,11 @@
 use seed::{prelude::*, *};
 
 // ------ ------
+//     Init
+// ------ ------
+
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -46,5 +51,6 @@ fn view(model: &Model) -> Node<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn render() {
-    App::builder(update, view).build_and_start();
+    let initial_value = 8;
+    App::start("app", move |_, _| initial_value, update, view);
 }

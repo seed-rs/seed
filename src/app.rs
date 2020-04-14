@@ -147,7 +147,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
     ///
     pub fn start(
         root_element: impl GetElement,
-        init: InitFn<Ms, Mdl, INodes, GMs>,
+        init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Mdl + 'static,
         update: UpdateFn<Ms, Mdl, INodes, GMs>,
         view: ViewFn<Mdl, INodes>,
     ) -> Self {
