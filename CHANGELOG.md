@@ -38,6 +38,7 @@
 - Added examples `markdown`, `tea_component`, `subscribe`, `custom_elements`, `fetch`, `url`, `pages`, `pages_hash_routing`, `pages_keep_state`, `auth` and `graphql` (#400).
 - Updated examples and extended examples.
 - Removed example `app_builder`.
+- Added base url handling + method `Orders::clone_base+path` (#369).
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

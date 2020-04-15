@@ -4,6 +4,7 @@ use super::super::{
 };
 use crate::app::{subs, Notification};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use std::rc::Rc;
 
 /// Add a new route using history's `push_state` method.
 ///
@@ -22,12 +23,12 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 }
 
 /// Add a listener that handles routing for navigation events like forward and back.
-// pub fn setup_popstate_listener<Ms, SubMs: 'static + Any + Clone>(
 pub fn setup_popstate_listener<Ms>(
     update: impl Fn(Ms) + 'static,
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
     routes: Option<fn(Url) -> Option<Ms>>,
+    base_path: Rc<Vec<String>>
 ) where
     Ms: 'static,
 {
@@ -44,7 +45,7 @@ pub fn setup_popstate_listener<Ms>(
             None => Url::current(),
         };
 
-        notify(Notification::new(subs::UrlChanged(url.clone())));
+        notify(Notification::new(subs::UrlChanged(url.clone().set_base_path(&base_path))));
 
         if let Some(routes) = routes {
             if let Some(routing_msg) = routes(url) {
@@ -66,6 +67,7 @@ pub fn setup_hashchange_listener<Ms>(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
     routes: Option<fn(Url) -> Option<Ms>>,
+    base_path: Rc<Vec<String>>
 ) where
     Ms: 'static,
 {
@@ -78,7 +80,7 @@ pub fn setup_hashchange_listener<Ms>(
         let url =
             Url::relative_from_str(&ev.new_url()).expect("cast hashchange event url to `Url`");
 
-        notify(Notification::new(subs::UrlChanged(url.clone())));
+        notify(Notification::new(subs::UrlChanged(url.clone().set_base_path(&base_path))));
 
         if let Some(routes) = routes {
             if let Some(routing_msg) = routes(url) {
@@ -96,6 +98,7 @@ pub fn setup_hashchange_listener<Ms>(
 
 pub(crate) fn url_request_handler(
     sub_data: subs::UrlRequested,
+    base_path: Rc<Vec<String>>,
     notify: impl Fn(Notification) + 'static,
 ) {
     let subs::UrlRequested(url, request) = sub_data;
@@ -106,7 +109,7 @@ pub(crate) fn url_request_handler(
             if let Some(event) = request.event.borrow_mut().take() {
                 event.prevent_default(); // Prevent page refresh
             }
-            notify(Notification::new(subs::UrlChanged(url.clone())));
+            notify(Notification::new(subs::UrlChanged(url.clone().set_base_path(&base_path))));
         }
         subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
             if prevent_default {

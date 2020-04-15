@@ -2,6 +2,7 @@ use super::{types::*, App, AppInitCfg, OrdersContainer};
 use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 pub mod after_mount;
 pub mod before_mount;
@@ -116,6 +117,7 @@ impl<
             builder.routes,
             builder.window_events,
             None,
+            Rc::new(Vec::new()),
         );
 
         let mut initial_orders = OrdersContainer::new(app.clone());
@@ -163,6 +165,7 @@ impl<
                 into_after_mount: Box::new(into_after_mount),
                 phantom: PhantomData,
             }),
+            Rc::new(Vec::new()),
         )
     }
 }

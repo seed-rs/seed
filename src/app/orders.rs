@@ -1,7 +1,7 @@
 use super::{App, CmdHandle, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg};
 use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
-use std::{any::Any, future::Future};
+use std::{any::Any, future::Future, rc::Rc};
 
 // @TODO: Add links to doc comment once https://github.com/rust-lang/rust/issues/43466 is resolved
 // or use nightly rustdoc. Applicable to the entire code base.
@@ -270,4 +270,12 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         &mut self,
         stream: impl Stream<Item = MsU> + 'static,
     ) -> StreamHandle;
+
+    /// Cheap clone base path loaded from element `<base href="base/path">`.
+    ///
+    /// Returns empty `Vec` if there is no `base` element in your HTML
+    /// or there were problems with parsing.
+    fn clone_base_path(&self) -> Rc<Vec<String>> {
+        Rc::clone(&self.clone_app().cfg.base_path)
+    }
 }

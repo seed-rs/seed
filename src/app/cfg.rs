@@ -1,6 +1,7 @@
 use super::{builder::IntoAfterMount, types::*, MountType};
 use crate::virtual_dom::IntoNodes;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 #[allow(clippy::module_name_repetitions)]
 pub struct AppInitCfg<Ms, Mdl, INodes, GMs, IAM: ?Sized>
@@ -28,4 +29,5 @@ where
     pub sink: Option<SinkFn<Ms, Mdl, INodes, GMs>>,
     pub view: ViewFn<Mdl, INodes>,
     pub window_events: Option<WindowEventsFn<Ms, Mdl>>,
+    pub base_path: Rc<Vec<String>>,
 }
