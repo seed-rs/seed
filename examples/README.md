@@ -72,6 +72,9 @@ Classic TodoMVC example with Local Storage.
 How to trigger `update` function from Javascript world.
 You'll also see how to call JS functions from Rust.
 
+### [Url](url)
+Intended as a demo of Url functions and browser navigation.
+
 ### [UserMedia](user_media)
 How to show your webcam output in `video` element.
 
