@@ -354,16 +354,19 @@ impl Url {
         self.search.as_ref()
     }
 
+    /// Change the browser URL and trigger a page load.
     pub fn go_and_load(&self) {
-        todo!("browser back")
+        util::window().location().set_href(&self.to_string()).expect("set location href");
     }
 
+    /// Trigger a page reload.
     pub fn reload() {
-        todo!("browser back")
+        util::window().location().reload().expect("reload location");
     }
 
+    /// Trigger a page reload and force reloading from the server.
     pub fn reload_and_skip_cache(&self) {
-        todo!("browser back")
+        util::window().location().reload_with_forceget(true).expect("reload location with forceget");
     }
 
     pub fn go_back(_steps: u32) {
