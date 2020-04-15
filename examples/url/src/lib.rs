@@ -1,32 +1,37 @@
 use seed::{prelude::*, *};
+use std::rc::Rc;
 
 // ------ ------
 //     Init
 // ------ ------
 
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    Model::default()
+fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
+    Model {
+        base_path: orders.clone_base_path(),
+        base_url: url.to_base_url(),
+        initial_url: url,
+    }
 }
 
 // ------ ------
 //     Model
 // ------ ------
 
-type Model = i32;
+struct Model {
+    base_path: Rc<Vec<String>>,
+    initial_url: Url,
+    base_url: Url,
+}
 
 // ------ ------
 //    Update
 // ------ ------
 
 enum Msg {
-    Increment,
-    Decrement,
 }
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Increment => *model += 1,
-        Msg::Decrement => *model -= 1,
     }
 }
 
@@ -35,10 +40,16 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 // ------ ------
 
 fn view(model: &Model) -> Node<Msg> {
-    div![
-        button![ev(Ev::Click, |_| Msg::Decrement), "-"],
-        div![model],
-        button![ev(Ev::Click, |_| Msg::Increment), "+"],
+    ol![
+        li![
+            format!("Base path: \"{}\"", &model.base_path.join("/")),
+        ],
+        li![
+            format!("Initial Url: \"{}\"", &model.initial_url),
+        ],
+        li![
+            format!("Base Url: \"{}\"", &model.base_url),
+        ],
     ]
 }
 

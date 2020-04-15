@@ -74,7 +74,7 @@ where
     pub init_cfg: OptDynInitCfg<Ms, Mdl, INodes, GMs>,
     /// App configuration available for the entire application lifetime.
     pub cfg: Rc<AppCfg<Ms, Mdl, INodes, GMs>>,
-    /// Mutable app state
+    /// Mutable app state.
     pub data: Rc<AppData<Ms, Mdl>>,
 }
 
@@ -160,17 +160,28 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
 
         let root_element = root_element.get_element().expect("get root element");
 
+        let base_path: Rc<Vec<String>> =
+            Rc::new(util::document()
+                .query_selector("base")
+                .expect("query element with 'base' tag")
+                .and_then(|element| element.get_attribute("href"))
+                .and_then(|href| web_sys::Url::new_with_base(&href, "http://dummy.com").ok())
+                .map(|url| url.pathname().trim_left_matches('/').split("/").map(ToOwned::to_owned).collect())
+                .unwrap_or_default());
+
         let app_init_cfg = AppInitCfg {
             mount_type: MountType::Takeover,
             phantom: PhantomData,
-            into_after_mount: Box::new(
+            into_after_mount: Box::new({
+                let base_path = Rc::clone(&base_path);
                 move |url: Url,
                       orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
                       -> AfterMount<Mdl> {
+                    let url = url.set_base_path(&base_path);
                     let model = init(url, orders);
                     AfterMount::new(model).url_handling(UrlHandling::None)
-                },
-            ) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
+                }
+            }) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
         };
         let app = Self::new(
             update,
@@ -180,6 +191,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             None,
             None,
             Some(app_init_cfg),
+            base_path,
         );
         app.run()
     }
@@ -311,9 +323,10 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         routes: Option<RoutesFn<Ms>>,
         window_events: Option<WindowEventsFn<Ms, Mdl>>,
         init_cfg: OptDynInitCfg<Ms, Mdl, INodes, GMs>,
+        base_path: Rc<Vec<String>>,
     ) -> Self {
         let window = util::window();
-        let document = window.document().expect("Can't find the window's document");
+        let document = window.document().expect("get window's document");
 
         Self {
             init_cfg,
@@ -324,6 +337,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 sink,
                 view,
                 window_events,
+                base_path,
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(None),
@@ -613,6 +627,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             }),
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
             routes,
+            Rc::clone(&self.cfg.base_path)
         );
         routing::setup_hashchange_listener(
             enc!((self => s) move |msg| s.update(msg)),
@@ -621,17 +636,19 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             }),
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
             routes,
+            Rc::clone(&self.cfg.base_path)
         );
         routing::setup_link_listener(
             enc!((self => s) move |msg| s.update(msg)),
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
-            routes,
+            routes
         );
 
         orders.subscribe(enc!((self => s) move |url_requested| {
             routing::url_request_handler(
                 url_requested,
-                move |notification| s.notify_with_notification(notification)
+                Rc::clone(&s.cfg.base_path),
+                move |notification| s.notify_with_notification(notification),
             )
         }));
 

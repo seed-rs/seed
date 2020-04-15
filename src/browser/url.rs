@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt};
 use wasm_bindgen::JsValue;
 
-/// Contains all information used in pushing and handling routes.
+/// URL used for routing.
+///
+/// It doesn't contain protocol and domain.
+/// (If it's the problem, create an [issue](https://github.com/seed-rs/seed/issues/new))
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Url {
     next_path_part_index: usize,
@@ -25,6 +28,13 @@ impl Url {
             hash: None,
             search: None,
         }
+    }
+
+    pub(crate) fn set_base_path(mut self, path_base: &[String]) -> Self {
+        if self.path.starts_with(path_base) {
+            self.next_path_part_index = path_base.len();
+        }
+        self
     }
 
     /// Change the browser URL, but do not trigger a page load.
