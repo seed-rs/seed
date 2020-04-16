@@ -50,6 +50,7 @@ impl<'a> Urls<'a> {
 //     View
 // ------ ------
 
+#[allow(clippy::single_match_else)]
 pub fn view<Ms>(model: &Model, ctx: &Context) -> Node<Ms> {
     match model.page_id {
         Some(PageId::Report) => {

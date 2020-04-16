@@ -1,3 +1,5 @@
+#![allow(clippy::must_use_candidate)]
+
 use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
@@ -7,8 +9,6 @@ const API_URL: &str = "https://martinkavik-seed-auth-example.builtwithdark.com/a
 // ------ ------
 //     Init
 // ------ ------
-
-start!();
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.subscribe(Msg::UrlChanged);
@@ -107,8 +107,8 @@ enum Msg {
     PasswordChanged(String),
     LoginClicked,
     LoginFetched(fetch::Result<LoggedUser>),
-    LogoutClicked,
     TopSecretFetched(fetch::Result<String>),
+    LogoutClicked,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -137,15 +137,14 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Urls::with_base(&model.base_url).home(),
             ));
         }
-        Msg::LoginFetched(Err(error)) => log!(error),
+        Msg::TopSecretFetched(Ok(secret_message)) => {
+            model.secret_message = Some(secret_message);
+        }
+        Msg::LoginFetched(Err(error)) | Msg::TopSecretFetched(Err(error)) => log!(error),
         Msg::LogoutClicked => {
             model.user = None;
             model.secret_message = None;
         }
-        Msg::TopSecretFetched(Ok(secret_message)) => {
-            model.secret_message = Some(secret_message);
-        }
-        Msg::TopSecretFetched(Err(error)) => log!(error),
     }
 }
 
@@ -227,4 +226,13 @@ fn header(base_url: &Url, user: Option<&LoggedUser>) -> Node<Msg> {
             ]]
         }
     ]
+}
+
+// ------ ------
+//     Start
+// ------ ------
+
+#[wasm_bindgen(start)]
+pub fn start() {
+    App::start("app", init, update, view);
 }

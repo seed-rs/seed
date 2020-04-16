@@ -107,7 +107,7 @@ mod tests {
     fn test_fetch_args() {
         let _ = fetch("https://seed-rs.org");
         let _ = fetch(String::from("https://seed-rs.org"));
-        let _ = fetch(Url::from(vec!["/", "foo"]));
+        let _ = fetch(Url::new().set_path(&["/", "foo"]));
         let _ = fetch(Request::new("https://seed-rs.org"));
     }
 }

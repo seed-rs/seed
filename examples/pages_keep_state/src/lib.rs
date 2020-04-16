@@ -1,3 +1,5 @@
+#![allow(clippy::must_use_candidate)]
+
 use seed::{prelude::*, *};
 
 mod page;

@@ -1,6 +1,6 @@
 use crate::browser::util;
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, fmt, str::FromStr};
 use wasm_bindgen::JsValue;
 
 pub const DUMMY_BASE_URL: &str = "http://example.com";
@@ -13,7 +13,7 @@ pub const DUMMY_BASE_URL: &str = "http://example.com";
 /// are considered different also during comparison.
 ///
 /// (If the features above are problems for you, create an [issue](https://github.com/seed-rs/seed/issues/new))
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct Url {
     next_path_part_index: usize,
     next_hash_path_part_index: usize,
@@ -26,14 +26,7 @@ pub struct Url {
 impl Url {
     /// Creates a new `Url` with the empty path.
     pub fn new() -> Self {
-        Self {
-            next_path_part_index: 0,
-            next_hash_path_part_index: 0,
-            path: Vec::new(),
-            hash_path: Vec::new(),
-            hash: None,
-            search: None,
-        }
+        Self::default()
     }
 
     /// Change the browser URL, but do not trigger a page load.
@@ -68,81 +61,6 @@ impl Url {
         util::history()
             .replace_state_with_url(&data, "", Some(&self.to_string()))
             .expect("Problem pushing state");
-    }
-
-    /// Creates a new `Url` from `&str`.
-    ///
-    /// # Errors
-    ///
-    /// Returns error when `url` is invalid.
-    pub fn from_str(url: impl AsRef<str>) -> Result<Self, String> {
-        let str_url = url.as_ref();
-        web_sys::Url::new_with_base(str_url, DUMMY_BASE_URL)
-            .map(|url| Url::from_native_url(&url))
-            .map_err(|_| format!("`{}` is invalid relative URL", str_url))
-    }
-
-    /// Creates a new `Url` from the browser native url.
-    pub fn from_native_url(url: &web_sys::Url) -> Self {
-        let path = {
-            let path = url.pathname();
-            path.split('/')
-                .filter_map(|path_part| {
-                    if path_part.is_empty() {
-                        None
-                    } else {
-                        Some(path_part.to_owned())
-                    }
-                })
-                .collect::<Vec<_>>()
-        };
-
-        let hash = {
-            let mut hash = url.hash();
-            if hash.is_empty() {
-                None
-            } else {
-                // Remove leading `#`.
-                hash.remove(0);
-                Some(hash)
-            }
-        };
-
-        let hash_path = {
-            if let Some(hash) = &hash {
-                hash.split('/')
-                    .filter_map(|path_part| {
-                        if path_part.is_empty() {
-                            None
-                        } else {
-                            Some(path_part.to_owned())
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            } else {
-                Vec::new()
-            }
-        };
-
-        let search = {
-            let mut search = url.search();
-            if search.is_empty() {
-                None
-            } else {
-                // Remove leading `?`.
-                search.remove(0);
-                Some(search)
-            }
-        };
-
-        Self {
-            next_path_part_index: 0,
-            next_hash_path_part_index: 0,
-            path,
-            hash_path,
-            hash,
-            search,
-        }
     }
 
     /// Creates a new `Url` from the one that is currently set in the browser.
@@ -248,8 +166,8 @@ impl Url {
     /// ```rust,no_run
     ///let link_to_blog = url.add_path_part("blog");
     /// ````
-    pub fn add_path_part(mut self, path_part: impl ToString) -> Self {
-        self.path.push(path_part.to_string());
+    pub fn add_path_part(mut self, path_part: impl Into<String>) -> Self {
+        self.path.push(path_part.into());
         self
     }
 
@@ -261,8 +179,8 @@ impl Url {
     /// ```rust,no_run
     ///let link_to_blog = url.add_hash_path_part("blog");
     /// ````
-    pub fn add_hash_path_part(mut self, hash_path_part: impl ToString) -> Self {
-        self.hash_path.push(hash_path_part.to_string());
+    pub fn add_hash_path_part(mut self, hash_path_part: impl Into<String>) -> Self {
+        self.hash_path.push(hash_path_part.into());
         self.hash = Some(self.hash_path.join("/"));
         self
     }
@@ -291,8 +209,14 @@ impl Url {
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn set_path<T: ToString>(mut self, into_path_iterator: impl IntoIterator<Item = T>) -> Self {
-        self.path = into_path_iterator.into_iter().map(|p| p.to_string()).collect();
+    pub fn set_path<T: ToString>(
+        mut self,
+        into_path_iterator: impl IntoIterator<Item = T>,
+    ) -> Self {
+        self.path = into_path_iterator
+            .into_iter()
+            .map(|p| p.to_string())
+            .collect();
         self.next_path_part_index = 0;
         self
     }
@@ -308,8 +232,14 @@ impl Url {
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn set_hash_path<T: ToString>(mut self, into_hash_path_iterator: impl IntoIterator<Item = T>) -> Self {
-        self.hash_path = into_hash_path_iterator.into_iter().map(|p| p.to_string()).collect();
+    pub fn set_hash_path<T: ToString>(
+        mut self,
+        into_hash_path_iterator: impl IntoIterator<Item = T>,
+    ) -> Self {
+        self.hash_path = into_hash_path_iterator
+            .into_iter()
+            .map(|p| p.to_string())
+            .collect();
         self.next_hash_path_part_index = 0;
         self.hash = Some(self.hash_path.join("/"));
         self
@@ -326,9 +256,9 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
-    pub fn set_hash(mut self, hash: impl ToString) -> Self {
-        let hash = hash.to_string();
-        self.hash_path = hash.split("/").map(ToOwned::to_owned).collect();
+    pub fn set_hash(mut self, hash: impl Into<String>) -> Self {
+        let hash = hash.into();
+        self.hash_path = hash.split('/').map(ToOwned::to_owned).collect();
         self.hash = Some(hash);
         self
     }
@@ -343,8 +273,8 @@ impl Url {
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub fn set_search(mut self, search: impl ToString) -> Self {
-        self.search = Some(search.to_string());
+    pub fn set_search(mut self, search: impl Into<String>) -> Self {
+        self.search = Some(search.into());
         self
     }
 
@@ -379,14 +309,20 @@ impl Url {
 
     /// Change the browser URL and trigger a page load.
     pub fn go_and_load(&self) {
-        util::window().location().set_href(&self.to_string()).expect("set location href");
+        util::window()
+            .location()
+            .set_href(&self.to_string())
+            .expect("set location href");
     }
 
     /// Change the browser URL and trigger a page load.
     ///
     /// Provided `url` isn't checked and it's passed into `location.href`.
     pub fn go_and_load_with_str(url: impl AsRef<str>) {
-        util::window().location().set_href(url.as_ref()).expect("set location href");
+        util::window()
+            .location()
+            .set_href(url.as_ref())
+            .expect("set location href");
     }
 
     /// Trigger a page reload.
@@ -396,7 +332,10 @@ impl Url {
 
     /// Trigger a page reload and force reloading from the server.
     pub fn reload_and_skip_cache() {
-        util::window().location().reload_with_forceget(true).expect("reload location with forceget");
+        util::window()
+            .location()
+            .reload_with_forceget(true)
+            .expect("reload location with forceget");
     }
 
     /// Move back in `History`.
@@ -459,4 +398,137 @@ impl<'a> From<Url> for Cow<'a, Url> {
     }
 }
 
-// @TODO write tests or move here the ones from `routing.rs` and maybe refactor `from_native_url`.
+impl FromStr for Url {
+    type Err = String;
+
+    /// Creates a new `Url` from `&str`.
+    ///
+    /// # Errors
+    ///
+    /// Returns error when `url` is invalid.
+    fn from_str(str_url: &str) -> Result<Self, Self::Err> {
+        web_sys::Url::new_with_base(str_url, DUMMY_BASE_URL)
+            .map(|url| Url::from(&url))
+            .map_err(|_| format!("`{}` is invalid relative URL", str_url))
+    }
+}
+
+impl From<&web_sys::Url> for Url {
+    /// Creates a new `Url` from the browser native url.
+    fn from(url: &web_sys::Url) -> Self {
+        let path = {
+            let path = url.pathname();
+            path.split('/')
+                .filter_map(|path_part| {
+                    if path_part.is_empty() {
+                        None
+                    } else {
+                        Some(path_part.to_owned())
+                    }
+                })
+                .collect::<Vec<_>>()
+        };
+
+        let hash = {
+            let mut hash = url.hash();
+            if hash.is_empty() {
+                None
+            } else {
+                // Remove leading `#`.
+                hash.remove(0);
+                Some(hash)
+            }
+        };
+
+        let hash_path = {
+            if let Some(hash) = &hash {
+                hash.split('/')
+                    .filter_map(|path_part| {
+                        if path_part.is_empty() {
+                            None
+                        } else {
+                            Some(path_part.to_owned())
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            }
+        };
+
+        let search = {
+            let mut search = url.search();
+            if search.is_empty() {
+                None
+            } else {
+                // Remove leading `?`.
+                search.remove(0);
+                Some(search)
+            }
+        };
+
+        Self {
+            next_path_part_index: 0,
+            next_hash_path_part_index: 0,
+            path,
+            hash_path,
+            hash,
+            search,
+        }
+    }
+}
+
+// ------ ------ Tests ------ ------
+
+#[cfg(test)]
+mod tests {
+    use wasm_bindgen_test::*;
+
+    use super::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn parse_url_simple() {
+        let expected = Url::new().set_path(&["path1", "path2"]);
+        let actual: Url = "/path1/path2".parse().unwrap();
+        assert_eq!(expected, actual)
+    }
+
+    #[wasm_bindgen_test]
+    fn parse_url_with_hash_search() {
+        let expected = Url::new()
+            .set_path(&["path"])
+            .set_search("search=query")
+            .set_hash("hash");
+        let actual: Url = "/path?search=query#hash".parse().unwrap();
+        assert_eq!(expected, actual)
+    }
+
+    #[wasm_bindgen_test]
+    fn parse_url_with_hash_only() {
+        let expected = Url::new().set_path(&["path"]).set_hash("hash");
+        let actual: Url = "/path#hash".parse().unwrap();
+        assert_eq!(expected, actual)
+    }
+
+    #[wasm_bindgen_test]
+    fn parse_url_with_hash_routing() {
+        let expected = Url::new().set_hash_path(&["discover"]);
+        let actual: Url = "/#discover".parse().unwrap();
+        assert_eq!(expected, actual)
+    }
+
+    #[wasm_bindgen_test]
+    fn check_url_to_string() {
+        let expected = "/foo/bar?q=42&z=13#discover";
+
+        let actual = Url::new()
+            .set_path(&["foo", "bar"])
+            .set_search("q=42&z=13")
+            .set_hash_path(&["discover"])
+            .to_string();
+
+        assert_eq!(expected, actual)
+    }
+}

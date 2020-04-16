@@ -30,7 +30,11 @@ impl Model {
             initial_url: url.clone(),
             base_url: url.to_base_url(),
             next_path_part: url.next_path_part().map(ToOwned::to_owned),
-            remaining_path_parts: url.remaining_path_parts().into_iter().map(ToOwned::to_owned).collect(),
+            remaining_path_parts: url
+                .remaining_path_parts()
+                .into_iter()
+                .map(ToOwned::to_owned)
+                .collect(),
         }
     }
 }

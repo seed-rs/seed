@@ -2,7 +2,7 @@ use crate::browser::dom::virtual_dom_bridge;
 use crate::browser::{
     service::routing,
     util::{self, window, ClosureNew},
-    Url, DUMMY_BASE_URL
+    Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
 use builder::{
@@ -160,14 +160,21 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
 
         let root_element = root_element.get_element().expect("get root element");
 
-        let base_path: Rc<Vec<String>> =
-            Rc::new(util::document()
+        let base_path: Rc<Vec<String>> = Rc::new(
+            util::document()
                 .query_selector("base")
                 .expect("query element with 'base' tag")
                 .and_then(|element| element.get_attribute("href"))
                 .and_then(|href| web_sys::Url::new_with_base(&href, DUMMY_BASE_URL).ok())
-                .map(|url| url.pathname().trim_left_matches('/').split("/").map(ToOwned::to_owned).collect())
-                .unwrap_or_default());
+                .map(|url| {
+                    url.pathname()
+                        .trim_start_matches('/')
+                        .split('/')
+                        .map(ToOwned::to_owned)
+                        .collect()
+                })
+                .unwrap_or_default(),
+        );
 
         let app_init_cfg = AppInitCfg {
             mount_type: MountType::Takeover,
@@ -627,7 +634,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             }),
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
             routes,
-            Rc::clone(&self.cfg.base_path)
+            Rc::clone(&self.cfg.base_path),
         );
         routing::setup_hashchange_listener(
             enc!((self => s) move |msg| s.update(msg)),
@@ -636,12 +643,12 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             }),
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
             routes,
-            Rc::clone(&self.cfg.base_path)
+            Rc::clone(&self.cfg.base_path),
         );
         routing::setup_link_listener(
             enc!((self => s) move |msg| s.update(msg)),
             enc!((self => s) move |notification| s.notify_with_notification(notification)),
-            routes
+            routes,
         );
 
         orders.subscribe(enc!((self => s) move |url_requested| {
