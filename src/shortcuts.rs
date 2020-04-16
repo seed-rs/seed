@@ -14,6 +14,29 @@ macro_rules! with_dollar_sign {
 }
 
 #[macro_export]
+/// Create struct `Urls`. It's useful especially for building `Url`s in nested modules.
+///
+/// # Example
+///
+/// ```rust,no_run
+///
+/// mod page;
+/// const ADMIN: &str = "admin";
+///
+/// // ------ ------
+/// //     Urls
+/// // ------ ------
+///
+/// struct_urls!();
+/// impl<'a> Urls<'a> {
+///     pub fn home(self) -> Url {
+///         self.base_url()
+///     }
+///     pub fn admin_urls(self) -> page::admin::Urls<'a> {
+///         page::admin::Urls::with_base(self.base_url().add_path_part(ADMIN))
+///     }
+/// }
+/// ```
 macro_rules! struct_urls {
     () => {
         pub struct Urls<'a> {
