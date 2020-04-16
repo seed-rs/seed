@@ -2,7 +2,7 @@ use crate::browser::dom::virtual_dom_bridge;
 use crate::browser::{
     service::routing,
     util::{self, window, ClosureNew},
-    Url,
+    Url, DUMMY_BASE_URL
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
 use builder::{
@@ -165,7 +165,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 .query_selector("base")
                 .expect("query element with 'base' tag")
                 .and_then(|element| element.get_attribute("href"))
-                .and_then(|href| web_sys::Url::new_with_base(&href, "http://dummy.com").ok())
+                .and_then(|href| web_sys::Url::new_with_base(&href, DUMMY_BASE_URL).ok())
                 .map(|url| url.pathname().trim_left_matches('/').split("/").map(ToOwned::to_owned).collect())
                 .unwrap_or_default());
 
@@ -177,7 +177,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 move |url: Url,
                       orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
                       -> AfterMount<Mdl> {
-                    let url = url.set_base_path(&base_path);
+                    let url = url.skip_base_path(&base_path);
                     let model = init(url, orders);
                     AfterMount::new(model).url_handling(UrlHandling::None)
                 }

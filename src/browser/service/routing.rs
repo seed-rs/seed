@@ -45,7 +45,7 @@ pub fn setup_popstate_listener<Ms>(
             None => Url::current(),
         };
 
-        notify(Notification::new(subs::UrlChanged(url.clone().set_base_path(&base_path))));
+        notify(Notification::new(subs::UrlChanged(url.clone().skip_base_path(&base_path))));
 
         if let Some(routes) = routes {
             if let Some(routing_msg) = routes(url) {
@@ -78,9 +78,9 @@ pub fn setup_hashchange_listener<Ms>(
             .expect("Problem casting as hashchange event");
 
         let url =
-            Url::relative_from_str(&ev.new_url()).expect("cast hashchange event url to `Url`");
+            Url::from_str(&ev.new_url()).expect("cast hashchange event url to `Url`");
 
-        notify(Notification::new(subs::UrlChanged(url.clone().set_base_path(&base_path))));
+        notify(Notification::new(subs::UrlChanged(url.clone().skip_base_path(&base_path))));
 
         if let Some(routes) = routes {
             if let Some(routing_msg) = routes(url) {
@@ -109,7 +109,7 @@ pub(crate) fn url_request_handler(
             if let Some(event) = request.event.borrow_mut().take() {
                 event.prevent_default(); // Prevent page refresh
             }
-            notify(Notification::new(subs::UrlChanged(url.clone().set_base_path(&base_path))));
+            notify(Notification::new(subs::UrlChanged(url.clone().skip_base_path(&base_path))));
         }
         subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
             if prevent_default {
@@ -159,7 +159,7 @@ pub fn setup_link_listener<Ms>(
                     event.prevent_default(); // Prevent page refresh
                 } else {
                     // Only update when requested for an update by the user.
-                    let url = Url::relative_from_str(&href).expect("cast link href to `Url`");
+                    let url = Url::from_str(&href).expect("cast link href to `Url`");
 
                     notify(Notification::new(subs::UrlRequested(
                         url.clone(),

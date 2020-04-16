@@ -3,10 +3,16 @@ use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt};
 use wasm_bindgen::JsValue;
 
+pub const DUMMY_BASE_URL: &str = "http://example.com";
+
 /// URL used for routing.
 ///
-/// It doesn't contain protocol and domain.
-/// (If it's the problem, create an [issue](https://github.com/seed-rs/seed/issues/new))
+/// - It represents relative URL.
+/// - Two, almost identical, `Url`s that differ only with differently advanced
+/// internal path or hash path iterators (e.g. `next_path_part()` was called on one of them)
+/// are considered different also during comparison.
+///
+/// (If the features above are problems for you, create an [issue](https://github.com/seed-rs/seed/issues/new))
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Url {
     next_path_part_index: usize,
@@ -18,7 +24,7 @@ pub struct Url {
 }
 
 impl Url {
-    /// Creates a new `Url`.
+    /// Creates a new `Url` with the empty path.
     pub fn new() -> Self {
         Self {
             next_path_part_index: 0,
@@ -28,13 +34,6 @@ impl Url {
             hash: None,
             search: None,
         }
-    }
-
-    pub(crate) fn set_base_path(mut self, path_base: &[String]) -> Self {
-        if self.path.starts_with(path_base) {
-            self.next_path_part_index = path_base.len();
-        }
-        self
     }
 
     /// Change the browser URL, but do not trigger a page load.
@@ -71,20 +70,20 @@ impl Url {
             .expect("Problem pushing state");
     }
 
-    /// Creates a new `Url` from `&str` that represents relative url.
+    /// Creates a new `Url` from `&str`.
     ///
     /// # Errors
     ///
-    /// Returns error when `relative_url` is invalid relative url.
-    pub fn relative_from_str(relative_url: &str) -> Result<Self, String> {
-        let dummy_base_url = "http://example.com";
-        web_sys::Url::new_with_base(&relative_url, dummy_base_url)
-            .map(|url| Url::relative_from_native_url(&url))
-            .map_err(|_| format!("`{}` is invalid relative URL", relative_url))
+    /// Returns error when `url` is invalid.
+    pub fn from_str(url: impl AsRef<str>) -> Result<Self, String> {
+        let str_url = url.as_ref();
+        web_sys::Url::new_with_base(str_url, DUMMY_BASE_URL)
+            .map(|url| Url::from_native_url(&url))
+            .map_err(|_| format!("`{}` is invalid relative URL", str_url))
     }
 
-    /// Creates a new `Url` from browser native url.
-    pub fn relative_from_native_url(url: &web_sys::Url) -> Self {
+    /// Creates a new `Url` from the browser native url.
+    pub fn from_native_url(url: &web_sys::Url) -> Self {
         let path = {
             let path = url.pathname();
             path.split('/')
@@ -149,7 +148,7 @@ impl Url {
     /// Creates a new `Url` from the one that is currently set in the browser.
     pub fn current() -> Url {
         let current_url = util::window().location().href().expect("get `href`");
-        Url::relative_from_str(&current_url).expect("create `web_sys::Url` from the current URL")
+        Url::from_str(&current_url).expect("create `web_sys::Url` from the current URL")
     }
 
     /// Advances the internal path iterator and returns the next path part as `Option<&str>`.
@@ -284,10 +283,16 @@ impl Url {
 
     /// Sets path and returns updated `Url`. It also resets internal path iterator.
     ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_path(&["my", "path"])
+    /// ```
+    ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn set_path<T: ToString>(mut self, path_iterator: impl Iterator<Item = T>) -> Self {
-        self.path = path_iterator.map(|p| p.to_string()).collect();
+    pub fn set_path<T: ToString>(mut self, into_path_iterator: impl IntoIterator<Item = T>) -> Self {
+        self.path = into_path_iterator.into_iter().map(|p| p.to_string()).collect();
         self.next_path_part_index = 0;
         self
     }
@@ -295,10 +300,16 @@ impl Url {
     /// Sets hash path and returns updated `Url`.
     /// It also resets internal hash path iterator and sets `hash`.
     ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_hash_path(&["my", "path"])
+    /// ```
+    ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn set_hash_path<T: ToString>(mut self, hash_path_iterator: impl Iterator<Item = T>) -> Self {
-        self.hash_path = hash_path_iterator.map(|p| p.to_string()).collect();
+    pub fn set_hash_path<T: ToString>(mut self, into_hash_path_iterator: impl IntoIterator<Item = T>) -> Self {
+        self.hash_path = into_hash_path_iterator.into_iter().map(|p| p.to_string()).collect();
         self.next_hash_path_part_index = 0;
         self.hash = Some(self.hash_path.join("/"));
         self
@@ -306,6 +317,12 @@ impl Url {
 
     /// Sets hash and returns updated `Url`.
     /// I also sets `hash_path`.
+    ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_hash("my_hash")
+    /// ```
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
@@ -317,6 +334,12 @@ impl Url {
     }
 
     /// Sets search and returns updated `Url`.
+    ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_search("x=1&y=2")
+    /// ```
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
@@ -359,57 +382,70 @@ impl Url {
         util::window().location().set_href(&self.to_string()).expect("set location href");
     }
 
+    /// Change the browser URL and trigger a page load.
+    ///
+    /// Provided `url` isn't checked and it's passed into `location.href`.
+    pub fn go_and_load_with_str(url: impl AsRef<str>) {
+        util::window().location().set_href(url.as_ref()).expect("set location href");
+    }
+
     /// Trigger a page reload.
     pub fn reload() {
         util::window().location().reload().expect("reload location");
     }
 
     /// Trigger a page reload and force reloading from the server.
-    pub fn reload_and_skip_cache(&self) {
+    pub fn reload_and_skip_cache() {
         util::window().location().reload_with_forceget(true).expect("reload location with forceget");
     }
 
-    pub fn go_back(_steps: u32) {
-        todo!("browser back")
+    /// Move back in `History`.
+    ///
+    /// - `steps: 0` only reloads the current page.
+    /// - Negative steps move you forward - use rather `Url::go_forward` instead.
+    /// - If there is no previous page, this call does nothing.
+    pub fn go_back(steps: i32) {
+        util::history().go_with_delta(-steps).expect("go back");
     }
 
-    pub fn go_forward(_steps: u32) {
-        todo!("browser back")
+    /// Move back in `History`.
+    ///
+    /// - `steps: 0` only reloads the current page.
+    /// - Negative steps move you back - use rather `Url::go_back` instead.
+    /// - If there is no next page, this call does nothing.
+    pub fn go_forward(steps: i32) {
+        util::history().go_with_delta(steps).expect("go forward");
+    }
+
+    /// If the current `Url`'s path prefix is equal to `path_base`,
+    /// then reset the internal path iterator and advance it to skip the prefix (aka `path_base`).
+    ///
+    /// It's used mostly by Seed internals, but it can be useful in combination
+    /// with `orders.clone_base_path()`.
+    pub fn skip_base_path(mut self, path_base: &[String]) -> Self {
+        if self.path.starts_with(path_base) {
+            self.next_path_part_index = path_base.len();
+        }
+        self
     }
 }
 
 impl fmt::Display for Url {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut path = self.path().join("/");
-        if !path.starts_with("/") {
-            path = "/".to_owned() + &path;
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let url = web_sys::Url::new_with_base(&self.path.join("/"), DUMMY_BASE_URL)
+            .expect("create native url");
+
+        if let Some(search) = &self.search {
+            url.set_search(search);
         }
-        if let Some(search) = self.search() {
-            path = path + "?" + search;
+
+        if let Some(hash) = &self.hash {
+            url.set_hash(hash);
         }
-        if let Some(hash) = self.hash() {
-            path = path + "#" + hash;
-        }
-        write!(f, "{}", path)
+        // @TODO replace with `strip_prefix` once stable.
+        write!(fmt, "{}", &url.href().trim_start_matches(DUMMY_BASE_URL))
     }
 }
-
-// @TODO remove or replace the current implementation?
-// impl fmt::Display for Url {
-//     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-//         // Url constructor can fail if given invalid URL. Shouldn't be possible in our case?
-//         let dummy_base_url = "http://example.com";
-//         let url = web_sys::Url::new_with_base(&self.path.join("/"), dummy_base_url)
-//             .expect("cannot create url");
-//         if let Some(search) = &self.search {
-//             url.set_search(search);
-//         }
-//         if let Some(hash) = &self.hash {
-//             url.set_hash(hash);
-//         }
-//         write!(fmt, "{}", &url.href()[dummy_base_url.len()..])
-//     }
-// }
 
 impl<'a> From<&'a Url> for Cow<'a, Url> {
     fn from(url: &'a Url) -> Cow<'a, Url> {
@@ -422,3 +458,5 @@ impl<'a> From<Url> for Cow<'a, Url> {
         Cow::Owned(url)
     }
 }
+
+// @TODO write tests or move here the ones from `routing.rs` and maybe refactor `from_native_url`.

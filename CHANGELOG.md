@@ -39,6 +39,7 @@
 - Updated examples and extended examples.
 - Removed example `app_builder`.
 - Added base url handling + method `Orders::clone_base+path` (#369).
+- [BREAKING] Updated `Url` and `routing.rs`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
