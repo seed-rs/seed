@@ -42,6 +42,11 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
 
     /// Notify all subscription handlers that listen for messages with the `message`'s type.
     ///
+    /// _Note:_ Seed's native subscriptions / `messages` can be also sent - e.g.
+    /// `orders.notify(subs::UrlRequested::new(url))`.
+    /// The most is ignored by the Seed's runtime, but some of them are processed and
+    /// trigger side-effects - e.g. simulate `<a>` link click by sending `subs::UrlRequested`.
+    ///
     /// # Example
     ///
     /// ```rust,no_run

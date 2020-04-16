@@ -12,7 +12,7 @@ pub use url_requested::UrlRequested;
 /// # Example
 ///
 /// ```rust,no_run
-///orders.subscribe(Msg::UrlChanged);
+///orders.subscribe(Msg::UrlChanged).notify(subs::UrlChanged(url));
 ///...
 ///update(... Msg::UrlChanged(subs::UrlChanged(url)) =>
 /// ```

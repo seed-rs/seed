@@ -6,7 +6,9 @@ pub type PreventDefault = bool;
 
 // ------ UrlRequested sub ------
 
-/// Subscribe to url requests. Requests are fired on a link click.
+/// Subscribe to url requests. Requests are fired on `<a>` link click.
+///
+/// _Note:_ `orders.notify(subs::UrlRequested::new(url))` simulates link click.
 ///
 /// # Example
 ///
