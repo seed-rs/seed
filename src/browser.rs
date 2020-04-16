@@ -4,4 +4,4 @@ pub mod service;
 pub mod url;
 pub mod util;
 
-pub use url::Url;
+pub use url::{Url, DUMMY_BASE_URL};
