@@ -1,5 +1,8 @@
 use crate::browser::Url;
-use std::{cell::{Cell, RefCell}, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 use web_sys::Event;
 
 pub type PreventDefault = bool;

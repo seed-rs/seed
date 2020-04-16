@@ -1,3 +1,5 @@
+#![allow(clippy::must_use_candidate)]
+
 use seed::{prelude::*, *};
 
 mod page;
@@ -75,11 +77,11 @@ enum Msg {
     UrlChanged(subs::UrlChanged),
 }
 
-fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::UrlChanged(subs::UrlChanged(url)) => {
             model.page = Page::init(url);
-        },
+        }
     }
 }
 
@@ -95,7 +97,9 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                 div!["Welcome home!"],
                 button![
                     "Go to Url prefixed by base path (see `base` in `index.html`)",
-                    ev(Ev::Click, |_| Url::new().set_path(vec!["base", "path"].iter()).go_and_load())
+                    ev(Ev::Click, |_| Url::new()
+                        .set_path(&["base", "path"])
+                        .go_and_load())
                 ]
             ],
             Page::Admin(admin_model) => page::admin::view(admin_model, &model.ctx),

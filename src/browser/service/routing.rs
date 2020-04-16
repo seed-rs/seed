@@ -3,8 +3,8 @@ use super::super::{
     Url,
 };
 use crate::app::{subs, Notification};
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use std::rc::Rc;
+use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
 /// Add a new route using history's `push_state` method.
 ///
@@ -28,7 +28,7 @@ pub fn setup_popstate_listener<Ms>(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
     routes: Option<fn(Url) -> Option<Ms>>,
-    base_path: Rc<Vec<String>>
+    base_path: Rc<Vec<String>>,
 ) where
     Ms: 'static,
 {
@@ -45,7 +45,9 @@ pub fn setup_popstate_listener<Ms>(
             None => Url::current(),
         };
 
-        notify(Notification::new(subs::UrlChanged(url.clone().skip_base_path(&base_path))));
+        notify(Notification::new(subs::UrlChanged(
+            url.clone().skip_base_path(&base_path),
+        )));
 
         if let Some(routes) = routes {
             if let Some(routing_msg) = routes(url) {
@@ -67,7 +69,7 @@ pub fn setup_hashchange_listener<Ms>(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
     routes: Option<fn(Url) -> Option<Ms>>,
-    base_path: Rc<Vec<String>>
+    base_path: Rc<Vec<String>>,
 ) where
     Ms: 'static,
 {
@@ -77,10 +79,14 @@ pub fn setup_hashchange_listener<Ms>(
             .dyn_ref::<web_sys::HashChangeEvent>()
             .expect("Problem casting as hashchange event");
 
-        let url =
-            Url::from_str(&ev.new_url()).expect("cast hashchange event url to `Url`");
+        let url: Url = ev
+            .new_url()
+            .parse()
+            .expect("cast hashchange event url to `Url`");
 
-        notify(Notification::new(subs::UrlChanged(url.clone().skip_base_path(&base_path))));
+        notify(Notification::new(subs::UrlChanged(
+            url.clone().skip_base_path(&base_path),
+        )));
 
         if let Some(routes) = routes {
             if let Some(routing_msg) = routes(url) {
@@ -96,6 +102,7 @@ pub fn setup_hashchange_listener<Ms>(
     updated_listener(closure);
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub(crate) fn url_request_handler(
     sub_data: subs::UrlRequested,
     base_path: Rc<Vec<String>>,
@@ -109,7 +116,9 @@ pub(crate) fn url_request_handler(
             if let Some(event) = request.event.borrow_mut().take() {
                 event.prevent_default(); // Prevent page refresh
             }
-            notify(Notification::new(subs::UrlChanged(url.clone().skip_base_path(&base_path))));
+            notify(Notification::new(subs::UrlChanged(
+                url.skip_base_path(&base_path),
+            )));
         }
         subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
             if prevent_default {
@@ -159,7 +168,7 @@ pub fn setup_link_listener<Ms>(
                     event.prevent_default(); // Prevent page refresh
                 } else {
                     // Only update when requested for an update by the user.
-                    let url = Url::from_str(&href).expect("cast link href to `Url`");
+                    let url: Url = href.parse().expect("cast link href to `Url`");
 
                     notify(Notification::new(subs::UrlRequested(
                         url.clone(),
@@ -186,80 +195,4 @@ pub fn setup_link_listener<Ms>(
         .expect("Problem setting up link interceptor");
 
     closure.forget(); // todo: Can we store the closure somewhere to avoid using forget?
-}
-
-#[cfg(test)]
-mod tests {
-    use wasm_bindgen_test::*;
-
-    use super::*;
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
-    fn parse_url_simple() {
-        let expected = Url {
-            path: vec!["path1".into(), "path2".into()],
-            hash: None,
-            search: None,
-            title: None,
-        };
-
-        let actual: Url = "/path1/path2".to_string().try_into().unwrap();
-        assert_eq!(expected, actual)
-    }
-
-    #[wasm_bindgen_test]
-    fn parse_url_with_hash_search() {
-        let expected = Url {
-            path: vec!["path".into()],
-            hash: Some("hash".into()),
-            search: Some("search=query".into()),
-            title: None,
-        };
-
-        let actual: Url = "/path?search=query#hash".to_string().try_into().unwrap();
-        assert_eq!(expected, actual)
-    }
-
-    #[wasm_bindgen_test]
-    fn parse_url_with_hash_only() {
-        let expected = Url {
-            path: vec!["path".into()],
-            hash: Some("hash".into()),
-            search: None,
-            title: None,
-        };
-
-        let actual: Url = "/path#hash".to_string().try_into().unwrap();
-        assert_eq!(expected, actual)
-    }
-
-    #[wasm_bindgen_test]
-    fn parse_url_with_hash_routing() {
-        let expected = Url {
-            path: vec!["".into()],
-            hash: Some("/discover".into()),
-            search: None,
-            title: None,
-        };
-
-        let actual: Url = "/#/discover".to_string().try_into().unwrap();
-        assert_eq!(expected, actual)
-    }
-
-    #[wasm_bindgen_test]
-    fn check_url_to_string() {
-        let expected = "/foo/bar?q=42&z=13#/discover";
-
-        let actual = Url {
-            path: vec!["foo".into(), "bar".into()],
-            hash: Some("/discover".into()),
-            search: Some("q=42&z=13".into()),
-            title: None,
-        }
-        .to_string();
-
-        assert_eq!(expected, actual)
-    }
 }

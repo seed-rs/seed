@@ -1,8 +1,8 @@
 use indexmap::IndexMap;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
-use std::{cell::RefCell, rc::Rc};
 use std::fmt;
+use std::{cell::RefCell, rc::Rc};
 use uuid::Uuid;
 
 // ------ SubManager ------
@@ -125,6 +125,7 @@ impl<Ms: 'static> Subscription<Ms> {
         Self::new_with_priority(handler, 0)
     }
 
+    #[allow(clippy::shadow_unrelated)]
     pub(crate) fn new_with_priority<SubMs: 'static + Clone>(
         handler: impl FnOnce(SubMs) -> Option<Ms> + Clone + 'static,
         priority: i8,

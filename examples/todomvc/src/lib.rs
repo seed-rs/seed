@@ -129,8 +129,8 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     let data = &mut model.data;
     match msg {
-        Msg::UrlChanged(subs::UrlChanged(url)) => {
-            data.filter = match url.path.into_iter().next() {
+        Msg::UrlChanged(subs::UrlChanged(mut url)) => {
+            data.filter = match url.next_path_part() {
                 Some(path_part) if path_part == TodoFilter::Active.to_url_path() => {
                     TodoFilter::Active
                 }
