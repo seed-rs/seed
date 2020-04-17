@@ -40,6 +40,8 @@
 - Removed example `app_builder`.
 - Added base url handling + method `Orders::clone_base+path` (#369).
 - [BREAKING] Updated `Url` and `routing.rs`.
+- [deprecated] `seed::browser::service::storage`.
+- Added `LocalStorage`, `SessionStorage` and `WebStorage` (trait).
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
