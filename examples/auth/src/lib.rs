@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 const LOGIN: &str = "login";
 const API_URL: &str = "https://martinkavik-seed-auth-example.builtwithdark.com/api";
+const STORAGE_KEY: &str = "seed_auth_example";
 
 // ------ ------
 //     Init
@@ -12,13 +13,15 @@ const API_URL: &str = "https://martinkavik-seed-auth-example.builtwithdark.com/a
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.subscribe(Msg::UrlChanged);
+
+    let user = LocalStorage::get(STORAGE_KEY).ok();
     Model {
-        user: None,
         email: "john@example.com".to_owned(),
         password: "1234".to_owned(),
         base_url: url.to_base_url(),
-        page: Page::init(url, None, orders),
+        page: Page::init(url, user.as_ref(), orders),
         secret_message: None,
+        user,
     }
 }
 
@@ -27,17 +30,17 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 
 struct Model {
-    user: Option<LoggedUser>,
     email: String,
     password: String,
     base_url: Url,
     page: Page,
     secret_message: Option<String>,
+    user: Option<LoggedUser>,
 }
 
 // ------ LoggedUser ------
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[allow(dead_code)]
 pub struct LoggedUser {
     id: usize,
@@ -59,21 +62,7 @@ impl Page {
         match url.next_path_part() {
             None => {
                 if let Some(user) = user {
-                    let token = user.token.clone();
-                    orders.perform_cmd(async {
-                        Msg::TopSecretFetched(
-                            async {
-                                Request::new(format!("{}/top_secret", API_URL))
-                                    .header(Header::bearer(token))
-                                    .fetch()
-                                    .await?
-                                    .check_status()?
-                                    .text()
-                                    .await
-                            }
-                            .await,
-                        )
-                    });
+                    send_request_to_top_secret(user.token.clone(), orders)
                 };
                 Self::Home
             }
@@ -81,6 +70,23 @@ impl Page {
             _ => Self::NotFound,
         }
     }
+}
+
+fn send_request_to_top_secret(token: String, orders: &mut impl Orders<Msg>) {
+    orders.perform_cmd(async {
+        Msg::TopSecretFetched(
+            async {
+                Request::new(format!("{}/top_secret", API_URL))
+                    .header(Header::bearer(token))
+                    .fetch()
+                    .await?
+                    .check_status()?
+                    .text()
+                    .await
+            }
+            .await,
+        )
+    });
 }
 
 // ------ ------
@@ -132,6 +138,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::LoginFetched(Ok(logged_user)) => {
+            LocalStorage::insert(STORAGE_KEY, &logged_user).expect("save user");
             model.user = Some(logged_user);
             orders.notify(subs::UrlRequested::new(Urls::new(&model.base_url).home()));
         }
@@ -140,6 +147,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::LoginFetched(Err(error)) | Msg::TopSecretFetched(Err(error)) => log!(error),
         Msg::LogoutClicked => {
+            LocalStorage::remove(STORAGE_KEY).expect("remove saved user");
             model.user = None;
             model.secret_message = None;
         }
