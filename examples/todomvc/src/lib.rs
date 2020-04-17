@@ -1,6 +1,6 @@
 use enclose::enc;
 use indexmap::IndexMap;
-use seed::{browser::service::web_storage::WebStorage, prelude::*, *};
+use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 use std::mem;
 use uuid::Uuid;
@@ -13,6 +13,21 @@ const STORAGE_KEY: &str = "seed-todomvc";
 type TodoId = Uuid;
 
 // ------ ------
+//     Init
+// ------ ------
+
+fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders
+        .subscribe(Msg::UrlChanged)
+        .notify(subs::UrlChanged(url));
+
+    Model {
+        data: LocalStorage::get(STORAGE_KEY).unwrap_or_default(),
+        refs: Refs::default(),
+    }
+}
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -20,7 +35,6 @@ type TodoId = Uuid;
 
 struct Model {
     data: Data,
-    services: Services,
     refs: Refs,
 }
 
@@ -30,10 +44,6 @@ struct Data {
     filter: TodoFilter,
     new_todo_title: String,
     editing_todo: Option<EditingTodo>,
-}
-
-struct Services {
-    local_storage: WebStorage,
 }
 
 #[derive(Default)]
@@ -79,25 +89,6 @@ impl TodoFilter {
             Self::Active => "active",
             Self::Completed => "completed",
         }
-    }
-}
-
-// ------ ------
-//     Init
-// ------ ------
-
-fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders
-        .subscribe(Msg::UrlChanged)
-        .notify(subs::UrlChanged(url));
-
-    let local_storage = web_storage::get_local_storage().expect("get `LocalStorage`");
-    let data = local_storage.load(STORAGE_KEY).unwrap_or_default();
-
-    Model {
-        data,
-        services: Services { local_storage },
-        refs: Refs::default(),
     }
 }
 
@@ -199,8 +190,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             data.editing_todo = None;
         }
     }
-    // Save data into LocalStorage. It should be optimized in a real-world application.
-    model.services.local_storage.save(STORAGE_KEY, &data);
+    // Note: It should be optimized in a real-world application.
+    LocalStorage::insert(STORAGE_KEY, &data).expect("save data to LocalStorage");
 }
 
 // ------ ------

@@ -49,7 +49,6 @@ pub use crate::{
     browser::fetch,
     browser::service::routing::push_route,
     browser::service::storage,
-    browser::service::web_storage,
     browser::url::Url,
     browser::util::{
         self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
@@ -129,6 +128,7 @@ pub mod prelude {
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
         },
+        browser::web_storage::{LocalStorage, SessionStorage, WebStorage},
         browser::Url,
         helpers::not,
         // macros are exported in crate root
