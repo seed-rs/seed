@@ -133,9 +133,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::LoginFetched(Ok(logged_user)) => {
             model.user = Some(logged_user);
-            orders.notify(subs::UrlRequested::new(
-                Urls::with_base(&model.base_url).home(),
-            ));
+            orders.notify(subs::UrlRequested::new(Urls::new(&model.base_url).home()));
         }
         Msg::TopSecretFetched(Ok(secret_message)) => {
             model.secret_message = Some(secret_message);
@@ -210,12 +208,12 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
 fn header(base_url: &Url, user: Option<&LoggedUser>) -> Node<Msg> {
     ul![
         li![a![
-            attrs! { At::Href => Urls::with_base(base_url).home() },
+            attrs! { At::Href => Urls::new(base_url).home() },
             "Home",
         ]],
         if user.is_none() {
             li![a![
-                attrs! { At::Href => Urls::with_base(base_url).login() },
+                attrs! { At::Href => Urls::new(base_url).login() },
                 "Login",
             ]]
         } else {

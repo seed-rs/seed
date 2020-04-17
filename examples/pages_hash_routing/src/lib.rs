@@ -65,7 +65,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn admin_urls(self) -> page::admin::Urls<'a> {
-        page::admin::Urls::with_base(self.base_url().add_hash_path_part(ADMIN))
+        page::admin::Urls::new(self.base_url().add_hash_path_part(ADMIN))
     }
 }
 
@@ -103,11 +103,11 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
 fn header(base_url: &Url) -> Node<Msg> {
     ul![
         li![a![
-            attrs! { At::Href => Urls::with_base(base_url).home() },
+            attrs! { At::Href => Urls::new(base_url).home() },
             "Home",
         ]],
         li![a![
-            attrs! { At::Href => Urls::with_base(base_url).admin_urls().report_urls().default() },
+            attrs! { At::Href => Urls::new(base_url).admin_urls().report_urls().default() },
             "Report",
         ]],
     ]
