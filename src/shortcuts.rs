@@ -23,6 +23,12 @@ macro_rules! with_dollar_sign {
 /// mod page;
 /// const ADMIN: &str = "admin";
 ///
+/// fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
+///     Model {
+///         base_url: url.to_base_url(),
+///     }
+/// }
+///
 /// // ------ ------
 /// //     Urls
 /// // ------ ------
@@ -33,8 +39,14 @@ macro_rules! with_dollar_sign {
 ///         self.base_url()
 ///     }
 ///     pub fn admin_urls(self) -> page::admin::Urls<'a> {
-///         page::admin::Urls::with_base(self.base_url().add_path_part(ADMIN))
+///         page::admin::Urls::new(self.base_url().add_path_part(ADMIN))
 ///     }
+/// }
+///
+/// fn view(model: &Model) -> Node<Msg> {
+///     a![
+///         attrs!{ At::Href => Urls::new(base_url).home() }
+///     ]
 /// }
 /// ```
 macro_rules! struct_urls {
@@ -44,13 +56,28 @@ macro_rules! struct_urls {
         }
 
         impl<'a> Urls<'a> {
-            pub fn with_base(
-                base_url: impl Into<std::borrow::Cow<'a, $crate::browser::Url>>,
-            ) -> Self {
+            /// Create a new `Urls` instance.
+            ///
+            /// # Example
+            ///
+            /// ```rust,no_run
+            /// Urls::new(base_url).home()
+            /// ```
+            pub fn new(base_url: impl Into<std::borrow::Cow<'a, $crate::browser::Url>>) -> Self {
                 Self {
                     base_url: base_url.into(),
                 }
             }
+
+            /// Return base `Url`. If `base_url` isn't owned, it will be cloned.
+            ///
+            /// # Example
+            ///
+            /// ```rust,no_run
+            /// pub fn admin_urls(self) -> page::admin::Urls<'a> {
+            ///     page::admin::Urls::new(self.base_url().add_path_part(ADMIN))
+            /// }
+            /// ```
             pub fn base_url(self) -> $crate::browser::Url {
                 self.base_url.into_owned()
             }

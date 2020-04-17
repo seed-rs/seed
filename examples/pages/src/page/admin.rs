@@ -33,7 +33,7 @@ pub struct Model {
 struct_urls!();
 impl<'a> Urls<'a> {
     pub fn report_urls(self) -> page::report::Urls<'a> {
-        page::report::Urls::with_base(self.base_url().add_path_part(REPORT))
+        page::report::Urls::new(self.base_url().add_path_part(REPORT))
     }
 }
 

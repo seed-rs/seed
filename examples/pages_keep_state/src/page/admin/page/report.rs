@@ -17,8 +17,8 @@ pub fn init(mut url: Url, model: &mut Option<Model>) -> Option<()> {
     model.frequency = match url.remaining_path_parts().as_slice() {
         [] => {
             match model.frequency {
-                Frequency::Daily => Urls::with_base(&model.base_url).daily().go_and_replace(),
-                Frequency::Weekly => Urls::with_base(&model.base_url).weekly().go_and_replace(),
+                Frequency::Daily => Urls::new(&model.base_url).daily().go_and_replace(),
+                Frequency::Weekly => Urls::new(&model.base_url).weekly().go_and_replace(),
             }
             model.frequency
         }
@@ -74,7 +74,7 @@ pub fn view<Ms>(model: &Model, ctx: &Context) -> Node<Ms> {
             a![
                 "Switch to weekly",
                 attrs! {
-                    At::Href => Urls::with_base(&model.base_url).weekly()
+                    At::Href => Urls::new(&model.base_url).weekly()
                 }
             ],
         ),
@@ -83,7 +83,7 @@ pub fn view<Ms>(model: &Model, ctx: &Context) -> Node<Ms> {
             a![
                 "Switch to daily",
                 attrs! {
-                    At::Href => Urls::with_base(&model.base_url).daily()
+                    At::Href => Urls::new(&model.base_url).daily()
                 }
             ],
         ),
