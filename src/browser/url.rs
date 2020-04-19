@@ -1,9 +1,11 @@
 use crate::browser::util;
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, fmt, str::FromStr};
+use std::{borrow::Cow, collections::BTreeMap, fmt, str::FromStr};
 use wasm_bindgen::JsValue;
 
 pub const DUMMY_BASE_URL: &str = "http://example.com";
+
+// ------ Url ------
 
 /// URL used for routing.
 ///
@@ -20,7 +22,8 @@ pub struct Url {
     path: Vec<String>,
     hash_path: Vec<String>,
     hash: Option<String>,
-    search: Option<String>,
+    search: UrlSearch,
+    invalid_components: Vec<String>,
 }
 
 impl Url {
@@ -268,13 +271,16 @@ impl Url {
     /// # Example
     ///
     /// ```rust, no_run
-    /// Url::new().set_search("x=1&y=2")
+    /// Url::new().set_search(UrlSearch::new(vec![
+    ///     ("x", vec!["1"]),
+    ///     ("sort_by", vec!["date", "name"]),
+    /// ])
     /// ```
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub fn set_search(mut self, search: impl Into<String>) -> Self {
-        self.search = Some(search.into());
+    pub fn set_search(mut self, search: impl Into<UrlSearch>) -> Self {
+        self.search = search.into();
         self
     }
 
@@ -303,8 +309,16 @@ impl Url {
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub fn search(&self) -> Option<&String> {
-        self.search.as_ref()
+    pub const fn search(&self) -> &UrlSearch {
+        &self.search
+    }
+
+    /// Get mutable search.
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
+    pub fn search_mut(&mut self) -> &mut UrlSearch {
+        &mut self.search
     }
 
     /// Change the browser URL and trigger a page load.
@@ -367,16 +381,50 @@ impl Url {
         }
         self
     }
+
+    /// Decodes a Uniform Resource Identifier (URI) component.
+    /// Aka percent-decoding.
+    ///
+    /// _Note:_ All components are automatically decoded when it's possible.
+    /// You can find undecodable components in the vector
+    /// returned from methods `invalid_components` or `invalid_components_mut`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// Url::decode_uri_component("Hello%20G%C3%BCnter"); // => "Hello Günter"
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns error when decoding fails - e.g. _"Error: malformed URI sequence"_.
+    pub fn decode_uri_component(component: impl AsRef<str>) -> Result<String, JsValue> {
+        let decoded = js_sys::decode_uri_component(component.as_ref())?;
+        Ok(String::from(decoded))
+    }
+
+    /// Get invalid components.
+    ///
+    /// Undecodable / unparsable components are invalid.
+    pub fn invalid_components(&self) -> &[String] {
+        &self.invalid_components
+    }
+
+    /// Get mutable invalid components.
+    ///
+    /// Undecodable / unparsable components are invalid.
+    pub fn invalid_components_mut(&mut self) -> &mut Vec<String> {
+        &mut self.invalid_components
+    }
 }
 
+/// `Url` components are automatically encoded.
 impl fmt::Display for Url {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let url = web_sys::Url::new_with_base(&self.path.join("/"), DUMMY_BASE_URL)
             .expect("create native url");
 
-        if let Some(search) = &self.search {
-            url.set_search(search);
-        }
+        url.set_search(&self.search.to_string());
 
         if let Some(hash) = &self.hash {
             url.set_hash(hash);
@@ -405,7 +453,11 @@ impl FromStr for Url {
     ///
     /// # Errors
     ///
-    /// Returns error when `url` is invalid.
+    /// Returns error when `url` cannot be parsed.
+    ///
+    /// _Note:_ When only some components are undecodable, no error is returned -
+    /// that components are saved into the `Url`s `invalid_components` - see methods
+    /// `Url::invalid_components` and `Url::invalid_components_mut`.
     fn from_str(str_url: &str) -> Result<Self, Self::Err> {
         web_sys::Url::new_with_base(str_url, DUMMY_BASE_URL)
             .map(|url| Url::from(&url))
@@ -415,7 +467,11 @@ impl FromStr for Url {
 
 impl From<&web_sys::Url> for Url {
     /// Creates a new `Url` from the browser native url.
+    /// `Url`'s components are decoded if possible. When decoding fails, the component is cloned
+    /// into `invalid_components` and the original value is used.
     fn from(url: &web_sys::Url) -> Self {
+        let mut invalid_components = Vec::<String>::new();
+
         let path = {
             let path = url.pathname();
             path.split('/')
@@ -423,7 +479,14 @@ impl From<&web_sys::Url> for Url {
                     if path_part.is_empty() {
                         None
                     } else {
-                        Some(path_part.to_owned())
+                        let path_part = match Url::decode_uri_component(path_part) {
+                            Ok(decoded_path_part) => decoded_path_part,
+                            Err(_) => {
+                                invalid_components.push(path_part.to_owned());
+                                path_part.to_owned()
+                            }
+                        };
+                        Some(path_part)
                     }
                 })
                 .collect::<Vec<_>>()
@@ -436,36 +499,45 @@ impl From<&web_sys::Url> for Url {
             } else {
                 // Remove leading `#`.
                 hash.remove(0);
+                let hash = match Url::decode_uri_component(&hash) {
+                    Ok(decoded_hash) => decoded_hash,
+                    Err(_) => {
+                        invalid_components.push(hash.clone());
+                        hash
+                    }
+                };
                 Some(hash)
             }
         };
 
         let hash_path = {
-            if let Some(hash) = &hash {
+            let mut hash = url.hash();
+            if hash.is_empty() {
+                Vec::new()
+            } else {
+                // Remove leading `#`.
+                hash.remove(0);
                 hash.split('/')
                     .filter_map(|path_part| {
                         if path_part.is_empty() {
                             None
                         } else {
-                            Some(path_part.to_owned())
+                            let path_part = match Url::decode_uri_component(path_part) {
+                                Ok(decoded_path_part) => decoded_path_part,
+                                Err(_) => {
+                                    invalid_components.push(path_part.to_owned());
+                                    path_part.to_owned()
+                                }
+                            };
+                            Some(path_part)
                         }
                     })
                     .collect::<Vec<_>>()
-            } else {
-                Vec::new()
             }
         };
 
-        let search = {
-            let mut search = url.search();
-            if search.is_empty() {
-                None
-            } else {
-                // Remove leading `?`.
-                search.remove(0);
-                Some(search)
-            }
-        };
+        let search = UrlSearch::from(url.search_params());
+        invalid_components.append(&mut search.invalid_components.clone());
 
         Self {
             next_path_part_index: 0,
@@ -474,7 +546,163 @@ impl From<&web_sys::Url> for Url {
             hash_path,
             hash,
             search,
+            invalid_components,
         }
+    }
+}
+
+// ------ UrlSearch ------
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UrlSearch {
+    search: BTreeMap<String, Vec<String>>,
+    invalid_components: Vec<String>,
+}
+
+impl UrlSearch {
+    /// Makes a new `UrlSearch` with the provided parameters.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// UrlSearch::new(vec![
+    ///     ("sort", vec!["date", "name"]),
+    ///     ("category", vec!["top"])
+    /// ])
+    /// ```
+    pub fn new<K, V, VS>(params: impl IntoIterator<Item = (K, VS)>) -> Self
+    where
+        K: Into<String>,
+        V: Into<String>,
+        VS: IntoIterator<Item = V>,
+    {
+        let mut search = BTreeMap::new();
+        for (key, values) in params {
+            search.insert(key.into(), values.into_iter().map(Into::into).collect());
+        }
+        Self {
+            search,
+            invalid_components: Vec::new(),
+        }
+    }
+
+    /// Returns `true` if the `UrlSearch` contains a value for the specified key.
+    pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
+        self.search.contains_key(key.as_ref())
+    }
+
+    /// Returns a reference to values corresponding to the key.
+    pub fn get(&self, key: impl AsRef<str>) -> Option<&Vec<String>> {
+        self.search.get(key.as_ref())
+    }
+
+    /// Returns a mutable reference to values corresponding to the key.
+    pub fn get_mut(&mut self, key: impl AsRef<str>) -> Option<&mut Vec<String>> {
+        self.search.get_mut(key.as_ref())
+    }
+
+    /// Push the value into the vector of values corresponding to the key.
+    /// - If the key and values are not present, they will be crated.
+    pub fn push_value<'a>(&mut self, key: impl Into<Cow<'a, str>>, value: String) {
+        let key = key.into();
+        if self.search.contains_key(key.as_ref()) {
+            self.search.get_mut(key.as_ref()).unwrap().push(value);
+        } else {
+            self.search.insert(key.into_owned(), vec![value]);
+        }
+    }
+
+    /// Inserts a key-values pair into the `UrlSearch`.
+    /// - If the `UrlSearch` did not have this key present, `None` is returned.
+    /// - If the `UrlSearch` did have this key present, old values are overwritten by new ones,
+    /// and old values are returned. The key is not updated.
+    pub fn insert(&mut self, key: String, values: Vec<String>) -> Option<Vec<String>> {
+        self.search.insert(key, values)
+    }
+
+    /// Removes a key from the `UrlSearch`, returning values at the key
+    /// if the key was previously in the `UrlSearch`.
+    pub fn remove(&mut self, key: impl AsRef<str>) -> Option<Vec<String>> {
+        self.search.remove(key.as_ref())
+    }
+
+    /// Gets an iterator over the entries of the `UrlSearch`, sorted by key.
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Vec<String>)> {
+        self.search.iter()
+    }
+
+    /// Get invalid components.
+    ///
+    /// Undecodable / unparsable components are invalid.
+    pub fn invalid_components(&self) -> &[String] {
+        &self.invalid_components
+    }
+
+    /// Get mutable invalid components.
+    ///
+    /// Undecodable / unparsable components are invalid.
+    pub fn invalid_components_mut(&mut self) -> &mut Vec<String> {
+        &mut self.invalid_components
+    }
+}
+
+/// `UrlSearch` components are automatically encoded.
+impl fmt::Display for UrlSearch {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let params = web_sys::UrlSearchParams::new().expect("create a new UrlSearchParams");
+
+        for (key, values) in &self.search {
+            for value in values {
+                params.append(key, value);
+            }
+        }
+        write!(fmt, "{}", String::from(params.to_string()))
+    }
+}
+
+impl From<web_sys::UrlSearchParams> for UrlSearch {
+    /// Creates a new `UrlSearch` from the browser native `UrlSearchParams`.
+    /// `UrlSearch`'s components are decoded if possible. When decoding fails, the component is cloned
+    /// into `invalid_components` and the original value is used.
+    fn from(params: web_sys::UrlSearchParams) -> Self {
+        let mut url_search = Self::default();
+        let mut invalid_components = Vec::<String>::new();
+
+        for param in js_sys::Array::from(&params).to_vec() {
+            let key_value_pair = js_sys::Array::from(&param).to_vec();
+
+            let key = key_value_pair
+                .get(0)
+                .expect("get UrlSearchParams key from key-value pair")
+                .as_string()
+                .expect("cast UrlSearchParams key to String");
+            let value = key_value_pair
+                .get(1)
+                .expect("get UrlSearchParams value from key-value pair")
+                .as_string()
+                .expect("cast UrlSearchParams value to String");
+
+            let key = match Url::decode_uri_component(&key) {
+                Ok(decoded_key) => decoded_key,
+                Err(_) => {
+                    invalid_components.push(key.clone());
+                    key
+                }
+            };
+            let value = match Url::decode_uri_component(&value) {
+                Ok(decoded_value) => decoded_value,
+                Err(_) => {
+                    invalid_components.push(value.clone());
+                    value
+                }
+            };
+
+            url_search.push_value(key, value)
+        }
+
+        url_search.invalid_components = invalid_components;
+        url_search
     }
 }
 
@@ -488,8 +716,28 @@ mod tests {
 
     wasm_bindgen_test_configure!(run_in_browser);
 
+    //(https://www.w3schools.com/tags/ref_urlencode.ASP)
     #[wasm_bindgen_test]
-    fn parse_url_simple() {
+    fn parse_url_decoding() {
+        // "/Hello Günter/path2?calc=5+6&x=1&x=2#heš"
+        let expected = "/Hello%20G%C3%BCnter/path2?calc=5%2B6&x=1&x=2#he%C5%A1";
+        let native_url = web_sys::Url::new_with_base(expected, DUMMY_BASE_URL).unwrap();
+        let url = Url::from(&native_url);
+
+        assert_eq!(url.path()[0], "Hello Günter");
+        assert_eq!(url.path()[1], "path2");
+        assert_eq!(
+            url.search(),
+            &UrlSearch::new(vec![("calc", vec!["5+6"]), ("x", vec!["1", "2"]),])
+        );
+        assert_eq!(url.hash(), Some(&"heš".to_owned()));
+
+        let actual = url.to_string();
+        assert_eq!(expected, actual)
+    }
+
+    #[wasm_bindgen_test]
+    fn parse_url_path() {
         let expected = Url::new().set_path(&["path1", "path2"]);
         let actual: Url = "/path1/path2".parse().unwrap();
         assert_eq!(expected, actual)
@@ -499,7 +747,7 @@ mod tests {
     fn parse_url_with_hash_search() {
         let expected = Url::new()
             .set_path(&["path"])
-            .set_search("search=query")
+            .set_search(UrlSearch::new(vec![("search", vec!["query"])]))
             .set_hash("hash");
         let actual: Url = "/path?search=query#hash".parse().unwrap();
         assert_eq!(expected, actual)
@@ -525,7 +773,7 @@ mod tests {
 
         let actual = Url::new()
             .set_path(&["foo", "bar"])
-            .set_search("q=42&z=13")
+            .set_search(UrlSearch::new(vec![("q", vec!["42"]), ("z", vec!["13"])]))
             .set_hash_path(&["discover"])
             .to_string();
 

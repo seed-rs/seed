@@ -129,7 +129,7 @@ pub mod prelude {
             RequestAnimationFrameTime,
         },
         browser::web_storage::{LocalStorage, SessionStorage, WebStorage},
-        browser::Url,
+        browser::{Url, UrlSearch},
         helpers::not,
         // macros are exported in crate root
         // https://github.com/rust-lang-nursery/reference/blob/master/src/macros-by-example.md
