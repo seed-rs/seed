@@ -93,6 +93,7 @@ features = [
     "KeyboardEvent",
     "InputEvent",
     "Url",
+    "UrlSearchParams",
 ]
 
 [workspace]

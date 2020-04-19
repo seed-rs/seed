@@ -25,6 +25,10 @@ struct Model {
 
 impl Model {
     fn new(mut url: Url, base_path: Rc<Vec<String>>) -> Self {
+        log!(&url);
+        log!(url.to_string());
+        log!("_______________________________");
+
         Self {
             base_path,
             initial_url: url.clone(),
@@ -71,7 +75,9 @@ fn view(model: &Model) -> Node<Msg> {
                 ev(Ev::Click, |_| {
                     Url::new()
                         .set_path(&["ui", "a", "b", "c"])
-                        .set_search("x=1")
+                        .set_search(UrlSearch::new(vec![
+                            ("x", vec!["1"])
+                        ]))
                         .set_hash("hash")
                         .go_and_load()
                 })

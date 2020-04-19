@@ -5,4 +5,4 @@ pub mod url;
 pub mod util;
 pub mod web_storage;
 
-pub use url::{Url, DUMMY_BASE_URL};
+pub use url::{Url, UrlSearch, DUMMY_BASE_URL};
