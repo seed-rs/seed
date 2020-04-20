@@ -8,11 +8,7 @@ use super::{
 use crate::virtual_dom::IntoNodes;
 use futures::future::{Future, FutureExt};
 use futures::stream::{Stream, StreamExt};
-use std::{
-    any::{Any, TypeId},
-    convert::identity,
-    rc::Rc,
-};
+use std::{any::Any, convert::identity, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersProxy<

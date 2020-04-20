@@ -116,7 +116,7 @@ impl Url {
     ///
     /// ```rust,no_run
     ///match url.remaining_path_parts().as_slice() {
-    ///    [""] | [] => Page::Home,
+    ///    [] => Page::Home,
     ///    ["report", rest @ ..] => {
     ///        match rest {
     ///            ["day"] => Page::ReportDay,
@@ -142,7 +142,7 @@ impl Url {
     ///
     /// ```rust,no_run
     ///match url.remaining_hash_path_parts().as_slice() {
-    ///    [""] | [] => Page::Home,
+    ///    [] => Page::Home,
     ///    ["report", rest @ ..] => {
     ///        match rest {
     ///            ["day"] => Page::ReportDay,
