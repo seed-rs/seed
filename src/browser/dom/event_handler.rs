@@ -3,7 +3,6 @@
 
 use super::super::util;
 use crate::virtual_dom::{Ev, EventHandler};
-use std::any::{Any, TypeId};
 use std::rc::Rc;
 use wasm_bindgen::JsCast;
 

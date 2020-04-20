@@ -62,20 +62,20 @@
 // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable.
 macro_rules! map_callback_return_to_option_ms {
     ($cb_type:ty, $callback:expr, $panic_text:literal, $output_type:tt) => {{
-        let t_type = TypeId::of::<MsU>();
-        if t_type == TypeId::of::<Ms>() {
+        let t_type = std::any::TypeId::of::<MsU>();
+        if t_type == std::any::TypeId::of::<Ms>() {
             $output_type::new(move |value| {
-                (&mut Some($callback(value)) as &mut dyn Any)
+                (&mut Some($callback(value)) as &mut dyn std::any::Any)
                     .downcast_mut::<Option<Ms>>()
                     .and_then(Option::take)
             })
-        } else if t_type == TypeId::of::<Option<Ms>>() {
+        } else if t_type == std::any::TypeId::of::<Option<Ms>>() {
             $output_type::new(move |value| {
-                (&mut $callback(value) as &mut dyn Any)
+                (&mut $callback(value) as &mut dyn std::any::Any)
                     .downcast_mut::<Option<Ms>>()
                     .and_then(Option::take)
             })
-        } else if t_type == TypeId::of::<()>() {
+        } else if t_type == std::any::TypeId::of::<()>() {
             $output_type::new(move |value| {
                 $callback(value);
                 None
@@ -173,12 +173,13 @@ pub mod prelude {
         browser::dom::event_handler::{
             drag_ev, ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, touch_ev,
         },
-        browser::fetch::{self, fetch, Header, Method, Request, Response, Status},
+        browser::fetch::{self, fetch, FetchError, Header, Method, Request, Response, Status},
         browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
             RequestAnimationFrameTime,
         },
-        browser::web_storage::{LocalStorage, SessionStorage, WebStorage},
+        browser::web_socket::{self, CloseEvent, WebSocket, WebSocketError, WebSocketMessage},
+        browser::web_storage::{self, LocalStorage, SessionStorage, WebStorage},
         browser::{Url, UrlSearch},
         helpers::not,
         // macros are exported in crate root

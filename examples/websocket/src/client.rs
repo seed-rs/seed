@@ -1,9 +1,6 @@
-use js_sys::Function;
 use seed::{prelude::*, *};
-use wasm_bindgen::JsCast;
-use web_sys::{MessageEvent, WebSocket};
 
-mod json;
+mod shared;
 
 const WS_URL: &str = "ws://127.0.0.1:9000/ws";
 
@@ -12,58 +9,31 @@ const WS_URL: &str = "ws://127.0.0.1:9000/ws";
 // ------ ------
 
 struct Model {
-    data: Data,
-    services: Services,
-}
-
-#[derive(Default)]
-struct Data {
-    connected: bool,
-    msg_rx_cnt: usize,
-    msg_tx_cnt: usize,
-    input_text: String,
+    sent_messages_count: usize,
     messages: Vec<String>,
-}
-
-struct Services {
-    ws: WebSocket,
+    input_text: String,
+    web_socket: WebSocket,
 }
 
 // ------ ------
-//  After Mount
+//     Init
 // ------ ------
 
-fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    let ws = WebSocket::new(WS_URL).unwrap();
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    let web_socket = WebSocket::builder(WS_URL, orders)
+        .on_open(|| log!("WebSocket connection is open now"))
+        .on_message(Msg::MessageReceived)
+        .on_close(Msg::WebSocketClosed)
+        .on_error(|| log!("Error"))
+        .build_and_open()
+        .unwrap();
 
-    register_ws_handler(WebSocket::set_onopen, Msg::Connected, &ws, orders);
-    register_ws_handler(WebSocket::set_onclose, Msg::Closed, &ws, orders);
-    register_ws_handler(WebSocket::set_onmessage, Msg::ServerMessage, &ws, orders);
-    register_ws_handler(WebSocket::set_onerror, Msg::Error, &ws, orders);
-
-    AfterMount::new(Model {
-        data: Data::default(),
-        services: Services { ws },
-    })
-}
-
-fn register_ws_handler<T, F>(
-    ws_cb_setter: fn(&WebSocket, Option<&Function>),
-    msg: F,
-    ws: &WebSocket,
-    orders: &mut impl Orders<Msg>,
-) where
-    T: wasm_bindgen::convert::FromWasmAbi + 'static,
-    F: Fn(T) -> Msg + 'static,
-{
-    let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
-
-    let closure = Closure::new(move |data| {
-        app.update(msg_mapper(msg(data)));
-    });
-
-    ws_cb_setter(ws, Some(closure.as_ref().unchecked_ref()));
-    closure.forget();
+    Model {
+        sent_messages_count: 0,
+        messages: Vec::new(),
+        input_text: String::new(),
+        web_socket,
+    }
 }
 
 // ------ ------
@@ -71,46 +41,42 @@ fn register_ws_handler<T, F>(
 // ------ ------
 
 enum Msg {
-    Connected(JsValue),
-    ServerMessage(MessageEvent),
-    Send(json::ClientMessage),
-    Sent,
-    EditChange(String),
-    Closed(JsValue),
-    Error(JsValue),
+    MessageReceived(WebSocketMessage),
+    CloseWebSocket,
+    WebSocketClosed(CloseEvent),
+    InputTextChanged(String),
+    SendMessage(shared::ClientMessage),
 }
 
-fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, mut model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Connected(_) => {
-            log!("WebSocket connection is open now");
-            model.data.connected = true;
-        }
-        Msg::ServerMessage(msg_event) => {
+        Msg::MessageReceived(message) => {
             log!("Client received a message");
-            let txt = msg_event.data().as_string().unwrap();
-            let json: json::ServerMessage = serde_json::from_str(&txt).unwrap();
-
-            model.data.msg_rx_cnt += 1;
-            model.data.messages.push(json.text);
+            model
+                .messages
+                .push(message.json::<shared::ServerMessage>().unwrap().text);
         }
-        Msg::EditChange(input_text) => {
-            model.data.input_text = input_text;
+        Msg::CloseWebSocket => {
+            model
+                .web_socket
+                .close(None, Some("user clicked Close button"))
+                .unwrap();
         }
-        Msg::Send(msg) => {
-            let s = serde_json::to_string(&msg).unwrap();
-            model.services.ws.send_with_str(&s).unwrap();
-            orders.send_msg(Msg::Sent);
+        Msg::WebSocketClosed(close_event) => {
+            log!("==================");
+            log!("WebSocket connection was closed:");
+            log!("Clean:", close_event.was_clean());
+            log!("Code:", close_event.code());
+            log!("Reason:", close_event.reason());
+            log!("==================");
         }
-        Msg::Sent => {
-            model.data.input_text = "".into();
-            model.data.msg_tx_cnt += 1;
+        Msg::InputTextChanged(input_text) => {
+            model.input_text = input_text;
         }
-        Msg::Closed(_) => {
-            log!("WebSocket connection was closed");
-        }
-        Msg::Error(_) => {
-            log!("Error");
+        Msg::SendMessage(msg) => {
+            model.web_socket.send_json(&msg).unwrap();
+            model.input_text.clear();
+            model.sent_messages_count += 1;
         }
     }
 }
@@ -119,43 +85,35 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
 //     View
 // ------ ------
 
-fn view(model: &Model) -> impl IntoNodes<Msg> {
-    let data = &model.data;
-
+fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
-        h1!["seed websocket example"],
-        if data.connected {
+        h1!["WebSocket example"],
+        div![model.messages.iter().map(|message| p![message])],
+        if model.web_socket.state() == web_socket::State::Open {
             div![
                 input![
                     id!("text"),
                     attrs! {
                         At::Type => "text",
-                        At::Value => data.input_text;
+                        At::Value => model.input_text;
                     },
-                    input_ev(Ev::Input, Msg::EditChange)
+                    input_ev(Ev::Input, Msg::InputTextChanged)
                 ],
                 button![
-                    id!("send"),
-                    attrs! { At::Type => "button" },
                     ev(Ev::Click, {
-                        let message_text = data.input_text.to_owned();
-                        move |_| Msg::Send(json::ClientMessage { text: message_text })
+                        let message_text = model.input_text.to_owned();
+                        move |_| Msg::SendMessage(shared::ClientMessage { text: message_text })
                     }),
                     "Send"
-                ]
+                ],
+                button![ev(Ev::Click, |_| Msg::CloseWebSocket), "Close"],
             ]
         } else {
-            div![p![em!["Connecting..."]]]
+            div![p![em!["Connecting or closed"]]]
         },
-        div![data.messages.iter().map(|message| p![message])],
         footer![
-            if data.connected {
-                p!["Connected"]
-            } else {
-                p!["Disconnected"]
-            },
-            p![format!("{} messages received", data.msg_rx_cnt)],
-            p![format!("{} messages sent", data.msg_tx_cnt)]
+            p![format!("{} messages", model.messages.len())],
+            p![format!("{} messages sent", model.sent_messages_count)]
         ],
     ]
 }
@@ -166,7 +124,5 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    App::builder(update, view)
-        .after_mount(after_mount)
-        .build_and_start();
+    App::start("app", init, update, view);
 }
