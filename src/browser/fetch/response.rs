@@ -50,7 +50,7 @@ impl Response {
             .map(JsFuture::from)?
             .await
             .map_err(FetchError::PromiseError)
-            .map(js_sys::Uint8Array::from)?
+            .map(|array_buffer| js_sys::Uint8Array::new(&array_buffer))?
             .to_vec())
     }
 
@@ -94,5 +94,50 @@ impl Response {
     /// [issue]: https://github.com/seed-rs/seed/issues
     pub const fn raw_response(&self) -> &web_sys::Response {
         &self.raw_response
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use wasm_bindgen_test::*;
+    wasm_bindgen_test_configure!(run_in_browser);
+    use super::*;
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    struct Obj {
+        key: String,
+    }
+
+    #[wasm_bindgen_test]
+    async fn test_json() {
+        let response = Response {
+            raw_response: web_sys::Response::new_with_opt_str(Some(r#"{ "key": "value" }"#))
+                .unwrap(),
+        };
+
+        let obj: Obj = response.json().await.unwrap();
+        assert_eq!(obj.key, "value");
+    }
+
+    #[wasm_bindgen_test]
+    async fn test_string() {
+        let response = Response {
+            raw_response: web_sys::Response::new_with_opt_str(Some("response")).unwrap(),
+        };
+
+        let string = response.text().await.unwrap();
+        assert_eq!(string, "response");
+    }
+
+    #[wasm_bindgen_test]
+    async fn test_bytes() {
+        let mut body = Vec::from(&b"response"[..]);
+        let response = Response {
+            raw_response: web_sys::Response::new_with_opt_u8_array(Some(&mut body)).unwrap(),
+        };
+
+        let vec = response.bytes().await.unwrap();
+        assert_eq!(&vec, b"response");
     }
 }
