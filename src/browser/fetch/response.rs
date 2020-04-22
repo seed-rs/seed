@@ -110,7 +110,7 @@ mod tests {
     }
 
     #[wasm_bindgen_test]
-    async fn test_json() {
+    async fn response_json() {
         let response = Response {
             raw_response: web_sys::Response::new_with_opt_str(Some(r#"{ "key": "value" }"#))
                 .unwrap(),
@@ -121,7 +121,7 @@ mod tests {
     }
 
     #[wasm_bindgen_test]
-    async fn test_string() {
+    async fn response_string() {
         let response = Response {
             raw_response: web_sys::Response::new_with_opt_str(Some("response")).unwrap(),
         };
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[wasm_bindgen_test]
-    async fn test_bytes() {
+    async fn response_bytes() {
         let mut body = Vec::from(&b"response"[..]);
         let response = Response {
             raw_response: web_sys::Response::new_with_opt_u8_array(Some(&mut body)).unwrap(),
