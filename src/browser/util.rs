@@ -5,7 +5,6 @@
 
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
-use web_sys;
 
 pub type RequestAnimationFrameTime = f64;
 
@@ -107,7 +106,9 @@ pub fn request_animation_frame(
 ///
 /// Will return error if it's not possible to call `get_value` for given `target`.
 pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> {
+    #![allow(clippy::wildcard_imports)]
     use web_sys::*;
+
     macro_rules! get {
         ($element:ty) => {
             get!($element, |_| Ok(()))
@@ -146,7 +147,9 @@ pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> 
 #[allow(clippy::missing_errors_doc)]
 /// Similar to `get_value`.
 pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'static str> {
+    #![allow(clippy::wildcard_imports)]
     use web_sys::*;
+
     macro_rules! set {
         ($element:ty) => {
             set!($element, |_| Ok(value))

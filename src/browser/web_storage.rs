@@ -1,6 +1,5 @@
 use crate::browser::util::window;
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json;
 use wasm_bindgen::JsValue;
 use web_sys::Storage;
 

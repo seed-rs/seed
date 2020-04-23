@@ -194,6 +194,12 @@ impl<'a> Request<'a> {
     ///         .await
     /// }
     /// ```
+    ///
+    /// ## Errors
+    ///
+    /// `fetch` will return `Err` only on network errors. This means that
+    /// even if you get `Ok` from this function, you still need to check
+    /// `Response` status for HTTP errors.
     pub async fn fetch(self) -> Result<Response> {
         fetch(self).await
     }

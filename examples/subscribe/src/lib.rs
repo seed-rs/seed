@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use js_sys;
 use seed::{prelude::*, *};
 use wasm_bindgen::JsCast;
 

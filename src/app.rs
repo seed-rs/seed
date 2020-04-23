@@ -17,7 +17,7 @@ use std::{
     marker::PhantomData,
     rc::Rc,
 };
-use types::*;
+use types::{RoutesFn, SinkFn, UpdateFn, ViewFn, WindowEventsFn};
 use wasm_bindgen::closure::Closure;
 use web_sys::Element;
 

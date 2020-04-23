@@ -1,4 +1,5 @@
-use super::{render_timestamp_delta::RenderTimestamp, types::*, RenderTimestampDelta, SubManager};
+use super::types::{MsgListeners, RoutesFn};
+use super::{render_timestamp_delta::RenderTimestamp, RenderTimestampDelta, SubManager};
 use crate::browser::util;
 use crate::virtual_dom::{El, EventHandlerManager};
 use std::cell::{Cell, RefCell};

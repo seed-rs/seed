@@ -29,10 +29,8 @@
 //! [fetch-mdn]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 
 use crate::util::window;
-use serde_json;
 use std::convert::TryInto;
 use wasm_bindgen_futures::JsFuture;
-use web_sys;
 
 pub mod header;
 mod method;

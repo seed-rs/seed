@@ -1,8 +1,6 @@
 use seed::{self, prelude::*, *};
 use std::borrow::Cow;
 
-use shared;
-
 pub const TITLE: &str = "Example A";
 pub const DESCRIPTION: &str = "Write something into input and click on 'Send message'.
     Message will be send to server and then it wil be returned with ordinal number.
