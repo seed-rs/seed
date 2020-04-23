@@ -108,19 +108,8 @@ See more on our [about](https://seed-rs.org/guide/about) page.
 - Seed doesn't have as many existing reusable components that more mature frameworks have (date-pickers, etc.), so you may need to implement them yourself, or adapt them from existing solutions.
 
 # Documentation
-- [Quickstart](https://seed-rs.org/guide/quickstart)
-- [About](https://seed-rs.org/guide/about)
-- [Code Comparison](https://seed-rs.org/guide/code-comparison)
-- [Structure](https://seed-rs.org/guide/structure)
-- [View Macros](https://seed-rs.org/guide/view)
-- [Events](https://seed-rs.org/guide/events)
-- [HTTP Requests](https://seed-rs.org/guide/http-requests-and-state)
-- [Routing](https://seed-rs.org/guide/routing)
-- [JavaScript Interaction](https://seed-rs.org/guide/javascript-interaction)
-- [Release and Debugging](https://seed-rs.org/guide/release-and-debugging)
-- [Server Integration](https://seed-rs.org/guide/server-integration)
-- [Support](https://seed-rs.org/guide/support)
-- [Troubleshooting] //TBA
+- Guides on [seed-rs.org](https://seed-rs.org)
+- API documentation on [docs.rs/seed](https://docs.rs/seed)
 
 # Resources
 ### Seed
