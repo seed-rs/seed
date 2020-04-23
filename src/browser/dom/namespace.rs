@@ -12,27 +12,26 @@ pub enum Namespace {
 // https://developer.mozilla.org/en-US/docs/Web/API/Document/createElementNS
 impl Namespace {
     pub fn as_str(&self) -> &str {
-        use Namespace::*;
         match self {
-            Html => "http://www.w3.org/1999/xhtml",
-            Svg => "http://www.w3.org/2000/svg",
-            MathMl => "http://www.w3.org/1998/mathml",
-            Xul => "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
-            Xbl => "http://www.mozilla.org/xbl",
-            Custom(s) => s,
+            Namespace::Html => "http://www.w3.org/1999/xhtml",
+            Namespace::Svg => "http://www.w3.org/2000/svg",
+            Namespace::MathMl => "http://www.w3.org/1998/mathml",
+            Namespace::Xul => "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+            Namespace::Xbl => "http://www.mozilla.org/xbl",
+            Namespace::Custom(namespace) => namespace,
         }
     }
 }
 
 impl From<String> for Namespace {
-    fn from(ns: String) -> Self {
-        match ns.as_ref() {
+    fn from(namespace: String) -> Self {
+        match namespace.as_ref() {
             "http://www.w3.org/1999/xhtml" => Namespace::Html,
             "http://www.w3.org/2000/svg" => Namespace::Svg,
             "http://www.w3.org/1998/mathml" => Namespace::MathMl,
             "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" => Namespace::Xul,
             "http://www.mozilla.org/xbl" => Namespace::Xbl,
-            _ => Namespace::Custom(ns),
+            _ => Namespace::Custom(namespace),
         }
     }
 }

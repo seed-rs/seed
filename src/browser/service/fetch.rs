@@ -8,11 +8,9 @@ use std::future::Future;
 
 use gloo_timers::callback::Timeout;
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json;
 use std::{borrow::Cow, cell::RefCell, collections::HashMap, convert::identity, rc::Rc};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
-use web_sys;
 
 // ---------- Aliases for foreign types ----------
 

@@ -99,7 +99,6 @@ features = [
 [workspace]
 members = [
     "examples/animation_frame",
-    "examples/app_builder",
     "examples/auth",
     "examples/counter",
     "examples/counter_advanced",

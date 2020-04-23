@@ -1,4 +1,5 @@
-use super::{types::*, App, AppInitCfg, OrdersContainer};
+use super::types::{RoutesFn, SinkFn, UpdateFn, ViewFn, WindowEventsFn};
+use super::{App, AppInitCfg, OrdersContainer};
 use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 use std::marker::PhantomData;

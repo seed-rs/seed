@@ -4,9 +4,6 @@ use actix_multipart::{Multipart, MultipartError};
 use actix_web::{get, post, web, App, HttpServer};
 use std::fmt::Write;
 use std::time;
-use tokio_timer;
-
-use shared;
 
 mod count_actor;
 use count_actor::{CountActor, MsgIncrement};
