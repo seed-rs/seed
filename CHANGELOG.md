@@ -42,6 +42,7 @@
 - [BREAKING] Updated `Url` and `routing.rs`.
 - [deprecated] `seed::browser::service::storage`.
 - Added `LocalStorage`, `SessionStorage` and `WebStorage` (trait).
+- Added `TouchEvent` and `touch_ev` definitions.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
