@@ -20,8 +20,6 @@ pub struct ElKey(String);
 ///
 /// The keys are used by the diffing algorithm to determine the correspondence between old and
 /// new elements and helps to optimize the insertion, removal and reordering of elements.
-///
-/// @TODO `key` restriction (have to implements `ToString`) will be probably relaxed in the future.
 pub fn el_key(key: &impl ToString) -> ElKey {
     ElKey(key.to_string())
 }

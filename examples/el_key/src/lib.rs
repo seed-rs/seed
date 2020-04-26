@@ -1,7 +1,7 @@
 //! This example shows how to control a DOM update using element keys and empty nodes.
 //! See README.md for more details.
 
-use rand::prelude::*;
+use rand::{rngs::SmallRng, seq::SliceRandom, SeedableRng};
 use regex::Regex;
 use scarlet::{
     color::{Color, RGBColor},
@@ -13,7 +13,6 @@ use std::mem;
 
 type CardId = char;
 type NumCards = u8;
-type RngSeed = u64;
 
 // NUM_CARDS have to be in the range [0, 26] (inclusive).
 // 26 is the number of letters in the English alphabet.
@@ -138,8 +137,8 @@ enum Msg {
     // Applies to selected cards or to all enabled if there are no selected cards.
     RotateCards,
     RotateColors,
-    ShuffleCards(RngSeed),
-    ShuffleColors(RngSeed),
+    ShuffleCards,
+    ShuffleColors,
     // ------ Options ------
     ToggleElKey,
     ToggleEmpty,
@@ -200,24 +199,22 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         // Change the order and colors of cards.
         // Applies to selected cards or to all enabled if there are no selected cards.
         Msg::RotateCards => {
-            let indeces = selected_or_all_enabled(&model.cards);
-            rotate_by_indeces(&mut model.cards, &indeces);
+            let indices = selected_or_all_enabled(&model.cards);
+            rotate_by_indices(&mut model.cards, &indices);
         }
         Msg::RotateColors => {
-            let indeces = selected_or_all_enabled(&model.cards);
-            rotate_colors_by_indeces(&mut model.cards, &indeces);
+            let indices = selected_or_all_enabled(&model.cards);
+            rotate_colors_by_indices(&mut model.cards, &indices);
         }
-        Msg::ShuffleCards(seed) => {
-            let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
-            let mut indeces = selected_or_all_enabled(&model.cards);
-            indeces.shuffle(&mut rng);
-            rotate_by_indeces(&mut model.cards, &indeces);
+        Msg::ShuffleCards => {
+            let mut indices = selected_or_all_enabled(&model.cards);
+            indices.shuffle(&mut SmallRng::from_entropy());
+            rotate_by_indices(&mut model.cards, &indices);
         }
-        Msg::ShuffleColors(seed) => {
-            let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
-            let mut indeces = selected_or_all_enabled(&model.cards);
-            indeces.shuffle(&mut rng);
-            rotate_colors_by_indeces(&mut model.cards, &indeces);
+        Msg::ShuffleColors => {
+            let mut indices = selected_or_all_enabled(&model.cards);
+            indices.shuffle(&mut SmallRng::from_entropy());
+            rotate_colors_by_indices(&mut model.cards, &indices);
         }
         // ------ Options ------
         Msg::ToggleElKey => model.el_key_enabled = !model.el_key_enabled,
@@ -243,20 +240,20 @@ fn selected_or_all_enabled(cards: &[Card]) -> Vec<usize> {
         .collect()
 }
 
-fn rotate_by_indeces<T>(arr: &mut [T], indeces: &[usize]) {
-    indeces
+fn rotate_by_indices<T>(arr: &mut [T], indices: &[usize]) {
+    indices
         .iter()
         .rev()
         .skip(1)
-        .zip(indeces.iter().rev())
+        .zip(indices.iter().rev())
         .for_each(|(&a, &b)| arr.swap(a, b));
 }
 
-fn rotate_colors_by_indeces(cards: &mut [Card], indeces: &[usize]) {
-    if let Some(&last_i) = indeces.last() {
+fn rotate_colors_by_indices(cards: &mut [Card], indices: &[usize]) {
+    if let Some(&last_i) = indices.last() {
         let mut bg = cards[last_i].bg_color;
         let mut fg = cards[last_i].fg_color;
-        for &i in indeces {
+        for &i in indices {
             let card = &mut cards[i];
             mem::swap(&mut bg, &mut card.bg_color);
             mem::swap(&mut fg, &mut card.fg_color);
@@ -336,7 +333,7 @@ fn disabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
     let card_id = card.id;
     div![
         id!(format!("card-table__card-{}", card.id)),
-        IF!(el_key_enabled => el_key(&format!("{}", card_id))),
+        IF!(el_key_enabled => el_key(&card_id)),
         C![
             "card-table__card",
             "card-table__card--disabled",
@@ -353,7 +350,7 @@ fn disabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
 fn enabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
     div![
         id!(format!("card-table__card-{}", card.id)),
-        IF!(el_key_enabled => el_key(&format!("{}", card.id))),
+        IF!(el_key_enabled => el_key(&card.id)),
         C![
             "card-table__card",
             "card-table__card--enabled",
@@ -393,7 +390,7 @@ fn enabled_card_graphics(card: &Card) -> Node<Msg> {
                 At::Y => percent(if card.id == 'J' { 50 } else { 55 }),
                 At::Fill => card.fg_color.to_string(),
             },
-            format!("{}", card.id),
+            card.id.to_string(),
         ],
     ]
 }
@@ -445,16 +442,10 @@ fn control_buttons() -> Node<Msg> {
             id!["control-buttons__order-buttons"],
             div!["Cards:"],
             button!["Rotate", ev(Ev::Click, |_| Msg::RotateCards)],
-            button![
-                "Shuffle",
-                input_ev(Ev::Click, |_| Msg::ShuffleCards(random()))
-            ],
+            button!["Shuffle", ev(Ev::Click, |_| Msg::ShuffleCards)],
             div!["Colors:"],
             button!["Rotate", ev(Ev::Click, |_| Msg::RotateColors)],
-            button![
-                "Shuffle",
-                input_ev(Ev::Click, |_| Msg::ShuffleColors(random()))
-            ],
+            button!["Shuffle", ev(Ev::Click, |_| Msg::ShuffleColors)],
         ],
         div![
             id!("control-buttons__buttons"),
