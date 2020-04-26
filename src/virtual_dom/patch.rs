@@ -18,20 +18,14 @@ fn append_el<'a, Ms>(
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-) -> Option<&'a web_sys::Node> {
+) {
     virtual_dom_bridge::assign_ws_nodes_to_el(document, new);
     virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
-    new.node_ws.as_ref()
 }
 
-fn append_text<'a>(
-    document: &Document,
-    new: &'a mut Text,
-    parent: &web_sys::Node,
-) -> Option<&'a web_sys::Node> {
+fn append_text<'a>(document: &Document, new: &'a mut Text, parent: &web_sys::Node) {
     virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
     virtual_dom_bridge::attach_text_node(new, parent);
-    new.node_ws.as_ref()
 }
 
 fn insert_el<'a, Ms>(
@@ -40,7 +34,7 @@ fn insert_el<'a, Ms>(
     parent: &web_sys::Node,
     next_node: web_sys::Node,
     mailbox: &Mailbox<Ms>,
-) -> Option<&'a web_sys::Node> {
+) {
     virtual_dom_bridge::assign_ws_nodes_to_el(document, new);
     virtual_dom_bridge::attach_children(new, mailbox);
     let new_node = new
@@ -57,8 +51,6 @@ fn insert_el<'a, Ms>(
         .attach_listeners(new_node.clone(), None, mailbox);
 
     new.node_ws.replace(new_node);
-
-    new.node_ws.as_ref()
 }
 
 fn insert_text<'a>(
@@ -66,14 +58,13 @@ fn insert_text<'a>(
     new: &'a mut Text,
     parent: &web_sys::Node,
     next_node: web_sys::Node,
-) -> Option<&'a web_sys::Node> {
+) {
     virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
     let new_node_ws = new
         .node_ws
         .as_ref()
         .expect("new_node_ws missing when patching Empty to Text");
     virtual_dom_bridge::insert_node(new_node_ws, parent, Some(next_node));
-    new.node_ws.as_ref()
 }
 
 fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
@@ -82,7 +73,7 @@ fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
     new: &'a mut El<Ms>,
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, INodes, GMs>,
-) -> Option<&'a web_sys::Node> {
+) {
     // At this step, we already assume we have the right element with matching namespace, tag and
     // el_key - either by entering this func directly for the top-level, or recursively after
     // analyzing children.
@@ -112,11 +103,9 @@ fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
         new_children_iter,
     );
     new.node_ws = Some(old_el_ws);
-
-    new.node_ws.as_ref()
 }
 
-fn patch_text(mut old: Text, new: &mut Text) -> Option<&web_sys::Node> {
+fn patch_text(mut old: Text, new: &mut Text) {
     let old_node_ws = old
         .node_ws
         .take()
@@ -126,7 +115,6 @@ fn patch_text(mut old: Text, new: &mut Text) -> Option<&web_sys::Node> {
         old_node_ws.set_text_content(Some(&new.text));
     }
     new.node_ws.replace(old_node_ws);
-    new.node_ws.as_ref()
 }
 
 fn replace_by_el<'a, Ms>(
@@ -135,7 +123,7 @@ fn replace_by_el<'a, Ms>(
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-) -> Option<&'a web_sys::Node> {
+) {
     let new_node = virtual_dom_bridge::make_websys_el(new, document);
     for ref_ in &mut new.refs {
         ref_.set(new_node.clone());
@@ -150,8 +138,6 @@ fn replace_by_el<'a, Ms>(
     virtual_dom_bridge::replace_child(new_ws, &old_node, parent);
 
     std::mem::drop(old_node);
-
-    Some(new_ws)
 }
 
 fn replace_by_text<'a>(
@@ -159,7 +145,7 @@ fn replace_by_text<'a>(
     old_node: web_sys::Node,
     new: &'a mut Text,
     parent: &web_sys::Node,
-) -> Option<&'a web_sys::Node> {
+) {
     // Can't just use assign_ws_nodes; borrow-checker issues.
     new.node_ws = Some(
         document
@@ -176,8 +162,6 @@ fn replace_by_text<'a>(
     virtual_dom_bridge::replace_child(new_node_ws, &old_node, parent);
 
     std::mem::drop(old_node);
-
-    new.node_ws.as_ref()
 }
 
 fn replace_el_by_el<'a, Ms>(
@@ -186,12 +170,12 @@ fn replace_el_by_el<'a, Ms>(
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-) -> Option<&'a web_sys::Node> {
+) {
     let old_node = old
         .node_ws
         .take()
         .expect("old el_ws missing when replacing element with new element");
-    replace_by_el(document, old_node, new, parent, mailbox)
+    replace_by_el(document, old_node, new, parent, mailbox);
 }
 
 fn replace_el_by_text<'a, Ms>(
@@ -199,12 +183,12 @@ fn replace_el_by_text<'a, Ms>(
     mut old: El<Ms>,
     new: &'a mut Text,
     parent: &web_sys::Node,
-) -> Option<&'a web_sys::Node> {
+) {
     let old_node = old
         .node_ws
         .take()
         .expect("old el_ws missing when replacing element with text node");
-    replace_by_text(document, old_node, new, parent)
+    replace_by_text(document, old_node, new, parent);
 }
 
 fn replace_text_by_el<'a, Ms>(
@@ -213,12 +197,12 @@ fn replace_text_by_el<'a, Ms>(
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
-) -> Option<&'a web_sys::Node> {
+) {
     let old_node = old
         .node_ws
         .take()
         .expect("old el_ws missing when replacing text node with element");
-    replace_by_el(document, old_node, new, parent, mailbox)
+    replace_by_el(document, old_node, new, parent, mailbox);
 }
 
 fn remove_el<Ms>(mut old: El<Ms>, parent: &web_sys::Node) {
@@ -269,14 +253,8 @@ pub(crate) fn patch_els<'a, Ms, Mdl, INodes, GMs, OI, NI>(
             PatchCommand::ReplaceElByText { el_old, text_new } => {
                 replace_el_by_text(document, el_old, text_new, old_el_ws)
             }
-            PatchCommand::RemoveEl { el_old } => {
-                remove_el(el_old, old_el_ws);
-                None
-            }
-            PatchCommand::RemoveText { text_old } => {
-                remove_text(text_old, old_el_ws);
-                None
-            }
+            PatchCommand::RemoveEl { el_old } => remove_el(el_old, old_el_ws),
+            PatchCommand::RemoveText { text_old } => remove_text(text_old, old_el_ws),
         };
     }
 }
@@ -313,10 +291,7 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
                 }
             }
             Node::Text(new_text) => replace_el_by_text(document, old_el, new_text, parent),
-            Node::Empty => {
-                remove_el(old_el, parent);
-                None
-            }
+            Node::Empty => remove_el(old_el, parent),
         },
         Node::Empty => {
             match new {
@@ -335,7 +310,7 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
                     }
                 }
                 // If new and old are empty, we don't need to do anything.
-                Node::Empty => None,
+                Node::Empty => (),
             }
         }
         Node::Text(old_text) => {
@@ -344,12 +319,10 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
                 Node::Element(new_el) => {
                     replace_text_by_el(document, old_text, new_el, parent, mailbox)
                 }
-                Node::Empty => {
-                    remove_text(old_text, parent);
-                    None
-                }
+                Node::Empty => remove_text(old_text, parent),
                 Node::Text(new_text) => patch_text(old_text, new_text),
             }
         }
-    }
+    };
+    new.node_ws()
 }
