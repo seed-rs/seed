@@ -1,6 +1,6 @@
 /*
  * The size of the card is defined by variable and can be changed.
- * The radius of the spinner's circle is releative to the size of the card.
+ * The radius of the spinner's circle is relative to the size of the card.
  * The stroke length is equal to the circumference of the spinner.
  * By animating the dashoffset, we create an spinner's animation similar to a clock.
  * Search for "SVG spinner animation" for more info.
