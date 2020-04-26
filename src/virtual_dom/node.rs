@@ -17,7 +17,6 @@ pub use text::Text;
 #[derive(Debug)]
 pub enum Node<Ms> {
     Element(El<Ms>),
-    //    Svg(El<Ms>),  // May be best to handle using namespace field on El
     Text(Text),
     Empty,
 }
