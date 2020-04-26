@@ -44,7 +44,8 @@ macro_rules! map_callback_return_to_option_ms {
 pub use crate::{
     app::{App, AppBuilder},
     browser::dom::cast::{
-        to_html_el, to_input, to_kbevent, to_mouse_event, to_select, to_textarea, to_touch_event,
+        to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
+        to_textarea, to_touch_event,
     },
     browser::fetch,
     browser::service::routing::push_route,
@@ -121,7 +122,7 @@ pub mod prelude {
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{
-            ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, touch_ev,
+            drag_ev, ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, touch_ev,
         },
         browser::fetch::{self, fetch, Header, Method, Request, Response, Status},
         browser::util::{

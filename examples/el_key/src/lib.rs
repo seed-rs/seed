@@ -10,8 +10,6 @@ use scarlet::{
 use seed::{prelude::*, *};
 use static_assertions::const_assert;
 use std::mem;
-use wasm_bindgen::JsCast;
-use web_sys::{self, DragEvent, Event};
 
 type CardId = char;
 type NumCards = u8;
@@ -283,17 +281,6 @@ fn card_index(cards: &[Card], card_id: CardId) -> Option<usize> {
 //     View
 // ------ ------
 
-trait IntoDragEvent {
-    fn into_drag_event(self) -> DragEvent;
-}
-
-impl IntoDragEvent for Event {
-    fn into_drag_event(self) -> DragEvent {
-        self.dyn_into::<web_sys::DragEvent>()
-            .expect("cannot cast given event into DragEvent")
-    }
-}
-
 // Note: It's macro so you can use it with all events.
 macro_rules! stop_and_prevent {
     { $event:expr } => {
@@ -415,35 +402,30 @@ fn enabled_card_event_handlers(card: &Card) -> Vec<EventHandler<Msg>> {
     let card_id = card.id;
     vec![
         ev(Ev::Click, move |_| Msg::ToggleSelected(card_id)),
-        ev(Ev::DragStart, move |event| {
+        drag_ev(Ev::DragStart, move |event| {
             event
-                .into_drag_event()
                 .data_transfer()
                 .map(|dt| dt.set_data("card_id", &card_id.to_string()));
             Msg::DragStart(card_id)
         }),
-        ev(Ev::DragEnter, move |event| {
-            let drag_event = event.into_drag_event();
-            stop_and_prevent!(drag_event);
-            drag_event.data_transfer().unwrap().set_drop_effect("move");
+        drag_ev(Ev::DragEnter, move |event| {
+            stop_and_prevent!(event);
+            event.data_transfer().unwrap().set_drop_effect("move");
             Msg::DragEnter(card_id)
         }),
-        ev(Ev::DragLeave, move |event| {
-            let drag_event = event.into_drag_event();
-            stop_and_prevent!(drag_event);
-            drag_event.data_transfer().unwrap().set_drop_effect("move");
+        drag_ev(Ev::DragLeave, move |event| {
+            stop_and_prevent!(event);
+            event.data_transfer().unwrap().set_drop_effect("move");
             Msg::DragLeave(card_id)
         }),
-        ev(Ev::DragOver, |event| -> Option<Msg> {
-            let drag_event = event.into_drag_event();
-            stop_and_prevent!(drag_event);
-            drag_event.data_transfer().unwrap().set_drop_effect("move");
+        drag_ev(Ev::DragOver, |event| -> Option<Msg> {
+            stop_and_prevent!(event);
+            event.data_transfer().unwrap().set_drop_effect("move");
             None
         }),
-        ev(Ev::Drop, move |event| {
-            let drag_event = event.into_drag_event();
-            stop_and_prevent!(drag_event);
-            drag_event
+        drag_ev(Ev::Drop, move |event| {
+            stop_and_prevent!(event);
+            event
                 .data_transfer()
                 .unwrap()
                 .get_data("card_id")
@@ -452,7 +434,7 @@ fn enabled_card_event_handlers(card: &Card) -> Vec<EventHandler<Msg>> {
                 .flatten()
                 .map(|src_id| Msg::Drop(src_id, card_id))
         }),
-        ev(Ev::DragEnd, |_| Msg::DragEnd),
+        drag_ev(Ev::DragEnd, |_| Msg::DragEnd),
     ]
 }
 

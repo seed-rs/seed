@@ -31,22 +31,29 @@ pub fn to_html_el(target: &web_sys::EventTarget) -> &web_sys::HtmlElement {
 
 /// Convert a `web_sys::Event` to a `web_sys::KeyboardEvent`. Useful for extracting
 /// info like which key has been pressed, which is not available with normal Events.
-pub fn to_kbevent(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
+pub fn to_keyboard_event(event: &web_sys::Event) -> &web_sys::KeyboardEvent {
     event
         .dyn_ref::<web_sys::KeyboardEvent>()
         .expect("Unable to cast as a keyboard event")
 }
 
-/// See `to_kbevent`
+/// See `to_keyboard_event`
 pub fn to_mouse_event(event: &web_sys::Event) -> &web_sys::MouseEvent {
     event
         .dyn_ref::<web_sys::MouseEvent>()
         .expect("Unable to cast as a mouse event")
 }
 
-/// See `to_kbevent`
+/// See `to_keyboard_event`
 pub fn to_touch_event(event: &web_sys::Event) -> &web_sys::TouchEvent {
     event
         .dyn_ref::<web_sys::TouchEvent>()
         .expect("Unable to cast as a touch event")
+}
+
+/// See `to_keyboard_event`
+pub fn to_drag_event(event: &web_sys::Event) -> &web_sys::DragEvent {
+    event
+        .dyn_ref::<web_sys::DragEvent>()
+        .expect("Unable to cast as a drag event")
 }
