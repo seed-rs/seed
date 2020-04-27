@@ -45,7 +45,7 @@ pub fn handle_controller(
         for count in 0..N_BUNNIES_PER_TICK {
             //alternate between corners
             let pos_x = match count % 2 {
-                0 => 0.0f64,
+                0 => 0.0_f64,
                 _ => (stage_size.width - img_size.width) as f64,
             };
 
@@ -146,7 +146,7 @@ pub fn render(
 
 pub fn end(
     mut fps_counter: UniqueViewMut<FpsCounter>,
-    hud: NonSendSync<UniqueViewMut<Hud>>,
+    mut hud: NonSendSync<UniqueViewMut<Hud>>,
     positions: View<Position>,
 ) {
     fps_counter.end();

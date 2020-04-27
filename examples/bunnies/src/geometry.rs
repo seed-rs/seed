@@ -1,4 +1,4 @@
-use rand::prelude::*;
+use rand::{rngs::SmallRng, Rng, SeedableRng};
 
 #[derive(Debug, Clone)]
 pub struct Point {
@@ -8,7 +8,7 @@ pub struct Point {
 
 impl Point {
     pub fn new_random() -> Self {
-        let mut rng = thread_rng();
+        let mut rng = SmallRng::from_entropy();
         let x: f64 = rng.gen(); // random number in range [0, 1)
         let y: f64 = rng.gen(); // random number in range [0, 1)
 

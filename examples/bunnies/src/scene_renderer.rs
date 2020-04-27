@@ -1,6 +1,6 @@
 use crate::geometry::*;
 use nalgebra::{Matrix4, Vector3};
-use web_sys::HtmlImageElement;
+use seed::web_sys::HtmlImageElement;
 
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BlendFactor, BufferData, BufferMask, BufferTarget, BufferUsage,
@@ -8,16 +8,17 @@ use awsm_web::webgl::{
     WebGlTextureSource,
 };
 
-pub struct SceneRenderer {
-    pub renderer: WebGl1Renderer,
-    ids: SceneIds,
-}
-
 struct SceneIds {
     program_id: Id,
     texture_id: Id,
     instance_id: Id,
 }
+
+pub struct SceneRenderer {
+    pub renderer: WebGl1Renderer,
+    ids: SceneIds,
+}
+
 impl SceneRenderer {
     pub fn new(
         mut renderer: WebGl1Renderer,

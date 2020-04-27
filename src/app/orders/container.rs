@@ -1,7 +1,7 @@
 use crate::app::orders::{proxy::OrdersProxy, Orders};
 use crate::app::{
-    effects::Effect, RenderInfo, App, CmdHandle, CmdManager,
-    Notification, ShouldRender, StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
+    effects::Effect, App, CmdHandle, CmdManager, Notification, RenderInfo, ShouldRender,
+    StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
 };
 use crate::virtual_dom::IntoNodes;
 use futures::future::FutureExt;

@@ -60,6 +60,9 @@ pub use crate::{
 pub use futures::future::{FutureExt, TryFutureExt};
 use wasm_bindgen::{closure::Closure, JsCast};
 
+pub use wasm_bindgen;
+pub use web_sys;
+
 #[macro_use]
 pub mod shortcuts;
 pub mod app;
@@ -117,8 +120,8 @@ pub mod prelude {
     pub use crate::{
         app::{
             builder::init::Init, cmds, streams, subs, AfterMount, App, BeforeMount, CmdHandle,
-            GetElement, MessageMapper, MountType, Orders, RenderInfo, StreamHandle,
-            SubHandle, UrlHandling,
+            GetElement, MessageMapper, MountType, Orders, RenderInfo, StreamHandle, SubHandle,
+            UrlHandling,
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{

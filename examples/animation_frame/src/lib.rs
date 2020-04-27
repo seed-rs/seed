@@ -75,7 +75,7 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Rendered(render_info) => {
-            let delta = f64::from(render_info.timestamp_delta.unwrap_or_default());
+            let delta = render_info.timestamp_delta.unwrap_or_default();
             if delta > 0. {
                 // move car at least 1px to the right
                 model.car.x += f64::max(1., delta / 1000. * model.car.speed);
