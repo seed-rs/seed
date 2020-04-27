@@ -83,7 +83,7 @@ If there are more old elements than new ones, then the elements are removed from
 
 ![Enable and disable without keys and empty nodes](public/enable-disable-without-keys-and-empty.gif)
 
-Note the color transition of the cards, these cards are updated on the in-place.
+Note the color transition of the cards, these cards are updated in-place.
 
 ### Reordering elements
 
