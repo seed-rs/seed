@@ -14,29 +14,29 @@ At the top you can see color cards with letters. Below them, in the form of smal
 
 ![Catd table](public/card-table.png)
 
-To select a card, click on it with the mouse button.
-You can also change the order of the enabled cards by dragging them with the mouse.
+To select a card, click it with the mouse button.
+You can also change the order of enabled cards by dragging them with the mouse.
 
-Upon appearance or replacement, the outline of the card is highlighted in red.
-If the card is updated in-place, then you will see a smooth transition between the old and new colors.
-So you can distinguish which cards were replaced, and which were updated in-place.
+Upon appearance or replacement, an outline of the card is highlighted in red.
+If a card is updated in-place, you will see a smooth transition between the old and new colors.
+This way you can distinguish which cards were replaced, and which were updated in-place.
 
-The rotating circle inside the card shows the time since the appearance or replacement of this card.
+A rotating circle inside a card shows the time since the appearance or replacement of this card.
 
 #### Control buttons
 
-Next you can see the control buttons.
+Then you can see the control buttons.
 
 ![Control buttons](public/control-buttons.png)
 
-So you can rotate the cards or their colors, shuffle the cards or their colors, enable and disable the cards, deselect all cards and reset the state.
+They rotate cards or their colors, shuffle them, enable and disable selected cards, deselect all cards and reset their state.
 
-Rotating cards or colors shifts cards or colors by one so that the last card or color becomes the first.
+Rotating cards or colors shifts them by one and the last card or color becomes the first.
 
 Shuffling reorders cards or colors at random.
 
 Rotation and shuffling is applied to the selected and enabled cards, or to all enabled if no cards are selected.
-Enabling and disabling apply to selected cards.
+Enabling and disabling is applied to selected cards.
 
 #### Options
 
@@ -72,11 +72,11 @@ Empty nodes are used as a placeholders for disabled elements. This allows to mai
 
 Result must be same as with element keys.
 
-#### Without element keys an empty noedes
+#### Without element keys an empty nodes
 
 Both `Use element keys` and `Use empty nodes` is unchecked.
 
-All elements with same tag and namespace are updated in-place. 
+All the elements with the same tag and namespace are updated in-place. 
 
 If there are fewer old elements than new ones, then the elements are added to the end.
 If there are more old elements than new ones, then the elements are removed from the end.
@@ -101,24 +101,24 @@ The correspondence between old and new elements is determined using keys.
 
 ![Reordering with keys](public/reordering-with-keys.gif)
 
-Note that some of the cards are highlighted in red, while the rest remain unchanged.
-In the case of rotation, only the first card is highlighted in red.
+Note that some of the cards are highlighted in red, while the rest remains unchanged.
+In case of rotation, only the first card is highlighted in red.
 
 #### Without element keys
 
 `Use element keys` is unchecked, `Use empty nodes` does not affect the result.
 
-Application cannot determine the correspondence between old and new elements and all elements are updated in-place.
+Application cannot determine the correspondence between old and new the elements and all elements are updated in-place.
 
 ![Reordering without keys](public/reordering-without-keys.gif)
 
-Note the color transition of the cards. None of cards are highlighted in red.
+Note the color transition of the cards. None of the cards are highlighted in red.
 
 ### Color reordering
 
 This example shows what happens when the attributes of the elements change but the order remains the same.
 
-Both `Use element keys` and `Use empty nodes` does not affect the result.
+Both `Use element keys` and `Use empty nodes` do not affect the result.
 
  1. Select a few cards in the middle, for example: `B`&nbsp;`C`&nbsp;`D`&nbsp;`E`.
  2. Press `Rotate` or `Shuffle` button to the right of the `Colors:`.
