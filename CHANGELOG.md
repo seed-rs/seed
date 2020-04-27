@@ -44,6 +44,8 @@
 - [deprecated] `seed::browser::service::storage`.
 - Added `LocalStorage`, `SessionStorage` and `WebStorage` (trait).
 - Added `TouchEvent` and `touch_ev` definitions.
+- Added `DragEvent` and `drag_ev` definitions.
+- [BREAKING] Renamed `to_kbevent` to `to_keyboard_event`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.

@@ -1,373 +1,282 @@
 //! This example shows how to control a DOM update using element keys and empty nodes.
 //! See README.md for more details.
 
-// Some Clippy linter rules are ignored for the sake of simplicity.
-#![allow(clippy::needless_pass_by_value)]
-use enclose::enc;
-use futures::prelude::*;
-use rand::prelude::*;
+use rand::{rngs::SmallRng, seq::SliceRandom, SeedableRng};
+use regex::Regex;
 use scarlet::{
     color::{Color, RGBColor},
     colors::hslcolor::HSLColor,
 };
 use seed::{prelude::*, *};
-use wasm_bindgen::JsCast;
-use web_sys::{self, DragEvent, Event, MouseEvent};
-
-// NUM_CARDS should be in the range [0, 26] (inclusive).
-// 26 because it is the number of letters in the English alphabet.
-const NUM_CARDS: usize = 12;
-
-// ------ ------
-//     Model
-// ------ ------
+use static_assertions::const_assert;
+use std::mem;
 
 type CardId = char;
-type RngSeed = u64;
+type NumCards = u8;
 
-#[allow(clippy::struct_excessive_bools)]
-#[derive(Debug)]
-struct Card {
-    id: CardId,
-    fg_color: RGBColor,
-    bg_color: RGBColor,
-    enabled: bool,
-    dragged: bool,
-    dragover: bool,
-    selected: bool,
-}
-
-impl Card {
-    fn new(card_n: usize, total_cards: usize) -> Self {
-        Self {
-            id: card_id(card_n),
-            fg_color: card_fg_color(card_n, total_cards),
-            bg_color: card_bg_color(card_n, total_cards),
-            enabled: true,
-            dragged: false,
-            dragover: false,
-            selected: false,
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Model {
-    cards: Vec<Card>,
-    readme: Option<String>,
-    // VDOM options
-    el_key_enabled: bool,
-    empty_enabled: bool,
-}
-
-impl Model {
-    fn new(n_cards: usize) -> Self {
-        assert!(n_cards <= 26);
-        Self {
-            cards: (0..n_cards).map(|n| Card::new(n, n_cards)).collect(),
-            readme: None,
-            el_key_enabled: true,
-            empty_enabled: true,
-        }
-    }
-
-    // Swap cards by drag and drop
-    fn drag_start(&mut self, card_id: CardId) {
-        if let Some(card) = self.cards.iter_mut().find(|card| card.id == card_id) {
-            card.dragged = true;
-        }
-    }
-    fn drag_enter(&mut self, card_id: CardId) {
-        if let Some(card) = self.cards.iter_mut().find(|card| card.id == card_id) {
-            card.dragover = true;
-        }
-    }
-    fn drag_leave(&mut self, card_id: CardId) {
-        if let Some(card) = self.cards.iter_mut().find(|card| card.id == card_id) {
-            card.dragover = false;
-        }
-    }
-    fn drag_end(&mut self) {
-        for card in &mut self.cards {
-            card.dragged = false;
-            card.dragover = false;
-        }
-    }
-    fn swap(&mut self, a_id: CardId, b_id: CardId) {
-        if let (Some(a_index), Some(b_index)) =
-            (card_index(&self.cards, a_id), card_index(&self.cards, b_id))
-        {
-            self.cards.swap(a_index, b_index);
-        }
-    }
-
-    // Selecting
-    fn select_none(&mut self) {
-        self.cards.iter_mut().for_each(|card| card.selected = false);
-    }
-    fn toggle_selected(&mut self, card_id: CardId) {
-        if let Some(card) = self.cards.iter_mut().find(|card| card.id == card_id) {
-            card.selected = !card.selected;
-        }
-    }
-
-    // Change the order and colors of cards.
-    // Applies to selected cards or to all enabled if there are no selected cards.
-    fn rotate_cards(&mut self) {
-        let indeces = selected_or_all_enabled(&self.cards);
-        rotate_by_indeces(&mut self.cards, &indeces);
-    }
-    fn shuffle_cards(&mut self, seed: RngSeed) {
-        let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
-        let mut indeces = selected_or_all_enabled(&self.cards);
-        indeces.shuffle(&mut rng);
-        rotate_by_indeces(&mut self.cards, &indeces);
-    }
-    fn rotate_colors(&mut self) {
-        let indeces = selected_or_all_enabled(&self.cards);
-        rotate_colors_by_indeces(&mut self.cards, &indeces);
-    }
-    fn shuffle_colors(&mut self, seed: RngSeed) {
-        let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
-        let mut indeces = selected_or_all_enabled(&self.cards);
-        indeces.shuffle(&mut rng);
-        rotate_colors_by_indeces(&mut self.cards, &indeces);
-    }
-    // Disable/Enable cards
-    fn disable_selected(&mut self) {
-        self.cards.iter_mut().for_each(|card| {
-            card.enabled = card.enabled && !card.selected;
-        });
-    }
-    fn enable_selected(&mut self) {
-        self.cards.iter_mut().for_each(|card| {
-            card.enabled = card.enabled || card.selected;
-        });
-    }
-
-    // Reset card order and colors
-    fn reset(&mut self) {
-        let total_cards = self.cards.len();
-        self.cards.sort_by_key(|card| card.id);
-        self.cards.iter_mut().enumerate().for_each(|(n, card)| {
-            card.fg_color = card_fg_color(n, total_cards);
-            card.bg_color = card_bg_color(n, total_cards);
-            card.enabled = true;
-            card.selected = false;
-        });
-    }
-
-    // Toggle VDOM options
-    fn toggle_el_key(&mut self) {
-        self.el_key_enabled = !self.el_key_enabled;
-    }
-    fn toggle_empty(&mut self) {
-        self.empty_enabled = !self.empty_enabled;
-    }
-}
-
-fn selected_or_all_enabled(cards: &[Card]) -> Vec<usize> {
-    let selected: Vec<usize> = cards
-        .iter()
-        .enumerate()
-        .filter_map(|(i, card)| {
-            if card.selected && card.enabled {
-                Some(i)
-            } else {
-                None
-            }
-        })
-        .collect();
-    if selected.is_empty() {
-        cards
-            .iter()
-            .enumerate()
-            .filter_map(|(i, card)| if card.enabled { Some(i) } else { None })
-            .collect()
-    } else {
-        selected
-    }
-}
-
-fn rotate_by_indeces<T>(arr: &mut [T], indeces: &[usize]) {
-    indeces
-        .iter()
-        .rev()
-        .skip(1)
-        .zip(indeces.iter().rev())
-        .for_each(|(&a, &b)| arr.swap(a, b));
-}
-
-fn rotate_colors_by_indeces(cards: &mut [Card], indeces: &[usize]) {
-    if let Some(&last_i) = indeces.last() {
-        let mut bg = cards[last_i].bg_color;
-        let mut fg = cards[last_i].fg_color;
-        for &i in indeces {
-            let card = &mut cards[i];
-            std::mem::swap(&mut bg, &mut card.bg_color);
-            std::mem::swap(&mut fg, &mut card.fg_color);
-        }
-    }
-}
-
-#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-fn card_bg_color(card_n: usize, total_cards: usize) -> RGBColor {
-    let card_hue = card_n as f64 / total_cards as f64 * 360.0;
-    (HSLColor {
-        h: card_hue % 360.0,
-        s: 0.98,
-        l: 0.81,
-    })
-    .convert()
-}
-
-#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-fn card_fg_color(card_n: usize, total_cards: usize) -> RGBColor {
-    let card_hue = card_n as f64 / total_cards as f64 * 360.0;
-    (HSLColor {
-        h: (card_hue + 240.0) % 360.0,
-        s: 0.45,
-        l: 0.31,
-    })
-    .convert()
-}
-
-#[allow(clippy::cast_possible_truncation)]
-fn card_id(card_n: usize) -> char {
-    assert!(card_n < 26);
-    (b'A' + card_n as u8) as char
-}
-
-fn card_index(cards: &[Card], card_id: CardId) -> Option<usize> {
-    cards
-        .iter()
-        .enumerate()
-        .find_map(|(i, card)| if card.id == card_id { Some(i) } else { None })
-}
+// NUM_CARDS have to be in the range [0, 26] (inclusive).
+// 26 is the number of letters in the English alphabet.
+const NUM_CARDS: NumCards = 12;
+const_assert!(NUM_CARDS <= 26);
 
 // ------ ------
 //     Init
 // ------ ------
 
-fn init(_url: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders.send_msg(Msg::FetchReadme);
-    Model::new(NUM_CARDS)
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::new()
+}
+
+// ------ ------
+//     Model
+// ------ ------
+
+// ------ Model ------
+
+#[derive(Debug)]
+struct Model {
+    cards: Vec<Card>,
+    // VDOM options
+    el_key_enabled: bool,
+    empty_enabled: bool,
+    // Save the README.md content into the model to mitigate rendering slowdown
+    // due to Regex replacement and MD conversion.
+    readme: Vec<Node<Msg>>,
+}
+
+impl Model {
+    fn new() -> Self {
+        let readme = Regex::new(r"<!-- hidden begin -->[\s\S]*?<!-- hidden end -->")
+            .unwrap()
+            .replace_all(include_str!("../README.md"), "");
+
+        Self {
+            cards: Card::new_cards(),
+            el_key_enabled: true,
+            empty_enabled: true,
+            readme: md!(&readme),
+        }
+    }
+}
+
+// ------ Card ------
+
+#[derive(Debug, Copy, Clone)]
+struct Card {
+    id: CardId,
+    fg_color: RGBColor,
+    bg_color: RGBColor,
+    enabled: bool,
+    selected: bool,
+    drag: Option<Drag>,
+}
+
+impl Card {
+    fn new_cards() -> Vec<Self> {
+        (0..NUM_CARDS)
+            .map(|card_n| Self {
+                id: CardId::from(b'A' + card_n),
+                fg_color: Self::fg_color(card_n),
+                bg_color: Self::bg_color(card_n),
+                enabled: true,
+                selected: false,
+                drag: None,
+            })
+            .collect()
+    }
+
+    fn bg_color(card_n: NumCards) -> RGBColor {
+        let card_hue = f64::from(card_n) / f64::from(NUM_CARDS) * 360.0;
+        (HSLColor {
+            h: card_hue % 360.0,
+            s: 0.98,
+            l: 0.81,
+        })
+        .convert()
+    }
+
+    fn fg_color(card_n: NumCards) -> RGBColor {
+        let card_hue = f64::from(card_n) / f64::from(NUM_CARDS) * 360.0;
+        (HSLColor {
+            h: (card_hue + 240.0) % 360.0,
+            s: 0.45,
+            l: 0.31,
+        })
+        .convert()
+    }
+}
+
+// ------ Drag ------
+
+#[derive(Debug, Copy, Clone)]
+enum Drag {
+    Dragged,
+    Over,
 }
 
 // ------ ------
 //    Update
 // ------ ------
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Msg {
-    // Readme
-    FetchReadme,
-    ReadmeReceived(String),
-    // Selecting
+    // ------ Selecting ------
     SelectNone,
     ToggleSelected(CardId),
-    // Drag and drop
+    // ------- Drag and drop ------
     DragStart(CardId),
     DragEnd,
     DragEnter(CardId),
     DragLeave(CardId),
     Drop(CardId, CardId),
-    // Control buttons
+    // ------ Control buttons ------
     DisableSelected,
     EnableSelected,
     Reset,
+    // Change the order and colors of cards.
+    // Applies to selected cards or to all enabled if there are no selected cards.
     RotateCards,
     RotateColors,
-    ShuffleCards(RngSeed),
-    ShuffleColors(RngSeed),
-    // Options
+    ShuffleCards,
+    ShuffleColors,
+    // ------ Options ------
     ToggleElKey,
     ToggleEmpty,
-}
-
-fn fetch_readme() -> impl Future<Output = Msg> {
-    async {
-        fetch("README.md")
-            .await?
-            .check_status()?
-            .text()
-            .await
-            .map(|readme| {
-                // Remove sections mrked as hidden.
-                readme
-                    .split("<!-- hidden begin -->")
-                    .map(|txt| txt.split("<!-- hidden end -->").nth(1).unwrap_or(txt))
-                    .fold(String::new(), |mut clean, part| {
-                        clean.push_str(part);
-                        clean
-                    })
-            })
-    }
-    .map(|result| Msg::ReadmeReceived(result.unwrap_or_else(|err| format!("{:?}", err))))
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     log!("update:", msg);
     match msg {
-        // Readme
-        Msg::FetchReadme => {
-            orders.skip();
-            orders.perform_cmd(fetch_readme());
+        // ------ Selecting ------
+        Msg::SelectNone => {
+            model
+                .cards
+                .iter_mut()
+                .for_each(|card| card.selected = false);
         }
-        Msg::ReadmeReceived(readme) => {
-            model.readme.replace(readme);
+        Msg::ToggleSelected(card_id) => {
+            if let Some(card) = model.cards.iter_mut().find(|card| card.id == card_id) {
+                card.selected = !card.selected;
+            }
         }
-        // Selecting
-        Msg::SelectNone => model.select_none(),
-        Msg::ToggleSelected(card_id) => model.toggle_selected(card_id),
-        // Drag and drop
-        Msg::DragStart(card_id) => model.drag_start(card_id),
-        Msg::DragEnd => model.drag_end(),
-        Msg::DragEnter(card_id) => model.drag_enter(card_id),
-        Msg::DragLeave(card_id) => model.drag_leave(card_id),
+        // ------- Drag and drop ------
+        Msg::DragStart(card_id) => {
+            if let Some(card) = model.cards.iter_mut().find(|card| card.id == card_id) {
+                card.drag = Some(Drag::Dragged);
+            }
+        }
+        Msg::DragEnd => {
+            for card in &mut model.cards {
+                card.drag = None;
+            }
+        }
+        Msg::DragEnter(card_id) => {
+            if let Some(card) = model.cards.iter_mut().find(|card| card.id == card_id) {
+                card.drag = Some(Drag::Over);
+            }
+        }
+        Msg::DragLeave(card_id) => {
+            if let Some(card) = model.cards.iter_mut().find(|card| card.id == card_id) {
+                card.drag = None;
+            }
+        }
         Msg::Drop(from_id, to_id) => {
-            model.drag_end();
-            model.swap(from_id, to_id);
+            swap(&mut model.cards, from_id, to_id);
+            orders.skip().send_msg(Msg::DragEnd);
         }
-        // Control buttons
-        Msg::DisableSelected => model.disable_selected(),
-        Msg::EnableSelected => model.enable_selected(),
-        Msg::Reset => model.reset(),
-        Msg::RotateCards => model.rotate_cards(),
-        Msg::RotateColors => model.rotate_colors(),
-        Msg::ShuffleCards(seed) => model.shuffle_cards(seed),
-        Msg::ShuffleColors(seed) => model.shuffle_colors(seed),
-        // Options
-        Msg::ToggleElKey => model.toggle_el_key(),
-        Msg::ToggleEmpty => model.toggle_empty(),
+        // ------ Control buttons ------
+        Msg::DisableSelected => {
+            model.cards.iter_mut().for_each(|card| {
+                card.enabled = card.enabled && !card.selected;
+            });
+        }
+        Msg::EnableSelected => {
+            model.cards.iter_mut().for_each(|card| {
+                card.enabled = card.enabled || card.selected;
+            });
+        }
+        Msg::Reset => model.cards = Card::new_cards(),
+        // Change the order and colors of cards.
+        // Applies to selected cards or to all enabled if there are no selected cards.
+        Msg::RotateCards => {
+            let indices = selected_or_all_enabled(&model.cards);
+            rotate_by_indices(&mut model.cards, &indices);
+        }
+        Msg::RotateColors => {
+            let indices = selected_or_all_enabled(&model.cards);
+            rotate_colors_by_indices(&mut model.cards, &indices);
+        }
+        Msg::ShuffleCards => {
+            let mut indices = selected_or_all_enabled(&model.cards);
+            indices.shuffle(&mut SmallRng::from_entropy());
+            rotate_by_indices(&mut model.cards, &indices);
+        }
+        Msg::ShuffleColors => {
+            let mut indices = selected_or_all_enabled(&model.cards);
+            indices.shuffle(&mut SmallRng::from_entropy());
+            rotate_colors_by_indices(&mut model.cards, &indices);
+        }
+        // ------ Options ------
+        Msg::ToggleElKey => model.el_key_enabled = !model.el_key_enabled,
+        Msg::ToggleEmpty => model.empty_enabled = !model.empty_enabled,
     };
+}
+
+fn selected_or_all_enabled(cards: &[Card]) -> Vec<usize> {
+    let selected: Vec<usize> = cards
+        .iter()
+        .enumerate()
+        .filter_map(|(i, card)| IF!(card.selected && card.enabled => i))
+        .collect();
+
+    if !selected.is_empty() {
+        return selected;
+    }
+
+    cards
+        .iter()
+        .enumerate()
+        .filter_map(|(i, card)| IF!(card.enabled => i))
+        .collect()
+}
+
+fn rotate_by_indices<T>(arr: &mut [T], indices: &[usize]) {
+    indices
+        .iter()
+        .rev()
+        .skip(1)
+        .zip(indices.iter().rev())
+        .for_each(|(&a, &b)| arr.swap(a, b));
+}
+
+fn rotate_colors_by_indices(cards: &mut [Card], indices: &[usize]) {
+    if let Some(&last_i) = indices.last() {
+        let mut bg = cards[last_i].bg_color;
+        let mut fg = cards[last_i].fg_color;
+        for &i in indices {
+            let card = &mut cards[i];
+            mem::swap(&mut bg, &mut card.bg_color);
+            mem::swap(&mut fg, &mut card.fg_color);
+        }
+    }
+}
+
+fn swap(cards: &mut [Card], a_id: CardId, b_id: CardId) {
+    if let (Some(a_index), Some(b_index)) = (card_index(cards, a_id), card_index(cards, b_id)) {
+        cards.swap(a_index, b_index);
+    }
+}
+
+fn card_index(cards: &[Card], card_id: CardId) -> Option<usize> {
+    cards
+        .iter()
+        .enumerate()
+        .find_map(|(i, card)| IF!(card.id == card_id => i))
 }
 
 // ------ ------
 //     View
 // ------ ------
-
-trait IntoDragEvent {
-    fn into_drag_event(self) -> DragEvent;
-}
-
-impl IntoDragEvent for Event {
-    fn into_drag_event(self) -> DragEvent {
-        self.dyn_into::<web_sys::DragEvent>()
-            .expect("cannot cast given event into DragEvent")
-    }
-}
-
-trait IntoMouseEvent {
-    fn into_mouse_event(self) -> MouseEvent;
-}
-
-impl IntoMouseEvent for Event {
-    fn into_mouse_event(self) -> MouseEvent {
-        self.dyn_into::<web_sys::MouseEvent>()
-            .expect("cannot cast given event into MouseEvent")
-    }
-}
 
 // Note: It's macro so you can use it with all events.
 macro_rules! stop_and_prevent {
@@ -380,14 +289,13 @@ macro_rules! stop_and_prevent {
 }
 
 fn view(model: &Model) -> impl IntoNodes<Msg> {
-    // log!(model);
     div![
         id!["content"],
         h1![id!["title"], "Element key example"],
         card_table(model),
         control_buttons(),
         options(model),
-        readme(model),
+        readme(&model.readme),
     ]
 }
 
@@ -400,7 +308,7 @@ fn card_table(model: &Model) -> Node<Msg> {
                 if card.enabled {
                     Some(enabled_card(card, model.el_key_enabled))
                 } else if model.empty_enabled {
-                    Some(empty())
+                    Some(empty![])
                 } else {
                     None
                 }
@@ -412,7 +320,7 @@ fn card_table(model: &Model) -> Node<Msg> {
                 if !card.enabled {
                     Some(disabled_card(card, model.el_key_enabled))
                 } else if model.empty_enabled {
-                    Some(empty())
+                    Some(empty![])
                 } else {
                     None
                 }
@@ -421,117 +329,11 @@ fn card_table(model: &Model) -> Node<Msg> {
     ]
 }
 
-#[allow(clippy::cognitive_complexity)]
-fn enabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
-    div![
-        id!(format!("card-table__card-{}", card.id)),
-        IF!(el_key_enabled => el_key(&format!("{}", card.id))),
-        C![
-            "card-table__card",
-            "card-table__card--enabled",
-            IF!(card.dragged => "card-table__card--dragged"),
-            IF!(card.dragover => "card-table__card--dragover"),
-            IF!(card.selected => "card-table__card--selected"),
-        ],
-        attrs! {
-            At::Draggable => true
-        },
-        // Card graphics
-        svg![
-            rect![
-                C!("card-table__card-background"),
-                attrs! {
-                    At::Fill => card.bg_color.to_string(),
-                },
-            ],
-            circle![
-                C!("card-table__card-spinner"),
-                attrs! {
-                    At::Stroke => card.fg_color.to_string(),
-                }
-            ],
-            text![
-                C!("card-table__card-text"),
-                attrs! {
-                    // SVG Text's `x` and `y` is not CSS properties.
-                    At::X => percent(50),
-                    At::Y => percent(if card.id == 'J' { 50 } else { 55 }),
-                    At::Fill => card.fg_color.to_string(),
-                },
-                format!("{}", card.id),
-            ],
-        ],
-        // Events
-        ev(
-            Ev::Click,
-            enc!((card.id => card_id) move |_| Msg::ToggleSelected(card_id))
-        ),
-        ev(
-            Ev::DragStart,
-            enc!(
-                (card.id => card_id) move | event | {
-                    event
-                        .into_drag_event()
-                        .data_transfer()
-                        .map(|dt| dt.set_data("card_id", format!("{}", card_id).as_str()));
-                    Msg::DragStart(card_id)
-                }
-            )
-        ),
-        ev(
-            Ev::DragEnter,
-            enc!(
-                (card.id => card_id) move | event | {
-                    let drag_event = event.into_drag_event();
-                    stop_and_prevent!(drag_event);
-                    drag_event.data_transfer().unwrap().set_drop_effect("move");
-                    Msg::DragEnter(card_id)
-                }
-            ),
-        ),
-        ev(
-            Ev::DragLeave,
-            enc!(
-                (card.id => card_id) move | event | {
-                    let drag_event = event.into_drag_event();
-                    stop_and_prevent!(drag_event);
-                    drag_event.data_transfer().unwrap().set_drop_effect("move");
-                    Msg::DragLeave(card_id)
-                }
-            ),
-        ),
-        ev(Ev::DragOver, |event| -> Option<Msg> {
-            let drag_event = event.into_drag_event();
-            stop_and_prevent!(drag_event);
-            drag_event.data_transfer().unwrap().set_drop_effect("move");
-            None
-        }),
-        ev(
-            Ev::Drop,
-            enc!(
-                (card.id => card_id) move | event | {
-                    let drag_event = event.into_drag_event();
-                    stop_and_prevent!(drag_event);
-                    drag_event
-                        .data_transfer()
-                        .unwrap()
-                        .get_data("card_id")
-                        .ok()
-                        .map(|d| d.parse().ok())
-                        .flatten()
-                        .map(|src_id| Msg::Drop(src_id, card_id))
-                }
-            )
-        ),
-        ev(Ev::DragEnd, |_| Msg::DragEnd),
-    ]
-}
-
 fn disabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
     let card_id = card.id;
     div![
         id!(format!("card-table__card-{}", card.id)),
-        IF!(el_key_enabled => el_key(&format!("{}", card_id))),
+        IF!(el_key_enabled => el_key(&card_id)),
         C![
             "card-table__card",
             "card-table__card--disabled",
@@ -540,11 +342,96 @@ fn disabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
         style! {
             St::Color => card.fg_color.to_string(),
         },
-        ev(
-            Ev::Click,
-            enc!((card_id) move |_| Msg::ToggleSelected(card_id))
-        ),
+        ev(Ev::Click, move |_| Msg::ToggleSelected(card_id)),
         format!("{}", card.id),
+    ]
+}
+
+fn enabled_card(card: &Card, el_key_enabled: bool) -> Node<Msg> {
+    div![
+        id!(format!("card-table__card-{}", card.id)),
+        IF!(el_key_enabled => el_key(&card.id)),
+        C![
+            "card-table__card",
+            "card-table__card--enabled",
+            card.drag.map(|drag| match drag {
+                Drag::Dragged => "card-table__card--dragged",
+                Drag::Over => "card-table__card--dragover",
+            }),
+            IF!(card.selected => "card-table__card--selected"),
+        ],
+        attrs! {
+            At::Draggable => true
+        },
+        enabled_card_graphics(card),
+        enabled_card_event_handlers(card),
+    ]
+}
+
+fn enabled_card_graphics(card: &Card) -> Node<Msg> {
+    svg![
+        rect![
+            C!("card-table__card-background"),
+            attrs! {
+                At::Fill => card.bg_color.to_string(),
+            },
+        ],
+        circle![
+            C!("card-table__card-spinner"),
+            attrs! {
+                At::Stroke => card.fg_color.to_string(),
+            }
+        ],
+        text![
+            C!("card-table__card-text"),
+            attrs! {
+                // SVG Text's `x` and `y` is not CSS properties.
+                At::X => percent(50),
+                At::Y => percent(if card.id == 'J' { 50 } else { 55 }),
+                At::Fill => card.fg_color.to_string(),
+            },
+            card.id.to_string(),
+        ],
+    ]
+}
+
+fn enabled_card_event_handlers(card: &Card) -> Vec<EventHandler<Msg>> {
+    let card_id = card.id;
+    vec![
+        ev(Ev::Click, move |_| Msg::ToggleSelected(card_id)),
+        drag_ev(Ev::DragStart, move |event| {
+            event
+                .data_transfer()
+                .map(|dt| dt.set_data("card_id", &card_id.to_string()));
+            Msg::DragStart(card_id)
+        }),
+        drag_ev(Ev::DragEnter, move |event| {
+            stop_and_prevent!(event);
+            event.data_transfer().unwrap().set_drop_effect("move");
+            Msg::DragEnter(card_id)
+        }),
+        drag_ev(Ev::DragLeave, move |event| {
+            stop_and_prevent!(event);
+            event.data_transfer().unwrap().set_drop_effect("move");
+            Msg::DragLeave(card_id)
+        }),
+        drag_ev(Ev::DragOver, |event| -> Option<Msg> {
+            stop_and_prevent!(event);
+            event.data_transfer().unwrap().set_drop_effect("move");
+            None
+        }),
+        drag_ev(Ev::Drop, move |event| {
+            stop_and_prevent!(event);
+            event
+                .data_transfer()
+                .unwrap()
+                .get_data("card_id")
+                .ok()
+                .map(|d| d.parse().ok())
+                .flatten()
+                .map(|src_id| Msg::Drop(src_id, card_id))
+        }),
+        drag_ev(Ev::DragEnd, |_| Msg::DragEnd),
     ]
 }
 
@@ -555,16 +442,10 @@ fn control_buttons() -> Node<Msg> {
             id!["control-buttons__order-buttons"],
             div!["Cards:"],
             button!["Rotate", ev(Ev::Click, |_| Msg::RotateCards)],
-            button![
-                "Shuffle",
-                input_ev(Ev::Click, |_| Msg::ShuffleCards(random()))
-            ],
+            button!["Shuffle", ev(Ev::Click, |_| Msg::ShuffleCards)],
             div!["Colors:"],
             button!["Rotate", ev(Ev::Click, |_| Msg::RotateColors)],
-            button![
-                "Shuffle",
-                input_ev(Ev::Click, |_| Msg::ShuffleColors(random()))
-            ],
+            button!["Shuffle", ev(Ev::Click, |_| Msg::ShuffleColors)],
         ],
         div![
             id!("control-buttons__buttons"),
@@ -580,48 +461,40 @@ fn options(model: &Model) -> Node<Msg> {
     section![
         id!["options"],
         div![
-            input![
-                attrs! {
-                    At::Type => "checkbox",
-                    At::Name => "use-el-key",
-                    At::Checked => model.el_key_enabled.as_at_value(),
-                },
-                ev(Ev::Input, |_| Msg::ToggleElKey),
-            ],
+            input![attrs! {
+                At::Type => "checkbox",
+                At::Name => "use-el-key",
+                At::Checked => model.el_key_enabled.as_at_value(),
+            },],
             label![
                 attrs! {
                     At::For => "use-el-key"
                 },
                 "Use element keys",
-            ]
+            ],
+            ev(Ev::Click, |_| Msg::ToggleElKey),
         ],
         div![
-            input![
-                attrs! {
-                    At::Type => "checkbox",
-                    At::Name => "use-empty",
-                    At::Checked => model.empty_enabled.as_at_value(),
-                },
-                ev(Ev::Input, |_| Msg::ToggleEmpty),
-            ],
+            input![attrs! {
+                At::Type => "checkbox",
+                At::Name => "use-empty",
+                At::Checked => model.empty_enabled.as_at_value(),
+            },],
             label![
                 attrs! {
                     At::For => "use-empty"
                 },
                 "Use empty nodes",
-            ]
+            ],
+            ev(Ev::Click, |_| Msg::ToggleEmpty),
         ],
     ]
 }
 
-fn readme(model: &Model) -> Node<Msg> {
+fn readme(readme: &[Node<Msg>]) -> Node<Msg> {
     section![
         id!("readme"),
-        details![
-            attrs! {At::Open => true},
-            summary!["Readme"],
-            md!(model.readme.as_deref().unwrap_or_else(|| "Loading..."))
-        ]
+        details![attrs! {At::Open => true}, summary!["Readme"], readme]
     ]
 }
 

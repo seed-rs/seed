@@ -4,7 +4,6 @@
 use super::{El, IntoNodes, Mailbox, Node, Text};
 use crate::app::App;
 use crate::browser::dom::virtual_dom_bridge;
-use wasm_bindgen::JsCast;
 use web_sys::Document;
 
 mod patch_gen;
@@ -12,6 +11,7 @@ use patch_gen::{PatchCommand, PatchGen};
 
 // We assume that when we run this, the new vdom doesn't have assigned `web_sys::Node`s -
 // assign them here when we create them.
+// @TODO: "Split" `Node` into 2 structs - one without native nodes and one with them (?).
 
 fn append_el<'a, Ms>(
     document: &Document,
@@ -79,6 +79,7 @@ fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
     // analyzing children.
 
     // Assume old el vdom's elements are still attached.
+    // @TODO: "Split" `Node` into 2 structs - one without native nodes and one with them (?).
 
     let old_el_ws = old
         .node_ws
@@ -119,7 +120,7 @@ fn patch_text(mut old: Text, new: &mut Text) {
 
 fn replace_by_el<'a, Ms>(
     document: &Document,
-    old_node: web_sys::Node,
+    old_node: &web_sys::Node,
     new: &'a mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
@@ -135,33 +136,22 @@ fn replace_by_el<'a, Ms>(
     virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
 
     let new_ws = new.node_ws.as_ref().expect("Missing websys el");
-    virtual_dom_bridge::replace_child(new_ws, &old_node, parent);
-
-    std::mem::drop(old_node);
+    virtual_dom_bridge::replace_child(new_ws, old_node, parent);
 }
 
 fn replace_by_text<'a>(
     document: &Document,
-    old_node: web_sys::Node,
+    old_node: &web_sys::Node,
     new: &'a mut Text,
     parent: &web_sys::Node,
 ) {
-    // Can't just use assign_ws_nodes; borrow-checker issues.
-    new.node_ws = Some(
-        document
-            .create_text_node(&new.text)
-            .dyn_into::<web_sys::Node>()
-            .expect("Problem casting Text as Node."),
-    );
-
+    virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
     let new_node_ws = new
         .node_ws
         .as_ref()
         .expect("old el_ws missing when replacing with text node");
 
-    virtual_dom_bridge::replace_child(new_node_ws, &old_node, parent);
-
-    std::mem::drop(old_node);
+    virtual_dom_bridge::replace_child(new_node_ws, old_node, parent);
 }
 
 fn replace_el_by_el<'a, Ms>(
@@ -175,7 +165,7 @@ fn replace_el_by_el<'a, Ms>(
         .node_ws
         .take()
         .expect("old el_ws missing when replacing element with new element");
-    replace_by_el(document, old_node, new, parent, mailbox);
+    replace_by_el(document, &old_node, new, parent, mailbox);
 }
 
 fn replace_el_by_text<'a, Ms>(
@@ -188,7 +178,7 @@ fn replace_el_by_text<'a, Ms>(
         .node_ws
         .take()
         .expect("old el_ws missing when replacing element with text node");
-    replace_by_text(document, old_node, new, parent);
+    replace_by_text(document, &old_node, new, parent);
 }
 
 fn replace_text_by_el<'a, Ms>(
@@ -202,7 +192,7 @@ fn replace_text_by_el<'a, Ms>(
         .node_ws
         .take()
         .expect("old el_ws missing when replacing text node with element");
-    replace_by_el(document, old_node, new, parent, mailbox);
+    replace_by_el(document, &old_node, new, parent, mailbox);
 }
 
 fn remove_el<Ms>(mut old: El<Ms>, parent: &web_sys::Node) {
@@ -278,6 +268,7 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
 
     // We assume that when we run this, the new vdom doesn't have assigned `web_sys::Node`s -
     // assign them here when we create them.
+    // @TODO: "Split" `Node` into 2 structs - one without native nodes and one with them (?).
 
     // @TODO Do we realy need this function? This function could be replaced by calling
     // `patch_els` with `std::iter::once` for old and new nodes.
