@@ -1,6 +1,6 @@
 use super::{
     super::{
-        App, CmdHandle, CmdManager, RenderTimestampDelta, StreamHandle, StreamManager, SubHandle,
+        App, CmdHandle, CmdManager, RenderInfo, StreamHandle, StreamManager, SubHandle,
         UndefinedGMsg,
     },
     Orders, OrdersContainer,
@@ -158,10 +158,10 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
 
     fn after_next_render<MsU: 'static>(
         &mut self,
-        callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
+        callback: impl FnOnce(RenderInfo) -> MsU + 'static,
     ) -> &mut Self {
         let callback = map_callback_return_to_option_ms!(
-            dyn FnOnce(Option<RenderTimestampDelta>) -> Option<Ms>,
+            dyn FnOnce(RenderInfo) -> Option<Ms>,
             callback,
             "Callback can return only Msg, Option<Msg> or ()!",
             Box
@@ -172,8 +172,8 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
             .data
             .after_next_render_callbacks
             .borrow_mut()
-            .push(Box::new(move |timestamp_delta| {
-                callback(timestamp_delta).map(|ms| f(ms))
+            .push(Box::new(move |render_info| {
+                callback(render_info).map(|ms| f(ms))
             }));
         self
     }

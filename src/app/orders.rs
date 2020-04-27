@@ -1,4 +1,4 @@
-use super::{App, CmdHandle, RenderTimestampDelta, StreamHandle, SubHandle, UndefinedGMsg};
+use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle, UndefinedGMsg};
 use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
 use std::{any::Any, future::Future, rc::Rc};
@@ -150,9 +150,10 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
 
     /// Register the callback that will be executed after the next render.
     ///
-    /// Callback's only parameter is `Option<RenderTimestampDelta>` - the difference between
-    /// the old render timestamp and the new one.
-    /// The parameter has value `None` if it's the first rendering.
+    /// Callback's only parameter is `RenderInfo` - it has fields `timestamp`
+    /// and `timestamp_delta`.
+    /// `timestamp_delta` is the difference between the old render timestamp and the new one
+    /// and it has value `None` if it's the first rendering.
     ///
     /// - It's useful when you want to use DOM API or make animations.
     /// - You can call this function multiple times - callbacks will be executed in the same order.
@@ -170,7 +171,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
     fn after_next_render<MsU: 'static>(
         &mut self,
-        callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
+        callback: impl FnOnce(RenderInfo) -> MsU + 'static,
     ) -> &mut Self;
 
     /// Subscribe for messages with the `handler`s input type.

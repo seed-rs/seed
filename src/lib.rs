@@ -117,7 +117,7 @@ pub mod prelude {
     pub use crate::{
         app::{
             builder::init::Init, cmds, streams, subs, AfterMount, App, BeforeMount, CmdHandle,
-            GetElement, MessageMapper, MountType, Orders, RenderTimestampDelta, StreamHandle,
+            GetElement, MessageMapper, MountType, Orders, RenderInfo, StreamHandle,
             SubHandle, UrlHandling,
         },
         browser::dom::css_units::*,

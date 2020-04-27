@@ -1,5 +1,5 @@
 use super::types::{MsgListeners, RoutesFn};
-use super::{render_timestamp_delta::RenderTimestamp, RenderTimestampDelta, SubManager};
+use super::{RenderInfo, SubManager};
 use crate::browser::util;
 use crate::virtual_dom::{El, EventHandlerManager};
 use std::cell::{Cell, RefCell};
@@ -21,6 +21,6 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub msg_listeners: RefCell<MsgListeners<Ms>>,
     pub scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
     pub after_next_render_callbacks:
-        RefCell<Vec<Box<dyn FnOnce(Option<RenderTimestampDelta>) -> Option<Ms>>>>,
-    pub render_timestamp: Cell<Option<RenderTimestamp>>,
+        RefCell<Vec<Box<dyn FnOnce(RenderInfo) -> Option<Ms>>>>,
+    pub render_info: Cell<Option<RenderInfo>>,
 }
