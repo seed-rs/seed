@@ -19,6 +19,9 @@ How to make a basic animation with random generators.
 ### [AppBuilder](app_builder)
 Demonstrates all `AppBuilder`'s methods.
 
+### [Bunnies](bunnies)
+Intended as a demo of [Shipyard](https://github.com/leudz/shipyard) (Entity Component System) integration.
+
 ### [Canvas](canvas)
 How to make a canvas element and use `ElRef`s.
 
