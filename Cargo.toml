@@ -105,6 +105,7 @@ features = [
 members = [
     "examples/animation_frame",
     "examples/auth",
+    "examples/bunnies",
     "examples/counter",
     "examples/counter_advanced",
     "examples/canvas",

@@ -36,7 +36,7 @@
 - Implemented `IntoNodes` for `Option<Node<Msg>>` and `Option<Vec<Node<Msg>>>`.
 - Implemented `UpdateEl` for `i64` and `u64`.
 - Reset properties `checked` and `value` on attribute remove (#405). 
-- Added examples `markdown`, `tea_component`, `subscribe`, `custom_elements`, `fetch`, `url`, `pages`, `pages_hash_routing`, `pages_keep_state`, `auth` and `graphql` (#400).
+- Added examples `markdown`, `tea_component`, `subscribe`, `custom_elements`, `fetch`, `url`, `pages`, `pages_hash_routing`, `pages_keep_state`, `auth`, `bunnies` and `graphql` (#400).
 - Updated examples and extended examples.
 - Removed example `app_builder`.
 - Added base url handling + method `Orders::clone_base+path` (#369).
