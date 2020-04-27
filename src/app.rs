@@ -30,7 +30,7 @@ pub mod effects;
 pub mod get_element;
 pub mod message_mapper;
 pub mod orders;
-pub mod render_timestamp_delta;
+pub mod render_info;
 pub mod stream_manager;
 pub mod streams;
 pub mod sub_manager;
@@ -48,7 +48,7 @@ pub use effects::Effect;
 pub use get_element::GetElement;
 pub use message_mapper::MessageMapper;
 pub use orders::{Orders, OrdersContainer, OrdersProxy};
-pub use render_timestamp_delta::RenderTimestampDelta;
+pub use render_info::RenderInfo;
 pub use stream_manager::{StreamHandle, StreamManager};
 pub use sub_manager::{Notification, SubHandle, SubManager};
 
@@ -358,7 +358,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 msg_listeners: RefCell::new(Vec::new()),
                 scheduled_render_handle: RefCell::new(None),
                 after_next_render_callbacks: RefCell::new(Vec::new()),
-                render_timestamp: Cell::new(None),
+                render_info: Cell::new(None),
             }),
         }
     }
@@ -534,21 +534,28 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
 
         // Execute `after_next_render_callbacks`.
 
-        let old_render_timestamp = self
-            .data
-            .render_timestamp
-            .replace(Some(new_render_timestamp));
-
-        let timestamp_delta = old_render_timestamp.map(|old_render_timestamp| {
-            RenderTimestampDelta::new(new_render_timestamp - old_render_timestamp)
-        });
+        let render_info = match self.data.render_info.take() {
+            Some(old_render_info) => {
+                RenderInfo {
+                    timestamp: new_render_timestamp,
+                    timestamp_delta: Some(new_render_timestamp - old_render_info.timestamp),
+                }
+            }
+            None => {
+                RenderInfo {
+                    timestamp: new_render_timestamp,
+                    timestamp_delta: None,
+                }
+            }
+        };
+        self.data.render_info.set(Some(render_info));
 
         self.process_effect_queue(
             self.data
                 .after_next_render_callbacks
                 .replace(Vec::new())
                 .into_iter()
-                .filter_map(|callback| callback(timestamp_delta).map(Effect::Msg))
+                .filter_map(|callback| callback(render_info).map(Effect::Msg))
                 .collect(),
         );
     }

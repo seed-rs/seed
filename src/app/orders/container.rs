@@ -1,6 +1,6 @@
 use crate::app::orders::{proxy::OrdersProxy, Orders};
 use crate::app::{
-    effects::Effect, render_timestamp_delta::RenderTimestampDelta, App, CmdHandle, CmdManager,
+    effects::Effect, RenderInfo, App, CmdHandle, CmdManager,
     Notification, ShouldRender, StreamHandle, StreamManager, SubHandle, UndefinedGMsg,
 };
 use crate::virtual_dom::IntoNodes;
@@ -146,10 +146,10 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
 
     fn after_next_render<MsU: 'static>(
         &mut self,
-        callback: impl FnOnce(Option<RenderTimestampDelta>) -> MsU + 'static,
+        callback: impl FnOnce(RenderInfo) -> MsU + 'static,
     ) -> &mut Self {
         let callback = map_callback_return_to_option_ms!(
-            dyn FnOnce(Option<RenderTimestampDelta>) -> Option<Ms>,
+            dyn FnOnce(RenderInfo) -> Option<Ms>,
             callback,
             "Callback can return only Msg, Option<Msg> or ()!",
             Box

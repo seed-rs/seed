@@ -68,14 +68,14 @@ fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
 
 #[derive(Clone, Copy)]
 enum Msg {
-    Rendered(Option<RenderTimestampDelta>),
+    Rendered(RenderInfo),
     SetViewportWidth,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Rendered(delta) => {
-            let delta = f64::from(delta.unwrap_or_default());
+        Msg::Rendered(render_info) => {
+            let delta = f64::from(render_info.timestamp_delta.unwrap_or_default());
             if delta > 0. {
                 // move car at least 1px to the right
                 model.car.x += f64::max(1., delta / 1000. * model.car.speed);
