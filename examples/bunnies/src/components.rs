@@ -1,8 +1,8 @@
 use crate::geometry::*;
 //re-exported so its easier to just use components::*
-pub use crate::fps::FpsCounter;
+pub use crate::fps_counter::FpsCounter;
 pub use crate::hud::Hud;
-pub use crate::renderer::SceneRenderer;
+pub use crate::scene_renderer::SceneRenderer;
 
 pub struct ImageArea(pub Area);
 pub struct StageArea(pub Area);

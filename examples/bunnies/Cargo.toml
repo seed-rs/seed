@@ -9,33 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-rand = { version = "0.7.3", features = ["wasm-bindgen"] }
+rand = { version = "0.7.3", features = ["wasm-bindgen", "small_rng"] }
 nalgebra = "0.21.0"
-wasm-bindgen = "0.2.60"
-js-sys = "0.3.37"
-wasm-bindgen-futures= "0.4.10"
-gloo-events = "0.1.1"
 awsm_web = { version = "0.1.9", features = ["tick", "webgl", "loaders", "audio"], default-features = false }
-wee_alloc = { version = "0.4.5", optional = true }
-wasm-logger = { version = "0.2.0", optional = true }
 shipyard = { version = "0.4.0", features = ["non_send", "non_sync"], default-features = false }
-cfg-if = "0.1.10"
-log = "0.4.8"
-lazy_static = "1.4.0"
-
-[dependencies.web-sys]
-version = "0.3.37"
-features = [
-    "console",
-    "MouseEvent",
-    "Document",
-    "Element",
-    "HtmlAnchorElement",
-    "HtmlElement",
-    "HtmlButtonElement",
-    "HtmlCanvasElement",
-    "CssStyleDeclaration",
-    "Node",
-    "Window",
-    "Performance",
-]

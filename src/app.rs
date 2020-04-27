@@ -535,18 +535,14 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         // Execute `after_next_render_callbacks`.
 
         let render_info = match self.data.render_info.take() {
-            Some(old_render_info) => {
-                RenderInfo {
-                    timestamp: new_render_timestamp,
-                    timestamp_delta: Some(new_render_timestamp - old_render_info.timestamp),
-                }
-            }
-            None => {
-                RenderInfo {
-                    timestamp: new_render_timestamp,
-                    timestamp_delta: None,
-                }
-            }
+            Some(old_render_info) => RenderInfo {
+                timestamp: new_render_timestamp,
+                timestamp_delta: Some(new_render_timestamp - old_render_info.timestamp),
+            },
+            None => RenderInfo {
+                timestamp: new_render_timestamp,
+                timestamp_delta: None,
+            },
         };
         self.data.render_info.set(Some(render_info));
 

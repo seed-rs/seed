@@ -1,3 +1,5 @@
+use seed::window;
+
 pub struct FpsCounter {
     begin_time: f64,
     prev_time: f64,
@@ -17,7 +19,7 @@ impl FpsCounter {
     }
 
     pub fn now() -> f64 {
-        web_sys::window().unwrap().performance().unwrap().now()
+        window().performance().unwrap().now()
     }
 
     pub fn begin(&mut self) {

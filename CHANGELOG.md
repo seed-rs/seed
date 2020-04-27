@@ -47,6 +47,7 @@
 - Added `DragEvent` and `drag_ev` definitions.
 - [BREAKING] Renamed `to_kbevent` to `to_keyboard_event`.
 - [BREAKING] `after_next_render` returns `RenderInfo`.
+- `web_sys` and `wasm_bindgen` available in `seed::web_sys` and `seed::wasm_bindgen`.
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
