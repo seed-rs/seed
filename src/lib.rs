@@ -1,4 +1,6 @@
-//! See readme for details.
+//! Visit the [website](https://seed-rs.org/)
+//!
+//! See the [github Readme](https://github.com/seed-rs/seed) for details
 
 //#![deny(missing_docs)]
 #![forbid(unsafe_code)]
