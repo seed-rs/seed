@@ -1,5 +1,6 @@
 # Changelog
 [unreleased]
+- [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
 - Added `el_key` method for adding keys to `El`s (#354).
 - Enabled all additional markdown [extensions](https://docs.rs/pulldown-cmark/latest/pulldown_cmark/struct.Options.html).
 - Removed `'static` bound from `El` and `Node`.
