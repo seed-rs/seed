@@ -450,12 +450,7 @@ where
 
 /// Checks whether the old element can be updated with a new one.
 pub(crate) fn el_can_be_patched<Ms>(el_old: &El<Ms>, el_new: &El<Ms>) -> bool {
-    // Custom elements can't be patched, because we need to reinit them (Issue #325).
-    // @TODO remove this check when #364 will be done.
-    el_old.namespace == el_new.namespace
-        && el_old.tag == el_new.tag
-        && el_old.key == el_new.key
-        && !el_new.is_custom()
+    el_old.namespace == el_new.namespace && el_old.tag == el_new.tag && el_old.key == el_new.key
 }
 
 /// Takes children from source iterators (new and old) and puts them in the
