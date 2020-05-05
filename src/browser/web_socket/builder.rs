@@ -177,11 +177,9 @@ fn create_js_handler<T: wasm_bindgen::convert::FromWasmAbi + 'static, Ms: 'stati
     orders: &impl Orders<Ms>,
 ) -> Closure<dyn Fn(T)> {
     let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
-
+    let mailbox = app.mailbox();
     // @TODO replace with `Closure::new` once stable.
     Closure::wrap(Box::new(move |data| {
-        if let Some(msg) = handler(data) {
-            app.update(msg_mapper(msg))
-        }
+        mailbox.send(handler(data).map(|msg| msg_mapper(msg)));
     }) as Box<dyn Fn(T)>)
 }

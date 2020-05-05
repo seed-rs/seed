@@ -94,11 +94,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
             Box
         );
 
-        let cmd = cmd.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(f(msg))
-            }
-        });
+        let cmd = cmd.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         CmdManager::perform_cmd(cmd);
         self
     }
@@ -117,11 +113,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
             Box
         );
 
-        let cmd = cmd.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(f(msg))
-            }
-        });
+        let cmd = cmd.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         CmdManager::perform_cmd_with_handle(cmd)
     }
 
@@ -224,11 +216,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
             Box
         );
 
-        let stream = stream.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(f(msg))
-            }
-        });
+        let stream = stream.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         StreamManager::stream(stream);
         self
     }
@@ -247,11 +235,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
             Box
         );
 
-        let stream = stream.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(f(msg))
-            }
-        });
+        let stream = stream.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         StreamManager::stream_with_handle(stream)
     }
 }
