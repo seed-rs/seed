@@ -556,7 +556,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         );
     }
 
-    fn mailbox(&self) -> Mailbox<Ms> {
+    pub fn mailbox(&self) -> Mailbox<Ms> {
         Mailbox::new(enclose!((self => s) move |option_message| {
             if let Some(message) = option_message {
                 s.update(message);

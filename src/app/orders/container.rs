@@ -81,11 +81,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
             Box
         );
 
-        let cmd = cmd.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(msg)
-            }
-        });
+        let cmd = cmd.map(move |msg| app.mailbox().send(handler(msg)));
         CmdManager::perform_cmd(cmd);
         self
     }
@@ -103,11 +99,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
             Box
         );
 
-        let cmd = cmd.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(msg)
-            }
-        });
+        let cmd = cmd.map(move |msg| app.mailbox().send(handler(msg)));
         CmdManager::perform_cmd_with_handle(cmd)
     }
 
@@ -204,11 +196,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
             Box
         );
 
-        let stream = stream.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(msg)
-            }
-        });
+        let stream = stream.map(move |msg| app.mailbox().send(handler(msg)));
         StreamManager::stream(stream);
         self
     }
@@ -226,11 +214,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
             Box
         );
 
-        let stream = stream.map(move |msg| {
-            if let Some(msg) = handler(msg) {
-                app.update(msg)
-            }
-        });
+        let stream = stream.map(move |msg| app.mailbox().send(handler(msg)));
         StreamManager::stream_with_handle(stream)
     }
 }
