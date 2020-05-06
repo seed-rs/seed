@@ -7,6 +7,9 @@ use web_sys::Event;
 mod event_stream;
 use event_stream::EventStream;
 
+mod backoff_stream;
+use backoff_stream::BackoffStream;
+
 // ------ Interval stream ------
 
 /// Stream no values on predefined time interval in milliseconds.
@@ -29,6 +32,35 @@ pub fn interval<MsU>(
     handler: impl FnOnce() -> MsU + Clone + 'static,
 ) -> impl Stream<Item = MsU> {
     IntervalStream::new(ms).map(move |_| handler.clone()())
+}
+
+// ------ Backoff stream ------
+
+/// Stream retries count in increasing intervals.
+///
+/// Algorithm - [Truncated exponential backoff](https://cloud.google.com/storage/docs/exponential-backoff)
+///
+/// # Arguments
+///
+/// * `max_seconds` - Typically `32` or `64` seconds. Default is `32`.
+/// * `handler` - Receives the number of retries (starting from 1); Has to return `Msg`, `Option<Msg>` or `()`.
+///
+/// # Example
+///
+/// ```rust,no_run
+///orders.stream(streams::backoff(None, |_retries| Msg::OnTick));
+///orders.stream_with_handle(streams::backoff(Some(15), |_| log!("Tick!")));
+/// ```
+///
+/// # Panics
+///
+/// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
+/// (It will be changed to a compile-time error).
+pub fn backoff<MsU>(
+    max_seconds: Option<u32>,
+    handler: impl FnOnce(usize) -> MsU + Clone + 'static,
+) -> impl Stream<Item = MsU> {
+    BackoffStream::new(max_seconds.unwrap_or(32)).map(move |retries| handler.clone()(retries))
 }
 
 // ------ Window Event stream ------

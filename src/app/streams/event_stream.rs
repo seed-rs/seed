@@ -9,7 +9,8 @@ use web_sys::EventTarget;
 
 // ------ EventStream ------
 
-// @TODO Replace `mpsc` with `crossbeam`? (And integrate it into the other Seed parts (e.g. `Listener`, `SubManager`)).
+// @TODO Replace `mpsc` with `crossbeam`, `futures-signals` or `flume`?
+// (And integrate it into the other Seed parts (e.g. `Listener`, `SubManager`, `BackoffStream`)).
 
 // @TODO Update it to support different `web_sys` events
 // during implementation of https://github.com/seed-rs/seed/issues/331

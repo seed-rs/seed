@@ -74,6 +74,7 @@ pub enum WebSocketError {
 ///
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 #[derive(Debug)]
+#[must_use = "WebSocket is closed on drop"]
 pub struct WebSocket {
     ws: web_sys::WebSocket,
     callbacks: Callbacks,
@@ -93,7 +94,7 @@ impl WebSocket {
     /// _Note:_ Always prefer `wss://` - encrypted and more reliable.
     pub fn builder<U: AsRef<str>, Ms: 'static, O: Orders<Ms>>(
         url: U,
-        orders: &mut O,
+        orders: &O,
     ) -> Builder<U, Ms, O> {
         Builder::new(url, orders)
     }
