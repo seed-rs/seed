@@ -31,7 +31,7 @@ pub(crate) struct Callbacks {
 ///```
 pub struct Builder<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> {
     url: U,
-    orders: &'a mut O,
+    orders: &'a O,
     callbacks: Callbacks,
     protocols: &'a [&'a str],
     binary_type: Option<BinaryType>,
@@ -40,7 +40,7 @@ pub struct Builder<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> {
 
 impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     // Note: `WebSocket::builder` is the preferred way how to crate a new `Builder` instance.
-    pub(crate) fn new(url: U, orders: &'a mut O) -> Self {
+    pub(crate) fn new(url: U, orders: &'a O) -> Self {
         Self {
             url,
             orders,
@@ -160,6 +160,9 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// Returns `WebSocketError::OpenError` when Web Socket opening fails.
     /// E.g. when the chosen port is blocked.
+    ///
+    /// _Note:_: It doesn't return error when the socket is open on the client side,
+    /// but fails to connect to the server - use `on_error` handler to resolve such cases.
     pub fn build_and_open(self) -> Result<WebSocket> {
         WebSocket::new(
             self.url.as_ref(),

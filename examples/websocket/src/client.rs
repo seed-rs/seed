@@ -13,6 +13,7 @@ struct Model {
     messages: Vec<String>,
     input_text: String,
     web_socket: WebSocket,
+    web_socket_reconnector: Option<StreamHandle>,
 }
 
 // ------ ------
@@ -20,20 +21,23 @@ struct Model {
 // ------ ------
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
-    let web_socket = WebSocket::builder(WS_URL, orders)
-        .on_open(|| log!("WebSocket connection is open now"))
-        .on_message(Msg::MessageReceived)
-        .on_close(Msg::WebSocketClosed)
-        .on_error(|| log!("Error"))
-        .build_and_open()
-        .unwrap();
-
     Model {
         sent_messages_count: 0,
         messages: Vec::new(),
         input_text: String::new(),
-        web_socket,
+        web_socket: create_websocket(orders),
+        web_socket_reconnector: None,
     }
+}
+
+fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
+    WebSocket::builder(WS_URL, orders)
+        .on_open(|| Msg::WebSocketOpened)
+        .on_message(Msg::MessageReceived)
+        .on_close(Msg::WebSocketClosed)
+        .on_error(|| Msg::WebSocketFailed)
+        .build_and_open()
+        .unwrap()
 }
 
 // ------ ------
@@ -41,15 +45,22 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 
 enum Msg {
+    WebSocketOpened,
     MessageReceived(WebSocketMessage),
     CloseWebSocket,
     WebSocketClosed(CloseEvent),
+    WebSocketFailed,
+    ReconnectWebSocket(usize),
     InputTextChanged(String),
     SendMessage(shared::ClientMessage),
 }
 
-fn update(msg: Msg, mut model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
+        Msg::WebSocketOpened => {
+            model.web_socket_reconnector = None;
+            log!("WebSocket connection is open now");
+        }
         Msg::MessageReceived(message) => {
             log!("Client received a message");
             model
@@ -57,6 +68,7 @@ fn update(msg: Msg, mut model: &mut Model, _: &mut impl Orders<Msg>) {
                 .push(message.json::<shared::ServerMessage>().unwrap().text);
         }
         Msg::CloseWebSocket => {
+            model.web_socket_reconnector = None;
             model
                 .web_socket
                 .close(None, Some("user clicked Close button"))
@@ -69,6 +81,25 @@ fn update(msg: Msg, mut model: &mut Model, _: &mut impl Orders<Msg>) {
             log!("Code:", close_event.code());
             log!("Reason:", close_event.reason());
             log!("==================");
+
+            // Chrome doesn't invoke `on_error` when the connection is lost.
+            if !close_event.was_clean() && model.web_socket_reconnector.is_none() {
+                model.web_socket_reconnector = Some(
+                    orders.stream_with_handle(streams::backoff(None, Msg::ReconnectWebSocket)),
+                );
+            }
+        }
+        Msg::WebSocketFailed => {
+            log!("WebSocket failed");
+            if model.web_socket_reconnector.is_none() {
+                model.web_socket_reconnector = Some(
+                    orders.stream_with_handle(streams::backoff(None, Msg::ReconnectWebSocket)),
+                );
+            }
+        }
+        Msg::ReconnectWebSocket(retries) => {
+            log!("Reconnect attempt:", retries);
+            model.web_socket = create_websocket(orders);
         }
         Msg::InputTextChanged(input_text) => {
             model.input_text = input_text;
