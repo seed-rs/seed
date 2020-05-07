@@ -58,6 +58,7 @@ features = [
     "Element",
     "Event",
     "EventTarget",
+    "FormData",
     "HashChangeEvent",
     "Headers",
     "History",

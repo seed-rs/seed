@@ -1,83 +1,75 @@
 use actix::prelude::*;
 use actix_files::{Files, NamedFile};
-use actix_multipart::{Multipart, MultipartError};
-use actix_web::{get, post, web, App, HttpServer};
+use actix_multipart::Multipart;
+use actix_web::{get, post, web, App, HttpServer, Result};
 use std::fmt::Write;
 use std::time;
+use futures::stream::StreamExt;
 
 mod count_actor;
 use count_actor::{CountActor, MsgIncrement};
 
 // ---- Apis ("/api/*") ----
 
-#[allow(clippy::needless_pass_by_value)]
 #[post("send-message")]
-fn send_message(
+async fn send_message(
     state: web::Data<State>,
     request_data: web::Json<shared::SendMessageRequestBody>,
-) -> impl Future<Item = web::Json<shared::SendMessageResponseBody>, Error = actix::MailboxError> {
-    let text = request_data.text.clone();
-    state
-        .count_actor
-        .send(MsgIncrement)
-        .and_then(move |ordinal_number| {
-            Ok(web::Json(shared::SendMessageResponseBody {
-                ordinal_number,
-                text,
-            }))
-        })
+) -> Result<web::Json<shared::SendMessageResponseBody>> {
+    Ok(web::Json(shared::SendMessageResponseBody {
+        ordinal_number: state.count_actor.send(MsgIncrement).await?,
+        text: request_data.text.clone(),
+    }))
 }
 
+
 #[get("delayed-response/{delay}")]
-fn delayed_response(
+async fn delayed_response(
     delay: web::Path<u64>,
-) -> impl Future<Item = String, Error = tokio_timer::Error> {
-    tokio_timer::sleep(time::Duration::from_millis(*delay))
-        .and_then(move |()| Ok(format!("Delay was set to {}ms.", delay)))
+) -> String {
+    futures_timer::Delay::new(time::Duration::from_millis(*delay)).await;
+    format!("Delay was set to {}ms.", delay)
 }
 
 #[post("form")]
-fn form(form: Multipart) -> impl Future<Item = String, Error = MultipartError> {
-    form.map(|field| {
-        // get field name
-        let name = field
+async fn form(mut form: Multipart) -> String {
+    let mut name_text_pairs: Vec<(String, String)> = Vec::new();
+    while let Some(Ok(mut field)) = form.next().await {
+        let field_name = field
             .content_disposition()
             .and_then(|cd| cd.get_name().map(ToString::to_string))
             .expect("Can't get field name!");
 
-        field
-            // get field value stream
-            .fold(Vec::new(), |mut value, bytes| -> Result<Vec<u8>, MultipartError> {
-                for byte in bytes {
-                    value.push(byte)
-                }
-                Ok(value)
-            })
-            .map(|value| String::from_utf8_lossy(&value).into_owned())
-            // add name into stream
-            .map(move |value| (name, value))
-            .into_stream()
-    })
-    .flatten()
-    .fold(
-        String::new(),
-        |mut output, (name, value)| -> Result<String, MultipartError> {
-            writeln!(&mut output, "{}: {}", name, value).unwrap();
-            writeln!(&mut output, "___________________").unwrap();
-            Ok(output)
-        },
-    )
+        let mut field_bytes: Vec<u8> = Vec::new();
+        while let Some(Ok(bytes)) = field.next().await {
+            for byte in bytes {
+                field_bytes.push(byte)
+            }
+        }
+
+        let field_text = String::from_utf8_lossy(&field_bytes).into_owned();
+        name_text_pairs.push((field_name, field_text));
+    }
+
+    let mut output = String::new();
+    for (name, text) in name_text_pairs {
+        writeln!(&mut output, "{}: {}", name, text).unwrap();
+        writeln!(&mut output, "___________________").unwrap();
+    }
+    output
+}
+
+async fn index() -> Result<NamedFile> {
+    Ok(NamedFile::open("./client/index.html")?)
 }
 
 struct State {
     count_actor: Addr<CountActor>,
 }
 
-fn main() -> std::io::Result<()> {
-    let system = System::new("server-integration-example");
-
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
     let count_actor_addr = CountActor(0).start();
-
     HttpServer::new(move || {
         App::new()
             .data(State {
@@ -90,12 +82,10 @@ fn main() -> std::io::Result<()> {
                     .service(form)
                     .default_service(web::route().to(web::HttpResponse::NotFound)),
             )
-            .service(Files::new("/public", "./client/public"))
             .service(Files::new("/pkg", "./client/pkg"))
-            .default_service(web::get().to(|| NamedFile::open("./client/index.html")))
+            .default_service(web::get().to(index))
     })
     .bind("127.0.0.1:8000")?
-    .run()?;
-
-    system.run()
+    .run()
+    .await
 }

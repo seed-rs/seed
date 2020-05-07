@@ -9,6 +9,14 @@ mod example_d;
 mod example_e;
 
 // ------ ------
+//     Init
+// ------ ------
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -86,5 +94,5 @@ fn view_intro<Ms>(title: &str, description: &str) -> Vec<Node<Ms>> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    App::builder(update, view).build_and_start();
+    App::start("app", init, update, view);
 }
