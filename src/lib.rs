@@ -106,10 +106,6 @@ pub use crate::{
 pub use futures::future::{FutureExt, TryFutureExt};
 use wasm_bindgen::{closure::Closure, JsCast};
 
-pub use wasm_bindgen;
-pub use web_sys;
-pub use js_sys;
-
 #[macro_use]
 pub mod shortcuts;
 pub mod app;
@@ -192,8 +188,9 @@ pub mod prelude {
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
-    pub use wasm_bindgen::prelude::*;
-    pub use web_sys::Event;
+    pub use wasm_bindgen::{self, JsCast, prelude::*};
+    pub use web_sys;
+    pub use js_sys;
 }
 
 #[cfg(test)]

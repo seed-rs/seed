@@ -1,4 +1,3 @@
-// use seed::browser::service::fetch;
 use seed::{prelude::*, *};
 use std::borrow::Cow;
 

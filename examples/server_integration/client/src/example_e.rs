@@ -1,7 +1,6 @@
 use seed::{prelude::*, *};
 use std::borrow::Cow;
 use std::mem;
-use wasm_bindgen::JsCast;
 use web_sys::{
     self,
     console::{log_1, log_2},
