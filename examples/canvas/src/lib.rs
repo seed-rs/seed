@@ -6,6 +6,16 @@ use seed::{prelude::*, *};
 use web_sys::HtmlCanvasElement;
 
 // ------ ------
+//     Init
+// ------ ------
+
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders.after_next_render(|_| Msg::Rendered);
+    Model::default()
+}
+
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -14,6 +24,8 @@ struct Model {
     fill_color: Color,
     canvas: ElRef<HtmlCanvasElement>,
 }
+
+// ------ Color -------
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum Color {
@@ -37,15 +49,6 @@ impl Default for Color {
 }
 
 // ------ ------
-//  After Mount
-// ------ ------
-
-fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-    orders.after_next_render(|_| Msg::Rendered);
-    AfterMount::default()
-}
-
-// ------ ------
 //    Update
 // ------ ------
 
@@ -60,7 +63,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::Rendered => {
             draw(&model.canvas, model.fill_color);
             // We want to call `.skip` to prevent infinite loop.
-            // (Infinite loops are useful for animations.)
+            // (However infinite loops are useful for animations.)
             orders.after_next_render(|_| Msg::Rendered).skip();
         }
         Msg::ChangeColor => {
@@ -112,8 +115,6 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
 // ------ ------
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    App::builder(update, view)
-        .after_mount(after_mount)
-        .build_and_start();
+pub fn start() {
+    App::start("app", init, update, view);
 }
