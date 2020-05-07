@@ -8,8 +8,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [build-dependencies]
-pulldown-cmark = "0.7.0"
+pulldown-cmark = "0.7.1"
 
 [dependencies]
 seed = {path = "../../"}
-wasm-bindgen = "0.2.55"
