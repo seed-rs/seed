@@ -108,6 +108,7 @@ use wasm_bindgen::{closure::Closure, JsCast};
 
 pub use wasm_bindgen;
 pub use web_sys;
+pub use js_sys;
 
 #[macro_use]
 pub mod shortcuts;
