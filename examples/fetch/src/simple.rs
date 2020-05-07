@@ -2,15 +2,23 @@
 
 use seed::{prelude::*, *};
 
-#[derive(serde::Deserialize)]
-pub struct User {
-    name: String,
-}
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 pub struct Model {
     user: Option<User>,
 }
+
+#[derive(serde::Deserialize)]
+pub struct User {
+    name: String,
+}
+
+// ------ ------
+//    Update
+// ------ ------
 
 pub enum Msg {
     Fetch,
@@ -39,6 +47,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
     }
 }
+
+// ------ ------
+//     View
+// ------ ------
 
 pub fn view(model: &Model) -> Node<Msg> {
     div![
