@@ -9,11 +9,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-wasm-bindgen = "0.2.55"
-wasm-bindgen-futures = "0.4.5"
+wasm-bindgen-futures = "0.4.12"
 
 [dependencies.web-sys]
-version = "0.3.32"
+version = "0.3.39"
 features = [
     "MediaDevices",
     "MediaStreamConstraints",
