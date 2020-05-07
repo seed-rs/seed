@@ -9,7 +9,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-wasm-bindgen = "0.2.59"
 graphql_client = "0.9.0"
-serde = "1.0.105"
+serde = "1.0.106"
 itertools = "0.9.0"
