@@ -1,4 +1,4 @@
-## Animation frame example
+## Animation example
 
 How to make a basic animation with random generators.
 

@@ -13,11 +13,8 @@ cargo make start
 The Seed homepage, also serving as an example. Includes simple
 interactions, markdown elements, routing, and view markup.
 
-### [Animation Frame](animation_frame)
+### [Animation](animation)
 How to make a basic animation with random generators.
-
-### [AppBuilder](app_builder)
-Demonstrates all `AppBuilder`'s methods.
 
 ### [Bunnies](bunnies)
 Intended as a demo of [Shipyard](https://github.com/leudz/shipyard) (Entity Component System) integration.
@@ -27,9 +24,6 @@ How to make a canvas element and use `ElRef`s.
 
 ### [Counter](counter)
 Intended as a demo of basic functionality.
-
-### [Counter Advanced](counter_advanced)
-Intended as a more sophisticated demo of basic functionality.
 
 ### [Custom Elements](custom_elements)
 How to create and use custom elements.
@@ -42,13 +36,6 @@ How to control a DOM update using element keys and empty nodes.
 
 ### [Markdown](markdown)
 How to render markdown.
-
-### [Mathjax](mathjax)
-An example using Mathjax, for LaTeX-like math notation.
-
-### [Orders](orders)
-How to perform commands and send messages from `update` function.
-And how to use [gloo](https://github.com/rustwasm/gloo) timers.
 
 ### [Pages](pages)
 How to create and browse multiple pages in your app.
@@ -98,9 +85,6 @@ How to communicate with a GraphQL backend.
 
 ### [Integration](server_integration)
 Example of a workspace with [Actix](https://actix.rs/) server.
-
-### [Interaction](server_interaction)
-Example of communicating with a server using HTTP requests.
 
 ### [Websocket Chat](websocket)
 Example of communicating with a server using Websockets.
