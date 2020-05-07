@@ -6,6 +6,14 @@ use seed::{prelude::*, *};
 mod counter;
 
 // ------ ------
+//     Init
+// ------ ------
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -59,6 +67,6 @@ fn view(model: &Model) -> Node<Msg> {
 // ------ ------
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    App::builder(update, view).build_and_start();
+pub fn start() {
+    App::start("app", init, update, view);
 }
