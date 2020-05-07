@@ -114,11 +114,10 @@ features = [
 
 [workspace]
 members = [
-    "examples/animation_frame",
+    "examples/animation",
     "examples/auth",
     "examples/bunnies",
     "examples/counter",
-    "examples/counter_advanced",
     "examples/canvas",
     "examples/custom_elements",
     "examples/drop_zone",
@@ -126,13 +125,10 @@ members = [
     "examples/graphql",
     "examples/markdown",
     "examples/fetch",
-    "examples/mathjax",
-    "examples/orders",
     "examples/pages",
     "examples/pages_hash_routing",
     "examples/pages_keep_state",
     # "examples/server_integration",   # has own workspace
-    "examples/server_interaction",
     "examples/subscribe",
     "examples/tea_component",
     "examples/todomvc",

@@ -38,8 +38,9 @@
 - Implemented `UpdateEl` for `i64` and `u64`.
 - Reset properties `checked` and `value` on attribute remove (#405). 
 - Added examples `markdown`, `tea_component`, `subscribe`, `custom_elements`, `fetch`, `url`, `pages`, `pages_hash_routing`, `pages_keep_state`, `auth`, `bunnies` and `graphql` (#400).
-- Updated examples and extended examples.
-- Removed example `app_builder`.
+- Updated examples.
+- Removed examples `app_builder`, `orders`, `server_interaction`, `counter_advanced` and `mathjax`.
+- Example `animation_frame` renamed to `animation`.
 - Added base url handling + method `Orders::clone_base+path` (#369).
 - [BREAKING] Updated `Url` and `routing.rs`.
 - [deprecated] `seed::browser::service::storage`.
