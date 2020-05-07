@@ -1,5 +1,8 @@
 use wasm_bindgen::JsCast;
 
+// @TODO: General helper? Or `to_` rename to `as_` and add `into_` variants.
+// Or delete all?
+
 /// Convenience function used in event handling: Convert an event target
 /// to an input element; eg so you can take its value.
 pub fn to_input(target: &web_sys::EventTarget) -> &web_sys::HtmlInputElement {

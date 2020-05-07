@@ -48,7 +48,7 @@
 - Added `DragEvent` and `drag_ev` definitions.
 - [BREAKING] Renamed `to_kbevent` to `to_keyboard_event`.
 - [BREAKING] `after_next_render` returns `RenderInfo`.
-- `web_sys`, `js_sys` and `wasm_bindgen` available in `seed::*`.
+- `web_sys`, `js_sys` and `wasm_bindgen` + `wasm_bindgen::JsCast` included in `prelude`.
 - Added `WebSocket` + related items (#8).
 - Exposed `App::mailbox`.
 - Added `streams::backoff` + updated `websocket` example.

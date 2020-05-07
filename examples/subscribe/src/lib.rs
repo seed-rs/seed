@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use seed::{prelude::*, *};
-use wasm_bindgen::JsCast;
 
 mod counter;
 

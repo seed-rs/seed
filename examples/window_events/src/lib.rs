@@ -1,5 +1,12 @@
 use seed::{prelude::*, *};
-use std::fmt;
+
+// ------ ------
+//     Init
+// ------ ------
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
 
 // ------ ------
 //     Model
@@ -7,7 +14,7 @@ use std::fmt;
 
 #[derive(Default)]
 struct Model {
-    watching: bool,
+    event_streams: Vec<StreamHandle>,
     point: Point,
     key_code: u32,
 }
@@ -16,26 +23,6 @@ struct Model {
 struct Point {
     x: i32,
     y: i32,
-}
-
-impl fmt::Display for Point {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "X: {}, Y: {}", self.x, self.y)
-    }
-}
-
-// ------ ------
-// Window Events
-// ------ ------
-
-fn window_events(model: &Model) -> Vec<EventHandler<Msg>> {
-    if !model.watching {
-        return Vec::new();
-    }
-    vec![
-        mouse_ev(Ev::MouseMove, Msg::MouseMoved),
-        keyboard_ev(Ev::KeyDown, Msg::KeyPressed),
-    ]
 }
 
 // ------ ------
@@ -48,9 +35,22 @@ enum Msg {
     KeyPressed(web_sys::KeyboardEvent),
 }
 
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::ToggleWatching => model.watching = !model.watching,
+        Msg::ToggleWatching => {
+            if model.event_streams.is_empty() {
+                model.event_streams = vec![
+                    orders.stream_with_handle(streams::window_event(Ev::MouseMove, |event| {
+                        Msg::MouseMoved(event.unchecked_into())
+                    })),
+                    orders.stream_with_handle(streams::window_event(Ev::KeyDown, |event| {
+                        Msg::KeyPressed(event.unchecked_into())
+                    })),
+                ];
+            } else {
+                model.event_streams.clear();
+            }
+        },
         Msg::MouseMoved(ev) => {
             model.point = Point {
                 x: ev.client_x(),
@@ -67,14 +67,14 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
-        h2![model.point.to_string()],
+        h2![format!("X: {}, Y: {}", model.point.x, model.point.y)],
         h2![format!("Last key pressed: {}", model.key_code)],
         button![
             ev(Ev::Click, |_| Msg::ToggleWatching),
-            if model.watching {
-                "Stop watching"
-            } else {
+            if model.event_streams.is_empty() {
                 "Start watching"
+            } else {
+                "Stop watching"
             }
         ],
     ]
@@ -85,8 +85,6 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
 // ------ ------
 
 #[wasm_bindgen(start)]
-pub fn render() {
-    App::builder(update, view)
-        .window_events(window_events)
-        .build_and_start();
+pub fn start() {
+    App::start("app", init, update, view);
 }
