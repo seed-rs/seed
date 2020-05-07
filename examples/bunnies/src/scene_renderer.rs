@@ -1,6 +1,6 @@
 use crate::geometry::*;
+use crate::web_sys::HtmlImageElement;
 use nalgebra::{Matrix4, Vector3};
-use seed::web_sys::HtmlImageElement;
 
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BlendFactor, BufferData, BufferMask, BufferTarget, BufferUsage,

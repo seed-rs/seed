@@ -19,9 +19,9 @@ use awsm_web::webgl::{
     WebGlTextureSource,
 };
 use awsm_web::window::get_window_size;
-use seed::web_sys::{HtmlCanvasElement, HtmlImageElement};
 use seed::{prelude::*, *};
 use shipyard::{NonSendSync, UniqueView, UniqueViewMut, World};
+use web_sys::{HtmlCanvasElement, HtmlImageElement};
 
 mod components;
 mod config;

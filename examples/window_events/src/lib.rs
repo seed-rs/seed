@@ -50,7 +50,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             } else {
                 model.event_streams.clear();
             }
-        },
+        }
         Msg::MouseMoved(ev) => {
             model.point = Point {
                 x: ev.client_x(),

@@ -188,9 +188,9 @@ pub mod prelude {
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
-    pub use wasm_bindgen::{self, JsCast, prelude::*};
-    pub use web_sys;
     pub use js_sys;
+    pub use wasm_bindgen::{self, prelude::*, JsCast};
+    pub use web_sys;
 }
 
 #[cfg(test)]
