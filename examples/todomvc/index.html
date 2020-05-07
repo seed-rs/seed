@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="en" data-framework="rust">
-  <head>
-    <meta charset="utf-8" />
-    <title>Seed • TodoMVC</title>
-    <link rel="stylesheet" href="/public/index.css" />
-  </head>
-  <body>
-    <section id="app" class="todoapp"></section>
 
-    <footer class="info">
-      <p>Double-click to edit a todo</p>
-      <p>
-        Created by <a href="http://github.com/David-OConnor/">David O'Connor</a>
-      </p>
-      <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
-    </footer>
+<head>
+  <meta charset="utf-8" />
+  <title>Seed • TodoMVC</title>
+  <link rel="stylesheet" href="/public/index.css" />
+</head>
 
-    <script type="module">
-      import init from '/pkg/package.js';
-      init('/pkg/package_bg.wasm');
-    </script>
-  </body>
+<body>
+  <section id="app" class="todoapp"></section>
+
+  <footer class="info">
+    <p>Double-click to edit a todo</p>
+    <p>
+      Created by <a href="http://github.com/David-OConnor/">David O'Connor</a>
+    </p>
+    <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+  </footer>
+
+  <script type="module">
+    import init from '/pkg/package.js';
+    init('/pkg/package_bg.wasm');
+  </script>
+</body>
+
 </html>

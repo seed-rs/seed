@@ -2,17 +2,19 @@ import { LitElement, html, css } from 'https://unpkg.com/lit-element/lit-element
 import { unsafeHTML } from 'https://unpkg.com/lit-html/directives/unsafe-html.js?module';
 
 class FeatherIconElement extends LitElement {
-    static get properties() { return {
-        icon: { type: String },
-        width: { type: Number },
-        height: { type: Number },
-    };}
+    static get properties() {
+        return {
+            icon: { type: String },
+            width: { type: Number },
+            height: { type: Number },
+        };
+    }
 
     constructor() {
         super();
         this.width = 24;
         this.height = 24;
-      }
+    }
 
     render() {
         const svg = feather.icons[this.icon].toSvg({
