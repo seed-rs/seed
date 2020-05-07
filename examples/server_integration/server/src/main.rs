@@ -2,9 +2,9 @@ use actix::prelude::*;
 use actix_files::{Files, NamedFile};
 use actix_multipart::Multipart;
 use actix_web::{get, post, web, App, HttpServer, Result};
+use futures::stream::StreamExt;
 use std::fmt::Write;
 use std::time;
-use futures::stream::StreamExt;
 
 mod count_actor;
 use count_actor::{CountActor, MsgIncrement};
@@ -22,11 +22,8 @@ async fn send_message(
     }))
 }
 
-
 #[get("delayed-response/{delay}")]
-async fn delayed_response(
-    delay: web::Path<u64>,
-) -> String {
+async fn delayed_response(delay: web::Path<u64>) -> String {
     futures_timer::Delay::new(time::Duration::from_millis(*delay)).await;
     format!("Delay was set to {}ms.", delay)
 }

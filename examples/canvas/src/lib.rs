@@ -14,7 +14,6 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     Model::default()
 }
 
-
 // ------ ------
 //     Model
 // ------ ------

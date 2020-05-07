@@ -5,8 +5,5 @@ use seed::{prelude::*, *};
 // ------ ------
 
 pub fn view<Ms: 'static>(expression: &str) -> Node<Ms> {
-    custom![
-        Tag::from("math-tex"),
-        expression,
-    ]
+    custom![Tag::from("math-tex"), expression,]
 }
