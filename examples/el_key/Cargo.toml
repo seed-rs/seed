@@ -9,7 +9,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = { path = "../../" }
-wasm-bindgen = "0.2.60"
 rand = { version = "0.7.3", features = ["wasm-bindgen", "small_rng"] }
 scarlet = "1.1.0"
 static_assertions = "1.1.0"
