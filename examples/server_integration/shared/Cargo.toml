@@ -5,4 +5,4 @@ authors = ["Your Name <email@address.com>"]
 edition = "2018"
 
 [dependencies]
-serde = { version = "^1.0.92" }
+serde = { version = "1.0.106" }
