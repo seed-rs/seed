@@ -1,6 +1,9 @@
 use seed::{prelude::*, *};
 
 mod checkbox_tristate;
+mod code_block;
+mod feather_icon;
+mod math_tex;
 
 // ------ ------
 //     Init
@@ -23,7 +26,7 @@ struct Model {
 //    Update
 // ------ ------
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 enum Msg {
     RotateCheckboxState,
 }
@@ -39,14 +42,31 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 // ------ ------
 
 fn view(model: &Model) -> impl IntoNodes<Msg> {
-    span![
-        style! {
-            St::Cursor => "pointer",
-            St::UserSelect => "none",
-        },
-        checkbox_tristate::view(model.checkbox_state),
-        ev(Ev::Click, |_| Msg::RotateCheckboxState),
-        "checkbox-tristate",
+    vec![
+        div![
+            style! {
+                St::Cursor => "pointer",
+                St::UserSelect => "none",
+            },
+            ev(Ev::Click, |_| Msg::RotateCheckboxState),
+            "checkbox-tristate",
+            checkbox_tristate::view(model.checkbox_state),
+        ],
+        hr![],
+        div![
+            "code-block",
+            code_block::view("rust", "let number: Option<u32> = Some(10_200);"),
+        ],
+        hr![],
+        div![
+            "feather-icon",
+            feather_icon::view("shopping-cart", None, None),
+        ],
+        hr![],
+        div![
+            "math-tex",
+            math_tex::view(r"\mathbb{1} = \sum_i \lvert i \rangle \langle i \rvert"),
+        ],
     ]
 }
 
