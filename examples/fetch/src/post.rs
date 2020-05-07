@@ -2,16 +2,24 @@
 
 use seed::{prelude::*, *};
 
-#[derive(serde::Serialize, Default)]
-pub struct Form {
-    name: String,
-}
+// ------ ------
+//     Model
+// ------ ------
 
 #[derive(Default)]
 pub struct Model {
     form: Form,
     message: Option<String>,
 }
+
+#[derive(serde::Serialize, Default)]
+pub struct Form {
+    name: String,
+}
+
+// ------ ------
+//    Update
+// ------ ------
 
 pub enum Msg {
     NameChanged(String),
@@ -55,6 +63,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
     }
 }
+
+// ------ ------
+//     View
+// ------ ------
 
 pub fn view(model: &Model) -> Node<Msg> {
     form![
