@@ -4,6 +4,14 @@ use enclose::enc;
 use seed::{prelude::*, *};
 
 // ------ ------
+//     Init
+// ------ ------
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
+
+// ------ ------
 //     Model
 // ------ ------
 
@@ -66,7 +74,7 @@ fn view(model: &Model) -> Node<Msg> {
 #[wasm_bindgen]
 // `wasm-bindgen` cannot transfer struct with public closures to JS (yet) so we have to send slice.
 pub fn start() -> Box<[JsValue]> {
-    let app = App::builder(update, view).build_and_start();
+    let app = App::start("app", init, update, view);
 
     create_closures_for_js(&app)
 }
@@ -97,7 +105,9 @@ where
     closure_as_js_value
 }
 
-// Javascript functions
+// ------ ------
+//    Extern
+// ------ ------
 
 #[wasm_bindgen]
 extern "C" {
