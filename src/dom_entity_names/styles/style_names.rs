@@ -323,6 +323,7 @@ make_styles! {
     MarginLeft => "margin-left",
     MarginRight => "margin-right",
     MarginTop => "margin-top",
+    MarginTrim => "margin-trim",
     Mask => "mask",
     MaskBorder => "mask-border",
     MaskBorderMode => "mask-border-mode",
