@@ -1,6 +1,6 @@
 [package]
 name = "seed"
-version = "0.6.0"
+version = "0.7.0"
 description = "A Rust framework for creating web apps, using WebAssembly"
 authors = ["DavidOConnor <david.alan.oconnor@gmail.com>", "Martin Kavík <martin@kavik.cz>"]
 license = "MIT"
@@ -18,7 +18,7 @@ build = "build.rs"
 version_check = "0.9.1"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.10"
+wasm-bindgen-test = "0.3.12"
 
 [dependencies]
 console_error_panic_hook = "0.1.6"
