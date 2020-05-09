@@ -315,11 +315,11 @@ impl<Ms> From<&web_sys::Element> for El<Ms> {
     /// and markdown strings. Includes children, recursively added.
     #[allow(clippy::too_many_lines)]
     fn from(ws_el: &web_sys::Element) -> Self {
-        // Result of tag_name is all caps, but tag From<String> expects lower.
-        // Probably is more pure to match by xlmns attribute instead.
-        let mut el = match ws_el.tag_name().to_lowercase().as_ref() {
-            "svg" => El::empty_svg(ws_el.tag_name().to_lowercase().into()),
-            _ => El::empty(ws_el.tag_name().to_lowercase().into()),
+        let namespace = ws_el.namespace_uri().map(Namespace::from);
+        let mut el = match namespace {
+            // tag_name returns all caps for HTML, but Tag::from uses lowercase names for HTML
+            Some(Namespace::Html) => El::empty(ws_el.tag_name().to_lowercase().into()),
+            _ => El::empty(ws_el.tag_name().into()),
         };
 
         // Populate attributes
@@ -420,14 +420,14 @@ impl<Ms> From<&web_sys::Element> for El<Ms> {
             "solidcolor",
         ];
 
-        if svg_tags.contains(&ws_el.tag_name().to_lowercase().as_str()) {
+        if svg_tags.contains(&ws_el.tag_name().as_str()) {
             el.namespace = Some(Namespace::Svg);
         }
 
-        if let Some(ns) = ws_el.namespace_uri() {
+        if let Some(ref ns) = namespace {
             // Prevent attaching a `xlmns` attribute to normal HTML elements.
-            if ns != "http://www.w3.org/1999/xhtml" {
-                el.namespace = Some(ns.into());
+            if ns != &Namespace::Html {
+                el.namespace = namespace;
             }
         }
 
