@@ -189,7 +189,7 @@ element_svg! {
     // missing-glyph => MissingGlyph; // todo unable to populate with macro due to hyphen
     pattern => Pattern; svg => Svg; switch => Switch; symbol => Symbol; unknown => Unknown;
     // SVG gradient elements
-    linear_gradient => LinearGradient; radial_gradient => RadialGradient; mesh_gradient => MeshGradient;
+    linearGradient => LinearGradient; radialGradient => RadialGradient; meshGradient => MeshGradient;
     stop => Stop;
     // SVG graphics elements
     image => Image;
