@@ -77,7 +77,7 @@ use std::collections::{BTreeSet, VecDeque};
 use std::iter::Peekable;
 
 #[allow(clippy::large_enum_variant)]
-pub(crate) enum PatchCommand<'a, Ms: 'static> {
+pub enum PatchCommand<'a, Ms: 'static> {
     AppendEl {
         el_new: &'a mut El<Ms>,
     },
@@ -149,7 +149,7 @@ impl PatchKey {
 
 /// This is a command generator.
 /// See the module documenation for brief description of how this works.
-pub(crate) struct PatchGen<'a, Ms, OI, NI>
+pub struct PatchGen<'a, Ms, OI, NI>
 where
     Ms: 'static,
     OI: Iterator<Item = Node<Ms>>,
@@ -449,7 +449,7 @@ where
 }
 
 /// Checks whether the old element can be updated with a new one.
-pub(crate) fn el_can_be_patched<Ms>(el_old: &El<Ms>, el_new: &El<Ms>) -> bool {
+pub fn el_can_be_patched<Ms>(el_old: &El<Ms>, el_new: &El<Ms>) -> bool {
     el_old.namespace == el_new.namespace && el_old.tag == el_new.tag && el_old.key == el_new.key
 }
 
