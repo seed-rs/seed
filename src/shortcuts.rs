@@ -497,7 +497,7 @@ macro_rules! nodes {
 //}
 
 #[cfg(use_nightly)]
-pub fn wrap_debug<T>(object: T) -> dbg::WrapDebug<T> {
+pub const fn wrap_debug<T>(object: T) -> dbg::WrapDebug<T> {
     dbg::WrapDebug(object)
 }
 

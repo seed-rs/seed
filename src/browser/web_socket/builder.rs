@@ -9,7 +9,7 @@ use web_sys::MessageEvent;
 
 // `Callbacks` are used internally by `WebSocket` and `Builder`.
 #[derive(Default, Debug)]
-pub(crate) struct Callbacks {
+pub struct Callbacks {
     pub on_open: Option<Closure<dyn Fn(JsValue)>>,
     pub on_close: Option<Closure<dyn Fn(JsValue)>>,
     pub on_error: Option<Closure<dyn Fn(JsValue)>>,
