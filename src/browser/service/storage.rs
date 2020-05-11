@@ -34,20 +34,3 @@ where
         .set_item(name, &serialized)
         .expect("save into `LocalStorage`");
 }
-
-/// Load a store, to a deserializable data structure.
-#[deprecated(
-    since = "0.7.0",
-    note = "Use `LocalStorage::get` or `SessionStorage::get`."
-)]
-pub fn load_data<T>(storage: &Storage, name: &str) -> Option<T>
-where
-    T: serde::de::DeserializeOwned,
-{
-    storage
-        .get_item(name)
-        .expect("try to get item from `LocalStorage`")
-        .map(|loaded_serialized| {
-            serde_json::from_str(&loaded_serialized).expect("deserialize from `LocalStorage`")
-        })
-}

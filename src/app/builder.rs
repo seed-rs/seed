@@ -385,26 +385,6 @@ impl<
         InitAPIType: InitAPIData<IntoInit = II, MountPoint = MP, IntoAfterMount = IAM>,
     > Builder<Ms, Mdl, INodes, GMs, InitAPIType>
 {
-    #[deprecated(
-        since = "0.5.0",
-        note = "Used for compatibility with old Init API. Use `before_mount` and `after_mount` instead."
-    )]
-    pub fn init<NewII: IntoInit<Ms, Mdl, INodes, GMs>>(
-        self,
-        new_init: NewII,
-    ) -> Builder<Ms, Mdl, INodes, GMs, MountPointInitInitAPI<MP, NewII>> {
-        Builder {
-            update: self.update,
-            view: self.view,
-
-            routes: self.routes,
-            window_events: self.window_events,
-            sink: self.sink,
-
-            init_api: self.init_api.init(new_init),
-        }
-    }
-
     /// Choose the element where the application will be mounted.
     /// The default one is the element with `id` = "app".
     ///

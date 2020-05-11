@@ -29,10 +29,12 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> seed::App<Msg, Model, Node<Msg>> {
-        seed::App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
-            // mount to the element that exists even in the default test html
-            .mount(util::body())
-            .finish()
+        seed::App::start(
+            "output",
+            |_, _| Init::new(Model {}).model,
+            |_, _, _| (),
+            |_| seed::empty(),
+        )
     }
 
     fn el_to_websys(mut node: Node<Msg>) -> web_sys::Node {

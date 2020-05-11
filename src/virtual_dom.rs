@@ -45,10 +45,12 @@ pub mod tests {
     struct Model {}
 
     fn create_app() -> App<Msg, Model, Node<Msg>> {
-        App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
-            // mount to the element that exists even in the default test html
-            .mount(util::body())
-            .finish()
+        App::start(
+            "output",
+            |_, _| Init::new(Model {}).model,
+            |_, _, _| (),
+            |_| seed::empty(),
+        )
     }
 
     fn call_patch(
@@ -815,19 +817,18 @@ pub mod tests {
             }
         }
 
-        let app = App::build(
+        let app = App::start(
+            "output",
             |_, _| {
                 Init::new(Model {
                     test_value_sender: Some(test_value_sender),
                     ..Default::default()
                 })
+                .model
             },
             update,
             |_| seed::empty(),
-        )
-        .mount(seed::body())
-        .finish()
-        .run();
+        );
 
         // ACT
         app.update(Msg::Start);

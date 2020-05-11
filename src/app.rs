@@ -5,10 +5,7 @@ use crate::browser::{
     Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
-use builder::{
-    init::{Init, InitFn as BuilderInitFn},
-    IntoAfterMount, MountPointInitInitAPI, UndefinedInitAPI, UndefinedMountPoint,
-};
+use builder::{IntoAfterMount, UndefinedInitAPI};
 use enclose::{enc, enclose};
 use std::{
     any::Any,
@@ -566,18 +563,6 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         }))
     }
 
-    #[deprecated(
-        since = "0.5.0",
-        note = "Use `builder` with `AppBuilder::{after_mount, before_mount}` instead."
-    )]
-    pub fn build(
-        init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Init<Mdl> + 'static,
-        update: UpdateFn<Ms, Mdl, INodes, GMs>,
-        view: ViewFn<Mdl, INodes>,
-    ) -> InitAppBuilder<Ms, Mdl, INodes, GMs> {
-        Self::builder(update, view).init(Box::new(init))
-    }
-
     /// App initialization: Collect its fundamental components, setup, and perform
     /// an initial render.
     #[deprecated(
@@ -673,12 +658,3 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         self
     }
 }
-
-#[deprecated(since = "0.5.0", note = "Part of the old Init API.")]
-type InitAppBuilder<Ms, Mdl, INodes, GMs> = AppBuilder<
-    Ms,
-    Mdl,
-    INodes,
-    GMs,
-    MountPointInitInitAPI<UndefinedMountPoint, BuilderInitFn<Ms, Mdl, INodes, GMs>>,
->;
