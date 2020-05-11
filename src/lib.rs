@@ -89,16 +89,16 @@ macro_rules! map_callback_return_to_option_ms {
 // @TODO move to prelude (?)
 pub use crate::{
     app::{App, AppBuilder},
-    browser::dom::cast::{
-        to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
-        to_textarea, to_touch_event,
-    },
+    // browser::dom::cast::{
+    //     to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
+    //     to_textarea, to_touch_event,
+    // },
     browser::fetch,
     browser::service::routing::push_route,
     browser::service::storage,
     browser::url::Url,
     browser::util::{
-        self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
+        self, /* body, */ canvas, canvas_context_2d, cookies, document, error, history, html_document,
         log, window,
     },
     virtual_dom::{Attrs, EventHandler, Style},
@@ -106,12 +106,27 @@ pub use crate::{
 pub use futures::future::{FutureExt, TryFutureExt};
 use wasm_bindgen::{closure::Closure, JsCast};
 
+pub mod dom {
+    //! Features for working with the DOM
+    //!
+    //! This module exports functions and other Seed features that work with the browser
+    //! DOM directly. It's generally preferred to use the virtual DOM where possible
+
+
+    #[doc(inline)]
+    pub use crate::browser::dom::cast::*;
+
+    #[doc(inline)]
+    pub use crate::browser::util::body;
+}
+
 #[macro_use]
 pub mod shortcuts;
 pub mod app;
 pub mod browser;
 pub mod dom_entity_names;
 pub mod helpers;
+/// Modelling and manipulation of performant [virtual DOM](https://elm-lang.org/news/blazing-fast-html#virtual-dom)
 pub mod virtual_dom;
 
 /// Create an element flagged in a way that it will not be rendered. Useful
