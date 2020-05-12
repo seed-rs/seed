@@ -1,6 +1,8 @@
 # Changelog
-[unreleased]
+
+## [unreleased]
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`).
+- Fixed `base_path` with a trailing slash parsing / handling.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.

@@ -168,7 +168,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 .and_then(|href| web_sys::Url::new_with_base(&href, DUMMY_BASE_URL).ok())
                 .map(|url| {
                     url.pathname()
-                        .trim_start_matches('/')
+                        .trim_matches('/')
                         .split('/')
                         .map(ToOwned::to_owned)
                         .collect()

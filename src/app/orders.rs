@@ -277,7 +277,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         stream: impl Stream<Item = MsU> + 'static,
     ) -> StreamHandle;
 
-    /// Cheap clone base path loaded from element `<base href="base/path">`.
+    /// Cheap clone base path loaded from element `<base href="/base/path/">`.
     ///
     /// Returns empty `Vec` if there is no `base` element in your HTML
     /// or there were problems with parsing.
