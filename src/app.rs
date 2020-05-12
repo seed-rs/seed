@@ -5,7 +5,7 @@ use crate::browser::{
     Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
-use builder::{IntoAfterMount, UndefinedInitAPI};
+use builder::IntoAfterMount;
 use enclose::{enc, enclose};
 use std::{
     any::Any,
@@ -35,8 +35,7 @@ pub mod subs;
 pub mod types;
 
 pub use builder::{
-    AfterMount, BeforeMount, Builder as AppBuilder, MountPoint, MountType, UndefinedAfterMount,
-    UrlHandling,
+    AfterMount, BeforeMount, MountPoint, MountType, UndefinedAfterMount, UrlHandling,
 };
 pub use cfg::{AppCfg, AppInitCfg};
 pub use cmd_manager::{CmdHandle, CmdManager};
@@ -198,48 +197,6 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             base_path,
         );
         app.run()
-    }
-
-    /// Creates a new `AppBuilder` instance. It's the standard way to create a Seed app.
-    ///
-    /// Then you can call optional builder methods like `routes` or `sink`.
-    /// And you have to call method `build_and_start` to build and run a new `App` instance.
-    ///
-    /// _NOTE:_ If your `Model` doesn't implement `Default`, you have to call builder method `after_mount`.
-    ///
-    /// # Example
-    ///
-    /// ```rust,no_run
-    ///fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg, GMsg>) {
-    ///   match msg {
-    ///       Msg::Clicked => model.clicks += 1,
-    ///   }
-    ///}
-    ///
-    ///fn view(model: &Model) -> impl IntoNodes<Msg> {
-    ///   vec![
-    ///       button![
-    ///           format!("Clicked: {}", model.clicks),
-    ///           simple_ev(Ev::Click, Msg::Clicked),
-    ///       ],
-    ///   ]
-    ///}
-    ///
-    ///App::builder(update, view)
-    /// ```
-    pub fn builder(
-        update: UpdateFn<Ms, Mdl, INodes, GMs>,
-        view: ViewFn<Mdl, INodes>,
-    ) -> AppBuilder<Ms, Mdl, INodes, GMs, UndefinedInitAPI> {
-        // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
-        // https://github.com/David-OConnor/seed/issues/241
-        // https://bugs.webkit.org/show_bug.cgi?id=202881
-        let _ = util::document().query_selector("html");
-
-        // Allows panic messages to output to the browser console.error.
-        console_error_panic_hook::set_once();
-
-        AppBuilder::new(update, view)
     }
 
     /// This runs whenever the state is changed, ie the user-written update function is called.

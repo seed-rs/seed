@@ -51,7 +51,12 @@
 #![allow(
     clippy::use_self,
     clippy::single_match_else,
-    clippy::must_use_candidate
+    clippy::must_use_candidate,
+
+    // temporary clearing some clippys for dev
+    clippy::future_not_send,
+    dead_code,
+    clippy::used_underscore_binding
 )]
 #![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
 
@@ -88,7 +93,7 @@ macro_rules! map_callback_return_to_option_ms {
 
 // @TODO move to prelude (?)
 pub use crate::{
-    app::{App, AppBuilder},
+    app::App,
     browser::dom::cast::{
         to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
         to_textarea, to_touch_event,

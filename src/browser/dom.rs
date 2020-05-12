@@ -16,7 +16,6 @@ pub mod tests {
 
     use crate as seed;
     use crate::app::builder::init::Init;
-    use crate::browser::util;
     use crate::virtual_dom::{patch, At, CSSValue, El, Mailbox, Node, St, Style, UpdateEl};
     use indexmap::IndexMap;
     use std::collections::HashSet;
