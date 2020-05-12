@@ -3,8 +3,6 @@ use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 
 #[allow(clippy::module_name_repetitions)]
-pub struct UndefinedAfterMount;
-
 // ------ UrlHandling ------
 
 /// Used for handling initial routing.
@@ -31,6 +29,7 @@ pub struct AfterMount<Mdl> {
     pub(crate) url_handling: UrlHandling,
 }
 
+/// TODO: Deletion blocking. App::start has this as a dependency.
 impl<Mdl> AfterMount<Mdl> {
     /// Creates a new `AfterMount` instance. You can also use `AfterMount::default`
     /// if your `Model` implements `Default`.
@@ -70,17 +69,5 @@ where
         orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
     ) -> AfterMount<Mdl> {
         self(init_url, orders)
-    }
-}
-
-impl<Ms: 'static, Mdl: Default, INodes: IntoNodes<Ms>, GMs> IntoAfterMount<Ms, Mdl, INodes, GMs>
-    for UndefinedAfterMount
-{
-    fn into_after_mount(
-        self: Box<Self>,
-        _: Url,
-        _: &mut OrdersContainer<Ms, Mdl, INodes, GMs>,
-    ) -> AfterMount<Mdl> {
-        AfterMount::default()
     }
 }

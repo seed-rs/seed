@@ -54,6 +54,7 @@
     clippy::must_use_candidate,
 
     // temporary clearing some clippys for dev
+    // TODO: CRITICAL! Remove these before merging into master.
     clippy::future_not_send,
     dead_code,
     clippy::used_underscore_binding
