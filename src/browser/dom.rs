@@ -10,7 +10,7 @@ pub mod virtual_dom_bridge;
 pub use namespace::Namespace;
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
     use wasm_bindgen_test::*;
     wasm_bindgen_test_configure!(run_in_browser);
 

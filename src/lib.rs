@@ -167,9 +167,8 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 pub mod prelude {
     pub use crate::{
         app::{
-            builder::init::Init, cmds, streams, subs, AfterMount, App, BeforeMount, CmdHandle,
-            GetElement, MessageMapper, MountType, Orders, RenderInfo, StreamHandle, SubHandle,
-            UrlHandling,
+            cmds, streams, subs, App, CmdHandle, GetElement, MessageMapper, Orders, RenderInfo,
+            StreamHandle, SubHandle,
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{
@@ -209,7 +208,7 @@ pub mod tests {
     /// change.
     #[wasm_bindgen_test]
     #[allow(dead_code)]
-    pub fn app_builds() {
+    pub(crate) fn app_builds() {
         use crate as seed; // required for macros to work.
         use crate::app::{builder::init::Init, Orders};
         use crate::browser::dom::event_handler::mouse_ev;

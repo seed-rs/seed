@@ -18,7 +18,7 @@ use types::{RoutesFn, SinkFn, UpdateFn, ViewFn, WindowEventsFn};
 use wasm_bindgen::closure::Closure;
 use web_sys::Element;
 
-pub mod builder;
+pub(crate) mod builder;
 pub mod cfg;
 pub mod cmd_manager;
 pub mod cmds;
@@ -34,9 +34,7 @@ pub mod sub_manager;
 pub mod subs;
 pub mod types;
 
-pub use builder::{
-    AfterMount, BeforeMount, MountPoint, MountType, UndefinedAfterMount, UrlHandling,
-};
+use builder::{AfterMount, MountType, UrlHandling};
 pub use cfg::{AppCfg, AppInitCfg};
 pub use cmd_manager::{CmdHandle, CmdManager};
 pub use data::AppData;
@@ -175,6 +173,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         let app_init_cfg = AppInitCfg {
             mount_type: MountType::Takeover,
             phantom: PhantomData,
+            // TODO builder/after_mount/into_after_mount() needs to be cleared out.
             into_after_mount: Box::new({
                 let base_path = Rc::clone(&base_path);
                 move |url: Url,
@@ -522,11 +521,14 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
 
     /// App initialization: Collect its fundamental components, setup, and perform
     /// an initial render.
+    /// TODO: the `builder` module has been removed from the public interface, but
+    /// weaves a complex web of dependencies. This function is also a dependency
+    /// to [`App::start`] and other functions.
     #[deprecated(
         since = "0.4.2",
-        note = "Please use `AppBuilder.build_and_start` instead"
+        note = "Legacy note: Please use `AppBuilder.build_and_start` instead\nAs part of the 0.7.0 cleanup, this has been made private. `App::start` depends on this function."
     )]
-    pub fn run(mut self) -> Self {
+    fn run(mut self) -> Self {
         let AppInitCfg {
             mount_type,
             into_after_mount,

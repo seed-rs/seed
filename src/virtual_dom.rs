@@ -24,7 +24,8 @@ pub use view::View;
 pub use crate::dom_entity_names::{At, Ev, St, Tag};
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
+    use crate::app::builder::init::Init;
     use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
     use web_sys::{self, Element};
