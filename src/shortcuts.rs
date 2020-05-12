@@ -3,6 +3,7 @@
 
 // @TODO merge with `pub use` & `prelude` in `lib.rs` and `browser::util`?
 
+use crate::virtual_dom::{At, Attrs};
 use wasm_bindgen::JsValue;
 
 /// Copied from [https://github.com/rust-lang/rust/issues/35853](https://github.com/rust-lang/rust/issues/35853)
@@ -325,22 +326,32 @@ macro_rules! C {
         {
             let mut all_classes = Vec::new();
             $(
-                if let Some(classes) = $class.to_classes() {
-                    for class in classes {
-                        if !class.is_empty() {
-                            all_classes.push(class);
-                        }
-                    }
-                }
+                $crate::shortcuts::_fill_all_classes(&mut all_classes, $class.to_classes());
             )*
-
-            let mut attrs = $crate::virtual_dom::Attrs::empty();
-            if !all_classes.is_empty() {
-                attrs.add_multiple(At::Class, &all_classes.iter().map(|class| class.as_str()).collect::<Vec<_>>());
-            }
-            attrs
+            $crate::shortcuts::_all_classes_to_attrs(&all_classes)
         }
     };
+}
+
+pub fn _fill_all_classes(all_classes: &mut Vec<String>, classes: Option<Vec<String>>) {
+    if let Some(classes) = classes {
+        for class in classes {
+            if !class.is_empty() {
+                all_classes.push(class);
+            }
+        }
+    }
+}
+
+pub fn _all_classes_to_attrs(all_classes: &[String]) -> Attrs {
+    let mut attrs = Attrs::empty();
+    if !all_classes.is_empty() {
+        attrs.add_multiple(
+            At::Class,
+            &all_classes.iter().map(String::as_str).collect::<Vec<_>>(),
+        );
+    }
+    attrs
 }
 
 /// `IF!(predicate => expression) -> Option<expression value>`
