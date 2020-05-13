@@ -211,7 +211,7 @@ pub mod tests {
     #[allow(dead_code)]
     pub(crate) fn app_builds() {
         use crate as seed; // required for macros to work.
-        use crate::app::{builder::init::Init, Orders};
+        use crate::app::{Orders};
         use crate::browser::dom::event_handler::mouse_ev;
         use crate::prelude::*;
         use crate::virtual_dom::{EventHandler, Node};
@@ -253,7 +253,7 @@ pub mod tests {
         pub fn render() {
             seed::App::start(
                 "render test app",
-                |_, _| Init::new(Model::default()).model,
+                |_, _| Model::default(),
                 update,
                 view,
             );

@@ -2,9 +2,6 @@ use super::super::OrdersContainer;
 use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 
-#[allow(clippy::module_name_repetitions)]
-// ------ UrlHandling ------
-
 /// Used for handling initial routing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UrlHandling {
@@ -12,15 +9,7 @@ pub enum UrlHandling {
     None,
 }
 
-impl Default for UrlHandling {
-    fn default() -> Self {
-        Self::PassToRoutes
-    }
-}
-
-// ------ AfterMount ------
-
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AfterMount<Mdl> {
     /// Initial model to be used when the app begins.
     pub(crate) model: Mdl,
@@ -29,14 +18,14 @@ pub struct AfterMount<Mdl> {
     pub(crate) url_handling: UrlHandling,
 }
 
-/// TODO: Deletion blocking. App::start has this as a dependency.
+/// TODO: Deletion blocking. `App::start` has this as a dependency.
 impl<Mdl> AfterMount<Mdl> {
     /// Creates a new `AfterMount` instance. You can also use `AfterMount::default`
     /// if your `Model` implements `Default`.
-    pub fn new(model: Mdl) -> Self {
+    pub const fn new(model: Mdl) -> Self {
         Self {
             model,
-            url_handling: UrlHandling::default(),
+            url_handling: UrlHandling::PassToRoutes,
         }
     }
 
@@ -47,8 +36,6 @@ impl<Mdl> AfterMount<Mdl> {
         self
     }
 }
-
-// ------ IntoAfterMount ------
 
 #[allow(clippy::module_name_repetitions)]
 pub trait IntoAfterMount<Ms: 'static, Mdl, INodes: IntoNodes<Ms>, GMs> {

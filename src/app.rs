@@ -138,12 +138,16 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
     ///
     /// Panics if the root element cannot be found.
     ///
+    #[allow(clippy::too_many_lines)]
     pub fn start(
         root_element: impl GetElement,
         init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes, GMs>) -> Mdl + 'static,
         update: UpdateFn<Ms, Mdl, INodes, GMs>,
         view: ViewFn<Mdl, INodes>,
     ) -> Self {
+        // This function looks to be a significant sticking point. It will possibly end
+        // up being a relatively major effort to get it cleaned up.
+
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
         // https://github.com/seed-rs/seed/issues/241
         // https://bugs.webkit.org/show_bug.cgi?id=202881
@@ -185,7 +189,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 }
             }) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
         };
-        let app = Self::new(
+        let mut app = Self::new(
             update,
             None,
             view,
@@ -195,7 +199,96 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             Some(app_init_cfg),
             base_path,
         );
-        app.run()
+
+        // TODO This is all taken from the deprecated run function. It needs to be cleaned up
+        {
+            let AppInitCfg {
+                mount_type,
+                into_after_mount,
+                ..
+            } = app.init_cfg.take().expect(
+                "`init_cfg` should be set in `App::new` which is called from `AppBuilder::build_and_start`",
+            );
+
+            // Bootstrap the virtual DOM.
+            app.data
+                .main_el_vdom
+                .replace(Some(app.bootstrap_vdom(mount_type)));
+
+            let mut orders = OrdersContainer::new(app.clone());
+            let AfterMount {
+                model,
+                url_handling,
+            } = into_after_mount.into_after_mount(Url::current(), &mut orders);
+
+            app.data.model.replace(Some(model));
+
+            match url_handling {
+                UrlHandling::PassToRoutes => {
+                    let url = Url::current();
+
+                    app.notify(subs::UrlChanged(url.clone()));
+
+                    let routing_msg = app
+                        .data
+                        .routes
+                        .borrow()
+                        .as_ref()
+                        .and_then(|routes| routes(url));
+                    if let Some(routing_msg) = routing_msg {
+                        orders.effects.push_back(routing_msg.into());
+                    }
+                }
+                UrlHandling::None => (),
+            };
+
+            app.patch_window_event_handlers();
+
+            // Update the state on page load, based
+            // on the starting URL. Must be set up on the server as well.
+            let routes = *app.data.routes.borrow();
+            routing::setup_popstate_listener(
+                enc!((app => s) move |msg| s.update(msg)),
+                enc!((app => s) move |closure| {
+                    s.data.popstate_closure.replace(Some(closure));
+                }),
+                enc!((app => s) move |notification| s.notify_with_notification(notification)),
+                routes,
+                Rc::clone(&app.cfg.base_path),
+            );
+            routing::setup_hashchange_listener(
+                enc!((app => s) move |msg| s.update(msg)),
+                enc!((app => s) move |closure| {
+                    s.data.hashchange_closure.replace(Some(closure));
+                }),
+                enc!((app => s) move |notification| s.notify_with_notification(notification)),
+                routes,
+                Rc::clone(&app.cfg.base_path),
+            );
+            routing::setup_link_listener(
+                enc!((app => s) move |msg| s.update(msg)),
+                enc!((app => s) move |notification| s.notify_with_notification(notification)),
+                routes,
+            );
+
+            orders.subscribe(enc!((app => s) move |url_requested| {
+                routing::url_request_handler(
+                    url_requested,
+                    Rc::clone(&s.cfg.base_path),
+                    move |notification| s.notify_with_notification(notification),
+                )
+            }));
+
+            app.process_effect_queue(orders.effects);
+            // TODO: In the future, only run the following line if the above statement:
+            //  - didn't force-rerender vdom
+            //  - didn't schedule render
+            //  - doesn't want to skip render
+
+            app.rerender_vdom();
+
+            app
+        }
     }
 
     /// This runs whenever the state is changed, ie the user-written update function is called.
@@ -517,103 +610,5 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 s.rerender_vdom();
             }
         }))
-    }
-
-    /// App initialization: Collect its fundamental components, setup, and perform
-    /// an initial render.
-    /// TODO: the `builder` module has been removed from the public interface, but
-    /// weaves a complex web of dependencies. This function is also a dependency
-    /// to [`App::start`] and other functions.
-    #[deprecated(
-        since = "0.4.2",
-        note = "Legacy note: Please use `AppBuilder.build_and_start` instead\nAs part of the 0.7.0 cleanup, this has been made private. `App::start` depends on this function."
-    )]
-    fn run(mut self) -> Self {
-        let AppInitCfg {
-            mount_type,
-            into_after_mount,
-            ..
-        } = self.init_cfg.take().expect(
-            "`init_cfg` should be set in `App::new` which is called from `AppBuilder::build_and_start`",
-        );
-
-        // Bootstrap the virtual DOM.
-        self.data
-            .main_el_vdom
-            .replace(Some(self.bootstrap_vdom(mount_type)));
-
-        let mut orders = OrdersContainer::new(self.clone());
-        let AfterMount {
-            model,
-            url_handling,
-        } = into_after_mount.into_after_mount(Url::current(), &mut orders);
-
-        self.data.model.replace(Some(model));
-
-        match url_handling {
-            UrlHandling::PassToRoutes => {
-                let url = Url::current();
-
-                self.notify(subs::UrlChanged(url.clone()));
-
-                let routing_msg = self
-                    .data
-                    .routes
-                    .borrow()
-                    .as_ref()
-                    .and_then(|routes| routes(url));
-                if let Some(routing_msg) = routing_msg {
-                    orders.effects.push_back(routing_msg.into());
-                }
-            }
-            UrlHandling::None => (),
-        };
-
-        self.patch_window_event_handlers();
-
-        // Update the state on page load, based
-        // on the starting URL. Must be set up on the server as well.
-        let routes = *self.data.routes.borrow();
-        routing::setup_popstate_listener(
-            enc!((self => s) move |msg| s.update(msg)),
-            enc!((self => s) move |closure| {
-                s.data.popstate_closure.replace(Some(closure));
-            }),
-            enc!((self => s) move |notification| s.notify_with_notification(notification)),
-            routes,
-            Rc::clone(&self.cfg.base_path),
-        );
-        routing::setup_hashchange_listener(
-            enc!((self => s) move |msg| s.update(msg)),
-            enc!((self => s) move |closure| {
-                s.data.hashchange_closure.replace(Some(closure));
-            }),
-            enc!((self => s) move |notification| s.notify_with_notification(notification)),
-            routes,
-            Rc::clone(&self.cfg.base_path),
-        );
-        routing::setup_link_listener(
-            enc!((self => s) move |msg| s.update(msg)),
-            enc!((self => s) move |notification| s.notify_with_notification(notification)),
-            routes,
-        );
-
-        orders.subscribe(enc!((self => s) move |url_requested| {
-            routing::url_request_handler(
-                url_requested,
-                Rc::clone(&s.cfg.base_path),
-                move |notification| s.notify_with_notification(notification),
-            )
-        }));
-
-        self.process_effect_queue(orders.effects);
-        // TODO: In the future, only run the following line if the above statement:
-        //  - didn't force-rerender vdom
-        //  - didn't schedule render
-        //  - doesn't want to skip render
-
-        self.rerender_vdom();
-
-        self
     }
 }

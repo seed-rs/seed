@@ -1,0 +1,27 @@
+#+TITLE: Org Mode for Seed
+#+AUTHOR: Ben PH
+
+* PROJ Clearing out the builder module
+** HOLD Revert clippy lints file:src/lib.rs::future_not_send
+** DONE move run into start
+** DONE Change test code to use a test-module defined init function instead of inline closure
+** STRT verify that all remaining builde/*.rs code is not easily culled
+*** DONE after_mount.rs
+- [X] enum UrlHandling - Possible to refactor UrlHandling to Option<PassToRoutes>
+  - [X] impl Default
+- [X] struct AfterMount<Mdl> defer to run changes for this problem
+  - [X] fn new
+  - [X] fn url_handling
+- [X] trait IntoAfterMount<Ms, Mdl, IntoNodes<Ms>, GMs>
+  - [X] impl for F - sticking point is [[file:src/app.rs::let app_init_cfg]]
+
+*** DONE before_mount.rs
+- [X] trait MountPoint: deleted
+- [X] enum MountType: Run into non trivial problems
+  - [X] default: can go without deriving Default
+*** DONE init.rs
+- [X] struct Init<Mdl>
+  - [X] fn new: only in tests, and is todo item to fix that
+*** PROJ build a plan on how to make this all work
+**** DONE Drep use of `Init` in test code and clear `init.rs`
+**** TODO ...

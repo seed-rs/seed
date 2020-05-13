@@ -1,11 +1,3 @@
-use web_sys::Element;
-
-// ------ MountPoint ------
-
-pub trait MountPoint {
-    fn element_getter(self) -> Box<dyn FnOnce() -> Element>;
-}
-
 // ------ MountType ------
 
 /// Describes the handling of elements already present in the mount element.
@@ -20,10 +12,4 @@ pub enum MountType {
     /// Leave the previously existing elements in the mount alone. This does not make guarantees of
     /// elements added after the [`crate::app::App`] has been mounted.
     Append,
-}
-
-impl Default for MountType {
-    fn default() -> Self {
-        Self::Append
-    }
 }
