@@ -1,4 +1,4 @@
-use super::types::{MsgListeners, RoutesFn};
+use super::types::MsgListeners;
 use super::{RenderInfo, SubManager};
 use crate::browser::util;
 use crate::virtual_dom::{El, EventHandlerManager};
@@ -15,7 +15,6 @@ pub struct AppData<Ms: 'static, Mdl> {
     pub main_el_vdom: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub hashchange_closure: StoredPopstate,
-    pub routes: RefCell<Option<RoutesFn<Ms>>>,
     pub window_event_handler_manager: RefCell<EventHandlerManager<Ms>>,
     pub sub_manager: RefCell<SubManager<Ms>>,
     pub msg_listeners: RefCell<MsgListeners<Ms>>,

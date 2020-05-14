@@ -23,11 +23,6 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms>, GMs> OrdersContainer<Ms, Mdl, INodes, GMs> 
             app,
         }
     }
-
-    pub(crate) fn merge(&mut self, mut other: Self) {
-        self.should_render = other.should_render;
-        self.effects.append(&mut other.effects);
-    }
 }
 
 impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>

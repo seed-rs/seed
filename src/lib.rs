@@ -88,7 +88,7 @@ macro_rules! map_callback_return_to_option_ms {
 
 // @TODO move to prelude (?)
 pub use crate::{
-    app::{App, AppBuilder},
+    app::App,
     browser::dom::cast::{
         to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
         to_textarea, to_touch_event,
@@ -162,9 +162,8 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 pub mod prelude {
     pub use crate::{
         app::{
-            builder::init::Init, cmds, streams, subs, AfterMount, App, BeforeMount, CmdHandle,
-            GetElement, MessageMapper, MountType, Orders, RenderInfo, StreamHandle, SubHandle,
-            UrlHandling,
+            cmds, streams, subs, App, CmdHandle, GetElement, MessageMapper, Orders, RenderInfo,
+            StreamHandle, SubHandle,
         },
         browser::dom::css_units::*,
         browser::dom::event_handler::{
@@ -204,9 +203,9 @@ pub mod tests {
     /// change.
     #[wasm_bindgen_test]
     #[allow(dead_code)]
-    pub fn app_builds() {
+    pub(crate) fn app_builds() {
         use crate as seed; // required for macros to work.
-        use crate::app::{builder::init::Init, Orders};
+        use crate::app::Orders;
         use crate::browser::dom::event_handler::mouse_ev;
         use crate::prelude::*;
         use crate::virtual_dom::{EventHandler, Node};
@@ -246,12 +245,7 @@ pub mod tests {
 
         #[wasm_bindgen]
         pub fn render() {
-            seed::App::build(|_, _| Init::new(Model::default()), update, view)
-                .mount("body")
-                .routes(routes)
-                .window_events(window_events)
-                .finish()
-                .run();
+            seed::App::start("render test app", |_, _| Model::default(), update, view);
         }
     }
 }

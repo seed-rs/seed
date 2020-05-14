@@ -23,15 +23,11 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 }
 
 /// Add a listener that handles routing for navigation events like forward and back.
-pub fn setup_popstate_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
+pub fn setup_popstate_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
-    routes: Option<fn(Url) -> Option<Ms>>,
     base_path: Rc<Vec<String>>,
-) where
-    Ms: 'static,
-{
+) {
     let closure = Closure::new(move |ev: web_sys::Event| {
         let ev = ev
             .dyn_ref::<web_sys::PopStateEvent>()
@@ -48,12 +44,6 @@ pub fn setup_popstate_listener<Ms>(
         notify(Notification::new(subs::UrlChanged(
             url.clone().skip_base_path(&base_path),
         )));
-
-        if let Some(routes) = routes {
-            if let Some(routing_msg) = routes(url) {
-                update(routing_msg);
-            }
-        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -64,15 +54,11 @@ pub fn setup_popstate_listener<Ms>(
 }
 
 /// Add a listener that handles routing when the url hash is changed.
-pub fn setup_hashchange_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
+pub fn setup_hashchange_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
-    routes: Option<fn(Url) -> Option<Ms>>,
     base_path: Rc<Vec<String>>,
-) where
-    Ms: 'static,
-{
+) {
     // todo: DRY with popstate listener
     let closure = Closure::new(move |ev: web_sys::Event| {
         let ev = ev
@@ -87,12 +73,6 @@ pub fn setup_hashchange_listener<Ms>(
         notify(Notification::new(subs::UrlChanged(
             url.clone().skip_base_path(&base_path),
         )));
-
-        if let Some(routes) = routes {
-            if let Some(routing_msg) = routes(url) {
-                update(routing_msg);
-            }
-        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -133,13 +113,7 @@ pub(crate) fn url_request_handler(
 /// Set up a listener that intercepts clicks on elements containing an Href attribute,
 /// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 #[allow(clippy::option_map_unit_fn)]
-pub fn setup_link_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
-    notify: impl Fn(Notification) + 'static,
-    routes: Option<fn(Url) -> Option<Ms>>,
-) where
-    Ms: 'static,
-{
+pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
     let closure = Closure::new(move |event: web_sys::Event| {
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
@@ -177,15 +151,6 @@ pub fn setup_link_listener<Ms>(
                             Some(event.clone()),
                         ),
                     )));
-
-                    if let Some(routes) = routes {
-                        if let Some(redirect_msg) = routes(url.clone()) {
-                            // Route internally, overriding the default history
-                            push_route(url);
-                            event.prevent_default(); // Prevent page refresh
-                            update(redirect_msg);
-                        }
-                    }
                 }
             });
     });
