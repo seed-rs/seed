@@ -2,10 +2,10 @@
 #+AUTHOR: Ben PH
 
 * PROJ Clearing out the builder module
-** HOLD Revert clippy lints file:src/lib.rs::future_not_send
+** DONE Revert clippy lints file:src/lib.rs::future_not_send
 ** DONE move run into start
 ** DONE Change test code to use a test-module defined init function instead of inline closure
-** STRT verify that all remaining builde/*.rs code is not easily culled
+** DONE verify that all remaining builde/*.rs code is not easily culled
 *** DONE after_mount.rs
 - [X] enum UrlHandling - Possible to refactor UrlHandling to Option<PassToRoutes>
   - [X] impl Default
@@ -22,6 +22,12 @@
 *** DONE init.rs
 - [X] struct Init<Mdl>
   - [X] fn new: only in tests, and is todo item to fix that
-*** PROJ build a plan on how to make this all work
-**** DONE Drep use of `Init` in test code and clear `init.rs`
-**** TODO ...
+** PROJ build a plan on how to make this all work
+**** DONE Drep use of `e_mountrInit` in test code and clear `init.rs`
+**** DONE IntoAfterMount in before_mount is problematic in `App::start`
+- we make a Box<|self, url, OrdersContainer| -> AfterMount>
+- `init` is the same type as what start gets
+- the result of the init calls `url_handling`, which casts
+- AfterMount is just a model, and whether or not it's PassToRoutes
+**** DONE MountType in before_mount
+***** replaced with a boolean named "takeover"

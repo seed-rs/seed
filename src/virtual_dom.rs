@@ -44,18 +44,15 @@ pub(crate) mod tests {
 
     struct TestModel;
 
-    fn test_init(_: seed::browser::url::Url, _: &mut impl seed::app::orders::Orders<Msg>) -> TestModel {
+    fn test_init(
+        _: seed::browser::url::Url,
+        _: &mut impl seed::app::orders::Orders<Msg>,
+    ) -> TestModel {
         TestModel
     }
 
-
     fn create_app() -> App<Msg, TestModel, Node<Msg>> {
-        App::start(
-            "output",
-            test_init,
-            |_, _, _| (),
-            |_| seed::empty(),
-        )
+        App::start("output", test_init, |_, _, _| (), |_| seed::empty())
     }
 
     fn call_patch(
@@ -824,11 +821,9 @@ pub(crate) mod tests {
 
         let app = App::start(
             "output",
-            |_, _| {
-                Model {
-                    test_value_sender: Some(test_value_sender),
-                    ..Default::default()
-                }
+            |_, _| Model {
+                test_value_sender: Some(test_value_sender),
+                ..Default::default()
             },
             update,
             |_| seed::empty(),

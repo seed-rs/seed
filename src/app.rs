@@ -5,20 +5,17 @@ use crate::browser::{
     Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
-use builder::IntoAfterMount;
-use enclose::{enc, enclose};
+use enclose::enclose;
 use std::{
     any::Any,
     cell::{Cell, RefCell},
     collections::VecDeque,
-    marker::PhantomData,
     rc::Rc,
 };
-use types::{RoutesFn, SinkFn, UpdateFn, ViewFn, WindowEventsFn};
+use types::{UpdateFn, ViewFn};
 use wasm_bindgen::closure::Closure;
 use web_sys::Element;
 
-pub(crate) mod builder;
 pub mod cfg;
 pub mod cmd_manager;
 pub mod cmds;
@@ -34,7 +31,6 @@ pub mod sub_manager;
 pub mod subs;
 pub mod types;
 
-use builder::{AfterMount, MountType, UrlHandling};
 pub use cfg::{AppCfg, AppInitCfg};
 pub use cmd_manager::{CmdHandle, CmdManager};
 pub use data::AppData;
@@ -47,9 +43,6 @@ pub use stream_manager::{StreamHandle, StreamManager};
 pub use sub_manager::{Notification, SubHandle, SubManager};
 
 pub struct UndefinedGMsg;
-
-type OptDynInitCfg<Ms, Mdl, INodes, GMs> =
-    Option<AppInitCfg<Ms, Mdl, INodes, GMs, dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>>;
 
 /// Determines if an update should cause the `VDom` to rerender or not.
 pub enum ShouldRender {
@@ -64,8 +57,6 @@ where
     Mdl: 'static,
     INodes: IntoNodes<Ms>,
 {
-    /// Temporary app configuration that is removed after app begins running.
-    pub init_cfg: OptDynInitCfg<Ms, Mdl, INodes, GMs>,
     /// App configuration available for the entire application lifetime.
     pub cfg: Rc<AppCfg<Ms, Mdl, INodes, GMs>>,
     /// Mutable app state.
@@ -83,7 +74,6 @@ impl<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>, GMs> ::std::fmt::Debug
 impl<Ms, Mdl, INodes: IntoNodes<Ms>, GMs> Clone for App<Ms, Mdl, INodes, GMs> {
     fn clone(&self) -> Self {
         Self {
-            init_cfg: None,
             cfg: Rc::clone(&self.cfg),
             data: Rc::clone(&self.data),
         }
@@ -156,8 +146,6 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         // Allows panic messages to output to the browser console.error.
         console_error_panic_hook::set_once();
 
-        let root_element = root_element.get_element().expect("get root element");
-
         let base_path: Rc<Vec<String>> = Rc::new(
             util::document()
                 .query_selector("base")
@@ -174,72 +162,58 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 .unwrap_or_default(),
         );
 
-        let app_init_cfg = AppInitCfg {
-            mount_type: MountType::Takeover,
-            phantom: PhantomData,
+        // let app_init_cfg = AppInitCfg {
+        //     takeover: true,
+        //     phantom: PhantomData,
             // TODO builder/after_mount/into_after_mount() needs to be cleared out.
-            into_after_mount: Box::new({
-                let base_path = Rc::clone(&base_path);
-                move |url: Url,
-                      orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
-                      -> AfterMount<Mdl> {
-                    let url = url.skip_base_path(&base_path);
-                    let model = init(url, orders);
-                    AfterMount::new(model).url_handling(UrlHandling::None)
-                }
-            }) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
-        };
-        let mut app = Self::new(
-            update,
-            None,
-            view,
-            root_element,
-            None,
-            None,
-            Some(app_init_cfg),
-            base_path,
-        );
+            // makes a function that takes Url and orders
+            // into_after_mount: Box::new({
+            //     let base_path = Rc::clone(&base_path);
+            //     move |url: Url,
+            //           orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
+            //           -> AfterMount<Mdl> {
+            //         let url = url.skip_base_path(&base_path);
+            //         let model = init(url, orders);
+            //         AfterMount::new(model).url_handling(false)
+            //     }
+            // }) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
+        // };
+
+        let root_element = root_element.get_element().expect("get root element");
+        let app = Self::new(update, view, root_element, base_path.clone());
 
         // TODO This is all taken from the deprecated run function. It needs to be cleaned up
         {
-            let AppInitCfg {
-                mount_type,
-                into_after_mount,
-                ..
-            } = app.init_cfg.take().expect(
-                "`init_cfg` should be set in `App::new` which is called from `AppBuilder::build_and_start`",
-            );
-
             // Bootstrap the virtual DOM.
-            app.data
-                .main_el_vdom
-                .replace(Some(app.bootstrap_vdom(mount_type)));
-
             let mut orders = OrdersContainer::new(app.clone());
-            let AfterMount {
-                model,
-                url_handling,
-            } = into_after_mount.into_after_mount(Url::current(), &mut orders);
+            // let after_mount = AfterMount {
+            let model = init(Url::current().skip_base_path(&base_path), &mut orders);
+            let url_pass_to_routes = false;
+            // };
+                // app_init_cfg
+                // .into_after_mount
+                // .into_after_mount(Url::current(), &mut orders);
 
             app.data.model.replace(Some(model));
+            app.data
+                .main_el_vdom
+                .replace(Some(El::empty(Tag::Placeholder)));
 
-            match url_handling {
-                UrlHandling::PassToRoutes => {
-                    let url = Url::current();
+            // the ONLY place in the system this is checked.
+            if url_pass_to_routes {
+                let url = Url::current();
 
-                    app.notify(subs::UrlChanged(url.clone()));
+                app.notify(subs::UrlChanged(url.clone()));
 
-                    let routing_msg = app
-                        .data
-                        .routes
-                        .borrow()
-                        .as_ref()
-                        .and_then(|routes| routes(url));
-                    if let Some(routing_msg) = routing_msg {
-                        orders.effects.push_back(routing_msg.into());
-                    }
+                let routing_msg = app
+                    .data
+                    .routes
+                    .borrow()
+                    .as_ref()
+                    .and_then(|routes| routes(url));
+                if let Some(routing_msg) = routing_msg {
+                    orders.effects.push_back(routing_msg.into());
                 }
-                UrlHandling::None => (),
             };
 
             app.patch_window_event_handlers();
@@ -248,30 +222,30 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             // on the starting URL. Must be set up on the server as well.
             let routes = *app.data.routes.borrow();
             routing::setup_popstate_listener(
-                enc!((app => s) move |msg| s.update(msg)),
-                enc!((app => s) move |closure| {
+                enclose!((app => s) move |msg| s.update(msg)),
+                enclose!((app => s) move |closure| {
                     s.data.popstate_closure.replace(Some(closure));
                 }),
-                enc!((app => s) move |notification| s.notify_with_notification(notification)),
+                enclose!((app => s) move |notification| s.notify_with_notification(notification)),
                 routes,
                 Rc::clone(&app.cfg.base_path),
             );
             routing::setup_hashchange_listener(
-                enc!((app => s) move |msg| s.update(msg)),
-                enc!((app => s) move |closure| {
+                enclose!((app => s) move |msg| s.update(msg)),
+                enclose!((app => s) move |closure| {
                     s.data.hashchange_closure.replace(Some(closure));
                 }),
-                enc!((app => s) move |notification| s.notify_with_notification(notification)),
+                enclose!((app => s) move |notification| s.notify_with_notification(notification)),
                 routes,
                 Rc::clone(&app.cfg.base_path),
             );
             routing::setup_link_listener(
-                enc!((app => s) move |msg| s.update(msg)),
-                enc!((app => s) move |notification| s.notify_with_notification(notification)),
+                enclose!((app => s) move |msg| s.update(msg)),
+                enclose!((app => s) move |notification| s.notify_with_notification(notification)),
                 routes,
             );
 
-            orders.subscribe(enc!((app => s) move |url_requested| {
+            orders.subscribe(enclose!((app => s) move |url_requested| {
                 routing::url_request_handler(
                     url_requested,
                     Rc::clone(&s.cfg.base_path),
@@ -370,26 +344,21 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
     #[allow(clippy::too_many_arguments)]
     pub(super) fn new(
         update: UpdateFn<Ms, Mdl, INodes, GMs>,
-        sink: Option<SinkFn<Ms, Mdl, INodes, GMs>>,
         view: ViewFn<Mdl, INodes>,
         mount_point: Element,
-        routes: Option<RoutesFn<Ms>>,
-        window_events: Option<WindowEventsFn<Ms, Mdl>>,
-        init_cfg: OptDynInitCfg<Ms, Mdl, INodes, GMs>,
         base_path: Rc<Vec<String>>,
     ) -> Self {
         let window = util::window();
         let document = window.document().expect("get window's document");
 
         Self {
-            init_cfg,
             cfg: Rc::new(AppCfg {
                 document,
                 mount_point,
                 update,
-                sink,
+                sink: None,
                 view,
-                window_events,
+                window_events: None,
                 base_path,
             }),
             data: Rc::new(AppData {
@@ -398,7 +367,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 main_el_vdom: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
                 hashchange_closure: RefCell::new(None),
-                routes: RefCell::new(routes),
+                routes: RefCell::new(None),
                 window_event_handler_manager: RefCell::new(EventHandlerManager::new()),
                 sub_manager: RefCell::new(SubManager::new()),
                 msg_listeners: RefCell::new(Vec::new()),
@@ -412,14 +381,14 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
     /// Bootstrap the dom with the vdom by taking over all children of the mount point and
     /// replacing them with the vdom if requested. Will otherwise ignore the original children of
     /// the mount point.
-    fn bootstrap_vdom(&self, mount_type: MountType) -> El<Ms> {
+    fn bootstrap_vdom(&self, takeover: bool) -> El<Ms> {
         // "new" name is for consistency with `update` function.
         // this section parent is a placeholder, so we can iterate over children
         // in a way consistent with patching code.
         let mut new = El::empty(Tag::Placeholder);
 
         // Map the DOM's elements onto the virtual DOM if requested to takeover.
-        if mount_type == MountType::Takeover {
+        if takeover {
             // Construct a vdom from the root element. Subsequently strip the workspace so that we
             // can recreate it later - this is a kind of simple way to avoid missing nodes (but
             // not entirely correct).
@@ -437,7 +406,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
 
         // Recreate the needed nodes. Only do this if requested to takeover the mount point since
         // it should only be needed here.
-        if mount_type == MountType::Takeover {
+        if takeover {
             // TODO: Please refer to [issue #277](https://github.com/seed-rs/seed/issues/277)
             virtual_dom_bridge::assign_ws_nodes_to_el(&util::document(), &mut new);
 

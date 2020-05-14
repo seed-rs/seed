@@ -52,12 +52,6 @@
     clippy::use_self,
     clippy::single_match_else,
     clippy::must_use_candidate,
-
-    // temporary clearing some clippys for dev
-    // TODO: CRITICAL! Remove these before merging into master.
-    clippy::future_not_send,
-    dead_code,
-    clippy::used_underscore_binding
 )]
 #![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
 
@@ -211,7 +205,7 @@ pub mod tests {
     #[allow(dead_code)]
     pub(crate) fn app_builds() {
         use crate as seed; // required for macros to work.
-        use crate::app::{Orders};
+        use crate::app::Orders;
         use crate::browser::dom::event_handler::mouse_ev;
         use crate::prelude::*;
         use crate::virtual_dom::{EventHandler, Node};
@@ -251,12 +245,7 @@ pub mod tests {
 
         #[wasm_bindgen]
         pub fn render() {
-            seed::App::start(
-                "render test app",
-                |_, _| Model::default(),
-                update,
-                view,
-            );
+            seed::App::start("render test app", |_, _| Model::default(), update, view);
         }
     }
 }
