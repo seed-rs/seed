@@ -165,18 +165,18 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         // let app_init_cfg = AppInitCfg {
         //     takeover: true,
         //     phantom: PhantomData,
-            // TODO builder/after_mount/into_after_mount() needs to be cleared out.
-            // makes a function that takes Url and orders
-            // into_after_mount: Box::new({
-            //     let base_path = Rc::clone(&base_path);
-            //     move |url: Url,
-            //           orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
-            //           -> AfterMount<Mdl> {
-            //         let url = url.skip_base_path(&base_path);
-            //         let model = init(url, orders);
-            //         AfterMount::new(model).url_handling(false)
-            //     }
-            // }) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
+        // TODO builder/after_mount/into_after_mount() needs to be cleared out.
+        // makes a function that takes Url and orders
+        // into_after_mount: Box::new({
+        //     let base_path = Rc::clone(&base_path);
+        //     move |url: Url,
+        //           orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
+        //           -> AfterMount<Mdl> {
+        //         let url = url.skip_base_path(&base_path);
+        //         let model = init(url, orders);
+        //         AfterMount::new(model).url_handling(false)
+        //     }
+        // }) as Box<dyn IntoAfterMount<Ms, Mdl, INodes, GMs>>,
         // };
 
         let root_element = root_element.get_element().expect("get root element");
@@ -190,9 +190,9 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             let model = init(Url::current().skip_base_path(&base_path), &mut orders);
             let url_pass_to_routes = false;
             // };
-                // app_init_cfg
-                // .into_after_mount
-                // .into_after_mount(Url::current(), &mut orders);
+            // app_init_cfg
+            // .into_after_mount
+            // .into_after_mount(Url::current(), &mut orders);
 
             app.data.model.replace(Some(model));
             app.data
