@@ -122,6 +122,7 @@ members = [
     "examples/component_builder",
     "examples/counter",
     "examples/canvas",
+    "examples/charts",
     "examples/custom_elements",
     "examples/drop_zone",
     "examples/el_key",
