@@ -245,7 +245,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         AppBuilder::new(update, view)
     }
 
-    /// Invoke your `update` function with provided message`. 
+    /// Invoke your `update` function with provided message.
     pub fn update(&self, message: Ms) {
         self.update_with_option(Some(message));
     }
@@ -556,10 +556,8 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 .after_next_render_callbacks
                 .replace(Vec::new())
                 .into_iter()
-                .map(|callback| {
-                    Effect::TriggeredHandler(Box::new(move || callback(render_info)))
-                })
-                .collect()
+                .map(|callback| Effect::TriggeredHandler(Box::new(move || callback(render_info))))
+                .collect(),
         );
     }
 

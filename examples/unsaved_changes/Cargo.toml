@@ -9,4 +9,3 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-web-sys = { version = "0.3.39", features = ["BeforeUnloadEvent"] }

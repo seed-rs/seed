@@ -62,7 +62,6 @@ How to make HTTP request using Fetch API.
 Classic TodoMVC example with Local Storage.
 
 ### [Unsaved changes](unsaved_changes)
-
 How to prevent navigating away when there are unsaved changes on the website.
 
 ### [Update from JS](update_from_js)

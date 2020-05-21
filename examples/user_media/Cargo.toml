@@ -16,7 +16,6 @@ version = "0.3.39"
 features = [
     "MediaDevices",
     "MediaStreamConstraints",
-    "Navigator",
     "MediaStream",
     "HtmlMediaElement",
 ]
