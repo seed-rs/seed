@@ -558,8 +558,10 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 .after_next_render_callbacks
                 .replace(Vec::new())
                 .into_iter()
-                .map(|callback| Effect::Msg(callback(render_info)))
-                .collect(),
+                .map(|callback| {
+                    Effect::TriggeredHandler(Box::new(move || callback(render_info)))
+                })
+                .collect()
         );
     }
 
