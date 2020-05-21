@@ -74,7 +74,7 @@ impl<Ms: 'static> SubManager<Ms> {
         }
     }
 
-    pub fn notify(&self, notification: &Notification) -> Vec<Box<dyn Fn() -> Option<Ms>>> {
+    pub fn notify(&self, notification: &Notification) -> Vec<Box<dyn FnOnce() -> Option<Ms>>> {
         self.subs
             .borrow()
             .get(&notification.type_id)
@@ -84,8 +84,8 @@ impl<Ms: 'static> SubManager<Ms> {
                     .map(|subscription| {
                         let handler = Rc::clone(&subscription.handler);
                         let message = Rc::clone(&notification.message);
-                        let triggered_handler: Box<dyn Fn() -> Option<Ms>> =
-                            Box::new(move || handler(Rc::clone(&message)));
+                        let triggered_handler: Box<dyn FnOnce() -> Option<Ms>> =
+                            Box::new(move || handler(message));
                         triggered_handler
                     })
                     .collect()
