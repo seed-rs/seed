@@ -5,6 +5,9 @@
 - Fixed `base_path` with a trailing slash parsing / handling.
 - Fixed `C` macro memory / WASM file size issue.
 - Added example `unsaved_changes` (#459).
+- Fixed `UrlRequested` handling (#459).
+- [BREAKING] Added `Effect` variant `TriggeredHandler`.
+- [BREAKING] Renamed module `effects` to `effect`.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
