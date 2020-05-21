@@ -258,7 +258,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
     /// The model stored in inner is the old model; `updated_model` is a newly-calculated one.
     pub fn update(&self, message: Ms) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
-        queue.push_front(message.into());
+        queue.push_front(Effect::Msg(Some(message)));
         self.process_effect_queue(queue);
     }
 
@@ -293,6 +293,10 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 }
                 Effect::Notification(notification) => {
                     let mut new_effects = self.process_queue_notification(&notification);
+                    queue.append(&mut new_effects);
+                }
+                Effect::TriggeredHandler(handler) => {
+                    let mut new_effects = self.process_queue_message(handler());
                     queue.append(&mut new_effects);
                 }
             }
@@ -433,21 +437,24 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             .borrow()
             .notify(notification)
             .into_iter()
-            .map(Effect::Msg)
+            .map(Effect::TriggeredHandler)
             .collect()
     }
 
-    fn process_queue_message(&self, message: Ms) -> VecDeque<Effect<Ms, GMs>> {
-        for l in self.data.msg_listeners.borrow().iter() {
-            (l)(&message)
-        }
-
+    fn process_queue_message(&self, message: Option<Ms>) -> VecDeque<Effect<Ms, GMs>> {
         let mut orders = OrdersContainer::new(self.clone());
-        (self.cfg.update)(
-            message,
-            &mut self.data.model.borrow_mut().as_mut().unwrap(),
-            &mut orders,
-        );
+
+        if let Some(message) = message {
+            for l in self.data.msg_listeners.borrow().iter() {
+                (l)(&message)
+            }
+
+            (self.cfg.update)(
+                message,
+                &mut self.data.model.borrow_mut().as_mut().unwrap(),
+                &mut orders,
+            );
+        }
 
         self.patch_window_event_handlers();
 
@@ -551,7 +558,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 .after_next_render_callbacks
                 .replace(Vec::new())
                 .into_iter()
-                .filter_map(|callback| callback(render_info).map(Effect::Msg))
+                .map(|callback| Effect::Msg(callback(render_info)))
                 .collect(),
         );
     }
@@ -618,9 +625,8 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                     .borrow()
                     .as_ref()
                     .and_then(|routes| routes(url));
-                if let Some(routing_msg) = routing_msg {
-                    orders.effects.push_back(routing_msg.into());
-                }
+
+                orders.effects.push_back(Effect::Msg(routing_msg));
             }
             UrlHandling::None => (),
         };
@@ -654,13 +660,17 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
             routes,
         );
 
-        orders.subscribe(enc!((self => s) move |url_requested| {
-            routing::url_request_handler(
-                url_requested,
-                Rc::clone(&s.cfg.base_path),
-                move |notification| s.notify_with_notification(notification),
-            )
-        }));
+        self.data.sub_manager.borrow_mut().subscribe_with_priority(
+            enc!((self => s) move |url_requested| {
+                routing::url_request_handler(
+                    url_requested,
+                    Rc::clone(&s.cfg.base_path),
+                    move |notification| s.notify_with_notification(notification),
+                );
+                None
+            }),
+            i8::min_value(),
+        );
 
         self.process_effect_queue(orders.effects);
         // TODO: In the future, only run the following line if the above statement:

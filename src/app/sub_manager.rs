@@ -25,7 +25,7 @@ impl<Ms: 'static> SubManager<Ms> {
         &mut self,
         handler: impl FnOnce(SubMs) -> Option<Ms> + Clone + 'static,
     ) {
-        self.subscribe_with_priority(handler, 0);
+        self.subscribe_with_priority(handler, i8::default());
     }
 
     pub(crate) fn subscribe_with_priority<SubMs: 'static + Clone>(
@@ -74,14 +74,20 @@ impl<Ms: 'static> SubManager<Ms> {
         }
     }
 
-    pub fn notify(&self, notification: &Notification) -> Vec<Ms> {
+    pub fn notify(&self, notification: &Notification) -> Vec<Box<dyn Fn() -> Option<Ms>>> {
         self.subs
             .borrow()
             .get(&notification.type_id)
             .map(|subscriptions| {
                 subscriptions
                     .values()
-                    .filter_map(|subscription| (&subscription.handler)(&notification.message))
+                    .map(|subscription| {
+                        let handler = Rc::clone(&subscription.handler);
+                        let message = Rc::clone(&notification.message);
+                        let triggered_handler: Box<dyn Fn() -> Option<Ms>> =
+                            Box::new(move || handler(Rc::clone(&message)));
+                        triggered_handler
+                    })
                     .collect()
             })
             .unwrap_or_default()
@@ -113,7 +119,7 @@ impl Drop for SubHandle {
 struct Subscription<Ms> {
     type_id: TypeId,
     id: Uuid,
-    handler: Box<dyn Fn(&Box<dyn Any>) -> Option<Ms>>,
+    handler: Rc<dyn Fn(Rc<dyn Any>) -> Option<Ms>>,
     priority: i8,
 }
 
@@ -134,7 +140,7 @@ impl<Ms: 'static> Subscription<Ms> {
         let handler = move |sub_msg: SubMs| handler.clone()(sub_msg);
 
         // Convert `Fn(SubMs)` to `Fn(&Box<dyn Any>)` where `Any` is `SubMs`.
-        let handler = move |sub_msg: &Box<dyn Any>| {
+        let handler = move |sub_msg: Rc<dyn Any>| {
             let sub_msg = sub_msg
                 .downcast_ref::<SubMs>()
                 .expect("downcast to `SubMs`");
@@ -144,9 +150,20 @@ impl<Ms: 'static> Subscription<Ms> {
         Self {
             type_id: TypeId::of::<SubMs>(),
             id: Uuid::new_v4(),
-            handler: Box::new(handler),
+            handler: Rc::new(handler),
             priority,
         }
+    }
+}
+
+impl<Ms> fmt::Debug for Subscription<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Subscription")
+            .field("type_id", &self.type_id)
+            .field("id", &self.id)
+            .field("handler", &"Box<dyn Fn(&Box<dyn Any>) -> Option<Ms>>")
+            .field("priority", &self.priority)
+            .finish()
     }
 }
 
@@ -154,14 +171,14 @@ impl<Ms: 'static> Subscription<Ms> {
 
 pub struct Notification {
     type_id: TypeId,
-    message: Box<dyn Any>,
+    message: Rc<dyn Any>,
 }
 
 impl Notification {
     pub fn new<SubMs: 'static + Any + Clone>(message: SubMs) -> Self {
         Self {
             type_id: TypeId::of::<SubMs>(),
-            message: Box::new(message),
+            message: Rc::new(message),
         }
     }
 }

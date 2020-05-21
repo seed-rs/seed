@@ -67,7 +67,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
     }
 
     fn send_msg(&mut self, msg: Ms) -> &mut Self {
-        self.effects.push_back(msg.into());
+        self.effects.push_back(Effect::Msg(Some(msg)));
         self
     }
 
