@@ -26,7 +26,7 @@ pub mod cfg;
 pub mod cmd_manager;
 pub mod cmds;
 pub mod data;
-pub mod effects;
+pub mod effect;
 pub mod get_element;
 pub mod message_mapper;
 pub mod orders;
@@ -44,7 +44,7 @@ pub use builder::{
 pub use cfg::{AppCfg, AppInitCfg};
 pub use cmd_manager::{CmdHandle, CmdManager};
 pub use data::AppData;
-pub use effects::Effect;
+pub use effect::Effect;
 pub use get_element::GetElement;
 pub use message_mapper::MessageMapper;
 pub use orders::{Orders, OrdersContainer, OrdersProxy};
