@@ -4,7 +4,7 @@
 [![Built with cargo-make](https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg)](https://sagiegurari.github.io/cargo-make)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/seed-rs/seed-rs.org/master/seed_branding/seed_logo.min.svg" width="256" title="Seed logo">
+  <img src="https://raw.githubusercontent.com/seed-rs/seed-rs.org/81ed1acc77062ede3295683f21f2d39611843192/seed_branding/seed_logo.min.svg" width="256" title="Seed logo">
 </p>
 
 ### [Website](https://seed-rs.org) | [Forum](https://seed.discourse.group) | [Chat](https://discord.gg/JHHcHp5)
