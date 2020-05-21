@@ -45,6 +45,7 @@ version = "0.3.39"
 features = [
     "AbortController",
     "AbortSignal",
+    "BeforeUnloadEvent",
     "Blob",
     "BinaryType",
     "CanvasRenderingContext2d",
@@ -83,6 +84,7 @@ features = [
     "Location",
     "MessageEvent",
     "MouseEvent",
+    "Navigator",
     "Node",
     "NodeList",
     "Performance",
