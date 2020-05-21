@@ -61,6 +61,10 @@ How to make HTTP request using Fetch API.
 ### [Todo MVC](todomvc)
 Classic TodoMVC example with Local Storage.
 
+### [Unsaved changes](unsaved_changes)
+
+How to prevent navigating away when there are unsaved changes on the website.
+
 ### [Update from JS](update_from_js)
 How to trigger `update` function from Javascript world.
 You'll also see how to call JS functions from Rust.
