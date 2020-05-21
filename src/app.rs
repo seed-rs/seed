@@ -245,20 +245,18 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
         AppBuilder::new(update, view)
     }
 
-    /// This runs whenever the state is changed, ie the user-written update function is called.
-    /// It updates the state, and any DOM elements affected by this change.
-    /// todo this is where we need to compare against differences and only update nodes affected
-    /// by the state change.
-    ///
-    /// We re-create the whole virtual dom each time (Is there a way around this? Probably not without
-    /// knowing what vars the model holds ahead of time), but only edit the rendered, `web_sys` dom
-    /// for things that have been changed.
-    /// We re-render the virtual DOM on every change, but (attempt to) only change
-    /// the actual DOM, via `web_sys`, when we need.
-    /// The model stored in inner is the old model; `updated_model` is a newly-calculated one.
+    /// Invoke your `update` function with provided message`. 
     pub fn update(&self, message: Ms) {
+        self.update_with_option(Some(message));
+    }
+
+    /// Invoke your `update` function with provided message.
+    ///
+    /// If the message is `None`, then your `update` won't be invoked,
+    /// but rerender will be still scheduled.
+    pub fn update_with_option(&self, message: Option<Ms>) {
         let mut queue: VecDeque<Effect<Ms, GMs>> = VecDeque::new();
-        queue.push_front(Effect::Msg(Some(message)));
+        queue.push_front(Effect::Msg(message));
         self.process_effect_queue(queue);
     }
 
@@ -567,11 +565,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
 
     pub fn mailbox(&self) -> Mailbox<Ms> {
         Mailbox::new(enclose!((self => s) move |option_message| {
-            if let Some(message) = option_message {
-                s.update(message);
-            } else {
-                s.rerender_vdom();
-            }
+            s.update_with_option(option_message);
         }))
     }
 
