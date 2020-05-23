@@ -119,6 +119,7 @@ members = [
     "examples/animation",
     "examples/auth",
     "examples/bunnies",
+    "examples/component_builder",
     "examples/counter",
     "examples/canvas",
     "examples/custom_elements",

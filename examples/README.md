@@ -22,6 +22,9 @@ Intended as a demo of [Shipyard](https://github.com/leudz/shipyard) (Entity Comp
 ### [Canvas](canvas)
 How to make a canvas element and use `ElRef`s.
 
+## [Component builder](component_builder)
+How to write reusable views / components with builder pattern.
+
 ### [Counter](counter)
 Intended as a demo of basic functionality.
 
