@@ -5,6 +5,7 @@
 - Tomáš Lauer
 - Lodewijk Antonides
 - António Cascalheira
+- Shawn MacIntyre
 
 ---
 
