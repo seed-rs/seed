@@ -126,6 +126,7 @@ members = [
     "examples/drop_zone",
     "examples/el_key",
     "examples/graphql",
+    "examples/i18n",
     "examples/markdown",
     "examples/fetch",
     "examples/pages",
