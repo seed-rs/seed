@@ -1,32 +1,29 @@
 use itertools::Itertools;
 use seed::{prelude::*, *};
 
+#[derive(Clone)]
+pub struct Tooltip {
+    pub position: (i32, i32),
+    pub data: (f64, f64),
+}
+
 pub fn chart<T: Clone + 'static>(
     data: &[(f64, f64)],
-    onenter: impl Fn(i32, i32) -> T + Clone + 'static,
+    onenter: impl Fn(Tooltip) -> T + Clone + 'static,
     onout: T,
 ) -> Node<T> {
     use At::*;
     // domain
     let x_bounds = data.iter().map(|(x, _)| x).minmax().into_option().unwrap();
 
-    // let y_bounds = data.iter().map(|(_, y)| y).minmax().into_option().unwrap();
-
     let padding = 30;
-    let width = 800;
-    let height = 500;
+    let width = 600;
+    let height = 300;
 
-    // let n = data.len() as f64;
-    let n = width as f64;
-    let dx = (x_bounds.1 - x_bounds.0) / (n - (2 * padding) as f64); // scale factor
-    let ticks_num = 15;
-    let ticks_step = (
-        (width - 2 * padding) / ticks_num,
-        (height - 2 * padding) / ticks_num,
-    );
+    let dx = (x_bounds.1 - x_bounds.0) / (width as f64 - (2 * padding) as f64); // scale factor
     svg![
         class!["chart"],
-        style!{ St::Display => "block" },
+        style! { St::Display => "block" },
         attrs! {
             ViewBox => format!("0 0 {} {}", width, height),
         },
@@ -35,31 +32,33 @@ pub fn chart<T: Clone + 'static>(
             line_![attrs! {
                 X1 => padding,
                 X2 => width - padding,
-                Y1 => height/2,
-                Y2 => height/2,
+                Y1 => height - padding,
+                Y2 => height - padding,
                 Stroke => "#ccc",
             }],
-            (ticks_step.0..(width - 2 * padding))
-                .step_by(ticks_step.0)
-                .map(|i| rect![attrs! {
-                    X => i + padding,
-                    Y => "50%",
+            g![
+                class!["x-ticks"],
+                (1..25).map(|i| rect![attrs! {
+                    X => (i as f64 * 0.25) / dx + padding as f64 - 0.5,
+                    Y => height - padding,
                     Width => 1,
-                    Height => 3,
-                    Fill => "#999",
+                    Height => if i % 2 == 0 { 3 } else { 2 },
+                    Fill => if i % 2 == 0 { "#999" } else { "#bbb" },
                 }]),
-            (ticks_step.0..(width - 2 * padding))
-                .step_by(ticks_step.0)
-                .map(|i| text![
+            ],
+            g![
+                class!["x-labels"],
+                (0..13).map(|i| text![
                     style! {St::FontSize => px(10)},
                     attrs! {
+                        X => (i as f64 * 0.5) / dx + padding as f64 - 0.5,
+                        Y => height - padding + 20,
                         Fill => "#999",
                         TextAnchor => "middle",
-                        X => i + padding,
-                        Y => height/2 + 20,
                     },
-                    format!("{:.2}", (i as f64)*dx),
+                    format!("{:.1}", (i as f64 * 0.5)),
                 ]),
+            ],
         ],
         g![
             class!["y-axis"],
@@ -70,27 +69,29 @@ pub fn chart<T: Clone + 'static>(
                 Y2 => height - padding,
                 Stroke => "#ccc",
             }],
-            (ticks_step.1..(height - 2 * padding))
-                .step_by(ticks_step.1)
-                .map(|i| rect![attrs! {
-                    X => padding - 3,
-                    Y => i + padding,
-                    Width => 3,
+            g![
+                class!["y-ticks"],
+                (1..11).map(|i| rect![attrs! {
+                    X => padding - if i % 2 == 0 { 3 } else { 2 },
+                    Y => (height - padding) as f64 - (i as f64 * 0.25) / dx - 0.5, // -0.5 to center rect
+                    Width => if i % 2 == 0 { 3 } else { 2 },
                     Height => 1,
-                    Fill => "#999",
+                    Fill => if i % 2 == 0 { "#999" } else { "#bbb" },
                 }],),
-            (ticks_step.1..(height - 2 * padding))
-                .step_by(ticks_step.1)
-                .map(|i| text![
+            ],
+            g![
+                class!["y-labels"],
+                (0..6).map(|i| text![
                     style! {St::FontSize => px(10)},
                     attrs! {
+                        X => padding - 6,
+                        Y => (height - padding) as f64 - (i as f64 * 0.5) / dx - 0.5, // -0.5 to center rect
                         TextAnchor => "end",
                         Fill => "#999",
-                        X => padding - 6,
-                        Y => i + padding + 4,
                     },
-                    i,
+                    format!("{:.1}", i as f64 * 0.5),
                 ]),
+            ]
         ],
         g![
             class!["plot-area"],
@@ -102,25 +103,29 @@ pub fn chart<T: Clone + 'static>(
                     .map(|(x, y)| format!(
                         "{},{}",
                         x / dx + padding as f64,
-                        -y / dx + (height/2) as f64,
+                        -y / dx + (height - padding) as f64,
                     ))
                     .collect::<Vec<_>>()
                     .join(" ")
             }],
             data.iter()
                 .enumerate()
-                .filter_map(|(i, (x, y))| if i % 30 == 0 {
+                .filter_map(|(i, (x, y))| if i % 15 == 0 {
                     let onenter = onenter.clone();
                     let onout = onout.clone();
+                    let data = (*x, *y);
                     Some(g![
                         class!["data-point"],
                         mouse_ev(Ev::MouseOver, move |event| {
-                            onenter(event.x(), event.y())
+                            onenter(Tooltip {
+                                position: (event.x(), event.y()),
+                                data,
+                            })
                         }),
                         mouse_ev(Ev::MouseOut, move |_| onout),
                         circle![attrs! {
                             Cx => x / dx + padding as f64,
-                            Cy => -y / dx + (height/2) as f64,
+                            Cy => -y / dx + (height - padding) as f64,
                             R => 2,
                             Fill => "rgba(0, 86, 91, 0.8)",
                         }],

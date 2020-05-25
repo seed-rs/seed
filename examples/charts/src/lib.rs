@@ -8,15 +8,15 @@ type Point = (f64, f64);
 
 struct Model {
     line_data: Vec<Point>,
-    tooltip: Option<(i32, i32)>,
+    tooltip: Option<line::Tooltip>,
 }
 
 impl Default for Model {
     fn default() -> Self {
-        let end = 6.0 * std::f64::consts::PI;
+        let end = 2.0 * std::f64::consts::PI;
         let n = 300;
         Self {
-            line_data: (0..n)
+            line_data: (0..=n)
                 .map(|i| {
                     let x = f64::from(i) * end / f64::from(n);
                     let y = f1(x);
@@ -29,20 +29,20 @@ impl Default for Model {
 }
 
 fn f1(x: f64) -> f64 {
-    x.sin()
+    x.sin() + 1.0
 }
 
 #[derive(Clone)]
 enum Msg {
-    ShowTooltip(i32, i32),
+    ShowTooltip(line::Tooltip),
     HideTooltip,
 }
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::ShowTooltip(x, y) => {
-            model.tooltip = Some((x, y));
-        },
+        Msg::ShowTooltip(tooltip) => {
+            model.tooltip = Some(tooltip);
+        }
         Msg::HideTooltip => {
             model.tooltip = None;
         }
@@ -58,22 +58,20 @@ fn view(model: &Model) -> Node<Msg> {
                 St::Border => "1px solid #ddd",
             },
             line::chart(&model.line_data, Msg::ShowTooltip, Msg::HideTooltip),
-            model
-                .tooltip
-                .map(|(x, y)| div![
-                    style! {
-                        St::PointerEvents => "none",
-                        St::Position => "fixed",
-                        St::Left => px(x),
-                        St::Top => px(y - 50),
-                        St::Background => "#eee",
-                        St::Border => "1px solid #ccc",
-                        St::BoxShadow => "2px 2px 4px rgba(0, 0, 0, 0.2)",
-                        St::Padding => px(10),
-                        St::BorderRadius => px(3),
-                    },
-                    format!("Tooltip {} {}", x, y),
-                ])
+            model.tooltip.as_ref().map(|tooltip| div![
+                style! {
+                    St::PointerEvents => "none",
+                    St::Position => "fixed",
+                    St::Left => px(tooltip.position.0),
+                    St::Top => px(tooltip.position.1 - 50),
+                    St::Background => "#eee",
+                    St::Border => "1px solid #ccc",
+                    St::BoxShadow => "2px 2px 4px rgba(0, 0, 0, 0.2)",
+                    St::Padding => px(10),
+                    St::BorderRadius => px(3),
+                },
+                format!("Point ({:.2}, {:.2}) ", tooltip.data.0, tooltip.data.1),
+            ])
         ]
     ]
 }
