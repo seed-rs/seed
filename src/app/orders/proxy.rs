@@ -1,33 +1,26 @@
 use super::{
-    super::{
-        App, CmdHandle, CmdManager, RenderInfo, StreamHandle, StreamManager, SubHandle,
-        UndefinedGMsg,
-    },
+    super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle},
     Orders, OrdersContainer,
 };
+
+use crate::app::cmd_manager::CmdManager;
+use crate::app::stream_manager::StreamManager;
 use crate::virtual_dom::IntoNodes;
 use futures::future::{Future, FutureExt};
 use futures::stream::{Stream, StreamExt};
 use std::{any::Any, convert::identity, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersProxy<
-    'a,
-    Ms,
-    AppMs: 'static,
-    Mdl: 'static,
-    INodes: IntoNodes<AppMs>,
-    GMs: 'static = UndefinedGMsg,
-> {
-    orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes, GMs>,
+pub struct OrdersProxy<'a, Ms, AppMs: 'static, Mdl: 'static, INodes: IntoNodes<AppMs>> {
+    orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes>,
     f: Rc<dyn Fn(Ms) -> AppMs>,
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs>, GMs>
-    OrdersProxy<'a, Ms, AppMs, Mdl, INodes, GMs>
+impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs>>
+    OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
 {
     pub fn new(
-        orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes, GMs>,
+        orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes>,
         f: impl Fn(Ms) -> AppMs + 'static,
     ) -> Self {
         OrdersProxy {
@@ -37,8 +30,8 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs>, GMs>
     }
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, GMs> Orders<Ms, GMs>
-    for OrdersProxy<'a, Ms, AppMs, Mdl, INodes, GMs>
+impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static> Orders<Ms>
+    for OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
 {
     type AppMs = AppMs;
     type Mdl = Mdl;
@@ -47,7 +40,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
     fn proxy<ChildMs: 'static>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
-    ) -> OrdersProxy<ChildMs, AppMs, Mdl, INodes, GMs> {
+    ) -> OrdersProxy<ChildMs, AppMs, Mdl, INodes> {
         let previous_f = self.f.clone();
         OrdersProxy {
             orders_container: self.orders_container,
@@ -117,24 +110,7 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static, G
         CmdManager::perform_cmd_with_handle(cmd)
     }
 
-    fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self {
-        self.orders_container.send_g_msg(g_msg);
-        self
-    }
-
-    fn perform_g_cmd(&mut self, g_cmd: impl Future<Output = GMs> + 'static) -> &mut Self {
-        self.orders_container.perform_g_cmd(g_cmd);
-        self
-    }
-
-    fn perform_g_cmd_with_handle(
-        &mut self,
-        g_cmd: impl Future<Output = GMs> + 'static,
-    ) -> CmdHandle {
-        self.orders_container.perform_g_cmd_with_handle(g_cmd)
-    }
-
-    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs> {
+    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes> {
         self.orders_container.clone_app()
     }
 

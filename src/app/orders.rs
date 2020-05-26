@@ -1,4 +1,4 @@
-use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle, UndefinedGMsg};
+use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle};
 use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
 use std::{any::Any, future::Future, rc::Rc};
@@ -12,7 +12,7 @@ pub mod proxy;
 pub use container::OrdersContainer;
 pub use proxy::OrdersProxy;
 
-pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
+pub trait Orders<Ms: 'static> {
     type AppMs: 'static;
     type Mdl: 'static;
     type INodes: IntoNodes<Self::AppMs> + 'static;
@@ -29,7 +29,7 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
     fn proxy<ChildMs: 'static>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
-    ) -> OrdersProxy<ChildMs, Self::AppMs, Self::Mdl, Self::INodes, GMs>;
+    ) -> OrdersProxy<ChildMs, Self::AppMs, Self::Mdl, Self::INodes>;
 
     /// Schedule web page rerender after model update. It's the default behaviour.
     fn render(&mut self) -> &mut Self;
@@ -119,24 +119,8 @@ pub trait Orders<Ms: 'static, GMs = UndefinedGMsg> {
         cmd: impl Future<Output = MsU> + 'static,
     ) -> CmdHandle;
 
-    /// Similar to `send_msg`, but calls function `sink` with the given global message.
-    fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self;
-
-    /// Similar to `perform_cmd`, but result is send to function `sink`.
-    fn perform_g_cmd(&mut self, g_cmd: impl Future<Output = GMs> + 'static) -> &mut Self;
-
-    /// Similar to `perform_g_cmd`, but result is send to function `sink`.
-    /// - Returns `CmdHandle` that you should save to your `Model`.
-    ///   `cmd` is aborted on the handle drop.
-    ///
-    #[must_use = "cmd is aborted on its handle drop"]
-    fn perform_g_cmd_with_handle(
-        &mut self,
-        g_cmd: impl Future<Output = GMs> + 'static,
-    ) -> CmdHandle;
-
     /// Get app instance. Cloning is cheap because `App` contains only `Rc` fields.
-    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs>;
+    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes>;
 
     /// Get the function that maps module's `Msg` to app's (root's) one.
     ///

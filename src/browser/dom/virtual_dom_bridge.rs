@@ -221,10 +221,10 @@ pub fn _remove_children(el: &web_sys::Node) {
     }
 }
 
-/// Update the attributes, style, text, and events of an element. Does not
-/// process children, and assumes the tag is the same. Assume we've identfied
-/// the most-correct pairing between new and old.
-pub fn patch_el_details<Ms>(
+// Update the attributes, style, text, and events of an element. Does not
+// process children, and assumes the tag is the same. Assume we've identfied
+// the most-correct pairing between new and old.
+pub(crate) fn patch_el_details<Ms>(
     old: &mut El<Ms>,
     new: &mut El<Ms>,
     old_el_ws: &web_sys::Node,

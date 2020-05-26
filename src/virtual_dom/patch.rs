@@ -67,12 +67,12 @@ fn insert_text<'a>(
     virtual_dom_bridge::insert_node(new_node_ws, parent, Some(next_node));
 }
 
-fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
+fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, INodes, GMs>,
+    app: &App<Ms, Mdl, INodes>,
 ) {
     // At this step, we already assume we have the right element with matching namespace, tag and
     // el_key - either by entering this func directly for the top-level, or recursively after
@@ -207,10 +207,10 @@ fn remove_text(mut old: Text, parent: &web_sys::Node) {
     old.node_ws.replace(old_node);
 }
 
-pub(crate) fn patch_els<'a, Ms, Mdl, INodes, GMs, OI, NI>(
+pub(crate) fn patch_els<'a, Ms, Mdl, INodes, OI, NI>(
     document: &Document,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, INodes, GMs>,
+    app: &App<Ms, Mdl, INodes>,
     old_el_ws: &web_sys::Node,
     old_children_iter: OI,
     new_children_iter: NI,
@@ -252,14 +252,14 @@ pub(crate) fn patch_els<'a, Ms, Mdl, INodes, GMs, OI, NI>(
 /// Routes patching through different channels, depending on the Node variant of old and new.
 /// Tries to updates the `old` node to become the `new` one.
 #[cfg(test)]
-pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>, GMs>(
+pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
     document: &Document,
     old: Node<Ms>,
     new: &'a mut Node<Ms>,
     parent: &web_sys::Node,
     next_node: Option<web_sys::Node>,
     mailbox: &Mailbox<Ms>,
-    app: &App<Ms, Mdl, INodes, GMs>,
+    app: &App<Ms, Mdl, INodes>,
 ) -> Option<&'a web_sys::Node> {
     // Old_el_ws is what we're patching, with items from the new vDOM el; or replacing.
     // We go through each combination of new and old variants to determine how to patch.

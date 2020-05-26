@@ -15,8 +15,6 @@ pub mod tests {
     wasm_bindgen_test_configure!(run_in_browser);
 
     use crate as seed;
-    use crate::app::builder::init::Init;
-    use crate::browser::util;
     use crate::virtual_dom::{patch, At, CSSValue, El, Mailbox, Node, St, Style, UpdateEl};
     use indexmap::IndexMap;
     use std::collections::HashSet;
@@ -26,13 +24,17 @@ pub mod tests {
     #[derive(Clone, Debug)]
     enum Msg {}
 
-    struct Model {}
+    struct TestModel;
 
-    fn create_app() -> seed::App<Msg, Model, Node<Msg>> {
-        seed::App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
-            // mount to the element that exists even in the default test html
-            .mount(util::body())
-            .finish()
+    fn test_init(
+        _: seed::browser::url::Url,
+        _: &mut impl seed::app::orders::Orders<Msg>,
+    ) -> TestModel {
+        TestModel
+    }
+
+    fn create_app() -> seed::App<Msg, TestModel, Node<Msg>> {
+        seed::App::start("output", self::test_init, |_, _, _| (), |_| seed::empty())
     }
 
     fn el_to_websys(mut node: Node<Msg>) -> web_sys::Node {

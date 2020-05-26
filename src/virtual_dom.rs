@@ -25,6 +25,7 @@ pub use crate::dom_entity_names::{At, Ev, St, Tag};
 
 #[cfg(test)]
 pub mod tests {
+
     use wasm_bindgen::JsCast;
     use wasm_bindgen_test::*;
     use web_sys::{self, Element};
@@ -42,13 +43,17 @@ pub mod tests {
     #[derive(Clone, Debug)]
     enum Msg {}
 
-    struct Model {}
+    struct TestModel;
 
-    fn create_app() -> App<Msg, Model, Node<Msg>> {
-        App::build(|_,_| Init::new(Model {}), |_, _, _| (), |_| seed::empty())
-            // mount to the element that exists even in the default test html
-            .mount(util::body())
-            .finish()
+    fn test_init(
+        _: seed::browser::url::Url,
+        _: &mut impl seed::app::orders::Orders<Msg>,
+    ) -> TestModel {
+        TestModel
+    }
+
+    fn create_app() -> App<Msg, TestModel, Node<Msg>> {
+        App::start("output", test_init, |_, _, _| (), |_| seed::empty())
     }
 
     fn call_patch(
@@ -57,7 +62,7 @@ pub mod tests {
         mailbox: &Mailbox<Msg>,
         old_vdom: Node<Msg>,
         mut new_vdom: Node<Msg>,
-        app: &App<Msg, Model, Node<Msg>>,
+        app: &App<Msg, TestModel, Node<Msg>>,
     ) -> Node<Msg> {
         patch::patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox, &app);
         new_vdom
@@ -815,19 +820,15 @@ pub mod tests {
             }
         }
 
-        let app = App::build(
-            |_, _| {
-                Init::new(Model {
-                    test_value_sender: Some(test_value_sender),
-                    ..Default::default()
-                })
+        let app = App::start(
+            "output",
+            |_, _| Model {
+                test_value_sender: Some(test_value_sender),
+                ..Default::default()
             },
             update,
             |_| seed::empty(),
-        )
-        .mount(seed::body())
-        .finish()
-        .run();
+        );
 
         // ACT
         app.update(Msg::Start);

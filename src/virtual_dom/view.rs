@@ -1,6 +1,9 @@
 use super::{IntoNodes, Node};
 
-#[deprecated(since = "0.7.0", note = "Use `IntoNodes` instead.")]
+#[deprecated(
+    since = "0.7.0",
+    note = "Use [`IntoNodes`](../node/into_nodes/trait.IntoNodes.html) instead."
+)]
 pub trait View<Ms>: IntoNodes<Ms> {
     fn els(self) -> Vec<Node<Ms>>;
 }

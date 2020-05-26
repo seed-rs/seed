@@ -288,6 +288,7 @@ macro_rules! attrs {
      };
 }
 
+#[deprecated(since = "0.7.0", note = "use [`C!`](macro.C!.html) instead")]
 /// Convenience macro. Ideal when there are multiple classes, and no other attrs.
 #[macro_export]
 macro_rules! class {
@@ -438,74 +439,6 @@ macro_rules! nodes {
         }
     };
 }
-
-//#[macro_export]
-//macro_rules! events {
-//    { $($event_str:expr => $handler:expr);+ } => {
-//        {
-//            let mut result = Vec::new();
-//            $(
-//                match $event_str {
-////                    _ => result.push($crate::virtual_dom::Listener::new_input($event_str.into(), $handler)),
-//
-//
-//                    _ => result.push($crate::virtual_dom::Listener::new_input($event_str.into(), $handler)),
-////
-////
-////
-////  "input" => result.push($crate::virtual_dom::Listener::new_input($event_str.into(), $handler)),
-////                    _ => result.push($crate::virtual_dom::Listener::new($event_str.into(), $handler)),
-//
-//                }
-//
-////                result.push($crate::virtual_dom::Listener::new($event_str.into(), $handler));
-//            )+
-//            result
-//        }
-//     };
-//}
-//
-
-///// Attempt to apply the correct input type based on its trigger.
-//#[macro_export]
-//macro_rules! ev2 {
-//    { $event_str:expr, $handler:expr } => {
-//        {
-//            match event_str {
-//                "input" => $crate::virtual_dom::input_ev($event_str, $handler),
-////                "change" => $crate::virtual_dom::input_ev($event_str, $handler),
-////
-////                "keydown" => $crate::virtual_dom::keyboard_ev($event_str, $handler),
-////
-////                "click" => $crate::virtual_dom::ev($event_str, $handler),
-////                "auxclick" => $crate::virtual_dom::ev($event_str, $handler),
-////                "dblclick" => $crate::virtual_dom::ev($event_str, $handler),
-////                "contextmenu" => $crate::virtual_dom::input_ev($event_str, $handler),
-//
-//                _ => $crate::virtual_dom::raw_ev($event_str, $handler),
-//
-//            }
-//        }
-//    };
-//}
-
-///// Attempt to apply the correct input type based on its trigger.
-//#[macro_export]
-//macro_rules! ev2 {
-//    { input, $handler:expr } => {
-//        {
-//            $crate::virtual_dom::input_ev("input", $handler),
-//        }
-//    };
-//    { click, $handler:expr } => {
-//        {
-//            $crate::virtual_dom::simple_ev("click", $handler),
-//        }
-//    };
-//
-//
-//
-//}
 
 #[cfg(use_nightly)]
 pub const fn wrap_debug<T>(object: T) -> dbg::WrapDebug<T> {
