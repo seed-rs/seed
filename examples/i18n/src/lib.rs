@@ -4,9 +4,10 @@
 use seed::{prelude::*, *};
 
 use fluent::{FluentArgs, FluentBundle, FluentResource, FluentValue};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use unic_langid::LanguageIdentifier;
 
-use enum_iterator::IntoEnumIterator;
 use std::borrow::Borrow;
 
 mod resource;
@@ -25,7 +26,7 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 //     Model
 // ------ ------
 #[allow(non_camel_case_types)]
-#[derive(Clone, IntoEnumIterator, PartialEq)]
+#[derive(Clone, EnumIter, PartialEq)]
 enum Lang {
     en_US,
     de_DE,
@@ -86,7 +87,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> impl IntoNodes<Msg> {
     let mut langs: Vec<Node<Msg>> = Vec::new();
-    for lang in Lang::into_enum_iter() {
+    for lang in Lang::iter() {
         langs.push(option![attrs! {At::Value => lang.id()}, lang.label()]);
     }
 
