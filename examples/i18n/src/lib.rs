@@ -25,12 +25,28 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 //     Model
 // ------ ------
+pub struct Model {
+    lang: Lang,
+    resource: FluentBundle<FluentResource>,
+}
+
+impl Default for Model {
+    fn default() -> Self {
+        Model {
+            lang: Lang::en_US,
+            resource: FluentBundle::default(),
+        }
+    }
+}
+
+// ------ Lang ------
 #[allow(non_camel_case_types)]
-#[derive(Clone, EnumIter, PartialEq)]
+#[derive(Clone, Copy, EnumIter, PartialEq)]
 enum Lang {
     en_US,
     de_DE,
 }
+
 impl Lang {
     fn id(&self) -> &str {
         match self {
@@ -42,20 +58,6 @@ impl Lang {
         match self {
             Lang::en_US => "English (US)".to_string(),
             Lang::de_DE => "Deutsch (Deutschland)".to_string(),
-        }
-    }
-}
-
-pub struct Model {
-    lang: Lang,
-    resource: FluentBundle<FluentResource>,
-}
-
-impl Default for Model {
-    fn default() -> Self {
-        Model {
-            lang: Lang::en_US,
-            resource: FluentBundle::default(),
         }
     }
 }
