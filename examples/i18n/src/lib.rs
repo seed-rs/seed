@@ -54,10 +54,10 @@ impl Lang {
             Lang::de_DE => "de-DE",
         }
     }
-    fn label(&self) -> String {
+    fn label(&self) -> &str {
         match self {
-            Lang::en_US => "English (US)".to_string(),
-            Lang::de_DE => "Deutsch (Deutschland)".to_string(),
+            Lang::en_US => "English (US)",
+            Lang::de_DE => "Deutsch (Deutschland)",
         }
     }
 }
