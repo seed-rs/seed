@@ -1,7 +1,8 @@
+use crate::app::cmd_manager::CmdManager;
 use crate::app::orders::{proxy::OrdersProxy, Orders};
+use crate::app::stream_manager::StreamManager;
 use crate::app::{
-    App, CmdHandle, CmdManager, Effect, Notification, RenderInfo, ShouldRender, StreamHandle,
-    StreamManager, SubHandle, UndefinedGMsg,
+    effect::Effect, App, CmdHandle, Notification, RenderInfo, ShouldRender, StreamHandle, SubHandle,
 };
 use crate::virtual_dom::IntoNodes;
 use futures::future::FutureExt;
@@ -9,29 +10,24 @@ use futures::stream::{Stream, StreamExt};
 use std::{any::Any, collections::VecDeque, convert::identity, future::Future, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersContainer<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>, GMs = UndefinedGMsg> {
+pub struct OrdersContainer<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>> {
     pub(crate) should_render: ShouldRender,
-    pub(crate) effects: VecDeque<Effect<Ms, GMs>>,
-    app: App<Ms, Mdl, INodes, GMs>,
+    pub(crate) effects: VecDeque<Effect<Ms>>,
+    app: App<Ms, Mdl, INodes>,
 }
 
-impl<Ms, Mdl, INodes: IntoNodes<Ms>, GMs> OrdersContainer<Ms, Mdl, INodes, GMs> {
-    pub fn new(app: App<Ms, Mdl, INodes, GMs>) -> Self {
+impl<Ms, Mdl, INodes: IntoNodes<Ms>> OrdersContainer<Ms, Mdl, INodes> {
+    pub fn new(app: App<Ms, Mdl, INodes>) -> Self {
         Self {
             should_render: ShouldRender::Render,
-            effects: VecDeque::new(),
+            effects: VecDeque::<Effect<Ms>>::new(),
             app,
         }
     }
-
-    pub(crate) fn merge(&mut self, mut other: Self) {
-        self.should_render = other.should_render;
-        self.effects.append(&mut other.effects);
-    }
 }
 
-impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms, GMs>
-    for OrdersContainer<Ms, Mdl, INodes, GMs>
+impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static> Orders<Ms>
+    for OrdersContainer<Ms, Mdl, INodes>
 {
     type AppMs = Ms;
     type Mdl = Mdl;
@@ -41,7 +37,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
     fn proxy<ChildMs: 'static>(
         &mut self,
         f: impl FnOnce(ChildMs) -> Ms + 'static + Clone,
-    ) -> OrdersProxy<ChildMs, Ms, Mdl, INodes, GMs> {
+    ) -> OrdersProxy<ChildMs, Ms, Mdl, INodes> {
         OrdersProxy::new(self, move |child_ms| f.clone()(child_ms))
     }
 
@@ -103,26 +99,7 @@ impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> Orders<Ms,
         CmdManager::perform_cmd_with_handle(cmd)
     }
 
-    fn send_g_msg(&mut self, g_msg: GMs) -> &mut Self {
-        let effect = Effect::GMsg(g_msg);
-        self.effects.push_back(effect);
-        self
-    }
-
-    fn perform_g_cmd(&mut self, cmd: impl Future<Output = GMs> + 'static) -> &mut Self {
-        let app = self.app.clone();
-        let cmd = cmd.map(move |msg| app.sink(msg));
-        CmdManager::perform_cmd(cmd);
-        self
-    }
-
-    fn perform_g_cmd_with_handle(&mut self, cmd: impl Future<Output = GMs> + 'static) -> CmdHandle {
-        let app = self.app.clone();
-        let cmd = cmd.map(move |msg| app.sink(msg));
-        CmdManager::perform_cmd_with_handle(cmd)
-    }
-
-    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes, GMs> {
+    fn clone_app(&self) -> App<Self::AppMs, Self::Mdl, Self::INodes> {
         self.app.clone()
     }
 

@@ -6,11 +6,11 @@ use crate::app::{subs, Notification};
 use std::rc::Rc;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 
-/// Add a new route using history's `push_state` method.
-///
-/// # References
-/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
-pub fn push_route<U: Into<Url>>(url: U) -> Url {
+// Add a new route using history's `push_state` method.
+//
+// # References
+// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
+pub(crate) fn push_route<U: Into<Url>>(url: U) -> Url {
     let url = url.into();
     // We use data to evaluate the path instead of the path displayed in the url.
     let data =
@@ -22,16 +22,12 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
     url
 }
 
-/// Add a listener that handles routing for navigation events like forward and back.
-pub fn setup_popstate_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
+// Add a listener that handles routing for navigation events like forward and back.
+pub(crate) fn setup_popstate_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
-    routes: Option<fn(Url) -> Option<Ms>>,
     base_path: Rc<Vec<String>>,
-) where
-    Ms: 'static,
-{
+) {
     let closure = Closure::new(move |ev: web_sys::Event| {
         let ev = ev
             .dyn_ref::<web_sys::PopStateEvent>()
@@ -46,14 +42,8 @@ pub fn setup_popstate_listener<Ms>(
         };
 
         notify(Notification::new(subs::UrlChanged(
-            url.clone().skip_base_path(&base_path),
+            url.skip_base_path(&base_path),
         )));
-
-        if let Some(routes) = routes {
-            if let Some(routing_msg) = routes(url) {
-                update(routing_msg);
-            }
-        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -63,16 +53,12 @@ pub fn setup_popstate_listener<Ms>(
     updated_listener(closure);
 }
 
-/// Add a listener that handles routing when the url hash is changed.
-pub fn setup_hashchange_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
+// Add a listener that handles routing when the url hash is changed.
+pub(crate) fn setup_hashchange_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
-    routes: Option<fn(Url) -> Option<Ms>>,
     base_path: Rc<Vec<String>>,
-) where
-    Ms: 'static,
-{
+) {
     // todo: DRY with popstate listener
     let closure = Closure::new(move |ev: web_sys::Event| {
         let ev = ev
@@ -85,14 +71,8 @@ pub fn setup_hashchange_listener<Ms>(
             .expect("cast hashchange event url to `Url`");
 
         notify(Notification::new(subs::UrlChanged(
-            url.clone().skip_base_path(&base_path),
+            url.skip_base_path(&base_path),
         )));
-
-        if let Some(routes) = routes {
-            if let Some(routing_msg) = routes(url) {
-                update(routing_msg);
-            }
-        }
     });
 
     (util::window().as_ref() as &web_sys::EventTarget)
@@ -130,16 +110,10 @@ pub(crate) fn url_request_handler(
     }
 }
 
-/// Set up a listener that intercepts clicks on elements containing an Href attribute,
-/// so we can prevent page refresh for internal links, and route internally.  Run this on load.
+// Set up a listener that intercepts clicks on elements containing an Href attribute,
+// so we can prevent page refresh for internal links, and route internally.  Run this on load.
 #[allow(clippy::option_map_unit_fn)]
-pub fn setup_link_listener<Ms>(
-    update: impl Fn(Ms) + 'static,
-    notify: impl Fn(Notification) + 'static,
-    routes: Option<fn(Url) -> Option<Ms>>,
-) where
-    Ms: 'static,
-{
+pub(crate) fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
     let closure = Closure::new(move |event: web_sys::Event| {
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
@@ -171,21 +145,12 @@ pub fn setup_link_listener<Ms>(
                     let url: Url = href.parse().expect("cast link href to `Url`");
 
                     notify(Notification::new(subs::UrlRequested(
-                        url.clone(),
+                        url,
                         subs::url_requested::UrlRequest::new(
                             subs::url_requested::UrlRequestStatus::default(),
                             Some(event.clone()),
                         ),
                     )));
-
-                    if let Some(routes) = routes {
-                        if let Some(redirect_msg) = routes(url.clone()) {
-                            // Route internally, overriding the default history
-                            push_route(url);
-                            event.prevent_default(); // Prevent page refresh
-                            update(redirect_msg);
-                        }
-                    }
                 }
             });
     });

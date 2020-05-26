@@ -4,7 +4,7 @@ use wasm_bindgen_futures::spawn_local;
 
 // ------ StreamManager ------
 
-pub struct StreamManager;
+pub(crate) struct StreamManager;
 
 impl StreamManager {
     pub fn stream(stream: impl Stream<Item = ()> + 'static) {
