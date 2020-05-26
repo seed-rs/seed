@@ -1,3 +1,2 @@
 pub mod fetch;
-pub mod routing;
-pub mod storage;
+pub(crate) mod routing;

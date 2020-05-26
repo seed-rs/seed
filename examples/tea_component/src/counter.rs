@@ -22,11 +22,11 @@ pub enum Msg {
     Decrement,
 }
 
-pub fn update<Ms: 'static, GMs>(
+pub fn update<Ms: 'static>(
     msg: Msg,
     model: &mut Model,
     on_change: impl FnOnce(i32) -> Ms,
-    orders: &mut impl Orders<Ms, GMs>,
+    orders: &mut impl Orders<Ms>,
 ) {
     match msg {
         Msg::Increment => model.value += 1,

@@ -10,7 +10,7 @@ use uuid::Uuid;
 type Subscriptions<Ms> = HashMap<TypeId, IndexMap<Uuid, Subscription<Ms>>>;
 
 #[derive(Default)]
-pub struct SubManager<Ms> {
+pub(crate) struct SubManager<Ms> {
     subs: Rc<RefCell<Subscriptions<Ms>>>,
 }
 
