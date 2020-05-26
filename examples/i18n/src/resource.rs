@@ -3,9 +3,9 @@ use std::collections::HashMap;
 mod german;
 
 #[derive(Debug)]
-pub struct Resources(HashMap<String, String>);
+pub struct Resource(HashMap<String, String>);
 
-impl Default for Resources {
+impl Default for Resource {
     fn default() -> Self {
         let ftl = String::from(
             r#"
@@ -46,13 +46,13 @@ sync-signedout-title = Connect with your {-sync-brand-name}"#,
 
         let mut m = HashMap::new();
         m.insert(String::from("en-US"), ftl);
-        Resources(m)
+        Resource(m)
     }
 }
 
-impl Resources {
+impl Resource {
     pub fn new() -> Self {
-        let mut r = Resources::default();
+        let mut r = Resource::default();
         r.insert("de-DE".to_string(), (german::S).to_string());
         r
     }

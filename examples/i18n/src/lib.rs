@@ -46,7 +46,7 @@ impl I18n {
     fn lang(&mut self, lang: Lang) -> &Self {
         self.lang = lang;
         let res = FluentResource::try_new(
-            resource::Resources::new()
+            resource::Resource::new()
                 .get(lang.id().to_string().borrow())
                 .unwrap()
                 .parse()
