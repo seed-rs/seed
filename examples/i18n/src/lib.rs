@@ -1,6 +1,3 @@
-// Some Clippy linter rules are ignored for the sake of simplicity.
-#![allow(clippy::needless_pass_by_value, clippy::trivially_copy_pass_by_ref)]
-
 use seed::{prelude::*, *};
 
 use fluent::{FluentArgs, FluentBundle, FluentResource, FluentValue};
