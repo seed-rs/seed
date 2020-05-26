@@ -1,6 +1,12 @@
 ## I18N example
 
-Intended as a demo of basic functionality.
+How to support multiple languages in your web app based on [Fluent][url_project_fluent]. 
+Includes a language selector, some sample text and FTL strings demonstrating 
+the simplicity and power of [Seed][url_project_seed] powered by [Fluent's rust crate][url_crate_fluent].
+
+[url_project_fluent]: https://projectfluent.org/
+[url_crate_fluent]: https://docs.rs/fluent/
+[url_project_seed]: https://seed-rs.org/
 
 ---
 
