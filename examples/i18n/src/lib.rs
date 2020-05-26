@@ -15,31 +15,60 @@ mod resource;
 // ------ ------
 //     Init
 // ------ ------
+const DEFAULT_LANG: Lang = Lang::en_US;
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    let mut model = Model::default();
-    change_lang(&mut model);
-    model
+    Model {
+        i18n: I18n::new(DEFAULT_LANG),
+    }
 }
 
 // ------ ------
 //     Model
 // ------ ------
 pub struct Model {
+    i18n: I18n,
+}
+
+// ------ I18n ------
+
+pub struct I18n {
     lang: Lang,
     resource: FluentBundle<FluentResource>,
 }
 
-impl Default for Model {
-    fn default() -> Self {
-        Model {
-            lang: Lang::en_US,
+impl I18n {
+    fn new(lang: Lang) -> Self {
+        let mut i18n = I18n {
+            lang,
             resource: FluentBundle::default(),
-        }
+        };
+        i18n.lang(lang);
+        i18n
+    }
+    fn lang(&mut self, lang: Lang) -> &Self {
+        self.lang = lang;
+        let res = FluentResource::try_new(
+            resource::Resources::new()
+                .get(lang.id().to_string().borrow())
+                .unwrap()
+                .parse()
+                .unwrap(),
+        )
+        .expect("Failed to parse an FTL string.");
+        let locale: LanguageIdentifier = lang.id().parse().expect("Parsing failed");
+        let mut bundle = FluentBundle::new(&[locale]);
+        bundle
+            .add_resource(res)
+            .expect("Failed to add FTL resources to the bundle.");
+
+        self.resource = bundle;
+        self
     }
 }
 
 // ------ Lang ------
+
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, EnumIter, PartialEq)]
 enum Lang {
@@ -74,11 +103,10 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::LangChanged(lang) => {
             match lang.as_str() {
-                "en-US" => model.lang = Lang::en_US,
-                "de-DE" => model.lang = Lang::de_DE,
-                _ => model.lang = Lang::en_US,
-            }
-            change_lang(model)
+                "en-US" => model.i18n.lang(Lang::en_US),
+                "de-DE" => model.i18n.lang(Lang::de_DE),
+                _ => model.i18n.lang(DEFAULT_LANG),
+            };
         }
     }
 }
@@ -113,7 +141,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
             langs,
             input_ev(Ev::Change, Msg::LangChanged),
         ],],
-        div![p!["Language in Model: ", model.lang.label()]],
+        div![p!["Language in Model: ", model.i18n.lang.label()]],
         div![],
         div![
             p![translate(model, None, "hello-world")],
@@ -142,33 +170,19 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
     ]
 }
 
-fn change_lang(model: &mut Model) {
-    let res = FluentResource::try_new(
-        resource::Resources::new()
-            .get(model.lang.id().to_string().borrow())
-            .unwrap()
-            .parse()
-            .unwrap(),
-    )
-    .expect("Failed to parse an FTL string.");
-    let locale: LanguageIdentifier = model.lang.id().parse().expect("Parsing failed");
-    let mut bundle = FluentBundle::new(&[locale]);
-    bundle
-        .add_resource(res)
-        .expect("Failed to add FTL resources to the bundle.");
-
-    model.resource = bundle;
-}
-
 fn translate(model: &Model, args: Option<&FluentArgs>, label: &str) -> String {
     let msg = model
+        .i18n
         .resource
         .get_message(label)
         .expect("Message doesn't exist.");
     let mut errors = vec![];
     let pattern = msg.value.expect("Message has no value.");
 
-    let value = model.resource.format_pattern(&pattern, args, &mut errors);
+    let value = model
+        .i18n
+        .resource
+        .format_pattern(&pattern, args, &mut errors);
     value.into()
 }
 
