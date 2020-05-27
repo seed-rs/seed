@@ -1,4 +1,5 @@
-pub static S: &'static str = r#"
+#[allow(clippy::non_ascii_literal)]
+pub static S: &str = r#"
 # Einfache Dinge sind einfach.
 hello-world = Hallo Welt.
 hello-user = {$formal ->

@@ -36,14 +36,19 @@ pub struct I18n {
 
 impl I18n {
     fn new(lang: Lang) -> Self {
-        let mut i18n = I18n {
+        let mut i18n = Self {
             lang,
             resource: FluentBundle::default(),
         };
-        i18n.lang(lang);
+        i18n.set_lang(lang);
         i18n
     }
-    fn lang(&mut self, lang: Lang) -> &Self {
+
+    const fn lang(&self) -> &Lang {
+        &self.lang
+    }
+
+    fn set_lang(&mut self, lang: Lang) -> &Self {
         self.lang = lang;
         let res = FluentResource::try_new(
             resource::Resource::new()
@@ -76,14 +81,14 @@ enum Lang {
 impl Lang {
     fn id(&self) -> &str {
         match self {
-            Lang::en_US => "en-US",
-            Lang::de_DE => "de-DE",
+            Self::en_US => "en-US",
+            Self::de_DE => "de-DE",
         }
     }
     fn label(&self) -> &str {
         match self {
-            Lang::en_US => "English (US)",
-            Lang::de_DE => "Deutsch (Deutschland)",
+            Self::en_US => "English (US)",
+            Self::de_DE => "Deutsch (Deutschland)",
         }
     }
 }
@@ -100,9 +105,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::LangChanged(lang) => {
             match lang.as_str() {
-                "en-US" => model.i18n.lang(Lang::en_US),
-                "de-DE" => model.i18n.lang(Lang::de_DE),
-                _ => model.i18n.lang(DEFAULT_LANG),
+                "en-US" => model.i18n.set_lang(Lang::en_US),
+                "de-DE" => model.i18n.set_lang(Lang::de_DE),
+                _ => model.i18n.set_lang(DEFAULT_LANG),
             };
         }
     }
@@ -138,7 +143,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
             langs,
             input_ev(Ev::Change, Msg::LangChanged),
         ],],
-        div![p!["Language in Model: ", model.i18n.lang.label()]],
+        div![p!["Language in Model: ", model.i18n.lang().label()]],
         div![],
         div![
             p![translate(model, None, "hello-world")],
@@ -179,7 +184,7 @@ fn translate(model: &Model, args: Option<&FluentArgs>, label: &str) -> String {
     let value = model
         .i18n
         .resource
-        .format_pattern(&pattern, args, &mut errors);
+        .format_pattern(pattern, args, &mut errors);
     value.into()
 }
 

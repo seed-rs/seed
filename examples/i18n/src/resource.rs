@@ -46,13 +46,13 @@ sync-signedout-title = Connect with your {-sync-brand-name}"#,
 
         let mut m = HashMap::new();
         m.insert(String::from("en-US"), ftl);
-        Resource(m)
+        Self(m)
     }
 }
 
 impl Resource {
     pub fn new() -> Self {
-        let mut r = Resource::default();
+        let mut r = Self::default();
         r.insert("de-DE".to_string(), (german::S).to_string());
         r
     }
@@ -60,7 +60,7 @@ impl Resource {
         self.0.insert(k, v);
         self
     }
-    pub fn get(&self, k: &String) -> Option<&String> {
+    pub fn get(&self, k: &str) -> Option<&String> {
         self.0.get(k)
     }
 }
