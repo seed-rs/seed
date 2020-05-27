@@ -1,8 +1,10 @@
 use super::{Result, WebSocketError};
+use js_sys::{Function, Promise};
 use serde::de::DeserializeOwned;
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
-use web_sys::MessageEvent;
+use web_sys::{Event, FileReader, MessageEvent};
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
@@ -49,7 +51,7 @@ impl WebSocketMessage {
         }
 
         if let Some(blob) = self.data.dyn_ref::<web_sys::Blob>() {
-            let bytes = JsFuture::from(blob.array_buffer())
+            let bytes = JsFuture::from(self.handle_blob(&blob))
                 .await
                 .map_err(WebSocketError::PromiseError)
                 .map(|array_buffer| js_sys::Uint8Array::new(&array_buffer))?
@@ -58,6 +60,28 @@ impl WebSocketMessage {
         }
 
         Ok(self.text()?.into_bytes())
+    }
+
+    // A fix for #470 - replace `websys::Blob::array_buffer` with `web_sys::FileReader`.
+    // Unfortunatelly `web_sys::Blob::array_buffer()` is not supported by many browsers including
+    // Internet Explorer, Opera and Safari.
+    // Full compatibility list: https://developer.mozilla.org/en-US/docs/Web/API/Blob/arrayBuffer
+    fn handle_blob(&self, blob: &web_sys::Blob) -> Promise {
+        let mut callback = Box::new(|resolve: Function, _: Function| -> () {
+            let file_reader = FileReader::new().unwrap();
+            file_reader.read_as_array_buffer(&blob).unwrap();
+
+            let onload = Closure::wrap(Box::new(move |event: Event| {
+                let file_reader: FileReader = event.target().unwrap().dyn_into().unwrap();
+                let array_buffer = file_reader.result().unwrap();
+                resolve.call1(&JsValue::NULL, &array_buffer).unwrap();
+            }) as Box<dyn Fn(_)>);
+
+            file_reader.set_onload(Some(onload.as_ref().unchecked_ref()));
+            onload.forget();
+        });
+
+        Promise::new(&mut callback)
     }
 
     /// Return message data as `Blob`.
