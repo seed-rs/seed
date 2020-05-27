@@ -1,5 +1,3 @@
-#[allow(clippy::non_ascii_literal)]
-pub static S: &str = r#"
 # Einfache Dinge sind einfach.
 hello-world = Hallo Welt.
 hello-user = {$formal ->
@@ -42,4 +40,4 @@ sync-dialog-title = {-sync-brand-name}
 sync-headline-title =
   {-sync-brand-name}: Die beste Art Deine Daten immer
   bei Dir zu haben
-sync-signedout-title = Verbinde Dich mit Deinem {-sync-brand-name}"#;
+sync-signedout-title = Verbinde Dich mit Deinem {-sync-brand-name}

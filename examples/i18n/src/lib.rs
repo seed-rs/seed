@@ -1,10 +1,10 @@
 use seed::{prelude::*, *};
 
-use fluent::{FluentArgs, FluentValue};
+use fluent::fluent_args;
 use strum::IntoEnumIterator;
 
 mod i18n;
-use crate::i18n::{I18n, Lang, translate};
+use crate::i18n::{translate, I18n, Lang};
 mod resource;
 
 // ------ ------
@@ -55,19 +55,21 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
         langs.push(option![attrs! {At::Value => lang.id()}, lang.label()]);
     }
 
-    let mut args_male_sg = FluentArgs::new();
-    args_male_sg.insert("userName", FluentValue::from("Stephan"));
-    args_male_sg.insert("photoCount", FluentValue::from(1));
-    args_male_sg.insert("userGender", FluentValue::from("male"));
-    args_male_sg.insert("tabCount", FluentValue::from(1));
-    args_male_sg.insert("formal", FluentValue::from("true"));
+    let args_male_sg = fluent_args![
+      "userName" => "Stephan",
+      "photoCount" => 1,
+      "userGender" => "male",
+      "tabCount" => 1,
+      "formal" => "true"
+    ];
 
-    let mut args_female_pl = FluentArgs::new();
-    args_female_pl.insert("userName", FluentValue::from("Anna"));
-    args_female_pl.insert("photoCount", FluentValue::from(5));
-    args_female_pl.insert("userGender", FluentValue::from("female"));
-    args_female_pl.insert("tabCount", FluentValue::from(7));
-    args_female_pl.insert("formal", FluentValue::from("false"));
+    let args_female_pl = fluent_args![
+      "userName" => "Anna",
+      "photoCount" => 5,
+      "userGender" => "female",
+      "tabCount" => 7,
+      "formal" => "false"
+    ];
 
     div![
         div![select![
@@ -82,10 +84,22 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
             p![translate(&model.i18n, Some(&args_male_sg), "hello-user")],
             p![translate(&model.i18n, Some(&args_male_sg), "shared-photos")],
             p![translate(&model.i18n, None, "tabs-close-button")],
-            p![translate(&model.i18n, Some(&args_male_sg), "tabs-close-tooltip")],
-            p![translate(&model.i18n, Some(&args_male_sg), "tabs-close-warning")],
+            p![translate(
+                &model.i18n,
+                Some(&args_male_sg),
+                "tabs-close-tooltip"
+            )],
+            p![translate(
+                &model.i18n,
+                Some(&args_male_sg),
+                "tabs-close-warning"
+            )],
             p![translate(&model.i18n, Some(&args_female_pl), "hello-user")],
-            p![translate(&model.i18n, Some(&args_female_pl), "shared-photos")],
+            p![translate(
+                &model.i18n,
+                Some(&args_female_pl),
+                "shared-photos"
+            )],
             p![translate(&model.i18n, None, "tabs-close-button")],
             p![translate(
                 &model.i18n,

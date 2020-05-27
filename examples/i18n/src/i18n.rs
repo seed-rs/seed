@@ -36,7 +36,7 @@ impl I18n {
                 .parse()
                 .unwrap(),
         )
-            .expect("Failed to parse an FTL string.");
+        .expect("Failed to parse an FTL string.");
 
         let locale: LanguageIdentifier = lang.id().parse().expect("Parsing failed");
 
@@ -83,8 +83,6 @@ pub fn translate(i18n: &I18n, args: Option<&FluentArgs>, label: &str) -> String 
     let mut errors = vec![];
     let pattern = fluent_msg.value.expect("Message has no value.");
 
-    let value = i18n
-        .resource
-        .format_pattern(pattern, args, &mut errors);
+    let value = i18n.resource.format_pattern(pattern, args, &mut errors);
     value.to_string()
 }
