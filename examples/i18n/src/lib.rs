@@ -1,12 +1,10 @@
 use seed::{prelude::*, *};
 
-use fluent::{FluentArgs, FluentBundle, FluentResource, FluentValue};
+use fluent::{FluentArgs, FluentValue};
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
-use unic_langid::LanguageIdentifier;
 
-use std::borrow::Borrow;
-
+mod i18n;
+use crate::i18n::{I18n, Lang, translate};
 mod resource;
 
 // ------ ------
@@ -25,72 +23,6 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 pub struct Model {
     i18n: I18n,
-}
-
-// ------ I18n ------
-
-pub struct I18n {
-    lang: Lang,
-    resource: FluentBundle<FluentResource>,
-}
-
-impl I18n {
-    fn new(lang: Lang) -> Self {
-        let mut i18n = Self {
-            lang,
-            resource: FluentBundle::default(),
-        };
-        i18n.set_lang(lang);
-        i18n
-    }
-
-    const fn lang(&self) -> &Lang {
-        &self.lang
-    }
-
-    fn set_lang(&mut self, lang: Lang) -> &Self {
-        self.lang = lang;
-        let res = FluentResource::try_new(
-            resource::Resource::new()
-                .get(lang.id().to_string().borrow())
-                .unwrap()
-                .parse()
-                .unwrap(),
-        )
-        .expect("Failed to parse an FTL string.");
-        let locale: LanguageIdentifier = lang.id().parse().expect("Parsing failed");
-        let mut bundle = FluentBundle::new(&[locale]);
-        bundle
-            .add_resource(res)
-            .expect("Failed to add FTL resources to the bundle.");
-
-        self.resource = bundle;
-        self
-    }
-}
-
-// ------ Lang ------
-
-#[allow(non_camel_case_types)]
-#[derive(Clone, Copy, EnumIter, PartialEq)]
-enum Lang {
-    en_US,
-    de_DE,
-}
-
-impl Lang {
-    fn id(&self) -> &str {
-        match self {
-            Self::en_US => "en-US",
-            Self::de_DE => "de-DE",
-        }
-    }
-    fn label(&self) -> &str {
-        match self {
-            Self::en_US => "English (US)",
-            Self::de_DE => "Deutsch (Deutschland)",
-        }
-    }
 }
 
 // ------ ------
@@ -146,46 +78,30 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
         div![p!["Language in Model: ", model.i18n.lang().label()]],
         div![],
         div![
-            p![translate(model, None, "hello-world")],
-            p![translate(model, Some(&args_male_sg), "hello-user")],
-            p![translate(model, Some(&args_male_sg), "shared-photos")],
-            p![translate(model, None, "tabs-close-button")],
-            p![translate(model, Some(&args_male_sg), "tabs-close-tooltip")],
-            p![translate(model, Some(&args_male_sg), "tabs-close-warning")],
-            p![translate(model, Some(&args_female_pl), "hello-user")],
-            p![translate(model, Some(&args_female_pl), "shared-photos")],
-            p![translate(model, None, "tabs-close-button")],
+            p![translate(&model.i18n, None, "hello-world")],
+            p![translate(&model.i18n, Some(&args_male_sg), "hello-user")],
+            p![translate(&model.i18n, Some(&args_male_sg), "shared-photos")],
+            p![translate(&model.i18n, None, "tabs-close-button")],
+            p![translate(&model.i18n, Some(&args_male_sg), "tabs-close-tooltip")],
+            p![translate(&model.i18n, Some(&args_male_sg), "tabs-close-warning")],
+            p![translate(&model.i18n, Some(&args_female_pl), "hello-user")],
+            p![translate(&model.i18n, Some(&args_female_pl), "shared-photos")],
+            p![translate(&model.i18n, None, "tabs-close-button")],
             p![translate(
-                model,
+                &model.i18n,
                 Some(&args_female_pl),
                 "tabs-close-tooltip"
             )],
             p![translate(
-                model,
+                &model.i18n,
                 Some(&args_female_pl),
                 "tabs-close-warning"
             )],
-            p![translate(model, None, "sync-dialog-title")],
-            p![translate(model, None, "sync-headline-title")],
-            p![translate(model, None, "sync-signedout-title")],
+            p![translate(&model.i18n, None, "sync-dialog-title")],
+            p![translate(&model.i18n, None, "sync-headline-title")],
+            p![translate(&model.i18n, None, "sync-signedout-title")],
         ],
     ]
-}
-
-fn translate(model: &Model, args: Option<&FluentArgs>, label: &str) -> String {
-    let msg = model
-        .i18n
-        .resource
-        .get_message(label)
-        .expect("Message doesn't exist.");
-    let mut errors = vec![];
-    let pattern = msg.value.expect("Message has no value.");
-
-    let value = model
-        .i18n
-        .resource
-        .format_pattern(pattern, args, &mut errors);
-    value.into()
 }
 
 // ------ ------
