@@ -10,7 +10,7 @@ mod resource;
 // ------ ------
 //     Init
 // ------ ------
-const DEFAULT_LANG: Lang = Lang::en_US;
+const DEFAULT_LANG: Lang = Lang::EnUS;
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
@@ -67,7 +67,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
     div![
         div![select![
             attrs! {At::Name => "lang"},
-            Lang::iter().map(|lang| option![attrs! {At::Value => lang.id()}, lang.label()]),
+            Lang::iter().map(|lang| option![attrs! {At::Value => lang.as_ref()}, lang.label()]),
             input_ev(Ev::Change, Msg::LangChanged),
         ],],
         div![p!["Language in Model: ", model.i18n.lang().label()]],

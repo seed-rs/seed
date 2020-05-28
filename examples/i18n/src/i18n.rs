@@ -1,8 +1,5 @@
-use std::borrow::Borrow;
-use std::str::FromStr;
-
 use fluent::{FluentArgs, FluentBundle, FluentResource};
-use strum_macros::EnumIter;
+use strum_macros::{AsRefStr, EnumIter, EnumString};
 use unic_langid::LanguageIdentifier;
 
 use super::resource::Resource;
@@ -32,14 +29,14 @@ impl I18n {
         self.lang = lang;
         let ftl_res = FluentResource::try_new(
             Resource::new()
-                .get(lang.id().to_string().borrow())
+                .get(lang.as_ref())
                 .expect("get language identifier")
                 .parse()
                 .expect("parse language identifier"),
         )
         .expect("parse FTL string");
 
-        let locale: LanguageIdentifier = lang.id().parse().expect("parse language identifier");
+        let locale: LanguageIdentifier = lang.as_ref().parse().expect("parse language identifier");
 
         let mut bundle = FluentBundle::new(&[locale]);
         bundle.add_resource(ftl_res).expect("add FTL resource");
@@ -61,36 +58,19 @@ impl I18n {
 // ------ Lang ------
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, EnumIter, PartialEq)]
+#[derive(Copy, Clone, EnumIter, EnumString, AsRefStr, PartialEq)]
 pub enum Lang {
-    en_US,
-    de_DE,
+    #[strum(serialize = "en-US")]
+    EnUS,
+    #[strum(serialize = "de-DE")]
+    DeDE,
 }
 
 impl Lang {
-    pub fn id(&self) -> &str {
-        match self {
-            Self::en_US => "en-US",
-            Self::de_DE => "de-DE",
-        }
-    }
-
     pub fn label(&self) -> &str {
         match self {
-            Self::en_US => "English (US)",
-            Self::de_DE => "Deutsch (Deutschland)",
-        }
-    }
-}
-
-impl FromStr for Lang {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, ()> {
-        match s {
-            "de-DE" => Ok(Self::de_DE),
-            "en-US" => Ok(Self::en_US),
-            _ => Err(()),
+            Self::EnUS => "English (US)",
+            Self::DeDE => "Deutsch (Deutschland)",
         }
     }
 }
