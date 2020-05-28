@@ -51,7 +51,7 @@ impl WebSocketMessage {
         }
 
         if let Some(blob) = self.data.dyn_ref::<web_sys::Blob>() {
-            let bytes = JsFuture::from(self.handle_blob(&blob))
+            let bytes = JsFuture::from(WebSocketMessage::handle_blob(blob))
                 .await
                 .map_err(WebSocketError::PromiseError)
                 .map(|array_buffer| js_sys::Uint8Array::new(&array_buffer))?
@@ -66,10 +66,10 @@ impl WebSocketMessage {
     // Unfortunatelly `web_sys::Blob::array_buffer()` is not supported by many browsers including
     // Internet Explorer, Opera and Safari.
     // Full compatibility list: https://developer.mozilla.org/en-US/docs/Web/API/Blob/arrayBuffer
-    fn handle_blob(&self, blob: &web_sys::Blob) -> Promise {
-        let mut callback = Box::new(|resolve: Function, _: Function| -> () {
+    fn handle_blob(blob: &web_sys::Blob) -> Promise {
+        let mut callback = Box::new(|resolve: Function, _: Function| {
             let file_reader = FileReader::new().unwrap();
-            file_reader.read_as_array_buffer(&blob).unwrap();
+            file_reader.read_as_array_buffer(blob).unwrap();
 
             let onload = Closure::wrap(Box::new(move |event: Event| {
                 let file_reader: FileReader = event.target().unwrap().dyn_into().unwrap();
