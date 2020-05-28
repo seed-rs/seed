@@ -86,14 +86,11 @@ impl FromStr for Lang {
     }
 }
 
-pub fn translate(i18n: &I18n, args: Option<&FluentArgs>, label: &str) -> String {
-    let fluentmsg = i18n
-        .resource
-        .get_message(label)
-        .expect("get fluent message");
-    let mut errors = vec![];
+pub fn translate(i18n: &I18n, args: Option<&FluentArgs>, key: &str) -> String {
+    let fluentmsg = i18n.resource.get_message(key).expect("get fluent message");
     let pattern = fluentmsg.value.expect("get value for fluent message");
 
-    let value = i18n.resource.format_pattern(pattern, args, &mut errors);
-    value.to_string()
+    i18n.resource
+        .format_pattern(pattern, args, &mut vec![])
+        .to_string()
 }

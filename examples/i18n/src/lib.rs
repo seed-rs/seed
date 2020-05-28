@@ -50,11 +50,6 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 // ------ ------
 
 fn view(model: &Model) -> impl IntoNodes<Msg> {
-    let mut langs: Vec<Node<Msg>> = Vec::new();
-    for lang in Lang::iter() {
-        langs.push(option![attrs! {At::Value => lang.id()}, lang.label()]);
-    }
-
     let args_male_sg = fluent_args![
       "userName" => "Stephan",
       "photoCount" => 1,
@@ -74,7 +69,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
     div![
         div![select![
             attrs! {At::Name => "lang"},
-            langs,
+            Lang::iter().map(|lang| option![attrs! {At::Value => lang.id()}, lang.label()]),
             input_ev(Ev::Change, Msg::LangChanged),
         ],],
         div![p!["Language in Model: ", model.i18n.lang().label()]],
