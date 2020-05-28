@@ -1,11 +1,9 @@
-use std::str::FromStr;
-
 use fluent::fluent_args;
 use seed::{prelude::*, *};
 use strum::IntoEnumIterator;
 
 mod i18n;
-use i18n::{translate, I18n, Lang};
+use i18n::{I18n, Lang};
 
 mod resource;
 
@@ -40,7 +38,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         Msg::LangChanged(lang) => {
             model
                 .i18n
-                .set_lang(Lang::from_str(lang.as_str()).expect("supported language"));
+                .set_lang(lang.parse().expect("supported language"));
         }
     }
 }
@@ -75,40 +73,28 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
         div![p!["Language in Model: ", model.i18n.lang().label()]],
         div![],
         div![
-            p![translate(&model.i18n, None, "hello-world")],
-            p![translate(&model.i18n, Some(&args_male_sg), "hello-user")],
-            p![translate(&model.i18n, Some(&args_male_sg), "shared-photos")],
-            p![translate(&model.i18n, None, "tabs-close-button")],
-            p![translate(
-                &model.i18n,
-                Some(&args_male_sg),
-                "tabs-close-tooltip"
-            )],
-            p![translate(
-                &model.i18n,
-                Some(&args_male_sg),
-                "tabs-close-warning"
-            )],
-            p![translate(&model.i18n, Some(&args_female_pl), "hello-user")],
-            p![translate(
-                &model.i18n,
-                Some(&args_female_pl),
-                "shared-photos"
-            )],
-            p![translate(&model.i18n, None, "tabs-close-button")],
-            p![translate(
-                &model.i18n,
-                Some(&args_female_pl),
-                "tabs-close-tooltip"
-            )],
-            p![translate(
-                &model.i18n,
-                Some(&args_female_pl),
-                "tabs-close-warning"
-            )],
-            p![translate(&model.i18n, None, "sync-dialog-title")],
-            p![translate(&model.i18n, None, "sync-headline-title")],
-            p![translate(&model.i18n, None, "sync-signedout-title")],
+            p![model.i18n.translate("hello-world", None)],
+            p![model.i18n.translate("hello-user", Some(&args_male_sg))],
+            p![model.i18n.translate("shared-photos", Some(&args_male_sg))],
+            p![model.i18n.translate("tabs-close-button", None)],
+            p![model
+                .i18n
+                .translate("tabs-close-tooltip", Some(&args_male_sg))],
+            p![model
+                .i18n
+                .translate("tabs-close-warning", Some(&args_male_sg))],
+            p![model.i18n.translate("hello-user", Some(&args_female_pl))],
+            p![model.i18n.translate("shared-photos", Some(&args_female_pl))],
+            p![model.i18n.translate("tabs-close-button", None)],
+            p![model
+                .i18n
+                .translate("tabs-close-tooltip", Some(&args_female_pl))],
+            p![model
+                .i18n
+                .translate("tabs-close-warning", Some(&args_female_pl))],
+            p![model.i18n.translate("sync-dialog-title", None)],
+            p![model.i18n.translate("sync-headline-title", None)],
+            p![model.i18n.translate("sync-signedout-title", None)],
         ],
     ]
 }

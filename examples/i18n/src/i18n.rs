@@ -47,6 +47,15 @@ impl I18n {
         self.resource = bundle;
         self
     }
+
+    pub fn translate(&self, key: &str, args: Option<&FluentArgs>) -> String {
+        let fluent_msg = self.resource.get_message(key).expect("get fluent message");
+        let pattern = fluent_msg.value.expect("get value for fluent message");
+
+        self.resource
+            .format_pattern(pattern, args, &mut vec![])
+            .to_string()
+    }
 }
 
 // ------ Lang ------
@@ -84,13 +93,4 @@ impl FromStr for Lang {
             _ => Err(()),
         }
     }
-}
-
-pub fn translate(i18n: &I18n, args: Option<&FluentArgs>, key: &str) -> String {
-    let fluent_msg = i18n.resource.get_message(key).expect("get fluent message");
-    let pattern = fluent_msg.value.expect("get value for fluent message");
-
-    i18n.resource
-        .format_pattern(pattern, args, &mut vec![])
-        .to_string()
 }
