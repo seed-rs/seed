@@ -5,6 +5,8 @@ use strum::IntoEnumIterator;
 
 mod i18n;
 use crate::i18n::{translate, I18n, Lang};
+use std::str::FromStr;
+
 mod resource;
 
 // ------ ------
@@ -36,11 +38,9 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::LangChanged(lang) => {
-            match lang.as_str() {
-                "en-US" => model.i18n.set_lang(Lang::en_US),
-                "de-DE" => model.i18n.set_lang(Lang::de_DE),
-                _ => model.i18n.set_lang(DEFAULT_LANG),
-            };
+            model
+                .i18n
+                .set_lang(Lang::from_str(lang.as_str()).expect("supported language"));
         }
     }
 }

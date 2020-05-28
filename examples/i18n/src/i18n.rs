@@ -3,6 +3,7 @@ use strum_macros::EnumIter;
 use unic_langid::LanguageIdentifier;
 
 use std::borrow::Borrow;
+use std::str::FromStr;
 
 use crate::resource::Resource;
 
@@ -69,6 +70,18 @@ impl Lang {
         match self {
             Self::en_US => "English (US)",
             Self::de_DE => "Deutsch (Deutschland)",
+        }
+    }
+}
+
+impl FromStr for Lang {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, ()> {
+        match s {
+            "de-DE" => Ok(Self::de_DE),
+            "en-US" => Ok(Self::en_US),
+            _ => Err(()),
         }
     }
 }
