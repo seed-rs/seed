@@ -61,7 +61,6 @@ features = [
     "Event",
     "EventTarget",
     "File",
-    "FileReader",
     "FormData",
     "HashChangeEvent",
     "Headers",
