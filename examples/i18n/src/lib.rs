@@ -1,11 +1,11 @@
-use seed::{prelude::*, *};
+use std::str::FromStr;
 
 use fluent::fluent_args;
+use seed::{prelude::*, *};
 use strum::IntoEnumIterator;
 
 mod i18n;
-use crate::i18n::{translate, I18n, Lang};
-use std::str::FromStr;
+use i18n::{translate, I18n, Lang};
 
 mod resource;
 

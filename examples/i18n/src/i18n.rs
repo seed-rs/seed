@@ -1,11 +1,11 @@
+use std::borrow::Borrow;
+use std::str::FromStr;
+
 use fluent::{FluentArgs, FluentBundle, FluentResource};
 use strum_macros::EnumIter;
 use unic_langid::LanguageIdentifier;
 
-use std::borrow::Borrow;
-use std::str::FromStr;
-
-use crate::resource::Resource;
+use super::resource::Resource;
 
 // ------ I18n ------
 
@@ -30,7 +30,7 @@ impl I18n {
 
     pub fn set_lang(&mut self, lang: Lang) -> &Self {
         self.lang = lang;
-        let ftlres = FluentResource::try_new(
+        let ftl_res = FluentResource::try_new(
             Resource::new()
                 .get(lang.id().to_string().borrow())
                 .expect("get language identifier")
@@ -42,7 +42,7 @@ impl I18n {
         let locale: LanguageIdentifier = lang.id().parse().expect("parse language identifier");
 
         let mut bundle = FluentBundle::new(&[locale]);
-        bundle.add_resource(ftlres).expect("add FTL resource");
+        bundle.add_resource(ftl_res).expect("add FTL resource");
 
         self.resource = bundle;
         self
@@ -87,8 +87,8 @@ impl FromStr for Lang {
 }
 
 pub fn translate(i18n: &I18n, args: Option<&FluentArgs>, key: &str) -> String {
-    let fluentmsg = i18n.resource.get_message(key).expect("get fluent message");
-    let pattern = fluentmsg.value.expect("get value for fluent message");
+    let fluent_msg = i18n.resource.get_message(key).expect("get fluent message");
+    let pattern = fluent_msg.value.expect("get value for fluent message");
 
     i18n.resource
         .format_pattern(pattern, args, &mut vec![])
