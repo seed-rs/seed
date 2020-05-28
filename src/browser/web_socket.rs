@@ -51,7 +51,7 @@ pub enum WebSocketError {
     SendError(JsValue),
     SerdeError(serde_json::Error),
     PromiseError(JsValue),
-    FileRedaerError(FileReadError),
+    FileReaderError(FileReadError),
     OpenError(JsValue),
     CloseError(JsValue),
 }
