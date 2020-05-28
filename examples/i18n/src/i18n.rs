@@ -29,21 +29,19 @@ impl I18n {
 
     pub fn set_lang(&mut self, lang: Lang) -> &Self {
         self.lang = lang;
-        let res = FluentResource::try_new(
+        let ftlres = FluentResource::try_new(
             Resource::new()
                 .get(lang.id().to_string().borrow())
-                .unwrap()
+                .expect("get language identifier")
                 .parse()
-                .unwrap(),
+                .expect("parse language identifier"),
         )
-        .expect("Failed to parse an FTL string.");
+        .expect("parse FTL string");
 
-        let locale: LanguageIdentifier = lang.id().parse().expect("Parsing failed");
+        let locale: LanguageIdentifier = lang.id().parse().expect("parse language identifier");
 
         let mut bundle = FluentBundle::new(&[locale]);
-        bundle
-            .add_resource(res)
-            .expect("Failed to add FTL resources to the bundle.");
+        bundle.add_resource(ftlres).expect("add FTL resource");
 
         self.resource = bundle;
         self
@@ -76,12 +74,12 @@ impl Lang {
 }
 
 pub fn translate(i18n: &I18n, args: Option<&FluentArgs>, label: &str) -> String {
-    let fluent_msg = i18n
+    let fluentmsg = i18n
         .resource
         .get_message(label)
-        .expect("Message doesn't exist.");
+        .expect("get fluent message");
     let mut errors = vec![];
-    let pattern = fluent_msg.value.expect("Message has no value.");
+    let pattern = fluentmsg.value.expect("get value for fluent message");
 
     let value = i18n.resource.format_pattern(pattern, args, &mut errors);
     value.to_string()
