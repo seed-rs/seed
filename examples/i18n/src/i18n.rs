@@ -4,20 +4,6 @@ use unic_langid::LanguageIdentifier;
 
 use super::resource::Resource;
 
-#[macro_export]
-macro_rules! t {
-    { $key:expr } => {
-        {
-            translate($key, None)
-        }
-     };
-     { $key:expr, $args:expr } => {
-        {
-            translate($key, Some($args))
-        }
-     };
-}
-
 // ------ I18n ------
 
 pub struct I18n {
@@ -87,4 +73,47 @@ impl Lang {
             Self::DeDE => "Deutsch (Deutschland)",
         }
     }
+}
+
+// ------ MACROS ------
+
+/// Convenience macro to improve readability of `view`s with many translations.
+///
+/// # Example
+///
+///```rust,no_run
+/// fn view(model: &Model) -> Node<Msg> {
+///    let args_male_sg = fluent_args![
+///      "userName" => "Stephan",
+///      "userGender" => "male",
+///    ];
+///
+///    create_t!(model.i18n);
+///    div![
+///        p![t!("hello-world")],
+///        p![t!("hello-user", &args_male_sg)],
+///    ]
+/// }
+///```
+#[macro_export]
+macro_rules! create_t {
+    ( $i18n:expr ) => {
+        // This replaces $d with $ in the inner macro.
+        seed::with_dollar_sign! {
+            ($d:tt) => {
+                macro_rules! t {
+                    { $d key:expr } => {
+                        {
+                            $i18n.translate($d key, None)
+                        }
+                    };
+                    { $d key:expr, $d args:expr } => {
+                        {
+                            $i18n.translate($d key, Some($d args))
+                        }
+                    };
+                }
+            }
+        }
+   }
 }
