@@ -27,7 +27,7 @@ use wasm_bindgen::JsValue;
 ///                     };
 ///                     { $d key:expr, $d args:expr } => {
 ///                         {
-///                             $i18n.translate($d key, Some($d args))
+///                             $i18n.translate($d key, Some(&$d args))
 ///                         }
 ///                     };
 ///                 }
