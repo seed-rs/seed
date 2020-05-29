@@ -11,6 +11,7 @@
 - Added `App::update_with_option`.
 - Added `Navigator` and `BeforeUnloadEvent` into Seed's `web_sys`.
 - Fixed runtime exception when using binary data in WS on some browsers. (#470)
+- Exported macro `with_dollar_sign!`.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.

@@ -3,14 +3,15 @@ use seed::{prelude::*, *};
 use strum::IntoEnumIterator;
 
 mod i18n;
-use i18n::{I18n, Lang, t};
+use i18n::{I18n, Lang};
 
 mod resource;
+
+const DEFAULT_LANG: Lang = Lang::EnUS;
 
 // ------ ------
 //     Init
 // ------ ------
-const DEFAULT_LANG: Lang = Lang::EnUS;
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
@@ -21,6 +22,7 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 //     Model
 // ------ ------
+
 pub struct Model {
     i18n: I18n,
 }
@@ -64,7 +66,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
       "formal" => "false"
     ];
 
-    let translate = |key, args| model.i18n.translate(key, args);
+    create_t!(model.i18n);
 
     div![
         div![select![
