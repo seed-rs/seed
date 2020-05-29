@@ -4,6 +4,20 @@ use unic_langid::LanguageIdentifier;
 
 use super::resource::Resource;
 
+#[macro_export]
+macro_rules! t {
+    { $key:expr } => {
+        {
+            translate($key, None)
+        }
+     };
+     { $key:expr, $args:expr } => {
+        {
+            translate($key, Some($args))
+        }
+     };
+}
+
 // ------ I18n ------
 
 pub struct I18n {

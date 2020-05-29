@@ -3,7 +3,7 @@ use seed::{prelude::*, *};
 use strum::IntoEnumIterator;
 
 mod i18n;
-use i18n::{I18n, Lang};
+use i18n::{I18n, Lang, t};
 
 mod resource;
 
@@ -64,6 +64,8 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
       "formal" => "false"
     ];
 
+    let translate = |key, args| model.i18n.translate(key, args);
+
     div![
         div![select![
             attrs! {At::Name => "lang"},
@@ -73,28 +75,20 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
         div![p!["Language in Model: ", model.i18n.lang().label()]],
         div![],
         div![
-            p![model.i18n.translate("hello-world", None)],
-            p![model.i18n.translate("hello-user", Some(&args_male_sg))],
-            p![model.i18n.translate("shared-photos", Some(&args_male_sg))],
-            p![model.i18n.translate("tabs-close-button", None)],
-            p![model
-                .i18n
-                .translate("tabs-close-tooltip", Some(&args_male_sg))],
-            p![model
-                .i18n
-                .translate("tabs-close-warning", Some(&args_male_sg))],
-            p![model.i18n.translate("hello-user", Some(&args_female_pl))],
-            p![model.i18n.translate("shared-photos", Some(&args_female_pl))],
-            p![model.i18n.translate("tabs-close-button", None)],
-            p![model
-                .i18n
-                .translate("tabs-close-tooltip", Some(&args_female_pl))],
-            p![model
-                .i18n
-                .translate("tabs-close-warning", Some(&args_female_pl))],
-            p![model.i18n.translate("sync-dialog-title", None)],
-            p![model.i18n.translate("sync-headline-title", None)],
-            p![model.i18n.translate("sync-signedout-title", None)],
+            p![t!("hello-world")],
+            p![t!("hello-user", &args_male_sg)],
+            p![t!("shared-photos", &args_male_sg)],
+            p![t!("tabs-close-button")],
+            p![t!("tabs-close-tooltip", &args_male_sg)],
+            p![t!("tabs-close-warning", &args_male_sg)],
+            p![t!("hello-user", &args_female_pl)],
+            p![t!("shared-photos", &args_female_pl)],
+            p![t!("tabs-close-button")],
+            p![t!("tabs-close-tooltip", &args_female_pl)],
+            p![t!("tabs-close-warning", &args_female_pl)],
+            p![t!("sync-dialog-title")],
+            p![t!("sync-headline-title")],
+            p![t!("sync-signedout-title")],
         ],
     ]
 }
