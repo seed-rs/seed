@@ -22,22 +22,16 @@ impl Handler for Server {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let client_id: usize = self.out.token().into();
 
-        let client_msg: shared::ClientMessage =
-            serde_json::from_str(&msg.into_text().unwrap()).unwrap();
+        let server_msg = if msg.is_text() {
+            Some(handle_text_message(client_id, msg))
+        } else if msg.is_binary() {
+            Some(handle_binary_message(client_id, msg))
+        } else {
+            None
+        };
 
-        println!(
-            "Server received text: '{}'\nfrom client '{}'\n",
-            client_msg.text, client_id
-        );
-
-        let server_msg: Message = serde_json::to_string(&shared::ServerMessage {
-            id: client_id,
-            text: client_msg.text,
-        })
-        .unwrap()
-        .into();
         // Broadcast to all connections.
-        self.out.broadcast(server_msg)
+        server_msg.map_or(Ok(()), |msg| self.out.broadcast(msg))
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
@@ -48,6 +42,43 @@ impl Handler for Server {
             client_id, code_number, code, reason
         );
     }
+}
+
+fn handle_text_message(client_id: usize, msg: Message) -> Message {
+    let client_msg: shared::ClientMessage =
+        serde_json::from_str(&msg.into_text().unwrap()).unwrap();
+
+    println!(
+        "Server received text message\ntext: '{}'\nfrom: '{}'\n",
+        client_msg.text, client_id
+    );
+
+    let server_msg: Message = serde_json::to_string(&shared::ServerMessage {
+        id: client_id,
+        text: client_msg.text,
+    })
+    .unwrap()
+    .into();
+
+    server_msg
+}
+
+fn handle_binary_message(client_id: usize, msg: Message) -> Message {
+    let binary_msg: shared::ClientMessage = rmp_serde::from_slice(&msg.into_data()).unwrap();
+
+    println!(
+        "Server received binary message\ntext: '{}'\nfrom: '{}'\n",
+        binary_msg.text, client_id
+    );
+
+    let server_msg: Message = rmp_serde::to_vec(&shared::ServerMessage {
+        id: client_id,
+        text: binary_msg.text,
+    })
+    .unwrap()
+    .into();
+
+    server_msg
 }
 
 fn main() {

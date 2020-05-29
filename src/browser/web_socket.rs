@@ -1,4 +1,5 @@
 use crate::app::Orders;
+use gloo_file::FileReadError;
 use serde::Serialize;
 use wasm_bindgen::{JsCast, JsValue};
 
@@ -50,6 +51,7 @@ pub enum WebSocketError {
     SendError(JsValue),
     SerdeError(serde_json::Error),
     PromiseError(JsValue),
+    FileReaderError(FileReadError),
     OpenError(JsValue),
     CloseError(JsValue),
 }

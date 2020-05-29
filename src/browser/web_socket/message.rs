@@ -1,7 +1,6 @@
 use super::{Result, WebSocketError};
 use serde::de::DeserializeOwned;
 use wasm_bindgen::{JsCast, JsValue};
-use wasm_bindgen_futures::JsFuture;
 use web_sys::MessageEvent;
 
 #[allow(clippy::module_name_repetitions)]
@@ -49,11 +48,10 @@ impl WebSocketMessage {
         }
 
         if let Some(blob) = self.data.dyn_ref::<web_sys::Blob>() {
-            let bytes = JsFuture::from(blob.array_buffer())
+            let blob = gloo_file::Blob::from(blob.to_owned());
+            let bytes = gloo_file::futures::read_as_bytes(&blob)
                 .await
-                .map_err(WebSocketError::PromiseError)
-                .map(|array_buffer| js_sys::Uint8Array::new(&array_buffer))?
-                .to_vec();
+                .map_err(WebSocketError::FileReaderError)?;
             return Ok(bytes);
         }
 
@@ -112,5 +110,25 @@ impl WebSocketMessage {
     /// [issue]: https://github.com/seed-rs/seed/issues
     pub const fn raw_message(&self) -> &web_sys::MessageEvent {
         &self.message_event
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::browser::web_socket::WebSocketMessage;
+    use wasm_bindgen_test::*;
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    async fn get_bytes_from_message() {
+        let bytes = "some test message".as_bytes();
+        let blob = gloo_file::Blob::new(bytes);
+        let message_event = web_sys::MessageEvent::new("test").unwrap();
+        let ws_msg = WebSocketMessage {
+            data: blob.into(),
+            message_event,
+        };
+        let result_bytes = ws_msg.bytes().await.unwrap();
+        assert_eq!(bytes, &*result_bytes);
     }
 }

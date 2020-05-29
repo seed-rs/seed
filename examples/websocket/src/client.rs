@@ -12,6 +12,7 @@ struct Model {
     sent_messages_count: usize,
     messages: Vec<String>,
     input_text: String,
+    input_binary: String,
     web_socket: WebSocket,
     web_socket_reconnector: Option<StreamHandle>,
 }
@@ -25,6 +26,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         sent_messages_count: 0,
         messages: Vec::new(),
         input_text: String::new(),
+        input_binary: String::new(),
         web_socket: create_websocket(orders),
         web_socket_reconnector: None,
     }
@@ -47,12 +49,15 @@ fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
 enum Msg {
     WebSocketOpened,
     MessageReceived(WebSocketMessage),
+    BytesReceived(Vec<u8>),
     CloseWebSocket,
     WebSocketClosed(CloseEvent),
     WebSocketFailed,
     ReconnectWebSocket(usize),
     InputTextChanged(String),
+    InputBinaryChanged(String),
     SendMessage(shared::ClientMessage),
+    SendBinaryMessage(shared::ClientMessage),
 }
 
 fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -63,9 +68,22 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::MessageReceived(message) => {
             log!("Client received a message");
-            model
-                .messages
-                .push(message.json::<shared::ServerMessage>().unwrap().text);
+
+            if message.contains_text() {
+                model
+                    .messages
+                    .push(message.json::<shared::ServerMessage>().unwrap().text);
+            } else {
+                orders.perform_cmd(async move {
+                    let bytes = message.bytes().await;
+                    bytes.map(Msg::BytesReceived).ok()
+                });
+            }
+        }
+        Msg::BytesReceived(bytes) => {
+            log!("Client received binary message");
+            let msg: shared::ServerMessage = rmp_serde::from_slice(&bytes).unwrap();
+            model.messages.push(msg.text);
         }
         Msg::CloseWebSocket => {
             model.web_socket_reconnector = None;
@@ -101,12 +119,21 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             log!("Reconnect attempt:", retries);
             model.web_socket = create_websocket(orders);
         }
-        Msg::InputTextChanged(input_text) => {
-            model.input_text = input_text;
+        Msg::InputTextChanged(text) => {
+            model.input_text = text;
+        }
+        Msg::InputBinaryChanged(text) => {
+            model.input_binary = text;
         }
         Msg::SendMessage(msg) => {
             model.web_socket.send_json(&msg).unwrap();
             model.input_text.clear();
+            model.sent_messages_count += 1;
+        }
+        Msg::SendBinaryMessage(msg) => {
+            let serialized = rmp_serde::to_vec(&msg).unwrap();
+            model.web_socket.send_bytes(&serialized).unwrap();
+            model.input_binary.clear();
             model.sent_messages_count += 1;
         }
     }
@@ -122,22 +149,48 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
         div![model.messages.iter().map(|message| p![message])],
         if model.web_socket.state() == web_socket::State::Open {
             div![
-                input![
-                    id!("text"),
-                    attrs! {
-                        At::Type => "text",
-                        At::Value => model.input_text;
-                    },
-                    input_ev(Ev::Input, Msg::InputTextChanged)
+                div![
+                    p!["Message (text)"],
+                    input![
+                        id!("text"),
+                        attrs! {
+                            At::Type => "text",
+                            At::Value => model.input_text;
+                        },
+                        input_ev(Ev::Input, Msg::InputTextChanged)
+                    ],
+                    button![
+                        ev(Ev::Click, {
+                            let message_text = model.input_text.to_owned();
+                            move |_| Msg::SendMessage(shared::ClientMessage { text: message_text })
+                        }),
+                        "Send"
+                    ],
                 ],
-                button![
-                    ev(Ev::Click, {
-                        let message_text = model.input_text.to_owned();
-                        move |_| Msg::SendMessage(shared::ClientMessage { text: message_text })
-                    }),
-                    "Send"
+                div![
+                    p!["Message (binary)"],
+                    input![
+                        id!("binary"),
+                        attrs! {
+                            At::Type => "text",
+                            At::Value => model.input_binary;
+                        },
+                        input_ev(Ev::Input, Msg::InputBinaryChanged)
+                    ],
+                    button![
+                        ev(Ev::Click, {
+                            let message_text = model.input_binary.to_owned();
+                            move |_| {
+                                Msg::SendBinaryMessage(shared::ClientMessage { text: message_text })
+                            }
+                        }),
+                        "Send"
+                    ],
                 ],
-                button![ev(Ev::Click, |_| Msg::CloseWebSocket), "Close"],
+                div![button![
+                    ev(Ev::Click, |_| Msg::CloseWebSocket),
+                    "Close websocket connection"
+                ],]
             ]
         } else {
             div![p![em!["Connecting or closed"]]]
