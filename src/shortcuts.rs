@@ -6,7 +6,37 @@
 use crate::virtual_dom::{At, Attrs};
 use wasm_bindgen::JsValue;
 
-/// Copied from [https://github.com/rust-lang/rust/issues/35853](https://github.com/rust-lang/rust/issues/35853)
+/// Allows to write nested macros.
+///
+/// [Related Rust issue](https://github.com/rust-lang/rust/issues/35853#issuecomment-415993963)
+///
+/// # Example
+///
+/// ```rust,no_run
+/// #[macro_export]
+/// macro_rules! create_t {
+///     ( $i18n:expr ) => {
+///         // This replaces $d with $ in the inner macro.
+///         seed::with_dollar_sign! {
+///             ($d:tt) => {
+///                 macro_rules! t {
+///                     { $d key:expr } => {
+///                         {
+///                             $i18n.translate($d key, None)
+///                         }
+///                     };
+///                     { $d key:expr, $d args:expr } => {
+///                         {
+///                             $i18n.translate($d key, Some(&$d args))
+///                         }
+///                     };
+///                 }
+///             }
+///         }
+///    }
+/// }
+///```
+#[macro_export]
 macro_rules! with_dollar_sign {
     ($($body:tt)*) => {
         macro_rules! __with_dollar_sign { $($body)* }

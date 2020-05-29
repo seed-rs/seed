@@ -5,12 +5,11 @@ use strum::IntoEnumIterator;
 mod i18n;
 use i18n::{I18n, Lang};
 
-mod resource;
+const DEFAULT_LANG: Lang = Lang::EnUS;
 
 // ------ ------
 //     Init
 // ------ ------
-const DEFAULT_LANG: Lang = Lang::EnUS;
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
@@ -21,6 +20,7 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 //     Model
 // ------ ------
+
 pub struct Model {
     i18n: I18n,
 }
@@ -64,37 +64,32 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
       "formal" => "false"
     ];
 
+    // Macro from the module `i18n`. It allows us to call `t!(..)` - see the code below.
+    create_t!(model.i18n);
+
     div![
         div![select![
             attrs! {At::Name => "lang"},
-            Lang::iter().map(|lang| option![attrs! {At::Value => lang.as_ref()}, lang.label()]),
+            Lang::iter().map(|lang| option![attrs! {At::Value => lang}, lang.label()]),
             input_ev(Ev::Change, Msg::LangChanged),
         ],],
         div![p!["Language in Model: ", model.i18n.lang().label()]],
         div![],
         div![
-            p![model.i18n.translate("hello-world", None)],
-            p![model.i18n.translate("hello-user", Some(&args_male_sg))],
-            p![model.i18n.translate("shared-photos", Some(&args_male_sg))],
-            p![model.i18n.translate("tabs-close-button", None)],
-            p![model
-                .i18n
-                .translate("tabs-close-tooltip", Some(&args_male_sg))],
-            p![model
-                .i18n
-                .translate("tabs-close-warning", Some(&args_male_sg))],
-            p![model.i18n.translate("hello-user", Some(&args_female_pl))],
-            p![model.i18n.translate("shared-photos", Some(&args_female_pl))],
-            p![model.i18n.translate("tabs-close-button", None)],
-            p![model
-                .i18n
-                .translate("tabs-close-tooltip", Some(&args_female_pl))],
-            p![model
-                .i18n
-                .translate("tabs-close-warning", Some(&args_female_pl))],
-            p![model.i18n.translate("sync-dialog-title", None)],
-            p![model.i18n.translate("sync-headline-title", None)],
-            p![model.i18n.translate("sync-signedout-title", None)],
+            p![t!("hello-world")],
+            p![t!("hello-user", args_male_sg)],
+            p![t!("shared-photos", args_male_sg)],
+            p![t!("tabs-close-button")],
+            p![t!("tabs-close-tooltip", args_male_sg)],
+            p![t!("tabs-close-warning", args_male_sg)],
+            p![t!("hello-user", args_female_pl)],
+            p![t!("shared-photos", args_female_pl)],
+            p![t!("tabs-close-button")],
+            p![t!("tabs-close-tooltip", args_female_pl)],
+            p![t!("tabs-close-warning", args_female_pl)],
+            p![t!("sync-dialog-title")],
+            p![t!("sync-headline-title")],
+            p![t!("sync-signedout-title")],
         ],
     ]
 }
