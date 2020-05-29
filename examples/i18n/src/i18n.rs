@@ -2,20 +2,18 @@ use fluent::{FluentArgs, FluentBundle, FluentResource};
 use strum_macros::{AsRefStr, EnumIter, EnumString};
 use unic_langid::LanguageIdentifier;
 
-use super::resource::Resource;
-
 // ------ I18n ------
 
 pub struct I18n {
     lang: Lang,
-    resource: FluentBundle<FluentResource>,
+    ftl_bundle: FluentBundle<FluentResource>,
 }
 
 impl I18n {
     pub fn new(lang: Lang) -> Self {
         let mut i18n = Self {
             lang,
-            resource: FluentBundle::default(),
+            ftl_bundle: FluentBundle::default(),
         };
         i18n.set_lang(lang);
         i18n
@@ -27,29 +25,24 @@ impl I18n {
 
     pub fn set_lang(&mut self, lang: Lang) -> &Self {
         self.lang = lang;
+
         let ftl_res = FluentResource::try_new(
-            Resource::new()
-                .get(lang.as_ref())
-                .expect("get language identifier")
-                .parse()
-                .expect("parse language identifier"),
+            lang.ftl_messages().to_owned(),
         )
-        .expect("parse FTL string");
+        .expect("parse FTL messages");
 
-        let locale: LanguageIdentifier = lang.as_ref().parse().expect("parse language identifier");
-
-        let mut bundle = FluentBundle::new(&[locale]);
+        let mut bundle = FluentBundle::new(&[lang.language_identifier()]);
         bundle.add_resource(ftl_res).expect("add FTL resource");
 
-        self.resource = bundle;
+        self.ftl_bundle = bundle;
         self
     }
 
     pub fn translate(&self, key: &str, args: Option<&FluentArgs>) -> String {
-        let fluent_msg = self.resource.get_message(key).expect("get fluent message");
+        let fluent_msg = self.ftl_bundle.get_message(key).expect("get fluent message");
         let pattern = fluent_msg.value.expect("get value for fluent message");
 
-        self.resource
+        self.ftl_bundle
             .format_pattern(pattern, args, &mut vec![])
             .to_string()
     }
@@ -57,7 +50,6 @@ impl I18n {
 
 // ------ Lang ------
 
-#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, EnumIter, EnumString, AsRefStr, PartialEq)]
 pub enum Lang {
     #[strum(serialize = "en-US")]
@@ -72,6 +64,20 @@ impl Lang {
             Self::EnUS => "English (US)",
             Self::DeDE => "Deutsch (Deutschland)",
         }
+    }
+
+    pub fn ftl_messages(&self) -> &str {
+        match self {
+            Self::EnUS => include_str!("resources/english.ftl"),
+            Self::DeDE => include_str!("resources/german.ftl"),
+        }
+    }
+
+    pub fn language_identifier(&self) -> LanguageIdentifier {
+        match self {
+            Self::EnUS => "en-US",
+            Self::DeDE => "de-DE",
+        }.parse().expect("parse Lang to LanguageIdentifier")
     }
 }
 

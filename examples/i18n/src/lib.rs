@@ -5,8 +5,6 @@ use strum::IntoEnumIterator;
 mod i18n;
 use i18n::{I18n, Lang};
 
-mod resource;
-
 const DEFAULT_LANG: Lang = Lang::EnUS;
 
 // ------ ------
