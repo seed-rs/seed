@@ -1,5 +1,5 @@
 use fluent::{FluentArgs, FluentBundle, FluentResource};
-use strum_macros::{AsRefStr, EnumIter, EnumString};
+use strum_macros::{AsRefStr, Display, EnumIter, EnumString};
 use unic_langid::LanguageIdentifier;
 
 // ------ I18n ------
@@ -11,12 +11,10 @@ pub struct I18n {
 
 impl I18n {
     pub fn new(lang: Lang) -> Self {
-        let mut i18n = Self {
+        Self {
             lang,
-            ftl_bundle: FluentBundle::default(),
-        };
-        i18n.set_lang(lang);
-        i18n
+            ftl_bundle: lang.create_ftl_bundle(),
+        }
     }
 
     pub const fn lang(&self) -> &Lang {
@@ -25,22 +23,17 @@ impl I18n {
 
     pub fn set_lang(&mut self, lang: Lang) -> &Self {
         self.lang = lang;
-
-        let ftl_res = FluentResource::try_new(
-            lang.ftl_messages().to_owned(),
-        )
-        .expect("parse FTL messages");
-
-        let mut bundle = FluentBundle::new(&[lang.language_identifier()]);
-        bundle.add_resource(ftl_res).expect("add FTL resource");
-
-        self.ftl_bundle = bundle;
+        self.ftl_bundle = lang.create_ftl_bundle();
         self
     }
 
-    pub fn translate(&self, key: &str, args: Option<&FluentArgs>) -> String {
-        let fluent_msg = self.ftl_bundle.get_message(key).expect("get fluent message");
-        let pattern = fluent_msg.value.expect("get value for fluent message");
+    pub fn translate(&self, key: impl AsRef<str>, args: Option<&FluentArgs>) -> String {
+        let mmessage = self
+            .ftl_bundle
+            .get_message(key.as_ref())
+            .expect("get fluent message");
+
+        let pattern = mmessage.value.expect("get value for fluent message");
 
         self.ftl_bundle
             .format_pattern(pattern, args, &mut vec![])
@@ -50,7 +43,7 @@ impl I18n {
 
 // ------ Lang ------
 
-#[derive(Copy, Clone, EnumIter, EnumString, AsRefStr, PartialEq)]
+#[derive(Debug, Copy, Clone, Display, EnumIter, EnumString, AsRefStr, Eq, PartialEq)]
 pub enum Lang {
     #[strum(serialize = "en-US")]
     EnUS,
@@ -59,29 +52,42 @@ pub enum Lang {
 }
 
 impl Lang {
-    pub fn label(&self) -> &str {
+    pub fn label(self) -> &'static str {
         match self {
             Self::EnUS => "English (US)",
             Self::DeDE => "Deutsch (Deutschland)",
         }
     }
 
-    pub fn ftl_messages(&self) -> &str {
+    pub fn ftl_messages(self) -> &'static str {
+        macro_rules! include_ftl_messages {
+            ( $lang_id:literal ) => {
+                include_str!(concat!("../ftl_messages/", $lang_id, ".ftl"))
+            };
+        }
         match self {
-            Self::EnUS => include_str!("resources/english.ftl"),
-            Self::DeDE => include_str!("resources/german.ftl"),
+            Self::EnUS => include_ftl_messages!("en-US"),
+            Self::DeDE => include_ftl_messages!("de-DE"),
         }
     }
 
-    pub fn language_identifier(&self) -> LanguageIdentifier {
-        match self {
-            Self::EnUS => "en-US",
-            Self::DeDE => "de-DE",
-        }.parse().expect("parse Lang to LanguageIdentifier")
+    pub fn to_language_identifier(self) -> LanguageIdentifier {
+        self.as_ref()
+            .parse()
+            .expect("parse Lang to LanguageIdentifier")
+    }
+
+    pub fn create_ftl_bundle(self) -> FluentBundle<FluentResource> {
+        let ftl_resource =
+            FluentResource::try_new(self.ftl_messages().to_owned()).expect("parse FTL messages");
+
+        let mut bundle = FluentBundle::new(&[self.to_language_identifier()]);
+        bundle.add_resource(ftl_resource).expect("add FTL resource");
+        bundle
     }
 }
 
-// ------ MACROS ------
+// ------ create_t ------
 
 /// Convenience macro to improve readability of `view`s with many translations.
 ///
@@ -97,7 +103,7 @@ impl Lang {
 ///    create_t!(model.i18n);
 ///    div![
 ///        p![t!("hello-world")],
-///        p![t!("hello-user", &args_male_sg)],
+///        p![t!("hello-user", args_male_sg)],
 ///    ]
 /// }
 ///```
@@ -115,11 +121,11 @@ macro_rules! create_t {
                     };
                     { $d key:expr, $d args:expr } => {
                         {
-                            $i18n.translate($d key, Some($d args))
+                            $i18n.translate($d key, Some(&$d args))
                         }
                     };
                 }
             }
         }
-   }
+    };
 }
