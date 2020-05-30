@@ -29,12 +29,166 @@ pub struct Url {
     invalid_components: Vec<String>,
 }
 
+// Constructors
+
 impl Url {
     /// Creates a new `Url` with the empty path.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Creates a new `Url` from the one that is currently set in the browser.
+    pub fn current() -> Url {
+        let current_url = util::window().location().href().expect("get `href`");
+        Url::from_str(&current_url).expect("create `web_sys::Url` from the current URL")
+    }
+}
+
+// Getters
+
+impl Url {
+    /// Get path.
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
+    pub fn path(&self) -> &[String] {
+        &self.path
+    }
+
+    /// Get hash path.
+    pub fn hash_path(&self) -> &[String] {
+        &self.path
+    }
+
+    /// Get hash.
+    ///
+    /// # References
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
+    pub fn hash(&self) -> Option<&String> {
+        self.hash.as_ref()
+    }
+
+    /// Get search.
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
+    pub const fn search(&self) -> &UrlSearch {
+        &self.search
+    }
+
+    /// Get mutable search.
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
+    pub fn search_mut(&mut self) -> &mut UrlSearch {
+        &mut self.search
+    }
+
+    /// Get invalid components.
+    ///
+    /// Undecodable / unparsable components are invalid.
+    pub fn invalid_components(&self) -> &[String] {
+        &self.invalid_components
+    }
+
+    /// Get mutable invalid components.
+    ///
+    /// Undecodable / unparsable components are invalid.
+    pub fn invalid_components_mut(&mut self) -> &mut Vec<String> {
+        &mut self.invalid_components
+    }
+}
+
+// Setters
+
+impl Url {
+    /// Sets path and returns updated `Url`. It also resets internal path iterator.
+    ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_path(&["my", "path"])
+    /// ```
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
+    pub fn set_path<T: ToString>(
+        mut self,
+        into_path_iterator: impl IntoIterator<Item = T>,
+    ) -> Self {
+        self.path = into_path_iterator
+            .into_iter()
+            .map(|p| p.to_string())
+            .collect();
+        self.next_path_part_index = 0;
+        self
+    }
+
+    /// Sets hash path and returns updated `Url`.
+    /// It also resets internal hash path iterator and sets `hash`.
+    ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_hash_path(&["my", "path"])
+    /// ```
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
+    pub fn set_hash_path<T: ToString>(
+        mut self,
+        into_hash_path_iterator: impl IntoIterator<Item = T>,
+    ) -> Self {
+        self.hash_path = into_hash_path_iterator
+            .into_iter()
+            .map(|p| p.to_string())
+            .collect();
+        self.next_hash_path_part_index = 0;
+        self.hash = Some(self.hash_path.join("/"));
+        self
+    }
+
+    /// Sets hash and returns updated `Url`.
+    /// I also sets `hash_path`.
+    ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_hash("my_hash")
+    /// ```
+    ///
+    /// # References
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
+    pub fn set_hash(mut self, hash: impl Into<String>) -> Self {
+        let hash = hash.into();
+        self.hash_path = hash.split('/').map(ToOwned::to_owned).collect();
+        self.hash = Some(hash);
+        self
+    }
+
+    /// Sets search and returns updated `Url`.
+    ///
+    /// # Example
+    ///
+    /// ```rust, no_run
+    /// Url::new().set_search(UrlSearch::new(vec![
+    ///     ("x", vec!["1"]),
+    ///     ("sort_by", vec!["date", "name"]),
+    /// ])
+    /// ```
+    ///
+    /// # Refenences
+    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
+    pub fn set_search(mut self, search: impl Into<UrlSearch>) -> Self {
+        self.search = search.into();
+        self
+    }
+}
+
+// Browser actions dependent on the Url struct
+// TODO: Consider moving all Browser actions into a separate `routing` module.
+
+impl Url {
     /// Change the browser URL, but do not trigger a page load.
     ///
     /// This will add a new entry to the browser history.
@@ -68,13 +222,65 @@ impl Url {
             .replace_state_with_url(&data, "", Some(&self.to_string()))
             .expect("Problem pushing state");
     }
+    
+    /// Change the browser URL and trigger a page load.
+    pub fn go_and_load(&self) {
+        util::window()
+            .location()
+            .set_href(&self.to_string())
+            .expect("set location href");
+    }
+}
 
-    /// Creates a new `Url` from the one that is currently set in the browser.
-    pub fn current() -> Url {
-        let current_url = util::window().location().href().expect("get `href`");
-        Url::from_str(&current_url).expect("create `web_sys::Url` from the current URL")
+// Actions independent of the Url struct
+// TODO: consider making these free functions
+
+impl Url {
+    /// Change the browser URL and trigger a page load.
+    ///
+    /// Provided `url` isn't checked and it's passed into `location.href`.
+    pub fn go_and_load_with_str(url: impl AsRef<str>) {
+        util::window()
+            .location()
+            .set_href(url.as_ref())
+            .expect("set location href");
     }
 
+    /// Trigger a page reload.
+    pub fn reload() {
+        util::window().location().reload().expect("reload location");
+    }
+
+    /// Trigger a page reload and force reloading from the server.
+    pub fn reload_and_skip_cache() {
+        util::window()
+            .location()
+            .reload_with_forceget(true)
+            .expect("reload location with forceget");
+    }
+
+    /// Move back in `History`.
+    ///
+    /// - `steps: 0` only reloads the current page.
+    /// - Negative steps move you forward - use rather `Url::go_forward` instead.
+    /// - If there is no previous page, this call does nothing.
+    pub fn go_back(steps: i32) {
+        util::history().go_with_delta(-steps).expect("go back");
+    }
+
+    /// Move back in `History`.
+    ///
+    /// - `steps: 0` only reloads the current page.
+    /// - Negative steps move you back - use rather `Url::go_back` instead.
+    /// - If there is no next page, this call does nothing.
+    pub fn go_forward(steps: i32) {
+        util::history().go_with_delta(steps).expect("go forward");
+    }
+}
+
+// Url `base_path`/`active_path` manipulation
+
+impl Url {
     /// Advances the internal path iterator and returns the next path part as `Option<&str>`.
     ///
     /// # Example
@@ -205,174 +411,6 @@ impl Url {
         url
     }
 
-    /// Sets path and returns updated `Url`. It also resets internal path iterator.
-    ///
-    /// # Example
-    ///
-    /// ```rust, no_run
-    /// Url::new().set_path(&["my", "path"])
-    /// ```
-    ///
-    /// # Refenences
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn set_path<T: ToString>(
-        mut self,
-        into_path_iterator: impl IntoIterator<Item = T>,
-    ) -> Self {
-        self.path = into_path_iterator
-            .into_iter()
-            .map(|p| p.to_string())
-            .collect();
-        self.next_path_part_index = 0;
-        self
-    }
-
-    /// Sets hash path and returns updated `Url`.
-    /// It also resets internal hash path iterator and sets `hash`.
-    ///
-    /// # Example
-    ///
-    /// ```rust, no_run
-    /// Url::new().set_hash_path(&["my", "path"])
-    /// ```
-    ///
-    /// # Refenences
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn set_hash_path<T: ToString>(
-        mut self,
-        into_hash_path_iterator: impl IntoIterator<Item = T>,
-    ) -> Self {
-        self.hash_path = into_hash_path_iterator
-            .into_iter()
-            .map(|p| p.to_string())
-            .collect();
-        self.next_hash_path_part_index = 0;
-        self.hash = Some(self.hash_path.join("/"));
-        self
-    }
-
-    /// Sets hash and returns updated `Url`.
-    /// I also sets `hash_path`.
-    ///
-    /// # Example
-    ///
-    /// ```rust, no_run
-    /// Url::new().set_hash("my_hash")
-    /// ```
-    ///
-    /// # References
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
-    pub fn set_hash(mut self, hash: impl Into<String>) -> Self {
-        let hash = hash.into();
-        self.hash_path = hash.split('/').map(ToOwned::to_owned).collect();
-        self.hash = Some(hash);
-        self
-    }
-
-    /// Sets search and returns updated `Url`.
-    ///
-    /// # Example
-    ///
-    /// ```rust, no_run
-    /// Url::new().set_search(UrlSearch::new(vec![
-    ///     ("x", vec!["1"]),
-    ///     ("sort_by", vec!["date", "name"]),
-    /// ])
-    /// ```
-    ///
-    /// # Refenences
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub fn set_search(mut self, search: impl Into<UrlSearch>) -> Self {
-        self.search = search.into();
-        self
-    }
-
-    /// Get path.
-    ///
-    /// # Refenences
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
-    pub fn path(&self) -> &[String] {
-        &self.path
-    }
-
-    /// Get hash path.
-    pub fn hash_path(&self) -> &[String] {
-        &self.path
-    }
-
-    /// Get hash.
-    ///
-    /// # References
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
-    pub fn hash(&self) -> Option<&String> {
-        self.hash.as_ref()
-    }
-
-    /// Get search.
-    ///
-    /// # Refenences
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub const fn search(&self) -> &UrlSearch {
-        &self.search
-    }
-
-    /// Get mutable search.
-    ///
-    /// # Refenences
-    /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub fn search_mut(&mut self) -> &mut UrlSearch {
-        &mut self.search
-    }
-
-    /// Change the browser URL and trigger a page load.
-    pub fn go_and_load(&self) {
-        util::window()
-            .location()
-            .set_href(&self.to_string())
-            .expect("set location href");
-    }
-
-    /// Change the browser URL and trigger a page load.
-    ///
-    /// Provided `url` isn't checked and it's passed into `location.href`.
-    pub fn go_and_load_with_str(url: impl AsRef<str>) {
-        util::window()
-            .location()
-            .set_href(url.as_ref())
-            .expect("set location href");
-    }
-
-    /// Trigger a page reload.
-    pub fn reload() {
-        util::window().location().reload().expect("reload location");
-    }
-
-    /// Trigger a page reload and force reloading from the server.
-    pub fn reload_and_skip_cache() {
-        util::window()
-            .location()
-            .reload_with_forceget(true)
-            .expect("reload location with forceget");
-    }
-
-    /// Move back in `History`.
-    ///
-    /// - `steps: 0` only reloads the current page.
-    /// - Negative steps move you forward - use rather `Url::go_forward` instead.
-    /// - If there is no previous page, this call does nothing.
-    pub fn go_back(steps: i32) {
-        util::history().go_with_delta(-steps).expect("go back");
-    }
-
-    /// Move back in `History`.
-    ///
-    /// - `steps: 0` only reloads the current page.
-    /// - Negative steps move you back - use rather `Url::go_back` instead.
-    /// - If there is no next page, this call does nothing.
-    pub fn go_forward(steps: i32) {
-        util::history().go_with_delta(steps).expect("go forward");
-    }
-
     /// If the current `Url`'s path prefix is equal to `path_base`,
     /// then reset the internal path iterator and advance it to skip the prefix (aka `path_base`).
     ///
@@ -384,7 +422,12 @@ impl Url {
         }
         self
     }
+}
 
+// Things that don't fit
+// TODO: consider making this a free floating function, making it private, or both.
+
+impl Url {
     /// Decodes a Uniform Resource Identifier (URI) component.
     /// Aka percent-decoding.
     ///
@@ -404,20 +447,6 @@ impl Url {
     pub fn decode_uri_component(component: impl AsRef<str>) -> Result<String, JsValue> {
         let decoded = js_sys::decode_uri_component(component.as_ref())?;
         Ok(String::from(decoded))
-    }
-
-    /// Get invalid components.
-    ///
-    /// Undecodable / unparsable components are invalid.
-    pub fn invalid_components(&self) -> &[String] {
-        &self.invalid_components
-    }
-
-    /// Get mutable invalid components.
-    ///
-    /// Undecodable / unparsable components are invalid.
-    pub fn invalid_components_mut(&mut self) -> &mut Vec<String> {
-        &mut self.invalid_components
     }
 }
 
