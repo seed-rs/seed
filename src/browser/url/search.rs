@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::BTreeMap, fmt};
-
 use super::Url;
-
-// ------ UrlSearch ------
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -13,28 +10,10 @@ pub struct UrlSearch {
 }
 
 impl UrlSearch {
-    /// Makes a new `UrlSearch` with the provided parameters.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// UrlSearch::new(vec![
-    ///     ("sort", vec!["date", "name"]),
-    ///     ("category", vec!["top"])
-    /// ])
-    /// ```
-    pub fn new<K, V, VS>(params: impl IntoIterator<Item = (K, VS)>) -> Self
-    where
-        K: Into<String>,
-        V: Into<String>,
-        VS: IntoIterator<Item = V>,
-    {
-        let mut search = BTreeMap::new();
-        for (key, values) in params {
-            search.insert(key.into(), values.into_iter().map(Into::into).collect());
-        }
+    /// Create an empty `UrlSearch` object.
+    pub fn new() -> Self {
         Self {
-            search,
+            search: BTreeMap::new(),
             invalid_components: Vec::new(),
         }
     }
@@ -155,5 +134,42 @@ impl From<web_sys::UrlSearchParams> for UrlSearch {
 
         url_search.invalid_components = invalid_components;
         url_search
+    }
+}
+
+impl<K, V, VS> std::iter::FromIterator<(K, VS)> for UrlSearch
+    where
+        K: Into<String>,
+        V: Into<String>,
+        VS: IntoIterator<Item = V>,
+{
+    fn from_iter<I: IntoIterator<Item = (K, VS)>>(iter: I) -> Self {
+        let search = iter.into_iter()
+            .map(|(k, vs)| {
+                let k = k.into();
+                let v: Vec<_> = vs.into_iter().map(Into::into).collect();
+                (k, v)
+            })
+            .collect();
+        Self {
+            search,
+            invalid_components: Vec::new(),
+        }
+    }
+}
+
+impl<'a, K, V, VS> std::iter::FromIterator<&'a (K, VS)> for UrlSearch
+    where
+        K: 'a,
+        &'a K: Into<String>,
+        V: Into<String>,
+        VS: 'a,
+        &'a VS: IntoIterator<Item = V>,
+{
+    fn from_iter<I: IntoIterator<Item = &'a (K, VS)>>(iter: I) -> Self {
+        iter.into_iter().map(|(k, vs)| (
+            k.into(),
+            vs.into_iter(),
+        )).collect()
     }
 }

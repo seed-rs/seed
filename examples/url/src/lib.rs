@@ -75,9 +75,9 @@ fn view(model: &Model) -> Node<Msg> {
                 ev(Ev::Click, |_| {
                     Url::new()
                         .set_path(&["ui", "a", "b", "c"])
-                        .set_search(UrlSearch::new(vec![
+                        .set_search(vec![
                             ("x", vec!["1"])
-                        ]))
+                        ].iter().collect())
                         .set_hash("hash")
                         .go_and_load()
                 })
