@@ -9,9 +9,9 @@ const WEEKLY: &str = "weekly";
 // ------ ------
 
 pub fn init(mut url: Url) -> Option<Model> {
-    let base_url = url.to_base_url();
+    let base_url = url.clone().truncate_relative_path();
 
-    let frequency = match url.remaining_path_parts().as_slice() {
+    let frequency = match url.consume_relative_path().as_slice() {
         [] => {
             Urls::new(&base_url).default().go_and_replace();
             Frequency::default()
@@ -59,10 +59,10 @@ impl<'a> Urls<'a> {
         self.daily()
     }
     pub fn daily(self) -> Url {
-        self.base_url().add_path_part(DAILY)
+        self.base_url().push_path_part(DAILY)
     }
     pub fn weekly(self) -> Url {
-        self.base_url().add_path_part(WEEKLY)
+        self.base_url().push_path_part(WEEKLY)
     }
 }
 

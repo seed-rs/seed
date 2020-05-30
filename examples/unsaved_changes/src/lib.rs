@@ -18,7 +18,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 
     let text = LocalStorage::get(STORAGE_KEY).unwrap_or_default();
     Model {
-        base_url: url.to_base_url(),
+        base_url: url.clone().truncate_relative_path(),
         saved_text_hash: calculate_hash(&text),
         text,
     }
@@ -44,7 +44,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     fn no_home(self) -> Url {
-        self.base_url().add_path_part("no-home")
+        self.base_url().push_path_part("no-home")
     }
 }
 

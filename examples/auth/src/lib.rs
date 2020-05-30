@@ -18,7 +18,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     Model {
         email: "john@example.com".to_owned(),
         password: "1234".to_owned(),
-        base_url: url.to_base_url(),
+        base_url: url.clone().truncate_relative_path(),
         page: Page::init(url, user.as_ref(), orders),
         secret_message: None,
         user,
@@ -59,7 +59,7 @@ enum Page {
 
 impl Page {
     fn init(mut url: Url, user: Option<&LoggedUser>, orders: &mut impl Orders<Msg>) -> Self {
-        match url.next_path_part() {
+        match url.pop_relative_path_part() {
             None => {
                 if let Some(user) = user {
                     send_request_to_top_secret(user.token.clone(), orders)
@@ -99,7 +99,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn login(self) -> Url {
-        self.base_url().add_path_part(LOGIN)
+        self.base_url().push_path_part(LOGIN)
     }
 }
 

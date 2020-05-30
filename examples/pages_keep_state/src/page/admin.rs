@@ -11,7 +11,7 @@ mod page;
 
 pub fn init(mut url: Url, model: &mut Option<Model>) -> Option<()> {
     let model = model.get_or_insert_with(Model::default);
-    model.page_id.replace(match url.next_path_part() {
+    model.page_id.replace(match url.pop_relative_path_part() {
         Some(REPORT) => page::report::init(url, &mut model.report_model).map(|_| PageId::Report)?,
         _ => None?,
     });
@@ -42,7 +42,7 @@ enum PageId {
 struct_urls!();
 impl<'a> Urls<'a> {
     pub fn report_urls(self) -> page::report::Urls<'a> {
-        page::report::Urls::new(self.base_url().add_path_part(REPORT))
+        page::report::Urls::new(self.base_url().push_path_part(REPORT))
     }
 }
 

@@ -32,10 +32,10 @@ impl Model {
         Self {
             base_path,
             initial_url: url.clone(),
-            base_url: url.to_base_url(),
-            next_path_part: url.next_path_part().map(ToOwned::to_owned),
+            base_url: url.clone().truncate_relative_path(),
+            next_path_part: url.pop_relative_path_part().map(ToOwned::to_owned),
             remaining_path_parts: url
-                .remaining_path_parts()
+                .consume_relative_path()
                 .into_iter()
                 .map(ToOwned::to_owned)
                 .collect(),
