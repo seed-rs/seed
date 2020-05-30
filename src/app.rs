@@ -184,7 +184,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static, GMs: 'static> App<Ms, Mdl, INodes
                 move |url: Url,
                       orders: &mut OrdersContainer<Ms, Mdl, INodes, GMs>|
                       -> AfterMount<Mdl> {
-                    let url = url.skip_base_path(&base_path);
+                    let url = url.try_skip_base_path(&base_path);
                     let model = init(url, orders);
                     AfterMount::new(model).url_handling(UrlHandling::None)
                 }

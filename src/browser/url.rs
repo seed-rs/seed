@@ -10,18 +10,30 @@ pub const DUMMY_BASE_URL: &str = "http://example.com";
 
 // ------ Url ------
 
-/// URL used for routing.
+/// URL used for routing. The struct also keeps track of the "base" path vs the "relative" path components
+/// within the URL. The relative path appended to the base path forms the "absolute" path or simply, the
+/// path. For example:
+///
+/// ```text
+/// https://site.com/albums/seedlings/oak-45.png
+///                  ^base^ ^----relative------^
+///                  ^---------absolute--------^
+/// ```
+///
+/// Note that methods exist to change which parts of the URL are considered the
+/// "base" vs the "relative" parts. This concept also applies for "hash paths".
 ///
 /// - It represents relative URL.
-/// - Two, almost identical, `Url`s that differ only with differently advanced
-/// internal path or hash path iterators (e.g. `next_path_part()` was called on one of them)
-/// are considered different also during comparison.
+/// - Two `Url`s that represent the same absolute path but different base/relative
+///   paths (e.g. `pop_path_part()` was called on one of them) are considered
+///   different when compared.
 ///
-/// (If the features above are problems for you, create an [issue](https://github.com/seed-rs/seed/issues/new))
+/// (If the features above are problems for you, please [create an issue on our
+/// GitHub page](https://github.com/seed-rs/seed/issues/new). Thank you!)
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct Url {
-    next_path_part_index: usize,
-    next_hash_path_part_index: usize,
+    base_path_len: usize,
+    base_hash_path_len: usize,
     path: Vec<String>,
     hash_path: Vec<String>,
     hash: Option<String>,
@@ -47,7 +59,7 @@ impl Url {
 // Getters
 
 impl Url {
-    /// Get path.
+    /// Get the (absolute) path.
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
@@ -55,12 +67,12 @@ impl Url {
         &self.path
     }
 
-    /// Get hash path.
+    /// Get the hash path.
     pub fn hash_path(&self) -> &[String] {
         &self.path
     }
 
-    /// Get hash.
+    /// Get the hash.
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
@@ -68,7 +80,7 @@ impl Url {
         self.hash.as_ref()
     }
 
-    /// Get search.
+    /// Get the search parameters.
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
@@ -76,7 +88,7 @@ impl Url {
         &self.search
     }
 
-    /// Get mutable search.
+    /// Get a mutable version of the search parameters.
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
@@ -84,14 +96,14 @@ impl Url {
         &mut self.search
     }
 
-    /// Get invalid components.
+    /// Get the invalid components.
     ///
     /// Undecodable / unparsable components are invalid.
     pub fn invalid_components(&self) -> &[String] {
         &self.invalid_components
     }
 
-    /// Get mutable invalid components.
+    /// Get a mutable version of the invalid components.
     ///
     /// Undecodable / unparsable components are invalid.
     pub fn invalid_components_mut(&mut self) -> &mut Vec<String> {
@@ -102,7 +114,9 @@ impl Url {
 // Setters
 
 impl Url {
-    /// Sets path and returns updated `Url`. It also resets internal path iterator.
+    /// Sets the (absolute) path and returns the updated `Url`.
+    ///
+    /// It also resets the base and relative paths.
     ///
     /// # Example
     ///
@@ -120,12 +134,13 @@ impl Url {
             .into_iter()
             .map(|p| p.to_string())
             .collect();
-        self.next_path_part_index = 0;
+        self.base_path_len = 0;
         self
     }
 
-    /// Sets hash path and returns updated `Url`.
-    /// It also resets internal hash path iterator and sets `hash`.
+    /// Sets the (absolute) hash path and returns the updated `Url`.
+    ///
+    /// It also resets the base and relative hash paths and sets `hash`.
     ///
     /// # Example
     ///
@@ -143,13 +158,14 @@ impl Url {
             .into_iter()
             .map(|p| p.to_string())
             .collect();
-        self.next_hash_path_part_index = 0;
+        self.base_hash_path_len = 0;
         self.hash = Some(self.hash_path.join("/"));
         self
     }
 
-    /// Sets hash and returns updated `Url`.
-    /// I also sets `hash_path`.
+    /// Sets the hash and returns the updated `Url`.
+    ///
+    /// It also sets the hash path, effectively calling `set_hash_path`.
     ///
     /// # Example
     ///
@@ -159,14 +175,13 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
-    pub fn set_hash(mut self, hash: impl Into<String>) -> Self {
-        let hash = hash.into();
-        self.hash_path = hash.split('/').map(ToOwned::to_owned).collect();
-        self.hash = Some(hash);
-        self
+    pub fn set_hash(self, hash: impl Into<String>) -> Self {
+        // TODO: Probably not an issue, but this effectively clones `hash` once.
+        // TODO: Optionally implement a private function to handle both.
+        self.set_hash_path(hash.into().split('/'))
     }
 
-    /// Sets search and returns updated `Url`.
+    /// Sets the search parameters and returns the updated `Url`.
     ///
     /// # Example
     ///
@@ -225,10 +240,7 @@ impl Url {
     
     /// Change the browser URL and trigger a page load.
     pub fn go_and_load(&self) {
-        util::window()
-            .location()
-            .set_href(&self.to_string())
-            .expect("set location href");
+        Self::go_and_load_with_str(self.to_string())
     }
 }
 
@@ -238,7 +250,7 @@ impl Url {
 impl Url {
     /// Change the browser URL and trigger a page load.
     ///
-    /// Provided `url` isn't checked and it's passed into `location.href`.
+    /// Provided `url` isn't checked and directly set to `location.href`.
     pub fn go_and_load_with_str(url: impl AsRef<str>) {
         util::window()
             .location()
@@ -281,50 +293,86 @@ impl Url {
 // Url `base_path`/`active_path` manipulation
 
 impl Url {
-    /// Advances the internal path iterator and returns the next path part as `Option<&str>`.
+    /// Returns the first part of the relative path and advances the base path.
+    /// Moves the first part of the relative path into the base path and returns
+    /// a reference to the moved portion.
     ///
-    /// # Example
+    /// The effects are as follows. Before:
+    ///
+    /// ```text
+    /// https://site.com/albums/seedlings/oak-45.png
+    ///                  ^base^ ^----relative------^
+    ///                  ^---------absolute--------^
+    /// ```
+    /// 
+    /// and after:
+    /// 
+    /// ```text
+    /// https://site.com/albums/seedlings/oak-45.png
+    ///                  ^-----base-----^ ^relative^
+    ///                  ^---------absolute--------^
+    /// ```
+    ///
+    /// # Code example
     ///
     /// ```rust,no_run
-    ///match url.next_path_part() {
+    ///match url.advance_base_path() {
     ///    None => Page::Home,
     ///    Some("report") => Page::Report(page::report::init(url)),
     ///    _ => Page::Unknown(url),
     ///}
     /// ````
-    pub fn next_path_part(&mut self) -> Option<&str> {
-        let path_part = self.path.get(self.next_path_part_index);
+    pub fn pop_relative_path_part(&mut self) -> Option<&str> {
+        let path_part = self.path.get(self.base_path_len);
         if path_part.is_some() {
-            self.next_path_part_index += 1;
+            self.base_path_len += 1;
         }
         path_part.map(String::as_str)
     }
 
-    /// Advances the internal hash path iterator and returns the next hash path part as `Option<&str>`.
+    /// Moves the first part of the relative hash path into the base hash path
+    /// and returns a reference to the moved portion, similar to `pop_relative_path`.
     ///
     /// # Example
     ///
     /// ```rust,no_run
-    ///match url.next_hash_path_part() {
+    ///match url.pop_relative_hash_path() {
     ///    None => Page::Home,
     ///    Some("report") => Page::Report(page::report::init(url)),
     ///    _ => Page::Unknown(url),
     ///}
     /// ````
-    pub fn next_hash_path_part(&mut self) -> Option<&str> {
-        let hash_path_part = self.hash_path.get(self.next_hash_path_part_index);
+    pub fn pop_relative_hash_path_part(&mut self) -> Option<&str> {
+        let hash_path_part = self.hash_path.get(self.base_hash_path_len);
         if hash_path_part.is_some() {
-            self.next_hash_path_part_index += 1;
+            self.base_hash_path_len += 1;
         }
         hash_path_part.map(String::as_str)
     }
 
-    /// Collects the internal path iterator and returns it as `Vec<&str>`.
+    /// Moves all the components of the relative path to the base path and
+    /// returns them as `Vec<&str>`.
+    ///
+    /// The effects are as follows. Before:
+    ///
+    /// ```text
+    /// https://site.com/albums/seedlings/oak-45.png
+    ///                  ^base^ ^----relative------^
+    ///                  ^---------absolute--------^
+    /// ```
+    /// 
+    /// and after:
+    /// 
+    /// ```text
+    /// https://site.com/albums/seedlings/oak-45.png
+    ///                  ^-----------base----------^
+    ///                  ^---------absolute--------^
+    /// ```
     ///
     /// # Example
     ///
     /// ```rust,no_run
-    ///match url.remaining_path_parts().as_slice() {
+    ///match url.consume_relative_path().as_slice() {
     ///    [] => Page::Home,
     ///    ["report", rest @ ..] => {
     ///        match rest {
@@ -335,9 +383,9 @@ impl Url {
     ///    _ => Page::NotFound,
     ///}
     /// ````
-    pub fn remaining_path_parts(&mut self) -> Vec<&str> {
-        let path_part_index = self.next_path_part_index;
-        self.next_path_part_index = self.path.len();
+    pub fn consume_relative_path(&mut self) -> Vec<&str> {
+        let path_part_index = self.base_path_len;
+        self.base_path_len = self.path.len();
         self.path
             .iter()
             .skip(path_part_index)
@@ -345,12 +393,13 @@ impl Url {
             .collect()
     }
 
-    /// Collects the internal hash path iterator and returns it as `Vec<&str>`.
+    /// Moves all the components of the relative hash path to the base hash path
+    /// and returns them as `Vec<&str>`, similar to `consume_hash_path`.
     ///
     /// # Example
     ///
     /// ```rust,no_run
-    ///match url.remaining_hash_path_parts().as_slice() {
+    ///match url.consume_relative_hash_path().as_slice() {
     ///    [] => Page::Home,
     ///    ["report", rest @ ..] => {
     ///        match rest {
@@ -361,9 +410,9 @@ impl Url {
     ///    _ => Page::NotFound,
     ///}
     /// ````
-    pub fn remaining_hash_path_parts(&mut self) -> Vec<&str> {
-        let hash_path_part_index = self.next_hash_path_part_index;
-        self.next_hash_path_part_index = self.hash_path.len();
+    pub fn consume_relative_hash_path(&mut self) -> Vec<&str> {
+        let hash_path_part_index = self.base_hash_path_len;
+        self.base_hash_path_len = self.hash_path.len();
         self.hash_path
             .iter()
             .skip(hash_path_part_index)
@@ -371,54 +420,73 @@ impl Url {
             .collect()
     }
 
-    /// Adds given path part and returns updated `Url`.
+    /// Adds the given path part and returns the updated `Url`. The path
+    /// part is added to the relative path.
     ///
     /// # Example
     ///
     /// ```rust,no_run
-    ///let link_to_blog = url.add_path_part("blog");
+    ///let link_to_blog = url.push_path_part("blog");
     /// ````
-    pub fn add_path_part(mut self, path_part: impl Into<String>) -> Self {
+    pub fn push_path_part(mut self, path_part: impl Into<String>) -> Self {
         self.path.push(path_part.into());
         self
     }
 
-    /// Adds given hash path part and returns updated `Url`.
+    /// Adds the given hash path part and returns the updated `Url`.
     /// It also changes `hash`.
     ///
     /// # Example
     ///
     /// ```rust,no_run
-    ///let link_to_blog = url.add_hash_path_part("blog");
+    ///let link_to_blog = url.push_hash_path_part("blog");
     /// ````
-    pub fn add_hash_path_part(mut self, hash_path_part: impl Into<String>) -> Self {
+    pub fn push_hash_path_part(mut self, hash_path_part: impl Into<String>) -> Self {
         self.hash_path.push(hash_path_part.into());
         self.hash = Some(self.hash_path.join("/"));
         self
     }
 
-    /// Clone the `Url` and strip remaining path parts.
-    pub fn to_base_url(&self) -> Self {
+    /// Clone the `Url` and strip relative path.
+    ///
+    /// The effects are as follows. Input:
+    ///
+    /// ```text
+    /// https://site.com/albums/seedlings/oak-45.png
+    ///                  ^-----base-----^ ^relative^
+    ///                  ^---------absolute--------^
+    /// ```
+    /// 
+    /// and output:
+    /// 
+    /// ```text
+    /// https://site.com/albums/seedlings
+    ///                  ^-----base-----^
+    ///                  ^---absolute---^
+    /// ```
+    pub fn truncate_relative_path(&mut self) -> Self {
         let mut url = self.clone();
-        url.path.truncate(self.next_path_part_index);
+        url.path.truncate(self.base_path_len);
         url
     }
 
-    /// Clone the `Url` and strip remaining hash path parts.
-    pub fn to_hash_base_url(&self) -> Self {
+    /// Clone the `Url` and strip relative hash path. Similar to
+    /// `truncate_relative_path`.
+    pub fn truncate_relative_hash_path(&self) -> Self {
         let mut url = self.clone();
-        url.hash_path.truncate(self.next_hash_path_part_index);
+        url.hash_path.truncate(self.base_hash_path_len);
         url
     }
 
-    /// If the current `Url`'s path prefix is equal to `path_base`,
-    /// then reset the internal path iterator and advance it to skip the prefix (aka `path_base`).
+    /// If the current `Url`'s path starts with `path_base`, then set the base
+    /// path to the provided `path_base` and the rest to the relative path.
     ///
     /// It's used mostly by Seed internals, but it can be useful in combination
     /// with `orders.clone_base_path()`.
-    pub fn skip_base_path(mut self, path_base: &[String]) -> Self {
+    // TODO potentially return `Result` so that the user can act on the check.
+    pub fn try_skip_base_path(mut self, path_base: &[String]) -> Self {
         if self.path.starts_with(path_base) {
-            self.next_path_part_index = path_base.len();
+            self.base_path_len = path_base.len();
         }
         self
     }
@@ -560,8 +628,8 @@ impl From<&web_sys::Url> for Url {
         invalid_components.append(&mut search.invalid_components.clone());
 
         Self {
-            next_path_part_index: 0,
-            next_hash_path_part_index: 0,
+            base_path_len: 0,
+            base_hash_path_len: 0,
             path,
             hash_path,
             hash,
