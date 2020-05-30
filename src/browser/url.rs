@@ -430,6 +430,48 @@ impl Url {
             .collect()
     }
 
+    /// Clone the `Url` and strip relative path.
+    ///
+    /// The effects are as follows. Input:
+    ///
+    /// ```text
+    /// https://site.com/albums/seedlings/oak-45.png
+    ///                  ^-----base-----^ ^relative^
+    ///                  ^---------absolute--------^
+    /// ```
+    /// 
+    /// and output:
+    /// 
+    /// ```text
+    /// https://site.com/albums/seedlings
+    ///                  ^-----base-----^
+    ///                  ^---absolute---^
+    /// ```
+    pub fn truncate_relative_path(&mut self) -> &mut Self {
+        self.path.truncate(self.base_path_len);
+        self
+    }
+
+    /// Clone the `Url` and strip relative hash path. Similar to
+    /// `truncate_relative_path`.
+    pub fn truncate_relative_hash_path(&mut self) -> &mut Self {
+        self.hash_path.truncate(self.base_hash_path_len);
+        self
+    }
+
+    /// If the current `Url`'s path starts with `path_base`, then set the base
+    /// path to the provided `path_base` and the rest to the relative path.
+    ///
+    /// It's used mostly by Seed internals, but it can be useful in combination
+    /// with `orders.clone_base_path()`.
+    // TODO potentially return `Result` so that the user can act on the check.
+    pub fn try_skip_base_path(mut self, path_base: &[String]) -> Self {
+        if self.path.starts_with(path_base) {
+            self.base_path_len = path_base.len();
+        }
+        self
+    }
+
     /// Adds the given path part and returns the updated `Url`. The path
     /// part is added to the relative path.
     ///
@@ -454,50 +496,6 @@ impl Url {
     pub fn push_hash_path_part(mut self, hash_path_part: impl Into<String>) -> Self {
         self.hash_path.push(hash_path_part.into());
         self.hash = Some(self.hash_path.join("/"));
-        self
-    }
-
-    /// Clone the `Url` and strip relative path.
-    ///
-    /// The effects are as follows. Input:
-    ///
-    /// ```text
-    /// https://site.com/albums/seedlings/oak-45.png
-    ///                  ^-----base-----^ ^relative^
-    ///                  ^---------absolute--------^
-    /// ```
-    /// 
-    /// and output:
-    /// 
-    /// ```text
-    /// https://site.com/albums/seedlings
-    ///                  ^-----base-----^
-    ///                  ^---absolute---^
-    /// ```
-    pub fn truncate_relative_path(&mut self) -> Self {
-        let mut url = self.clone();
-        url.path.truncate(self.base_path_len);
-        url
-    }
-
-    /// Clone the `Url` and strip relative hash path. Similar to
-    /// `truncate_relative_path`.
-    pub fn truncate_relative_hash_path(&self) -> Self {
-        let mut url = self.clone();
-        url.hash_path.truncate(self.base_hash_path_len);
-        url
-    }
-
-    /// If the current `Url`'s path starts with `path_base`, then set the base
-    /// path to the provided `path_base` and the rest to the relative path.
-    ///
-    /// It's used mostly by Seed internals, but it can be useful in combination
-    /// with `orders.clone_base_path()`.
-    // TODO potentially return `Result` so that the user can act on the check.
-    pub fn try_skip_base_path(mut self, path_base: &[String]) -> Self {
-        if self.path.starts_with(path_base) {
-            self.base_path_len = path_base.len();
-        }
         self
     }
 }
