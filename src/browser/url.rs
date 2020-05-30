@@ -204,7 +204,7 @@ impl Url {
     ///
     /// # Refenences
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
-    pub fn set_search(mut self, search: impl Into<UrlSearch>) -> Self {
+    pub fn set_search(mut self, search: UrlSearch) -> Self {
         self.search = search.into();
         self
     }
