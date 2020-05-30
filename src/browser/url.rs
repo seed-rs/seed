@@ -447,14 +447,14 @@ impl Url {
     ///                  ^-----base-----^
     ///                  ^---absolute---^
     /// ```
-    pub fn truncate_relative_path(&mut self) -> &mut Self {
+    pub fn truncate_relative_path(mut self) -> Self {
         self.path.truncate(self.base_path_len);
         self
     }
 
     /// Clone the `Url` and strip relative hash path. Similar to
     /// `truncate_relative_path`.
-    pub fn truncate_relative_hash_path(&mut self) -> &mut Self {
+    pub fn truncate_relative_hash_path(mut self) -> Self {
         self.hash_path.truncate(self.base_hash_path_len);
         self
     }

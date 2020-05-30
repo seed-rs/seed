@@ -11,16 +11,15 @@ const ADMIN: &str = "admin";
 // ------ ------
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
-    let base_url = url.clone().truncate_relative_path();
     orders
         .subscribe(Msg::UrlChanged)
-        .notify(subs::UrlChanged(url));
+        .notify(subs::UrlChanged(url.clone()));
 
     Model {
         ctx: Context {
             logged_user: "John Doe",
         },
-        base_url,
+        base_url: url.truncate_relative_path(),
         page_id: None,
         admin_model: None,
     }
