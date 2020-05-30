@@ -66,6 +66,16 @@ impl Url {
     pub fn path(&self) -> &[String] {
         &self.path
     }
+    
+    /// Get the base path.
+    pub fn base_path(&mut self) -> &[String] {
+        &self.path[0..self.base_path_len]
+    }
+
+    /// Get the relative path.
+    pub fn relative_path(&mut self) -> &[String] {
+        &self.path[self.base_path_len..]
+    }
 
     /// Get the hash path.
     pub fn hash_path(&self) -> &[String] {
