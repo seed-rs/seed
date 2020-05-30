@@ -66,7 +66,7 @@ impl Url {
     pub fn path(&self) -> &[String] {
         &self.path
     }
-    
+
     /// Get the base path.
     pub fn base_path(&mut self) -> &[String] {
         &self.path[0..self.base_path_len]
@@ -247,7 +247,7 @@ impl Url {
             .replace_state_with_url(&data, "", Some(&self.to_string()))
             .expect("Problem pushing state");
     }
-    
+
     /// Change the browser URL and trigger a page load.
     pub fn go_and_load(&self) {
         Self::go_and_load_with_str(self.to_string())
@@ -314,9 +314,9 @@ impl Url {
     ///                  ^base^ ^----relative------^
     ///                  ^---------absolute--------^
     /// ```
-    /// 
+    ///
     /// and after:
-    /// 
+    ///
     /// ```text
     /// https://site.com/albums/seedlings/oak-45.png
     ///                  ^-----base-----^ ^relative^
@@ -370,9 +370,9 @@ impl Url {
     ///                  ^base^ ^----relative------^
     ///                  ^---------absolute--------^
     /// ```
-    /// 
+    ///
     /// and after:
-    /// 
+    ///
     /// ```text
     /// https://site.com/albums/seedlings/oak-45.png
     ///                  ^-----------base----------^
@@ -439,9 +439,9 @@ impl Url {
     ///                  ^-----base-----^ ^relative^
     ///                  ^---------absolute--------^
     /// ```
-    /// 
+    ///
     /// and output:
-    /// 
+    ///
     /// ```text
     /// https://site.com/albums/seedlings
     ///                  ^-----base-----^
@@ -584,13 +584,11 @@ impl From<&web_sys::Url> for Url {
             let path = url.pathname();
             path.split('/')
                 .filter(|path_part| !path_part.is_empty())
-                .map(|path_part| {
-                    match Url::decode_uri_component(path_part) {
-                        Ok(decoded_path_part) => decoded_path_part,
-                        Err(_) => {
-                            invalid_components.push(path_part.to_owned());
-                            path_part.to_string()
-                        }
+                .map(|path_part| match Url::decode_uri_component(path_part) {
+                    Ok(decoded_path_part) => decoded_path_part,
+                    Err(_) => {
+                        invalid_components.push(path_part.to_owned());
+                        path_part.to_string()
                     }
                 })
                 .collect()
@@ -605,15 +603,14 @@ impl From<&web_sys::Url> for Url {
                 let hash = &hash['#'.len_utf8()..];
 
                 // Decode hash path parts.
-                let hash_path = hash.split('/')
+                let hash_path = hash
+                    .split('/')
                     .filter(|path_part| !path_part.is_empty())
-                    .map(|path_part| {
-                        match Url::decode_uri_component(path_part) {
-                            Ok(decoded_path_part) => decoded_path_part,
-                            Err(_) => {
-                                invalid_components.push(path_part.to_owned());
-                                path_part.to_owned()
-                            }
+                    .map(|path_part| match Url::decode_uri_component(path_part) {
+                        Ok(decoded_path_part) => decoded_path_part,
+                        Err(_) => {
+                            invalid_components.push(path_part.to_owned());
+                            path_part.to_owned()
                         }
                     })
                     .collect();
@@ -664,14 +661,13 @@ mod tests {
         let expected = "/Hello%20G%C3%BCnter/path2?calc=5%2B6&x=1&x=2#he%C5%A1";
         let native_url = web_sys::Url::new_with_base(expected, DUMMY_BASE_URL).unwrap();
         let url = Url::from(&native_url);
-        let expected_search: UrlSearch = vec![("calc", vec!["5+6"]), ("x", vec!["1", "2"]),].into_iter().collect();
+        let expected_search: UrlSearch = vec![("calc", vec!["5+6"]), ("x", vec!["1", "2"])]
+            .into_iter()
+            .collect();
 
         assert_eq!(url.path()[0], "Hello Günter");
         assert_eq!(url.path()[1], "path2");
-        assert_eq!(
-            url.search(),
-            &expected_search,
-        );
+        assert_eq!(url.search(), &expected_search,);
         assert_eq!(url.hash(), Some(&"heš".to_owned()));
 
         let actual = url.to_string();
@@ -715,7 +711,11 @@ mod tests {
 
         let actual = Url::new()
             .set_path(&["foo", "bar"])
-            .set_search(vec![("q", vec!["42"]), ("z", vec!["13"])].into_iter().collect())
+            .set_search(
+                vec![("q", vec!["42"]), ("z", vec!["13"])]
+                    .into_iter()
+                    .collect(),
+            )
             .set_hash_path(&["discover"])
             .to_string();
 

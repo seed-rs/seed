@@ -1,6 +1,6 @@
+use super::Url;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::BTreeMap, fmt};
-use super::Url;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -138,13 +138,14 @@ impl From<web_sys::UrlSearchParams> for UrlSearch {
 }
 
 impl<K, V, VS> std::iter::FromIterator<(K, VS)> for UrlSearch
-    where
-        K: Into<String>,
-        V: Into<String>,
-        VS: IntoIterator<Item = V>,
+where
+    K: Into<String>,
+    V: Into<String>,
+    VS: IntoIterator<Item = V>,
 {
     fn from_iter<I: IntoIterator<Item = (K, VS)>>(iter: I) -> Self {
-        let search = iter.into_iter()
+        let search = iter
+            .into_iter()
             .map(|(k, vs)| {
                 let k = k.into();
                 let v: Vec<_> = vs.into_iter().map(Into::into).collect();
@@ -159,17 +160,16 @@ impl<K, V, VS> std::iter::FromIterator<(K, VS)> for UrlSearch
 }
 
 impl<'a, K, V, VS> std::iter::FromIterator<&'a (K, VS)> for UrlSearch
-    where
-        K: 'a,
-        &'a K: Into<String>,
-        V: Into<String>,
-        VS: 'a,
-        &'a VS: IntoIterator<Item = V>,
+where
+    K: 'a,
+    &'a K: Into<String>,
+    V: Into<String>,
+    VS: 'a,
+    &'a VS: IntoIterator<Item = V>,
 {
     fn from_iter<I: IntoIterator<Item = &'a (K, VS)>>(iter: I) -> Self {
-        iter.into_iter().map(|(k, vs)| (
-            k.into(),
-            vs.into_iter(),
-        )).collect()
+        iter.into_iter()
+            .map(|(k, vs)| (k.into(), vs.into_iter()))
+            .collect()
     }
 }
