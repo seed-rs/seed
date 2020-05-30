@@ -77,7 +77,7 @@ fn view(model: &Model) -> Node<Msg> {
                         .set_path(&["ui", "a", "b", "c"])
                         .set_search(vec![
                             ("x", vec!["1"])
-                        ].iter().collect())
+                        ].into_iter().collect())
                         .set_hash("hash")
                         .go_and_load()
                 })
