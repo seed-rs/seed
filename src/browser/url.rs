@@ -504,67 +504,55 @@ impl From<&web_sys::Url> for Url {
     fn from(url: &web_sys::Url) -> Self {
         let mut invalid_components = Vec::<String>::new();
 
-        let path = {
+        let path: Vec<_> = {
             let path = url.pathname();
             path.split('/')
-                .filter_map(|path_part| {
-                    if path_part.is_empty() {
-                        None
-                    } else {
-                        let path_part = match Url::decode_uri_component(path_part) {
+                .filter(|path_part| !path_part.is_empty())
+                .map(|path_part| {
+                    match Url::decode_uri_component(path_part) {
+                        Ok(decoded_path_part) => decoded_path_part,
+                        Err(_) => {
+                            invalid_components.push(path_part.to_owned());
+                            path_part.to_string()
+                        }
+                    }
+                })
+                .collect()
+        };
+
+        let (hash, hash_path) = {
+            let hash = url.hash();
+            if hash.is_empty() {
+                (None, Vec::new())
+            } else {
+                // Remove leading `#`.
+                let hash = &hash['#'.len_utf8()..];
+
+                // Decode hash path parts.
+                let hash_path = hash.split('/')
+                    .filter(|path_part| !path_part.is_empty())
+                    .map(|path_part| {
+                        match Url::decode_uri_component(path_part) {
                             Ok(decoded_path_part) => decoded_path_part,
                             Err(_) => {
                                 invalid_components.push(path_part.to_owned());
                                 path_part.to_owned()
                             }
-                        };
-                        Some(path_part)
-                    }
-                })
-                .collect::<Vec<_>>()
-        };
+                        }
+                    })
+                    .collect();
 
-        let hash = {
-            let mut hash = url.hash();
-            if hash.is_empty() {
-                None
-            } else {
-                // Remove leading `#`.
-                hash.remove(0);
+                // Decode hash.
                 let hash = match Url::decode_uri_component(&hash) {
                     Ok(decoded_hash) => decoded_hash,
                     Err(_) => {
-                        invalid_components.push(hash.clone());
-                        hash
+                        invalid_components.push(hash.to_owned());
+                        hash.to_owned()
                     }
                 };
-                Some(hash)
-            }
-        };
 
-        let hash_path = {
-            let mut hash = url.hash();
-            if hash.is_empty() {
-                Vec::new()
-            } else {
-                // Remove leading `#`.
-                hash.remove(0);
-                hash.split('/')
-                    .filter_map(|path_part| {
-                        if path_part.is_empty() {
-                            None
-                        } else {
-                            let path_part = match Url::decode_uri_component(path_part) {
-                                Ok(decoded_path_part) => decoded_path_part,
-                                Err(_) => {
-                                    invalid_components.push(path_part.to_owned());
-                                    path_part.to_owned()
-                                }
-                            };
-                            Some(path_part)
-                        }
-                    })
-                    .collect::<Vec<_>>()
+                // Return `(hash, hash_path)`
+                (Some(hash), hash_path)
             }
         };
 
