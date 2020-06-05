@@ -106,7 +106,6 @@ pub fn request_animation_frame(
 ///
 /// Will return error if it's not possible to call `get_value` for given `target`.
 pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> {
-    #![allow(clippy::wildcard_imports)]
     use web_sys::*;
 
     macro_rules! get {
@@ -147,7 +146,6 @@ pub fn get_value(target: &web_sys::EventTarget) -> Result<String, &'static str> 
 #[allow(clippy::missing_errors_doc)]
 /// Similar to `get_value`.
 pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), &'static str> {
-    #![allow(clippy::wildcard_imports)]
     use web_sys::*;
 
     macro_rules! set {
