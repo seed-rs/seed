@@ -51,7 +51,10 @@
 #![allow(
     clippy::use_self,
     clippy::single_match_else,
-    clippy::must_use_candidate
+    clippy::must_use_candidate,
+    clippy::wildcard_imports,
+    clippy::used_underscore_binding,
+    clippy::future_not_send
 )]
 #![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
 

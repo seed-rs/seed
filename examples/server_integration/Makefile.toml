@@ -74,5 +74,8 @@ args = ["clippy", "--all-features", "--",
     "--deny", "warnings",
     "--deny", "clippy::pedantic",
     "--deny", "clippy::nursery",
-    "--allow", "clippy::wildcard_imports" # for `use seed::{prelude::*, *};`
+    "--allow", "clippy::wildcard_imports", # for `use seed::{prelude::*, *};`
+    "--allow", "clippy::future_not_send", # JS/WASM is single threaded
+    "--allow", "clippy::used_underscore_binding", # some libraries break this rule
+    "--allow", "clippy::eval_order_dependence", # false positives
 ]

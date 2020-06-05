@@ -427,8 +427,7 @@ fn enabled_card_event_handlers(card: &Card) -> Vec<EventHandler<Msg>> {
                 .unwrap()
                 .get_data("card_id")
                 .ok()
-                .map(|d| d.parse().ok())
-                .flatten()
+                .and_then(|d| d.parse().ok())
                 .map(|src_id| Msg::Drop(src_id, card_id))
         }),
         drag_ev(Ev::DragEnd, |_| Msg::DragEnd),
