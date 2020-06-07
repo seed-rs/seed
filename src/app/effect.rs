@@ -1,6 +1,6 @@
 use super::{MessageMapper, Notification};
 
-pub(crate) enum Effect<Ms> {
+pub enum Effect<Ms> {
     Msg(Option<Ms>),
     Notification(Notification),
     TriggeredHandler(Box<dyn FnOnce() -> Option<Ms>>),

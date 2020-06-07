@@ -7,14 +7,14 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 
 #[deprecated(
-    since = "0.7.0",
+    since = "0.8.0",
     note = "see [`request_animation_frame`](fn.request_animation_frame.html)"
 )]
 pub type RequestAnimationFrameTime = f64;
 
 #[must_use]
 #[deprecated(
-    since = "0.7.0",
+    since = "0.8.0",
     note = "see [`request_animation_frame`](fn.request_animation_frame.html)"
 )]
 pub struct RequestAnimationFrameHandle {
@@ -94,7 +94,7 @@ pub fn cookies() -> Option<cookie::CookieJar> {
 }
 
 #[deprecated(
-    since = "0.7.0",
+    since = "0.8.0",
     note = "use [`Orders::after_next_render`](../../app/orders/trait.Orders.html#method.after_next_render) instead"
 )]
 /// Request the animation frame.

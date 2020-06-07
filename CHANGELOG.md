@@ -6,12 +6,16 @@
 - Fixed `C` macro memory / WASM file size issue.
 - Added examples `component_builder`, `i18n` and `unsaved_changes` (#459).
 - Fixed `UrlRequested` handling (#459).
-- [BREAKING] Added `Effect` variant `TriggeredHandler`.
-- [BREAKING] Renamed module `effects` to `effect`.
+- [BREAKING] Hidden and renamed module `effects` to `effect`.
 - Added `App::update_with_option`.
 - Added `Navigator` and `BeforeUnloadEvent` into Seed's `web_sys`.
 - Fixed runtime exception when using binary data in WS on some browsers. (#470)
 - Exported macro `with_dollar_sign!`.
+- [deprecated] `RequestAnimationFrameTime` + `RequestAnimationFrameHandle` + `request_animation_frame` are deprecated.
+- [deprecated] `set_interval` + `set_timeout` are deprecated.
+- [deprecated] `class!` is deprecated in favor of `C!`.
+- [BREAKING] Removed `AppBuilder` with `sink`, `mount_point`, `routes`, `window_events`, etc. (Use `App::start` instead.)
+- [BREAKING] Removed support for global messages (`GMsg`, `GMs`, ..). Use `orders.notify` + `orders.subscribe` instead. 
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
