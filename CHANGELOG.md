@@ -15,7 +15,8 @@
 - [deprecated] `set_interval` + `set_timeout` are deprecated.
 - [deprecated] `class!` is deprecated in favor of `C!`.
 - [BREAKING] Removed `AppBuilder` with `sink`, `mount_point`, `routes`, `window_events`, etc. (Use `App::start` instead.)
-- [BREAKING] Removed support for global messages (`GMsg`, `GMs`, ..). Use `orders.notify` + `orders.subscribe` instead. 
+- [BREAKING] Removed support for global messages (`GMsg`, `GMs`, ..). Use `orders.notify` + `orders.subscribe` instead.
+- Relaxed `view` and `update` type in `App::start` from `fn` to `FnOnce + Clone`.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.

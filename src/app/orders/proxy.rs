@@ -11,13 +11,21 @@ use futures::stream::{Stream, StreamExt};
 use std::{any::Any, convert::identity, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersProxy<'a, Ms, AppMs: 'static, Mdl: 'static, INodes: IntoNodes<AppMs>> {
+pub struct OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
+where
+    AppMs: 'static,
+    Mdl: 'static,
+    INodes: IntoNodes<AppMs>,
+{
     orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes>,
     f: Rc<dyn Fn(Ms) -> AppMs>,
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs>>
-    OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
+impl<'a, Ms, AppMs, Mdl, INodes> OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
+where
+    Ms: 'static,
+    AppMs: 'static,
+    INodes: IntoNodes<AppMs>,
 {
     pub fn new(
         orders_container: &'a mut OrdersContainer<AppMs, Mdl, INodes>,
@@ -30,8 +38,11 @@ impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs>>
     }
 }
 
-impl<'a, Ms: 'static, AppMs: 'static, Mdl, INodes: IntoNodes<AppMs> + 'static> Orders<Ms>
-    for OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
+impl<'a, Ms, AppMs, Mdl, INodes> Orders<Ms> for OrdersProxy<'a, Ms, AppMs, Mdl, INodes>
+where
+    Ms: 'static,
+    AppMs: 'static,
+    INodes: IntoNodes<AppMs> + 'static,
 {
     type AppMs = AppMs;
     type Mdl = Mdl;

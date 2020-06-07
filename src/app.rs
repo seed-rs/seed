@@ -10,10 +10,10 @@ use std::{
     any::Any,
     cell::{Cell, RefCell},
     collections::VecDeque,
+    fmt,
     rc::Rc,
 };
 use sub_manager::SubManager;
-use types::{UpdateFn, ViewFn};
 use wasm_bindgen::closure::Closure;
 
 pub mod cfg;
@@ -29,7 +29,6 @@ pub mod stream_manager;
 pub mod streams;
 pub mod sub_manager;
 pub mod subs;
-pub mod types;
 
 pub use cfg::AppCfg;
 pub use cmd_manager::CmdHandle;
@@ -55,19 +54,27 @@ where
     Mdl: 'static,
     INodes: IntoNodes<Ms>,
 {
-    /// App configuration available for the entire application lifetime.
+    /// App configuration.
     cfg: Rc<AppCfg<Ms, Mdl, INodes>>,
     /// Mutable app state.
     data: Rc<AppData<Ms, Mdl>>,
 }
 
-impl<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>> ::std::fmt::Debug for App<Ms, Mdl, INodes> {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+impl<Ms, Mdl, INodes> fmt::Debug for App<Ms, Mdl, INodes>
+where
+    Ms: 'static,
+    Mdl: 'static,
+    INodes: IntoNodes<Ms>,
+{
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> fmt::Result {
         write!(f, "App")
     }
 }
 
-impl<Ms, Mdl, INodes: IntoNodes<Ms>> Clone for App<Ms, Mdl, INodes> {
+impl<Ms, Mdl, INodes> Clone for App<Ms, Mdl, INodes>
+where
+    INodes: IntoNodes<Ms>,
+{
     fn clone(&self) -> Self {
         Self {
             cfg: Rc::clone(&self.cfg),
@@ -78,9 +85,10 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms>> Clone for App<Ms, Mdl, INodes> {
 
 /// We use a struct instead of series of functions, in order to avoid passing
 /// repetitive sequences of parameters.
-impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static> App<Ms, Mdl, INodes> {
-    // @TODO: Relax input function restrictions - init: fn => FnOnce, update & view: FnOnce + Clone.
-    // @TODO: Refactor while removing `Builder`.
+impl<Ms, Mdl, INodes> App<Ms, Mdl, INodes>
+where
+    INodes: IntoNodes<Ms> + 'static,
+{
     /// Create, mount and start the `App`. It's the standard way to create a Seed app.
     ///
     /// _NOTE:_ It tries to hydrate the root element content => you can use it also for prerendered website.
@@ -124,11 +132,12 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static> App<Ms, Mdl, INodes> {
     ///
     /// Panics if the root element cannot be found.
     ///
+    // pub type UpdateFn<Ms, Mdl, INodes> = fn(Ms, &mut Mdl, &mut OrdersContainer<Ms, Mdl, INodes>);
     pub fn start(
         root_element: impl GetElement,
         init: impl FnOnce(Url, &mut OrdersContainer<Ms, Mdl, INodes>) -> Mdl + 'static,
-        update: UpdateFn<Ms, Mdl, INodes>,
-        view: ViewFn<Mdl, INodes>,
+        update: impl FnOnce(Ms, &mut Mdl, &mut OrdersContainer<Ms, Mdl, INodes>) + Clone + 'static,
+        view: impl FnOnce(&Mdl) -> INodes + Clone + 'static,
     ) -> Self {
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
         // https://github.com/seed-rs/seed/issues/241
@@ -158,8 +167,8 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static> App<Ms, Mdl, INodes> {
             cfg: Rc::new(AppCfg {
                 document: util::window().document().expect("get window's document"),
                 mount_point: root_element.get_element().expect("get root element"),
-                update,
-                view,
+                update: Box::new(move |msg, model, orders| update.clone()(msg, model, orders)),
+                view: Box::new(move |model| view.clone()(model)),
                 base_path,
             }),
             data: Rc::new(AppData {
