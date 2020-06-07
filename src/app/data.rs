@@ -1,4 +1,3 @@
-use super::types::MsgListeners;
 use super::{RenderInfo, SubManager};
 use crate::browser::util;
 use crate::virtual_dom::{El, EventHandlerManager};
@@ -18,7 +17,7 @@ pub(crate) struct AppData<Ms: 'static, Mdl> {
     pub hashchange_closure: StoredPopstate,
     pub window_event_handler_manager: RefCell<EventHandlerManager<Ms>>,
     pub sub_manager: RefCell<SubManager<Ms>>,
-    pub msg_listeners: RefCell<MsgListeners<Ms>>,
+    pub msg_listeners: RefCell<Vec<Box<dyn Fn(&Ms)>>>,
     pub scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
     pub after_next_render_callbacks: RefCell<Vec<Box<dyn FnOnce(RenderInfo) -> Option<Ms>>>>,
     pub render_info: Cell<Option<RenderInfo>>,

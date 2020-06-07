@@ -7,16 +7,26 @@ use crate::app::{
 use crate::virtual_dom::IntoNodes;
 use futures::future::FutureExt;
 use futures::stream::{Stream, StreamExt};
-use std::{any::Any, collections::VecDeque, convert::identity, future::Future, rc::Rc};
+use std::{
+    any::Any, collections::VecDeque, convert::identity, future::Future, rc::Rc,
+};
 
 #[allow(clippy::module_name_repetitions)]
-pub struct OrdersContainer<Ms: 'static, Mdl: 'static, INodes: IntoNodes<Ms>> {
+pub struct OrdersContainer<Ms, Mdl, INodes>
+where
+    Ms: 'static,
+    Mdl: 'static,
+    INodes: IntoNodes<Ms>,
+{
     pub(crate) should_render: ShouldRender,
     pub(crate) effects: VecDeque<Effect<Ms>>,
     app: App<Ms, Mdl, INodes>,
 }
 
-impl<Ms, Mdl, INodes: IntoNodes<Ms>> OrdersContainer<Ms, Mdl, INodes> {
+impl<Ms, Mdl, INodes> OrdersContainer<Ms, Mdl, INodes>
+where
+    INodes: IntoNodes<Ms> + 'static,
+{
     pub fn new(app: App<Ms, Mdl, INodes>) -> Self {
         Self {
             should_render: ShouldRender::Render,
@@ -26,8 +36,10 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms>> OrdersContainer<Ms, Mdl, INodes> {
     }
 }
 
-impl<Ms: 'static, Mdl, INodes: IntoNodes<Ms> + 'static> Orders<Ms>
-    for OrdersContainer<Ms, Mdl, INodes>
+impl<Ms, Mdl, INodes> Orders<Ms> for OrdersContainer<Ms, Mdl, INodes>
+where
+    Ms: 'static,
+    INodes: IntoNodes<Ms> + 'static,
 {
     type AppMs = Ms;
     type Mdl = Mdl;

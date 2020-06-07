@@ -67,13 +67,15 @@ fn insert_text<'a>(
     virtual_dom_bridge::insert_node(new_node_ws, parent, Some(next_node));
 }
 
-fn patch_el<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
+fn patch_el<'a, Ms, Mdl, INodes>(
     document: &Document,
     mut old: El<Ms>,
     new: &'a mut El<Ms>,
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, INodes>,
-) {
+) where
+    INodes: IntoNodes<Ms>,
+{
     // At this step, we already assume we have the right element with matching namespace, tag and
     // el_key - either by entering this func directly for the top-level, or recursively after
     // analyzing children.
