@@ -10,7 +10,7 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 //
 // # References
 // * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
-pub(crate) fn push_route<U: Into<Url>>(url: U) -> Url {
+pub fn push_route<U: Into<Url>>(url: U) -> Url {
     let url = url.into();
     // We use data to evaluate the path instead of the path displayed in the url.
     let data =
@@ -23,7 +23,7 @@ pub(crate) fn push_route<U: Into<Url>>(url: U) -> Url {
 }
 
 // Add a listener that handles routing for navigation events like forward and back.
-pub(crate) fn setup_popstate_listener(
+pub fn setup_popstate_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
     base_path: Rc<Vec<String>>,
@@ -54,7 +54,7 @@ pub(crate) fn setup_popstate_listener(
 }
 
 // Add a listener that handles routing when the url hash is changed.
-pub(crate) fn setup_hashchange_listener(
+pub fn setup_hashchange_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
     base_path: Rc<Vec<String>>,
@@ -83,7 +83,7 @@ pub(crate) fn setup_hashchange_listener(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub(crate) fn url_request_handler(
+pub fn url_request_handler(
     sub_data: subs::UrlRequested,
     base_path: Rc<Vec<String>>,
     notify: impl Fn(Notification) + 'static,
@@ -113,7 +113,7 @@ pub(crate) fn url_request_handler(
 // Set up a listener that intercepts clicks on elements containing an Href attribute,
 // so we can prevent page refresh for internal links, and route internally.  Run this on load.
 #[allow(clippy::option_map_unit_fn)]
-pub(crate) fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
+pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
     let closure = Closure::new(move |event: web_sys::Event| {
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())

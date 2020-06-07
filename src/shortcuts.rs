@@ -318,7 +318,7 @@ macro_rules! attrs {
      };
 }
 
-#[deprecated(since = "0.7.0", note = "use [`C!`](macro.C!.html) instead")]
+#[deprecated(since = "0.8.0", note = "use [`C!`](macro.C!.html) instead")]
 /// Convenience macro. Ideal when there are multiple classes, and no other attrs.
 #[macro_export]
 macro_rules! class {

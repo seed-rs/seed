@@ -218,17 +218,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static> App<Ms, Mdl, INodes> {
         app
     }
 
-    /// This runs whenever the state is changed, ie the user-written update function is called.
-    /// It updates the state, and any DOM elements affected by this change.
-    /// todo this is where we need to compare against differences and only update nodes affected
-    /// by the state change.
-    ///
-    /// We re-create the whole virtual dom each time (Is there a way around this? Probably not without
-    /// knowing what vars the model holds ahead of time), but only edit the rendered, `web_sys` dom
-    /// for things that have been changed.
-    /// We re-render the virtual DOM on every change, but (attempt to) only change
-    /// the actual DOM, via `web_sys`, when we need.
-    /// The model stored in inner is the old model; `updated_model` is a newly-calculated one.
+    /// Invoke your `update` function with provided message.
     pub fn update(&self, message: Ms) {
         self.update_with_option(Some(message));
     }
@@ -282,7 +272,7 @@ impl<Ms, Mdl, INodes: IntoNodes<Ms> + 'static> App<Ms, Mdl, INodes> {
         // in a way consistent with patching code.
         let mut new = El::empty(Tag::Placeholder);
 
-        // Map the DOM's elements onto the virtual DOM if requested to takeover.
+        // Map the DOM's elements onto the virtual DOM.
         // Construct a vdom from the root element. Subsequently strip the workspace so that we
         // can recreate it later - this is a kind of simple way to avoid missing nodes (but
         // not entirely correct).

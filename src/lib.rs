@@ -121,7 +121,7 @@ pub const fn empty<Ms>() -> virtual_dom::Node<Ms> {
 }
 
 #[deprecated(
-    since = "0.7.0",
+    since = "0.8.0",
     note = "use [`Orders::stream`](app/orders/trait.Orders.html#method.stream) instead"
 )]
 /// A high-level wrapper for `web_sys::window.set_interval_with_callback_and_timeout_and_arguments_0`:
@@ -142,7 +142,7 @@ pub fn set_interval(handler: Box<dyn Fn()>, timeout: i32) {
 }
 
 #[deprecated(
-    since = "0.7.0",
+    since = "0.8.0",
     note = "use [`Orders::stream`](app/orders/trait.Orders.html#method.stream) instead"
 )]
 /// See [`set_interval`](fn.set_interval.html)

@@ -2,7 +2,7 @@ use crate::app::cmd_manager::CmdManager;
 use crate::app::orders::{proxy::OrdersProxy, Orders};
 use crate::app::stream_manager::StreamManager;
 use crate::app::{
-    effect::Effect, App, CmdHandle, Notification, RenderInfo, ShouldRender, StreamHandle, SubHandle,
+    App, CmdHandle, Effect, Notification, RenderInfo, ShouldRender, StreamHandle, SubHandle,
 };
 use crate::virtual_dom::IntoNodes;
 use futures::future::FutureExt;
