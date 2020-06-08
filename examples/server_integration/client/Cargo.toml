@@ -10,6 +10,6 @@ path = "src/lib.rs"
 
 [dependencies]
 seed = { path = "../../../" }
-serde = "1.0.106"
+serde = "1.0.111"
 
 shared = { path = "../shared"}

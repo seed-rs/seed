@@ -22,8 +22,7 @@ wasm-bindgen-test = "0.3.13"
 
 [dependencies]
 console_error_panic_hook = "0.1.6"
-# Update once https://github.com/SergioBenitez/cookie-rs/issues/148 is resolved.
-cookie = { version = "0.13.3", features = ["percent-encode"] }
+cookie = { version = "0.14.1", features = ["percent-encode"] }
 enclose = "1.1.8"
 gloo-timers = { version = "0.2.1", features = ["futures"] }
 gloo-file = { version = "0.1.0", features = ["futures"] }
