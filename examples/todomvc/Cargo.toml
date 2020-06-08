@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-serde = "1.0.106"
+serde = "1.0.111"
 uuid = { version = "0.8.1", features = ["serde", "v4", "wasm-bindgen"] }
-indexmap = { version = "1.3.2", features = ["serde-1"] }
+indexmap = { version = "1.4.0", features = ["serde-1"] }
 enclose = "1.1.8"

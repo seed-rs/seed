@@ -10,6 +10,6 @@ crate-type = ["cdylib"]
 [dependencies]
 seed = {path = "../../"}
 rand = { version = "0.7.3", features = ["wasm-bindgen", "small_rng"] }
-nalgebra = "0.21.0"
+nalgebra = "0.21.1"
 awsm_web = { version = "0.1.9", features = ["tick", "webgl", "loaders", "audio"], default-features = false }
-shipyard = { version = "0.4.0", features = ["non_send", "non_sync"], default-features = false }
+shipyard = { version = "0.4.1", features = ["non_send", "non_sync"], default-features = false }
