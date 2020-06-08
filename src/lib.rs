@@ -56,7 +56,7 @@
     clippy::used_underscore_binding,
     clippy::future_not_send
 )]
-#![allow(deprecated)] // @TODO delete once `seed::update` and related things are removed
+#![allow(deprecated)]
 
 // @TODO Refactor once `optin_builtin_traits` or `negative_impls`
 // @TODO is stable (https://github.com/seed-rs/seed/issues/391).
