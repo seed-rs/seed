@@ -82,7 +82,7 @@ pub fn view<Ms>(model: &Model, ctx: &Context) -> Node<Ms> {
             ],
         ),
         Frequency::Weekly => (
-            "daily",
+            "weekly",
             a![
                 "Switch to daily",
                 attrs! {
