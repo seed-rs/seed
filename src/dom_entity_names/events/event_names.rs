@@ -44,5 +44,5 @@ make_events! {
 
     Change => "change",
 
-    Input => "input",
+    Input => "input"
 }

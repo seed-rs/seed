@@ -9,7 +9,7 @@ type StoredPopstate = RefCell<Option<Closure<dyn FnMut(web_sys::Event)>>>;
 #[allow(clippy::type_complexity)]
 pub(crate) struct AppData<Ms: 'static, Mdl> {
     pub model: RefCell<Option<Mdl>>,
-    pub(crate) main_el_vdom: RefCell<Option<El<Ms>>>,
+    pub(crate) root_el: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
     pub hashchange_closure: StoredPopstate,
     pub window_event_handler_manager: RefCell<EventHandlerManager<Ms>>,
