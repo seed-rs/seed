@@ -156,6 +156,7 @@ pub fn ev<Ms: 'static, MsU: 'static>(
 
 /// Create an event that passes no data, other than it occurred. Foregoes using a closure,
 /// in favor of pointing to a message directly.
+#[deprecated(since = "0.8.0", note = "Use `ev` instead.")]
 pub fn simple_ev<Ms: Clone + 'static>(trigger: impl Into<Ev>, message: Ms) -> EventHandler<Ms> {
     let handler = || Some(message);
     let closure_handler = move |_| handler.clone()();

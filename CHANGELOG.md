@@ -18,6 +18,7 @@
 - [BREAKING] Removed support for deprecated global messages (`GMsg`, `GMs`, ..). Use `orders.notify` + `orders.subscribe` instead.
 - Relaxed `view` and `update` type in `App::start` from `fn` to `FnOnce + Clone`.
 - [BREAKING] Removed deprecated `Ev::TriggerUpdate`.
+- [deprecated] `simple_ev` is deprecated.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
