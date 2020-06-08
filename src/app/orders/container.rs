@@ -7,9 +7,7 @@ use crate::app::{
 use crate::virtual_dom::IntoNodes;
 use futures::future::FutureExt;
 use futures::stream::{Stream, StreamExt};
-use std::{
-    any::Any, collections::VecDeque, convert::identity, future::Future, rc::Rc,
-};
+use std::{any::Any, collections::VecDeque, convert::identity, future::Future, rc::Rc};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OrdersContainer<Ms, Mdl, INodes>

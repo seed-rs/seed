@@ -173,7 +173,7 @@ where
             }),
             data: Rc::new(AppData {
                 model: RefCell::new(None),
-                main_el_vdom: RefCell::new(None),
+                root_el: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
                 hashchange_closure: RefCell::new(None),
                 window_event_handler_manager: RefCell::new(EventHandlerManager::new()),
@@ -185,8 +185,7 @@ where
             }),
         };
 
-        // TODO: Look into neccesity of this following removal of builder API
-        app.data.main_el_vdom.replace(Some(app.bootstrap_vdom()));
+        app.data.root_el.replace(Some(app.bootstrap_vdom()));
 
         let mut orders = OrdersContainer::new(app.clone());
 
@@ -343,10 +342,10 @@ where
 
         let old = self
             .data
-            .main_el_vdom
+            .root_el
             .borrow_mut()
             .take()
-            .expect("missing main_el_vdom");
+            .expect("missing root element");
 
         patch::patch_els(
             &self.cfg.document,
@@ -359,7 +358,7 @@ where
 
         // Now that we've re-rendered, replace our stored El with the new one;
         // it will be used as the old El next time.
-        self.data.main_el_vdom.borrow_mut().replace(new);
+        self.data.root_el.borrow_mut().replace(new);
 
         // Execute `after_next_render_callbacks`.
 
