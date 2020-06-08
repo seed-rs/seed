@@ -45,7 +45,4 @@ make_events! {
     Change => "change",
 
     Input => "input",
-
-    // deprecated, @TODO: remove
-    TriggerUpdate => "triggerupdate"
 }
