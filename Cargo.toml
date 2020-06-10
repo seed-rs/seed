@@ -31,7 +31,7 @@ js-sys = "0.3.40"
 pulldown-cmark = "0.7.1"
 rand = { version = "0.7.3", features = ["wasm-bindgen", "small_rng"] }
 serde = { version = "1.0.111", features = ['derive'] }
-serde_json = "1.0.53"
+serde_json = "1.0.55"
 wasm-bindgen = {version = "0.2.63", features = ["serde-serialize"]}
 wasm-bindgen-futures = "0.4.13"
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
