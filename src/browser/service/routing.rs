@@ -22,7 +22,6 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
     url
 }
 
-// Add a listener that handles routing for navigation events like forward and back.
 pub fn setup_popstate_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
@@ -49,35 +48,6 @@ pub fn setup_popstate_listener(
     (util::window().as_ref() as &web_sys::EventTarget)
         .add_event_listener_with_callback("popstate", closure.as_ref().unchecked_ref())
         .expect("Problem adding popstate listener");
-
-    updated_listener(closure);
-}
-
-// Add a listener that handles routing when the url hash is changed.
-pub fn setup_hashchange_listener(
-    updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
-    notify: impl Fn(Notification) + 'static,
-    base_path: Rc<Vec<String>>,
-) {
-    // todo: DRY with popstate listener
-    let closure = Closure::new(move |ev: web_sys::Event| {
-        let ev = ev
-            .dyn_ref::<web_sys::HashChangeEvent>()
-            .expect("Problem casting as hashchange event");
-
-        let url: Url = ev
-            .new_url()
-            .parse()
-            .expect("cast hashchange event url to `Url`");
-
-        notify(Notification::new(subs::UrlChanged(
-            url.skip_base_path(&base_path),
-        )));
-    });
-
-    (util::window().as_ref() as &web_sys::EventTarget)
-        .add_event_listener_with_callback("hashchange", closure.as_ref().unchecked_ref())
-        .expect("Problem adding hashchange listener");
 
     updated_listener(closure);
 }

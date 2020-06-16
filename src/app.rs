@@ -202,13 +202,6 @@ where
             enc!((app => s) move |notification| s.notify_with_notification(notification)),
             Rc::clone(&app.cfg.base_path),
         );
-        routing::setup_hashchange_listener(
-            enc!((app => s) move |closure| {
-                s.data.hashchange_closure.replace(Some(closure));
-            }),
-            enc!((app => s) move |notification| s.notify_with_notification(notification)),
-            Rc::clone(&app.cfg.base_path),
-        );
         routing::setup_link_listener(
             enc!((app => s) move |notification| s.notify_with_notification(notification)),
         );
