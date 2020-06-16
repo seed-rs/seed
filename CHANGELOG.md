@@ -20,6 +20,7 @@
 - [BREAKING] Removed deprecated `Ev::TriggerUpdate`.
 - [deprecated] `simple_ev` is deprecated.
 - Exposed dependency `console_error_panic_hook`.
+- Fixed double `UrlChanged` firing by removing `hashchange` listener.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
