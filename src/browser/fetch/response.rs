@@ -66,15 +66,6 @@ impl Response {
     ///
     /// ```
     ///
-    /// Or with combinators:
-    ///
-    /// ```rust
-    /// fetch(url)
-    ///     .map(|result| result.and_then(Response::check_status))
-    ///     .and_then(Response.json)
-    ///     .map(Msg::Fetched)
-    /// ```
-    ///
     /// # Errors
     /// Returns `FetchError::StatusError` if status isn't 2xx.
     pub fn check_status(self) -> Result<Self> {
