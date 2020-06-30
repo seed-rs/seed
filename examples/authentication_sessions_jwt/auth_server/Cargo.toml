@@ -1,0 +1,9 @@
+[package]
+name = "auth_server"
+version = "0.1.0"
+authors = ["Your Name <email@address.com>"]
+edition = "2018"
+
+[dependencies]
+tide = "0.11"
+async-std = { version = "1.6", features = ["attributes"] }

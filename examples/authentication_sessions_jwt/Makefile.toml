@@ -1,0 +1,50 @@
+
+# ---- START ----
+
+
+[tasks.start_server]
+description = "Build and start Tide auth server on port 8000"
+workspace = false
+command = "cargo"
+args = ["run", "--package", "auth_server"]
+dependencies = ["build"]
+
+
+
+[tasks.start_client]
+description = "Start SPA server"
+workspace = false
+install_crate = { crate_name = "microserver", binary = "microserver", test_arg = "-h" }
+command = "microserver"
+args = ["--port", "8000", "--spa-index", "client/index.html"]
+dependencies = ["build"]
+
+# ---- LINT ----
+
+[tasks.fmt]
+description = "Format with rustfmt"
+workspace = false
+install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fmt_check]
+extend = "fmt"
+description = "Check format with rustfmt"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.clippy]
+description = "Lint with Clippy"
+clear = true
+workspace = false
+install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
+command = "cargo"
+args = ["clippy", "--all-features", "--",
+    "--deny", "warnings",
+    "--deny", "clippy::pedantic",
+    "--deny", "clippy::nursery",
+    "--allow", "clippy::wildcard_imports", # for `use seed::{prelude::*, *};`
+    "--allow", "clippy::future_not_send", # JS/WASM is single threaded
+    "--allow", "clippy::used_underscore_binding", # some libraries break this rule
+    "--allow", "clippy::eval_order_dependence", # false positives
+]

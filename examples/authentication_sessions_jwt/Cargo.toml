@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "client",
+    "auth_server",
+]
