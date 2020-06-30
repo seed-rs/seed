@@ -4,5 +4,5 @@
 [tasks.build]
 description = "Build auth server"
 command = "cargo"
-args = ["build", "--package", "server"]
+args = ["build"]
 
