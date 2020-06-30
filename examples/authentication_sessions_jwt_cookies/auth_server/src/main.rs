@@ -78,7 +78,7 @@ struct Claims {
     // Sub is where we are going to store the username of the user.
     pub sub: String,
     company: String,
-    expires: i64,
+    exp: i64,
 }
 
 impl Claims {
@@ -88,7 +88,7 @@ impl Claims {
             sub: user,
             company: "example.com".to_owned(),
             // Let's set the token to expire in one day.
-            expires: (Utc::now() + ChronoDuration::days(Self::max_age_days())).timestamp(),
+            exp: (Utc::now() + ChronoDuration::days(Self::max_age_days())).timestamp(),
         }
     }
     // Generates a token from a claim.
@@ -101,21 +101,12 @@ impl Claims {
     }
     // Decodes a token to produce the underlying claim.
     fn decode_token(token: &str) -> Result<TokenData<Self>, jsonwebtoken::errors::Error> {
-        use jsonwebtoken::errors::ErrorKind;
-
-        let token = decode::<Claims>(
+        // `decode` validate our tokens signature and expiration.
+        decode::<Self>(
             token,
             &DecodingKey::from_secret(SECRET.as_bytes()),
             &Validation::default(),
-        );
-
-        if let Ok(ref token) = token {
-            // If the token is expired then let's return an error.
-            if token.claims.expires < Utc::now().timestamp() {
-                return Err(ErrorKind::InvalidToken.into());
-            }
-        }
-        token
+        )
     }
     /// Can't simply return a `time::Duration` due to time crate version miss-match with `chrono` and `cookie`
     const fn max_age_days() -> i64 {
