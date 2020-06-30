@@ -10,9 +10,9 @@ use {
 // This secret is used to encode and decode tokens.
 // It MUST be secret. I recommend storing it as an environment variable rather than a
 // constant to avoid pushing secrets to repositories.
-const SECRET: &'static str = "SECRET";
+const SECRET: &str = "SECRET";
 
-const CLIENT: &'static str = "http://localhost:8000";
+const CLIENT: &str = "http://localhost:8000";
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
@@ -88,8 +88,7 @@ impl Claims {
             sub: user,
             company: "example.com".to_owned(),
             // Let's set the token to expire in one day.
-            expires: (Utc::now() + ChronoDuration::days(Self::max_age_days())).timestamp()
-            ,
+            expires: (Utc::now() + ChronoDuration::days(Self::max_age_days())).timestamp(),
         }
     }
     // Generates a token from a claim.
