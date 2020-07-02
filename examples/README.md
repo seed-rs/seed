@@ -104,5 +104,8 @@ How to communicate with a GraphQL backend.
 ### [Integration](server_integration)
 Example of a workspace with [Actix](https://actix.rs/) server.
 
+### [JWT](jwt)
+How to implement user sessions with JSON web tokens.
+
 ### [Websocket Chat](websocket)
 Example of communicating with a server using Websockets.
