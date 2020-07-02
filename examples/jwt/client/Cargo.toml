@@ -10,3 +10,4 @@ path = "src/lib.rs"
 
 [dependencies]
 seed = { path = "../../../" }
+serde = { version = "1.0.114", features = ["derive"] }

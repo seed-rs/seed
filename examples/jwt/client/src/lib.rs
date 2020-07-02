@@ -1,16 +1,19 @@
-// (Lines like the one below ignore selected Clippy rules
-//  - it's useful when you want to check your code with `cargo make verify`
-// but some rules are too "annoying" or are not applicable for your case.)
 #![allow(clippy::wildcard_imports)]
 
 use seed::{prelude::*, *};
+use serde::{Deserialize, Serialize};
+use web_sys::RequestCredentials;
+
+const AUTH_SERVER: &str = "http://localhost:8081";
 
 // ------ ------
 //     Init
 // ------ ------
 
 // `init` describes what should happen when your app started.
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    // Lets "order" our sign in status to be fetched.
+    orders.send_msg(Msg::FetchIsSignedIn);
     Model::default()
 }
 
@@ -18,25 +21,40 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 //     Model
 // ------ ------
 
-// `Model` describes our app state.
-type Model = i32;
+// We are only bothered with storing the login status our user so lets set the Model
+// as a type alias.
+type Model = Option<Result<bool, FetchError>>;
 
 // ------ ------
 //    Update
 // ------ ------
 
-// (Remove the line below once any of your `Msg` variants doesn't implement `Copy`.)
-#[derive(Copy, Clone)]
-// `Msg` describes the different events you can modify state with.
 enum Msg {
-    Increment,
+    FetchIsSignedIn,
+    IsSignedInFetched(Result<bool, FetchError>),
 }
 
 // `update` describes how to handle each `Msg`.
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Increment => *model += 1,
+        Msg::FetchIsSignedIn => {
+            // `perform_cmd` allows us to get a `Msg` from an `async` function.
+            orders.perform_cmd(async { Msg::IsSignedInFetched(fetch_signed_in().await) });
+            orders.skip();
+        }
+        // Once we have the data lets attach it to the model.
+        Msg::IsSignedInFetched(data) => *model = Some(data),
     }
+}
+
+async fn fetch_signed_in() -> Result<bool, FetchError> {
+    Request::new(&format!("{}/signed-in", AUTH_SERVER))
+        // We have to allow cookies to be sent.
+        .credentials(RequestCredentials::Include)
+        .fetch()
+        .await?
+        .json()
+        .await
 }
 
 // ------ ------
@@ -48,9 +66,26 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
     div![
-        "This is a counter: ",
-        C!["counter"],
-        button![model, ev(Ev::Click, |_| Msg::Increment),],
+        p![
+            "Use this link to toggle your login state. ",
+            "Close the tab and come back. Note the state should be saved."
+        ],
+        match model {
+            Some(Ok(true)) => {
+                a![
+                    "Sign Out",
+                    attrs! {At::Href => format!("{}/sign-out",AUTH_SERVER)}
+                ]
+            }
+            Some(Ok(false)) => {
+                a![
+                    "Sign In",
+                    attrs! {At::Href => format!("{}/sign-in",AUTH_SERVER)}
+                ]
+            }
+            Some(Err(_)) => p!["Failed to fetch login status"],
+            None => p!["Loading"],
+        }
     ]
 }
 

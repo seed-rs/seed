@@ -3,7 +3,11 @@ use {
     cookie::Cookie,
     jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation},
     serde::{Deserialize, Serialize},
-    tide::{http::StatusCode, Body, Redirect, Request, Response},
+    tide::{
+        http::{headers::HeaderValue, StatusCode},
+        security::{CorsMiddleware, Origin},
+        Body, Redirect, Request, Response,
+    },
     time::Duration as TimeDuration,
 };
 
@@ -21,6 +25,14 @@ async fn main() -> tide::Result<()> {
     // femme will print logs for us.
     femme::with_level(log::LevelFilter::Debug);
 
+    // We need to allow cross origin requests from our PWA server.
+    app.middleware(
+        CorsMiddleware::new()
+            .allow_methods("GET, POST, OPTIONS".parse::<HeaderValue>().unwrap())
+            .allow_origin(Origin::from(CLIENT))
+            .allow_credentials(true),
+    );
+
     app.at("/sign-in").get(sign_in);
     app.at("/sign-out").get(sign_out);
     app.at("/signed-in").get(signed_in);
@@ -31,7 +43,11 @@ async fn main() -> tide::Result<()> {
 }
 
 // Sign in a user.
-async fn sign_in(_: Request<()>) -> tide::Result<Response> {
+async fn sign_in(
+    // Normally I would get credentials from this but we are not going to use it for
+    // this example.
+    _: Request<()>,
+) -> tide::Result<Response> {
     // Lets set the response to redirect to our PWA server once the cookie is provided.
     let mut response: Response = Redirect::new(CLIENT).into();
     // We will give the user the username "nori". We will not bother with a password for
@@ -78,6 +94,7 @@ struct Claims {
     // Sub is where we are going to store the username of the user.
     pub sub: String,
     company: String,
+    // This field must be called `exp` for your token to validate.
     exp: i64,
 }
 
