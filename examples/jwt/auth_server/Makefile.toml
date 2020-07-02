@@ -1,8 +1,6 @@
-
 # ---- BUILD ----
 
 [tasks.build]
 description = "Build auth server"
 command = "cargo"
 args = ["build"]
-

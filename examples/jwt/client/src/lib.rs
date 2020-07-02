@@ -10,7 +10,7 @@ const AUTH_SERVER: &str = "http://localhost:8081";
 //     Init
 // ------ ------
 
-// `init` describes what should happen when your app started.
+// `init` describes what should happen when our app starts.
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     // Lets "order" our sign in status to be fetched.
     orders.send_msg(Msg::FetchIsSignedIn);
@@ -21,8 +21,8 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
 //     Model
 // ------ ------
 
-// We are only bothered with storing the login status our user so lets set the Model
-// as a type alias.
+// We are only interested in storing the login status of our user so lets set the Model
+// to a type alias.
 type Model = Option<Result<bool, FetchError>>;
 
 // ------ ------
@@ -96,6 +96,5 @@ fn view(model: &Model) -> Node<Msg> {
 // (This function is invoked by `init` function in `index.html`.)
 #[wasm_bindgen(start)]
 pub fn start() {
-    // Mount the `app` to the element with the `id` "app".
     App::start("app", init, update, view);
 }

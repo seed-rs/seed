@@ -1,6 +1,4 @@
-
 # ---- START ----
-
 
 [tasks.start_server]
 description = "Build and start Tide auth server on port 8000"
@@ -8,8 +6,6 @@ workspace = false
 command = "cargo"
 args = ["run", "--package", "auth_server"]
 dependencies = ["build"]
-
-
 
 [tasks.start_client]
 description = "Start SPA server"
