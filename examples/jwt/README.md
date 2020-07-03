@@ -19,7 +19,7 @@ cargo make start_server
 ```
 And in another terminal
 ```bash
-cargo make start_client
+cargo make start
 ```
 
 

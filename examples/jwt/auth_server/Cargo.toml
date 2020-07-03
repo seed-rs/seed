@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 tide = "0.11"
 async-std = { version = "1.6", features = ["attributes"] }
-jsonwebtoken = "7.1"
+jsonwebtoken = "7.2"
 serde = { version = "1.0", features = ["derive"] }
 chrono = "0.4"
 time = "0.2"

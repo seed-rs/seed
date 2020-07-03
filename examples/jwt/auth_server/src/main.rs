@@ -73,19 +73,16 @@ async fn sign_out(_: Request<()>) -> tide::Result<Response> {
 }
 
 // Checks if a user is signed in.
-async fn signed_in(req: Request<()>) -> tide::Result<Response> {
-    let user = req.cookie("login").and_then(|cookie| {
+async fn signed_in(request: Request<()>) -> tide::Result<Response> {
+    let user = request.cookie("login").and_then(|cookie| {
         Claims::decode_token(cookie.value())
             .map(|token| token.claims.sub)
             .ok()
     });
 
-    let mut res = Response::new(StatusCode::Ok);
-    res.set_body(Body::from_json(&match user {
-        Some(_user) => true,
-        None => false,
-    })?);
-    Ok(res)
+    let mut response = Response::new(StatusCode::Ok);
+    response.set_body(Body::from_json(&user.is_some())?);
+    Ok(response)
 }
 
 // `Claims` is the data we are going to encode in our tokens.
