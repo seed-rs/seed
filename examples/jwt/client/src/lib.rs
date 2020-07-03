@@ -1,7 +1,4 @@
-#![allow(clippy::wildcard_imports)]
-
 use seed::{prelude::*, *};
-use serde::{Deserialize, Serialize};
 use web_sys::RequestCredentials;
 
 const AUTH_SERVER: &str = "http://localhost:8081";
