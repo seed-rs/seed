@@ -1,7 +1,0 @@
-# ---- BUILD ----
-
-[tasks.build]
-description = "Build client"
-install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
-command = "wasm-pack"
-args = ["build", "--target", "web", "--out-name", "package", "--dev"]

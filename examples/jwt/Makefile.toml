@@ -1,19 +1,69 @@
-# ---- START ----
+extend = "../../Makefile.toml"
 
-[tasks.start_server]
-description = "Build and start Tide auth server on port 8000"
+# ---- BUILD ----
+
+[tasks.build]
+description = "Build client and server"
+clear = true
+workspace = false
+dependencies = ["build_client", "build_server"]
+
+[tasks.build_release]
+extend = "build"
+description = "Build client and server in release mode"
+dependencies = ["build_client_release", "build_server_release"]
+
+[tasks.build_client]
+description = "Build client"
+workspace = false
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = ["build", "client", "--target", "web", "--out-name", "package", "--dev"]
+
+[tasks.build_client_release]
+extend = "build_client"
+description = "Build client in release mode"
+args = ["build", "client", "--target", "web", "--out-name", "package", "--release"]
+
+[tasks.build_server]
+description = "Build server"
 workspace = false
 command = "cargo"
-args = ["run", "--package", "auth_server"]
-dependencies = ["build"]
+args = ["build", "--package", "auth_server"]
 
-[tasks.start_client]
-description = "Start SPA server"
+[tasks.build_server_release]
+extend = "build_server"
+description = "Build server in release mode"
+args = ["build", "--package", "auth_server", "--release"]
+
+# ---- START ----
+
+[tasks.start]
+description = "Build and start microserver"
 workspace = false
 install_crate = { crate_name = "microserver", binary = "microserver", test_arg = "-h" }
 command = "microserver"
-args = ["--port", "8000", "--spa-index", "client/index.html"]
-dependencies = ["build"]
+args = ["--port", "8000", "client"]
+dependencies = ["build_client"]
+
+[tasks.start_release]
+extend = "start"
+description = "Build and start microserver in release mode"
+dependencies = ["build_client_release"]
+
+[tasks.start_server]
+description = "Build and start Tide auth server on port 8081"
+workspace = false
+command = "cargo"
+args = ["run", "--package", "auth_server"]
+dependencies = ["build_server"]
+
+[tasks.start_server_release]
+description = "Build and start Tide auth server on port 8081 in release mode"
+workspace = false
+command = "cargo"
+args = ["run", "--package", "auth_server", "--release"]
+dependencies = ["build_server_release"]
 
 # ---- LINT ----
 
