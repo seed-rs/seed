@@ -27,16 +27,9 @@ pub fn el_ref<E: Clone>(reference: &ElRef<E>) -> ElRef<E> {
 /// fn view(model: &Model) -> impl IntoNodes<Msg> {
 ///     canvas![
 ///         el_ref(&model.canvas),
-///         attrs![
-///             At::Width => px(200),
-///             At::Height => px(100),
-///         ],
+///         attrs![ /* ... */ ],
 ///     ]
-/// }
-///
-/// fn after_mount(_: Url, orders: &mut impl Orders<Msg>) -> AfterMount<Model> {
-///     orders.after_next_render(|_| Msg::Rendered);
-/// // ...
+///}
 ///
 /// fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 ///     match msg {
