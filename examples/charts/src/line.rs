@@ -22,13 +22,13 @@ pub fn chart<T: Clone + 'static>(
 
     let dx = (x_bounds.1 - x_bounds.0) / (width as f64 - (2 * padding) as f64); // scale factor
     svg![
-        class!["chart"],
+        C!["chart"],
         style! { St::Display => "block" },
         attrs! {
             ViewBox => format!("0 0 {} {}", width, height),
         },
         g![
-            class!["x-axis"],
+            C!["x-axis"],
             line_![attrs! {
                 X1 => padding,
                 X2 => width - padding,
@@ -37,7 +37,7 @@ pub fn chart<T: Clone + 'static>(
                 Stroke => "#ccc",
             }],
             g![
-                class!["x-ticks"],
+                C!["x-ticks"],
                 (1..25).map(|i| rect![attrs! {
                     X => (i as f64 * 0.25) / dx + padding as f64 - 0.5,
                     Y => height - padding,
@@ -47,7 +47,7 @@ pub fn chart<T: Clone + 'static>(
                 }]),
             ],
             g![
-                class!["x-labels"],
+                C!["x-labels"],
                 (0..13).map(|i| text![
                     style! {St::FontSize => px(10)},
                     attrs! {
@@ -61,7 +61,7 @@ pub fn chart<T: Clone + 'static>(
             ],
         ],
         g![
-            class!["y-axis"],
+            C!["y-axis"],
             line_![attrs! {
                 X1 => padding,
                 X2 => padding,
@@ -70,7 +70,7 @@ pub fn chart<T: Clone + 'static>(
                 Stroke => "#ccc",
             }],
             g![
-                class!["y-ticks"],
+                C!["y-ticks"],
                 (1..11).map(|i| rect![attrs! {
                     X => padding - if i % 2 == 0 { 3 } else { 2 },
                     Y => (height - padding) as f64 - (i as f64 * 0.25) / dx - 0.5, // -0.5 to center rect
@@ -80,7 +80,7 @@ pub fn chart<T: Clone + 'static>(
                 }],),
             ],
             g![
-                class!["y-labels"],
+                C!["y-labels"],
                 (0..6).map(|i| text![
                     style! {St::FontSize => px(10)},
                     attrs! {
@@ -94,7 +94,7 @@ pub fn chart<T: Clone + 'static>(
             ]
         ],
         g![
-            class!["plot-area"],
+            C!["plot-area"],
             polyline![attrs! {
                 Fill => "none",
                 Stroke => "rgb(0, 86, 91)",
@@ -115,7 +115,7 @@ pub fn chart<T: Clone + 'static>(
                     let onout = onout.clone();
                     let data = (*x, *y);
                     Some(g![
-                        class!["data-point"],
+                        C!["data-point"],
                         mouse_ev(Ev::MouseOver, move |event| {
                             onenter(Tooltip {
                                 position: (event.x(), event.y()),
