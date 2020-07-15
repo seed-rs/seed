@@ -3,6 +3,7 @@
 use super::{fetch, FetchError, Header, Headers, Method, Response, Result};
 use crate::browser::Url;
 use gloo_timers::callback::Timeout;
+use js_sys::Uint8Array;
 use serde::Serialize;
 use std::{borrow::Cow, cell::RefCell, convert::TryFrom, rc::Rc};
 use wasm_bindgen::JsValue;
@@ -61,7 +62,7 @@ impl<'a> Request<'a> {
         self
     }
 
-    /// Set request body to provided `JsValue`. Consider using `json` or `text` methods instead.
+    /// Set request body to provided `JsValue`. Consider using `json`, `text`, or `bytes` methods instead.
     ///
     /// ## Panics
     /// This method will panic when request method is GET or HEAD.
@@ -97,6 +98,13 @@ impl<'a> Request<'a> {
     pub fn text(mut self, text: impl AsRef<str>) -> Self {
         self.body = Some(JsValue::from(text.as_ref()));
         self.header(Header::content_type("text/plain; charset=utf-8"))
+    }
+
+    /// Set request body to the provided bytes.
+    /// It will also set `Content-Type` header to `application/octet-stream`.
+    pub fn bytes(mut self, bytes: impl AsRef<[u8]>) -> Self {
+        self.body = Some(Uint8Array::from(bytes.as_ref()).into());
+        self.header(Header::content_type("application/octet-stream"))
     }
 
     /// Set request mode.
