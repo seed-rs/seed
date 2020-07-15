@@ -78,5 +78,5 @@ fn view(model: &Model) -> Node<Msg> {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    App::start("app", |_, _| Default::default(), update, view);
+    App::start("app", |_, _| Model::default(), update, view);
 }

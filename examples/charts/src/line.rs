@@ -7,11 +7,13 @@ pub struct Tooltip {
     pub data: (f64, f64),
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn chart<T: Clone + 'static>(
     data: &[(f64, f64)],
     onenter: impl Fn(Tooltip) -> T + Clone + 'static,
     onout: T,
 ) -> Node<T> {
+    #![allow(clippy::enum_glob_use)]
     use At::*;
     // domain
     let x_bounds = data.iter().map(|(x, _)| x).minmax().into_option().unwrap();
@@ -20,7 +22,7 @@ pub fn chart<T: Clone + 'static>(
     let width = 600;
     let height = 300;
 
-    let dx = (x_bounds.1 - x_bounds.0) / (width as f64 - (2 * padding) as f64); // scale factor
+    let dx = (x_bounds.1 - x_bounds.0) / (f64::from(width) - f64::from(2 * padding)); // scale factor
     svg![
         C!["chart"],
         style! { St::Display => "block" },
@@ -39,7 +41,7 @@ pub fn chart<T: Clone + 'static>(
             g![
                 C!["x-ticks"],
                 (1..25).map(|i| rect![attrs! {
-                    X => (i as f64 * 0.25) / dx + padding as f64 - 0.5,
+                    X => (f64::from(i) * 0.25) / dx + f64::from(padding) - 0.5,
                     Y => height - padding,
                     Width => 1,
                     Height => if i % 2 == 0 { 3 } else { 2 },
@@ -51,12 +53,12 @@ pub fn chart<T: Clone + 'static>(
                 (0..13).map(|i| text![
                     style! {St::FontSize => px(10)},
                     attrs! {
-                        X => (i as f64 * 0.5) / dx + padding as f64 - 0.5,
+                        X => (f64::from(i) * 0.5) / dx + f64::from(padding) - 0.5,
                         Y => height - padding + 20,
                         Fill => "#999",
                         TextAnchor => "middle",
                     },
-                    format!("{:.1}", (i as f64 * 0.5)),
+                    format!("{:.1}", (f64::from(i) * 0.5)),
                 ]),
             ],
         ],
@@ -73,7 +75,7 @@ pub fn chart<T: Clone + 'static>(
                 C!["y-ticks"],
                 (1..11).map(|i| rect![attrs! {
                     X => padding - if i % 2 == 0 { 3 } else { 2 },
-                    Y => (height - padding) as f64 - (i as f64 * 0.25) / dx - 0.5, // -0.5 to center rect
+                    Y => f64::from(height - padding) - (f64::from(i) * 0.25) / dx - 0.5, // -0.5 to center rect
                     Width => if i % 2 == 0 { 3 } else { 2 },
                     Height => 1,
                     Fill => if i % 2 == 0 { "#999" } else { "#bbb" },
@@ -85,11 +87,11 @@ pub fn chart<T: Clone + 'static>(
                     style! {St::FontSize => px(10)},
                     attrs! {
                         X => padding - 6,
-                        Y => (height - padding) as f64 - (i as f64 * 0.5) / dx - 0.5, // -0.5 to center rect
+                        Y => f64::from(height - padding)  - (f64::from(i) * 0.5) / dx - 0.5, // -0.5 to center rect
                         TextAnchor => "end",
                         Fill => "#999",
                     },
-                    format!("{:.1}", i as f64 * 0.5),
+                    format!("{:.1}", f64::from(i) * 0.5),
                 ]),
             ]
         ],
@@ -102,8 +104,8 @@ pub fn chart<T: Clone + 'static>(
                     .iter()
                     .map(|(x, y)| format!(
                         "{},{}",
-                        x / dx + padding as f64,
-                        -y / dx + (height - padding) as f64,
+                        x / dx + f64::from(padding),
+                        -y / dx + f64::from(height - padding),
                     ))
                     .collect::<Vec<_>>()
                     .join(" ")
@@ -124,8 +126,8 @@ pub fn chart<T: Clone + 'static>(
                         }),
                         mouse_ev(Ev::MouseOut, move |_| onout),
                         circle![attrs! {
-                            Cx => x / dx + padding as f64,
-                            Cy => -y / dx + (height - padding) as f64,
+                            Cx => x / dx + f64::from(padding),
+                            Cy => -y / dx + f64::from(height - padding),
                             R => 2,
                             Fill => "rgba(0, 86, 91, 0.8)",
                         }],
