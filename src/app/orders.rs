@@ -87,7 +87,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the output isn't `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -109,7 +110,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the output isn't `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[must_use = "cmd is aborted on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
@@ -149,7 +151,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -178,7 +181,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -207,7 +211,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[must_use = "subscription is cancelled on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
@@ -231,7 +236,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
     // @TODO or https://github.com/rust-lang/rust/issues/41875 is stable
@@ -251,7 +257,8 @@ pub trait Orders<Ms: 'static> {
     /// # Panics
     ///
     /// Panics when the handler doesn't return `Msg`, `Option<Msg>` or `()`.
-    /// (It will be changed to a compile-time error).
+    ///
+    /// Stabilisation of issue [391](https://github.com/seed-rs/seed/issues/391) makes this a compile-time error.
     #[must_use = "stream is stopped on its handle drop"]
     #[allow(clippy::shadow_unrelated)]
     // @TODO remove `'static`s once `optin_builtin_traits`, `negative_impls`
