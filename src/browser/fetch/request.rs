@@ -348,3 +348,25 @@ impl Default for RequestController {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use wasm_bindgen::JsCast;
+    use wasm_bindgen_test::*;
+    wasm_bindgen_test_configure!(run_in_browser);
+    use super::*;
+
+    #[wasm_bindgen_test]
+    async fn request_bytes() {
+        let request = Request::new("").bytes([6, 2, 8, 3, 1, 8]);
+        assert_eq!(
+            request
+                .body
+                .unwrap()
+                .dyn_into::<Uint8Array>()
+                .unwrap()
+                .to_vec(),
+            Vec::from([6, 2, 8, 3, 1, 8])
+        )
+    }
+}
