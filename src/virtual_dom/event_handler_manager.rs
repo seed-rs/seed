@@ -27,6 +27,7 @@ impl<Ms> Clone for EventHandlerManager<Ms> {
 
 impl<Ms> EventHandlerManager<Ms> {
     /// Creates an empty manager instance.
+    #[allow(clippy::missing_const_for_fn)] // False positive see rust issue #71835
     pub fn new() -> Self {
         Self {
             groups: BTreeMap::new(),

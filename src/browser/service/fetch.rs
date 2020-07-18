@@ -356,13 +356,13 @@ impl Request {
     }
 
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/cache)
-    pub fn cache(mut self, cache: web_sys::RequestCache) -> Self {
+    pub const fn cache(mut self, cache: web_sys::RequestCache) -> Self {
         self.cache = Some(cache);
         self
     }
 
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials)
-    pub fn credentials(mut self, request_credentials: web_sys::RequestCredentials) -> Self {
+    pub const fn credentials(mut self, request_credentials: web_sys::RequestCredentials) -> Self {
         self.credentials = Some(request_credentials);
         self
     }
@@ -374,31 +374,32 @@ impl Request {
     }
 
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/mode)
-    pub fn mode(mut self, mode: web_sys::RequestMode) -> Self {
+    pub const fn mode(mut self, mode: web_sys::RequestMode) -> Self {
         self.mode = Some(mode);
         self
     }
 
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/redirect)
-    pub fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
+    pub const fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
         self.redirect = Some(redirect);
         self
     }
 
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrer)
+    #[allow(clippy::missing_const_for_fn)] // False positive "destructors cannot be evaluated at compile-time"
     pub fn referrer(mut self, referrer: String) -> Self {
         self.referrer = Some(referrer);
         self
     }
 
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrerPolicy)
-    pub fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
+    pub const fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
         self.referrer_policy = Some(referrer_policy);
         self
     }
 
     /// Enable request timeout and set it to given milliseconds.
-    pub fn timeout(mut self, millis: u32) -> Self {
+    pub const fn timeout(mut self, millis: u32) -> Self {
         self.timeout = Some(millis);
         self
     }

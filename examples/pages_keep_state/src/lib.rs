@@ -81,7 +81,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                 Some(ADMIN) => {
                     page::admin::init(url, &mut model.admin_model).map(|_| PageId::Admin)
                 }
-                _ => None,
+                Some(_) => None,
             };
         }
     }
