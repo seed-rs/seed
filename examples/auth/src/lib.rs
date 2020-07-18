@@ -67,7 +67,7 @@ impl Page {
                 Self::Home
             }
             Some(LOGIN) => Self::Login,
-            _ => Self::NotFound,
+            Some(_) => Self::NotFound,
         }
     }
 }

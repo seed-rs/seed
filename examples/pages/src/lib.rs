@@ -50,7 +50,7 @@ impl Page {
         match url.next_path_part() {
             None => Self::Home,
             Some(ADMIN) => page::admin::init(url).map_or(Self::NotFound, Self::Admin),
-            _ => Self::NotFound,
+            Some(_) => Self::NotFound,
         }
     }
 }

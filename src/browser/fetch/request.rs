@@ -164,7 +164,7 @@ impl<'a> Request<'a> {
     }
 
     /// Set request timeout in milliseconds.
-    pub fn timeout(mut self, timeout: u32) -> Self {
+    pub const fn timeout(mut self, timeout: u32) -> Self {
         self.timeout = Some(timeout);
         self
     }
