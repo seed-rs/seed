@@ -6,6 +6,8 @@
 - Lodewijk Antonides
 - António Cascalheira
 - Shawn MacIntyre
+- @km-tr
+- @sabine
 
 ---
 
