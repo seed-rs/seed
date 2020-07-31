@@ -1,4 +1,4 @@
-//! This file is generated automatically by `/scripts/populate_styles.rs`.
+//! This file is generated automatically by `cargo make populate_styles`.
 //! It's not meant to be edited directly.
 
 make_styles! {
