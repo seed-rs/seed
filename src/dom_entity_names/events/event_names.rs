@@ -36,6 +36,8 @@ make_events! {
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
     VolumeChange => "volumechange", Waiting => "waiting",
 
+    ProgressAbort=>"abort",ProgressError=> "error", ProgressLoad=> "load", ProgressLoadEnd=> "loadend",ProgressLoadStart=> "loadstart" , ProgressTimeout=> "timeout",
+
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
