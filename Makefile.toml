@@ -19,8 +19,41 @@ dependencies = ["populate_styles"]
 
 [tasks.populate_styles]
 description = "Populate styles"
-script_runner = "@rust"
-script = { file = "./scripts/populate_styles.rs" }
+script = [
+'''
+#!@duckscript
+# fetch styles
+styles_txt = http_client https://seed-rs.github.io/html-css-db/css_properties.json
+styles = json_parse ${styles_txt}
+
+# generate content for style names
+arr_range = range 0 ${styles.length}
+style_pairs = set ""
+for index in ${arr_range}
+    original = get_by_name styles[${index}].name.original
+    pascal_case = get_by_name styles[${index}].name.pascal_case
+
+    if not is_empty ${pascal_case}
+        style_pairs = concat ${style_pairs} "    ${pascal_case} => \"${original}\",\n"
+    end
+end
+style_pairs = trim ${style_pairs}
+remove_ending = ends_with ${style_pairs} ,
+if ${remove_ending}
+    end_index = strlen ${style_pairs}
+    end_index = calc ${end_index} - 1
+    style_pairs = substring ${style_pairs} 0 ${end_index}
+end
+content_for_style_names_file = set "//! This file is generated automatically by `cargo make ${CARGO_MAKE_CURRENT_TASK_NAME}`.\n"
+content_for_style_names_file = concat ${content_for_style_names_file} "//! It's not meant to be edited directly.\n\n"
+content_for_style_names_file = concat ${content_for_style_names_file} "make_styles! {\n"
+content_for_style_names_file = concat ${content_for_style_names_file} "    ${style_pairs}\n"
+content_for_style_names_file = concat ${content_for_style_names_file} "}\n"
+
+# write rust file
+writefile ./src/dom_entity_names/styles/style_names.rs ${content_for_style_names_file}
+'''
+]
 
 # ---- GENERAL ----
 
