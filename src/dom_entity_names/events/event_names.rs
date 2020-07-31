@@ -51,7 +51,7 @@ make_events! {
 
     //WebVR is deprecated, so no need to add it I guess
 
-
+    SVGAbort => "SVGAbort",SVGError => "SVGError", SVGLoad => "SVGLoad", SVGResize => "SVGResize",SVGScroll => "SVGScroll"  , SVGUnload => "SVGUnload",
 
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
