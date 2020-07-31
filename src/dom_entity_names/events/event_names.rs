@@ -45,6 +45,8 @@ make_events! {
     Broadcast=>"broadcast", CheckBoxStateChange=>"CheckBoxStateChange", HasChange=> "haschange",  Input => "input" , RadioStateChange=> "RadioStateChange",
     ReadyStateChange=> "readystatechange",ValueChange=> "ValueChange",
 
+    Invalid=>"invalid",DedicatedWorkerGlobalScopeMessage=>"message",EventSourceMessage=>"message",EventSourceOpen=>"message",Show=>"show",
+
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
