@@ -34,7 +34,7 @@ make_events! {
     DurationChange => "durationchange", Emptied => "emptied", Ended => "ended", LoadedData => "loadeddata",
     LoadedMetaData => "loadedmetadata", Pause => "pause", Play => "play", Playing => "playing", RateChange => "ratechange",
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
-    VolumeChange => "volumechange",
+    VolumeChange => "volumechange", Waiting => "waiting",
 
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
