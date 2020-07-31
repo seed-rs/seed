@@ -42,13 +42,16 @@ make_events! {
 
     Checking=> "checking",Downloading=>"downloading",UpdateError=> "error", NoUpdate=> "noupdate",Obselete=> "obsolete", UpdateReady=> "updateready",
 
+    Broadcast=>"broadcast", CheckBoxStateChange=>"CheckBoxStateChange", HasChange=> "haschange",  Input => "input" , RadioStateChange=> "RadioStateChange",
+    ReadyStateChange=> "readystatechange",ValueChange=> "ValueChange",
+
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
 
     // todo finish this
 
-    Change => "change",
+    Change => "change"
 
-    Input => "input"
+
 }
