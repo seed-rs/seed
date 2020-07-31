@@ -40,6 +40,8 @@ make_events! {
 
     StorageChange=> "change",Storage=> "storage",
 
+    Checking=> "checking",Downloading=>"downloading",UpdateError=> "error", NoUpdate=> "noupdate",Obselete=> "obsolete", UpdateReady=> "updateready",
+
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
