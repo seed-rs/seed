@@ -47,6 +47,12 @@ make_events! {
 
     Invalid=>"invalid",DedicatedWorkerGlobalScopeMessage=>"message",EventSourceMessage=>"message",EventSourceOpen=>"message",Show=>"show",
 
+    AbortController=>"abort",
+
+    //WebVR is deprecated, so no need to add it I guess
+
+
+
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
