@@ -36,18 +36,18 @@ make_events! {
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
     VolumeChange => "volumechange", Waiting => "waiting",
 
-    ProgressAbort=>"abort",ProgressError=> "error", ProgressLoad=> "load", ProgressLoadEnd=> "loadend",ProgressLoadStart=> "loadstart" , ProgressTimeout=> "timeout",
+    ProgressAbort => "abort",ProgressError => "error", ProgressLoad => "load", ProgressLoadEnd => "loadend",ProgressLoadStart => "loadstart" , ProgressTimeout => "timeout",
 
-    StorageChange=> "change",Storage=> "storage",
+    StorageChange => "change",Storage => "storage",
 
-    Checking=> "checking",Downloading=>"downloading",UpdateError=> "error", NoUpdate=> "noupdate",Obselete=> "obsolete", UpdateReady=> "updateready",
+    Checking => "checking",Downloading=> "downloading",UpdateError => "error", NoUpdate => "noupdate",Obselete => "obsolete", UpdateReady => "updateready",
 
-    Broadcast=>"broadcast", CheckBoxStateChange=>"CheckBoxStateChange", HasChange=> "haschange",  Input => "input" , RadioStateChange=> "RadioStateChange",
-    ReadyStateChange=> "readystatechange",ValueChange=> "ValueChange",
+    Broadcast => "broadcast", CheckBoxStateChange => "CheckBoxStateChange", HasChange => "haschange",  Input => "input" , RadioStateChange => "RadioStateChange",
+    ReadyStateChange => "readystatechange",ValueChange => "ValueChange",
 
-    Invalid=>"invalid",DedicatedWorkerGlobalScopeMessage=>"message",EventSourceMessage=>"message",EventSourceOpen=>"message",Show=>"show",
+    Invalid => "invalid",DedicatedWorkerGlobalScopeMessage => "message",EventSourceMessage => "message",EventSourceOpen => "message",Show => "show",
 
-    AbortController=>"abort",
+    AbortController => "abort",
 
     //WebVR is deprecated, so no need to add it I guess
 
