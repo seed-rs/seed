@@ -38,6 +38,8 @@ make_events! {
 
     ProgressAbort=>"abort",ProgressError=> "error", ProgressLoad=> "load", ProgressLoadEnd=> "loadend",ProgressLoadStart=> "loadstart" , ProgressTimeout=> "timeout",
 
+    StorageChange=> "change",Storage=> "storage",
+
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
