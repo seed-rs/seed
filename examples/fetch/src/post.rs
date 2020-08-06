@@ -70,7 +70,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 pub fn view(model: &Model) -> Node<Msg> {
     form![
-        ev(Ev::Submit, |_| Msg::Submit),
+        ev(Ev::Submit, |event| {
+            event.prevent_default();
+            Msg::Submit
+        }),
         label![
             "Name",
             input![
@@ -78,13 +81,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 input_ev(Ev::Input, Msg::NameChanged),
             ]
         ],
-        button![
-            "Submit",
-            ev(Ev::Click, |event| {
-                event.prevent_default();
-                Msg::Submit
-            })
-        ],
+        button!["Submit",],
         if let Some(message) = &model.message {
             span![message]
         } else {
