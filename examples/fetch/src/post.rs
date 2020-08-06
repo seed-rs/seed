@@ -81,7 +81,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 input_ev(Ev::Input, Msg::NameChanged),
             ]
         ],
-        button!["Submit",],
+        button!["Submit"],
         if let Some(message) = &model.message {
             span![message]
         } else {
