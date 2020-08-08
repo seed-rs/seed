@@ -3,11 +3,14 @@
 ---
 
 - Tomáš Lauer
+- @sparky8251
+
 - Lodewijk Antonides
 - António Cascalheira
 - Shawn MacIntyre
 - @km-tr
 - @sabine
+- Craig Mayhew
 
 ---
 
