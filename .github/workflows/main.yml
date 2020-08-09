@@ -38,7 +38,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
         run: |
           cargo make test_h chrome
-          cargo make test_h firefox
+      
+      # uncomment once https://github.com/rustwasm/wasm-bindgen/issues/2261 is resolved.
+      #    cargo make test_h firefox
 
       # uncomment once fixes from https://webkit.org/blog/9609/release-notes-for-safari-technology-preview-94/
       # are included in installed Safari
