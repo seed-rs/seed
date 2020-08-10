@@ -77,6 +77,7 @@
 - Added `WebSocket` + related items (#8).
 - Exposed `App::mailbox`.
 - Added `streams::backoff` + updated `websocket` example.
+- Added `#[derive(Debug)]` to `fetch::Response`
 
 ## v0.6.0
 - Implemented `UpdateEl` for `Filter` and `FilterMap`.
