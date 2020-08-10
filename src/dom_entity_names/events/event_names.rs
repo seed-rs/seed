@@ -36,18 +36,16 @@ make_events! {
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
     VolumeChange => "volumechange", Waiting => "waiting",
 
-    ProgressAbort => "abort",ProgressError => "error", ProgressLoad => "load", ProgressLoadEnd => "loadend",ProgressLoadStart => "loadstart" , ProgressTimeout => "timeout",
+    LoadEnd => "loadend",LoadStart => "loadstart" , Timeout => "timeout",
 
-    StorageChange => "change",Storage => "storage",
+    Change => "change",Storage => "storage",
 
-    Checking => "checking",Downloading=> "downloading",UpdateError => "error", NoUpdate => "noupdate",Obselete => "obsolete", UpdateReady => "updateready",
+    Checking => "checking",Downloading=> "downloading", NoUpdate => "noupdate",Obselete => "obsolete", UpdateReady => "updateready",
 
     Broadcast => "broadcast", CheckBoxStateChange => "CheckBoxStateChange", HasChange => "haschange",  Input => "input" , RadioStateChange => "RadioStateChange",
     ReadyStateChange => "readystatechange",ValueChange => "ValueChange",
 
-    Invalid => "invalid",DedicatedWorkerGlobalScopeMessage => "message",EventSourceMessage => "message",EventSourceOpen => "message",Show => "show",
-
-    AbortController => "abort",
+    Invalid => "invalid",Show => "show",
 
     //WebVR is deprecated, so no need to add it I guess
 
@@ -56,10 +54,6 @@ make_events! {
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
     SelectionChange => "selectionchange",
-
-    // todo finish this
-
-    Change => "change"
 
 
 }
