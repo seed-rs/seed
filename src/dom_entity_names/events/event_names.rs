@@ -72,7 +72,9 @@ make_events! {
     DeviceOrientation => "deviceorientation",
     OrientationChange => "orientationchange",
     SmartcardInsert => "smartcard-insert",
-    SmartCardRemove => "smartcard-remove"
+    SmartCardRemove => "smartcard-remove",
+
+    GoPointerCapture => "gotpointercapture",
 
     SelectionChange => "selectionchange",
 }
