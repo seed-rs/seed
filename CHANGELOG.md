@@ -22,6 +22,11 @@
 - Exposed dependency `console_error_panic_hook`.
 - Fixed double `UrlChanged` firing by removing `hashchange` listener.
 - Added `Request::bytes`.
+- Build Changes - Remove all workspace=false and instead defined default_to_workspace=false in the config
+- Build Changes - Make all core cargo-make tasks private with default namespace and remove clear=true from all seed tasks
+- Build Changes - Remove installation instructions and instead depend on core cargo-make installation tasks
+- Build Changes - Replace rust for_each implementation with duckscript which is much shorter, simpler and faster (in case you don't have cargo-script installed).
+- Build Changes - Enforce minimal cargo-make version: 0.32.1
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
