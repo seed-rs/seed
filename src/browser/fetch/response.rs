@@ -8,6 +8,7 @@ use wasm_bindgen_futures::JsFuture;
 /// To get one you need to use [`fetch`](./fn.fetch.html) function.
 ///
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+#[derive(Debug)]
 pub struct Response {
     pub(crate) raw_response: web_sys::Response,
 }
