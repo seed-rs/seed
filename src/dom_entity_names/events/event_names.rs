@@ -49,11 +49,30 @@ make_events! {
 
     //WebVR is deprecated, so no need to add it I guess
 
-    SVGAbort => "SVGAbort",SVGError => "SVGError", SVGLoad => "SVGLoad", SVGResize => "SVGResize",SVGScroll => "SVGScroll"  , SVGUnload => "SVGUnload",
+    SVGAbort => "SVGAbort", SVGError => "SVGError", SVGLoad => "SVGLoad", SVGResize => "SVGResize",SVGScroll => "SVGScroll"  , SVGUnload => "SVGUnload",
 
+    Blocked => "blocked", Success => "success", UpgradeNeeded => "upgradeneeded", VersionChange => "versionchange",
+
+    AfterScriptExecute => "afterscriptexecute", BeforeScriptExecute => "beforescriptexecute",
+    DOMMenuItemActive => "DOMMenuItemActive", DOMMenuteItemInactive => "DOMMEnuItemInactive",
+
+    PopupHidden=>"popuphidden",PopupHiding => "popuphiding", PopupShowing => "popupshowing", PopupShown => "popupshown",
     // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
     VisibilityChange => "visibilitychange",
+
+    ChargingChange => "chargingchange",
+    ChargingTimeChange =>"chargingtimechange",
+    DischargingTimeChange => "dischargingtimechange",
+
+    Connected => "connected",
+
+    StateChange => "statechange",
+
+    DeviceMotion => "devicemotion",
+    DeviceOrientation => "deviceorientation",
+    OrientationChange => "orientationchange",
+    SmartcardInsert => "smartcard-insert",
+    SmartCardRemove => "smartcard-remove"
+
     SelectionChange => "selectionchange",
-
-
 }
