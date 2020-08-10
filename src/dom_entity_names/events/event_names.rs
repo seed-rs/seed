@@ -47,8 +47,6 @@ make_events! {
 
     Invalid => "invalid",Show => "show",
 
-    //WebVR is deprecated, so no need to add it I guess
-
     SVGAbort => "SVGAbort", SVGError => "SVGError", SVGLoad => "SVGLoad", SVGResize => "SVGResize",SVGScroll => "SVGScroll"  , SVGUnload => "SVGUnload",
 
     Blocked => "blocked", Success => "success", UpgradeNeeded => "upgradeneeded", VersionChange => "versionchange",
@@ -57,7 +55,7 @@ make_events! {
     DOMMenuItemActive => "DOMMenuItemActive", DOMMenuteItemInactive => "DOMMEnuItemInactive",
 
     PopupHidden=>"popuphidden",PopupHiding => "popuphiding", PopupShowing => "popupshowing", PopupShown => "popupshown",
-    // [MDN ref](https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event)
+
     VisibilityChange => "visibilitychange",
 
     ChargingChange => "chargingchange",
