@@ -36,25 +36,25 @@ make_events! {
     Seeked => "seeked", Seeking => "seeking", Stalled => "stalled", Suspend => "suspend", TimeUpdate => "timeupdate",
     VolumeChange => "volumechange", Waiting => "waiting",
 
-    LoadEnd => "loadend",LoadStart => "loadstart" , Timeout => "timeout",
+    LoadEnd => "loadend", LoadStart => "loadstart", Timeout => "timeout",
 
-    Change => "change",Storage => "storage",
+    Change => "change", Storage => "storage",
 
-    Checking => "checking",Downloading=> "downloading", NoUpdate => "noupdate",Obselete => "obsolete", UpdateReady => "updateready",
+    Checking => "checking", Downloading=> "downloading", NoUpdate => "noupdate", Obselete => "obsolete", UpdateReady => "updateready",
 
-    Broadcast => "broadcast", CheckBoxStateChange => "CheckBoxStateChange", HasChange => "haschange",  Input => "input" , RadioStateChange => "RadioStateChange",
-    ReadyStateChange => "readystatechange",ValueChange => "ValueChange",
+    Broadcast => "broadcast", CheckBoxStateChange => "CheckBoxStateChange", HasChange => "haschange",  Input => "input", RadioStateChange => "RadioStateChange",
+    ReadyStateChange => "readystatechange", ValueChange => "ValueChange",
 
-    Invalid => "invalid",Show => "show",
+    Invalid => "invalid", Show => "show",
 
-    SVGAbort => "SVGAbort", SVGError => "SVGError", SVGLoad => "SVGLoad", SVGResize => "SVGResize",SVGScroll => "SVGScroll"  , SVGUnload => "SVGUnload",
+    SVGAbort => "SVGAbort", SVGError => "SVGError", SVGLoad => "SVGLoad", SVGResize => "SVGResize", SVGScroll => "SVGScroll", SVGUnload => "SVGUnload",
 
     Blocked => "blocked", Success => "success", UpgradeNeeded => "upgradeneeded", VersionChange => "versionchange",
 
     AfterScriptExecute => "afterscriptexecute", BeforeScriptExecute => "beforescriptexecute",
-    DOMMenuItemActive => "DOMMenuItemActive", DOMMenuteItemInactive => "DOMMEnuItemInactive",
+    DOMMenuItemActive => "DOMMenuItemActive", DOMMenuItemInactive => "DOMMenuItemInactive",
 
-    PopupHidden=>"popuphidden",PopupHiding => "popuphiding", PopupShowing => "popupshowing", PopupShown => "popupshown",
+    PopupHidden => "popuphidden", PopupHiding => "popuphiding", PopupShowing => "popupshowing", PopupShown => "popupshown",
 
     VisibilityChange => "visibilitychange",
 
