@@ -74,5 +74,5 @@ make_events! {
 
     GoPointerCapture => "gopointercapture",
 
-    SelectionChange => "selectionchange",
+    SelectionChange => "selectionchange"
 }
