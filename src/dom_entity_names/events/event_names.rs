@@ -72,7 +72,5 @@ make_events! {
     SmartCardInsert => "smartcard-insert",
     SmartCardRemove => "smartcard-remove",
 
-    GoPointerCapture => "gopointercapture",
-
     SelectionChange => "selectionchange"
 }
