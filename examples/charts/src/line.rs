@@ -1,18 +1,18 @@
 use itertools::Itertools;
 use seed::{prelude::*, *};
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Tooltip {
     pub position: (i32, i32),
     pub data: (f64, f64),
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn chart<T: Clone + 'static>(
+pub fn chart<Ms: Clone + 'static>(
     data: &[(f64, f64)],
-    onenter: impl Fn(Tooltip) -> T + Clone + 'static,
-    onout: T,
-) -> Node<T> {
+    on_enter: impl Fn(Tooltip) -> Ms + Clone + 'static,
+    on_out: Ms,
+) -> Node<Ms> {
     #![allow(clippy::enum_glob_use)]
     use At::*;
     // domain
@@ -112,7 +112,7 @@ pub fn chart<T: Clone + 'static>(
             }],
             data.iter()
                 .enumerate()
-                .filter_map(|(i, (x, y))| if i % 15 == 0 {
+                .filter_map(|(i, (x, y))| IF!(i % 15 == 0 => {
                     let onenter = onenter.clone();
                     let onout = onout.clone();
                     let data = (*x, *y);
@@ -132,9 +132,7 @@ pub fn chart<T: Clone + 'static>(
                             Fill => "rgba(0, 86, 91, 0.8)",
                         }],
                     ])
-                } else {
-                    None
-                })
+                }))
         ]
     ]
 }

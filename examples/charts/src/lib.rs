@@ -51,7 +51,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> Node<Msg> {
     div![
-        style! {St::Width => "80vh", St::Height => "50vh", St::Margin => "auto"},
+        style! {St::Width => vh(80), St::Height => vh(50), St::Margin => "auto"},
         div![
             style! {
                 St::Position => "relative",
