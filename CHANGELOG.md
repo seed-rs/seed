@@ -27,6 +27,7 @@
 - Build Changes - Remove installation instructions and instead depend on core cargo-make installation tasks
 - Build Changes - Replace rust for_each implementation with duckscript which is much shorter, simpler and faster (in case you don't have cargo-script installed).
 - Build Changes - Enforce minimal cargo-make version: 0.32.1
+- Added `charts` example.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
@@ -65,7 +66,7 @@
 - [deprecated] - `seed::browser::service::fetch` module is deprecated in favor of `seed::browser::fetch`.
 - Implemented `IntoNodes` for `Option<Node<Msg>>` and `Option<Vec<Node<Msg>>>`.
 - Implemented `UpdateEl` for `i64` and `u64`.
-- Reset properties `checked` and `value` on attribute remove (#405). 
+- Reset properties `checked` and `value` on attribute remove (#405).
 - Added examples `markdown`, `tea_component`, `subscribe`, `custom_elements`, `fetch`, `url`, `pages`, `pages_hash_routing`, `pages_keep_state`, `auth`, `bunnies` and `graphql` (#400).
 - Updated examples.
 - Removed examples `app_builder`, `orders`, `server_interaction`, `counter_advanced` and `mathjax`.

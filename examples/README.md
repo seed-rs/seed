@@ -22,6 +22,9 @@ Intended as a demo of [Shipyard](https://github.com/leudz/shipyard) (Entity Comp
 ### [Canvas](canvas)
 How to make a canvas element and use `ElRef`s.
 
+### [Charts](charts)
+How to draw SVG charts.
+
 ## [Component builder](component_builder)
 How to write reusable views / components with builder pattern.
 
@@ -39,9 +42,9 @@ How to control a DOM update using element keys and empty nodes.
 
 ### [I18N](i18n)
 
-How to support multiple languages in your web app based on [Fluent][url_project_fluent]. 
-Includes a language selector, some sample text and [FTL strings][url_ftl_syntax_guide] 
-demonstrating the simplicity and power of [Seed][url_project_seed] 
+How to support multiple languages in your web app based on [Fluent][url_project_fluent].
+Includes a language selector, some sample text and [FTL strings][url_ftl_syntax_guide]
+demonstrating the simplicity and power of [Seed][url_project_seed]
 powered by [Fluent's Rust crate][url_crate_fluent].
 
 [url_project_fluent]: https://projectfluent.org/
