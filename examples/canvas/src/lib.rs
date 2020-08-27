@@ -33,7 +33,7 @@ enum Color {
 }
 
 impl Color {
-    fn as_str(&self) -> &str {
+    const fn as_str(&self) -> &str {
         match self {
             Self::A => "white",
             Self::B => "green",

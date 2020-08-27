@@ -262,7 +262,7 @@ impl<Ms> El<Ms> {
     }
 
     /// Is it a custom element?
-    pub fn is_custom(&self) -> bool {
+    pub const fn is_custom(&self) -> bool {
         matches!(self.tag, Tag::Custom(_))
     }
 }

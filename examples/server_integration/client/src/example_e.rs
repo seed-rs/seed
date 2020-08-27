@@ -57,7 +57,7 @@ impl Default for Model {
 }
 
 impl Model {
-    fn form(&self) -> &Form {
+    const fn form(&self) -> &Form {
         match self {
             Self::ReadyToSubmit(form) | Self::WaitingForResponse(form) => form,
         }

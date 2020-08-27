@@ -24,7 +24,7 @@ pub enum State {
 }
 
 impl State {
-    pub fn next(self) -> Self {
+    pub const fn next(self) -> Self {
         match self {
             Self::Unchecked => Self::Indeterminate,
             Self::Indeterminate => Self::Checked,
