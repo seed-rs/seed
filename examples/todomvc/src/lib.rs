@@ -83,7 +83,7 @@ impl Default for TodoFilter {
 }
 
 impl TodoFilter {
-    fn to_url_path(self) -> &'static str {
+    const fn to_url_path(self) -> &'static str {
         match self {
             Self::All => "",
             Self::Active => "active",

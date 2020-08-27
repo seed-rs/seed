@@ -178,7 +178,7 @@ pub struct Status {
 #[allow(dead_code)]
 impl Status {
     /// Is response status category `ClientError` or `ServerError`? (Code 400-599)
-    pub fn is_error(&self) -> bool {
+    pub const fn is_error(&self) -> bool {
         match self.category {
             StatusCategory::ClientError | StatusCategory::ServerError => true,
             _ => false,
@@ -263,7 +263,7 @@ pub enum Method {
 }
 
 impl Method {
-    fn as_str(&self) -> &str {
+    const fn as_str(&self) -> &str {
         match *self {
             Method::Get => "GET",
             Method::Head => "HEAD",

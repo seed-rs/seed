@@ -128,21 +128,21 @@ impl<Ms> Node<Ms> {
         Node::Text(Text::new(text))
     }
 
-    pub fn is_text(&self) -> bool {
+    pub const fn is_text(&self) -> bool {
         if let Node::Text(_) = self {
             true
         } else {
             false
         }
     }
-    pub fn is_el(&self) -> bool {
+    pub const fn is_el(&self) -> bool {
         if let Node::Element(_) = self {
             true
         } else {
             false
         }
     }
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         if let Node::Empty = self {
             true
         } else {
@@ -150,14 +150,14 @@ impl<Ms> Node<Ms> {
         }
     }
 
-    pub fn text(&self) -> Option<&Text> {
+    pub const fn text(&self) -> Option<&Text> {
         if let Node::Text(t) = self {
             Some(t)
         } else {
             None
         }
     }
-    pub fn el(&self) -> Option<&El<Ms>> {
+    pub const fn el(&self) -> Option<&El<Ms>> {
         if let Node::Element(e) = self {
             Some(e)
         } else {

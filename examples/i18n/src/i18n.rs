@@ -52,14 +52,14 @@ pub enum Lang {
 }
 
 impl Lang {
-    pub fn label(self) -> &'static str {
+    pub const fn label(self) -> &'static str {
         match self {
             Self::EnUS => "English (US)",
             Self::DeDE => "Deutsch (Deutschland)",
         }
     }
 
-    pub fn ftl_messages(self) -> &'static str {
+    pub const fn ftl_messages(self) -> &'static str {
         macro_rules! include_ftl_messages {
             ( $lang_id:literal ) => {
                 include_str!(concat!("../ftl_messages/", $lang_id, ".ftl"))
