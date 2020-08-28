@@ -58,7 +58,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             *model = Model::new(url, orders.clone_base_path())
         }
         Msg::GoToUrl(url) => {
-            orders.notify(subs::UrlRequested::new(url));
+            orders.request_url(url);
         }
     }
 }
