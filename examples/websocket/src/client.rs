@@ -1,4 +1,5 @@
 use seed::{prelude::*, *};
+use std::rc::Rc;
 
 mod shared;
 
@@ -8,7 +9,7 @@ const WS_URL: &str = "ws://127.0.0.1:9000/ws";
 //     Model
 // ------ ------
 
-struct Model {
+pub struct Model {
     sent_messages_count: usize,
     messages: Vec<String>,
     input_text: String,
@@ -32,24 +33,14 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     }
 }
 
-fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
-    WebSocket::builder(WS_URL, orders)
-        .on_open(|| Msg::WebSocketOpened)
-        .on_message(Msg::MessageReceived)
-        .on_close(Msg::WebSocketClosed)
-        .on_error(|| Msg::WebSocketFailed)
-        .build_and_open()
-        .unwrap()
-}
-
 // ------ ------
 //    Update
 // ------ ------
 
-enum Msg {
+pub enum Msg {
     WebSocketOpened,
-    MessageReceived(WebSocketMessage),
-    BytesReceived(Vec<u8>),
+    TextMessageReceived(shared::ServerMessage),
+    BinaryMessageReceived(shared::ServerMessage),
     CloseWebSocket,
     WebSocketClosed(CloseEvent),
     WebSocketFailed,
@@ -66,24 +57,13 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.web_socket_reconnector = None;
             log!("WebSocket connection is open now");
         }
-        Msg::MessageReceived(message) => {
-            log!("Client received a message");
-
-            if message.contains_text() {
-                model
-                    .messages
-                    .push(message.json::<shared::ServerMessage>().unwrap().text);
-            } else {
-                orders.perform_cmd(async move {
-                    let bytes = message.bytes().await;
-                    bytes.map(Msg::BytesReceived).ok()
-                });
-            }
+        Msg::TextMessageReceived(message) => {
+            log!("Client received a text message");
+            model.messages.push(message.text);
         }
-        Msg::BytesReceived(bytes) => {
+        Msg::BinaryMessageReceived(message) => {
             log!("Client received binary message");
-            let msg: shared::ServerMessage = rmp_serde::from_slice(&bytes).unwrap();
-            model.messages.push(msg.text);
+            model.messages.push(message.text);
         }
         Msg::CloseWebSocket => {
             model.web_socket_reconnector = None;
@@ -139,6 +119,38 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
+fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
+    let msg_sender = orders.msg_sender();
+
+    WebSocket::builder(WS_URL, orders)
+        .on_open(|| Msg::WebSocketOpened)
+        .on_message(move |msg| decode_message(msg, msg_sender))
+        .on_close(Msg::WebSocketClosed)
+        .on_error(|| Msg::WebSocketFailed)
+        .build_and_open()
+        .unwrap()
+}
+
+fn decode_message(message: WebSocketMessage, msg_sender: Rc<dyn Fn(Option<Msg>)>) {
+    if message.contains_text() {
+        let msg = message
+            .json::<shared::ServerMessage>()
+            .expect("Failed to decode WebSocket text message");
+
+        msg_sender(Some(Msg::TextMessageReceived(msg)));
+    } else {
+        spawn_local(async move {
+            let bytes = message
+                .bytes()
+                .await
+                .expect("WebsocketError on binary data");
+
+            let msg: shared::ServerMessage = rmp_serde::from_slice(&bytes).unwrap();
+            msg_sender(Some(Msg::BinaryMessageReceived(msg)));
+        });
+    }
+}
+
 // ------ ------
 //     View
 // ------ ------
@@ -147,6 +159,7 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
     vec![
         h1!["WebSocket example"],
         div![model.messages.iter().map(|message| p![message])],
+        hr![],
         if model.web_socket.state() == web_socket::State::Open {
             div![
                 div![
@@ -187,10 +200,11 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
                         "Send"
                     ],
                 ],
-                div![button![
+                hr![style! {St::Margin => px(20) + " " + &px(0)}],
+                button![
                     ev(Ev::Click, |_| Msg::CloseWebSocket),
                     "Close websocket connection"
-                ],]
+                ],
             ]
         } else {
             div![p![em!["Connecting or closed"]]]

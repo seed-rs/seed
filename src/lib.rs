@@ -106,6 +106,7 @@ pub use crate::{
 pub use console_error_panic_hook;
 pub use futures::future::{FutureExt, TryFutureExt};
 use wasm_bindgen::{closure::Closure, JsCast};
+pub use wasm_bindgen_futures::{self, spawn_local};
 
 #[macro_use]
 pub mod shortcuts;

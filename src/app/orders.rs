@@ -1,6 +1,6 @@
-use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle, subs};
-use crate::virtual_dom::IntoNodes;
+use super::{subs, App, CmdHandle, RenderInfo, StreamHandle, SubHandle};
 use crate::browser::Url;
+use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
 use std::{any::Any, future::Future, rc::Rc};
 
@@ -127,13 +127,50 @@ pub trait Orders<Ms: 'static> {
 
     /// Get the function that maps module's `Msg` to app's (root's) one.
     ///
+    /// _Note:_ You want to use `Orders::msg_sender` instead in most cases.
+    ///
     /// # Example
     ///
     /// ```rust,no_run
     ///let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
     ///app.update(msg_mapper(Msg::AMessage));
     /// ```
-    fn msg_mapper(&self) -> Box<dyn Fn(Ms) -> Self::AppMs>;
+    fn msg_mapper(&self) -> Rc<dyn Fn(Ms) -> Self::AppMs>;
+
+    /// Get the function that invokes your `update` function.
+    /// The most common use-case is passing the function into callbacks.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
+    ///     let msg_sender = orders.msg_sender();
+    ///
+    ///     WebSocket::builder(WS_URL, orders)
+    ///         .on_message(move |msg| decode_message(msg, msg_sender))
+    ///         ...
+    /// }
+    ///
+    /// fn decode_message(message: WebSocketMessage, msg_sender: Rc<dyn Fn(Option<Msg>)>) {
+    ///     ...
+    ///         spawn_local(async move {
+    ///             let bytes = message
+    ///                 .bytes()
+    ///                 .await
+    ///                 .expect("WebsocketError on binary data");
+    ///
+    ///             let msg: shared::ServerMessage = rmp_serde::from_slice(&bytes).unwrap();
+    ///             msg_sender(Some(Msg::BinaryMessageReceived(msg)));
+    ///         });
+    ///     ...
+    /// }
+    /// ```
+    fn msg_sender(&self) -> Rc<dyn Fn(Option<Ms>)> {
+        let (app, msg_mapper) = (self.clone_app(), self.msg_mapper());
+        let msg_sender =
+            move |msg: Option<Ms>| app.update_with_option(msg.map(|msg| msg_mapper(msg)));
+        Rc::new(msg_sender)
+    }
 
     /// Register the callback that will be executed after the next render.
     ///
@@ -277,7 +314,7 @@ pub trait Orders<Ms: 'static> {
         Rc::clone(&self.clone_app().cfg.base_path)
     }
 
-    /// Simulate `<a href="[url]">` element click. 
+    /// Simulate `<a href="[url]">` element click.
     ///
     /// A thin wrapper for `orders.notify(subs::UrlRequested::new(url))`
     fn request_url(&mut self, url: Url) -> &mut Self {

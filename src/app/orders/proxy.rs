@@ -126,9 +126,9 @@ where
     }
 
     #[allow(clippy::redundant_closure)]
-    fn msg_mapper(&self) -> Box<dyn Fn(Ms) -> Self::AppMs> {
+    fn msg_mapper(&self) -> Rc<dyn Fn(Ms) -> Self::AppMs> {
         let f = self.f.clone();
-        Box::new(move |ms| f(ms))
+        Rc::new(move |ms| f(ms))
     }
 
     fn after_next_render<MsU: 'static>(
