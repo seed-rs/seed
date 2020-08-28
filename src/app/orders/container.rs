@@ -113,8 +113,8 @@ where
         self.app.clone()
     }
 
-    fn msg_mapper(&self) -> Box<dyn Fn(Ms) -> Self::AppMs> {
-        Box::new(identity)
+    fn msg_mapper(&self) -> Rc<dyn Fn(Ms) -> Self::AppMs> {
+        Rc::new(identity)
     }
 
     fn after_next_render<MsU: 'static>(

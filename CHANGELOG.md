@@ -28,6 +28,9 @@
 - Build Changes - Replace rust for_each implementation with duckscript which is much shorter, simpler and faster (in case you don't have cargo-script installed).
 - Build Changes - Enforce minimal cargo-make version: 0.32.1.
 - Added new `Orders` methods `request_url` (#518) and `msg_sender` (#502).
+- [BREAKING] `Orders::msg_mapper` returns `Rc<..>` instead of `Box<..>`.
+- Reexported `pub use wasm_bindgen_futures::{self, spawn_local};` in `lib.rs`.
+- Updated example `websocket`.
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.
