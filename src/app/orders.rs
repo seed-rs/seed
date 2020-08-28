@@ -1,5 +1,6 @@
-use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle};
+use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle, subs};
 use crate::virtual_dom::IntoNodes;
+use crate::browser::Url;
 use futures::stream::Stream;
 use std::{any::Any, future::Future, rc::Rc};
 
@@ -274,5 +275,12 @@ pub trait Orders<Ms: 'static> {
     /// or there were problems with parsing.
     fn clone_base_path(&self) -> Rc<Vec<String>> {
         Rc::clone(&self.clone_app().cfg.base_path)
+    }
+
+    /// Simulate `<a href="[url]">` element click. 
+    ///
+    /// A thin wrapper for `orders.notify(subs::UrlRequested::new(url))`
+    fn request_url(&mut self, url: Url) -> &mut Self {
+        self.notify(subs::UrlRequested::new(url))
     }
 }
