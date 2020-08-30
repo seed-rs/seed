@@ -98,6 +98,9 @@ A demonstration of event-handlers attached to the `window`.
 ## Server
 Backend server integration & interaction examples.
 
+## Service Worker
+Service worker intergration demo. Includes registration, asset caching, state change messaging and notication subscription.
+
 ### [Auth](auth)
 How to implement login / logout.
 

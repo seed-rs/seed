@@ -4,7 +4,7 @@
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).
 - Fixed `base_path` with a trailing slash parsing / handling.
 - Fixed `C` macro memory / WASM file size issue.
-- Added examples `resize_observer`, `component_builder`, `i18n` and `unsaved_changes` (#459).
+- Added examples `service_worker`, `resize_observer`, `component_builder`, `i18n` and `unsaved_changes` (#459).
 - Fixed `UrlRequested` handling (#459).
 - [BREAKING] Hidden and renamed module `effects` to `effect`.
 - Added `App::update_with_option`.
@@ -29,7 +29,7 @@
 - Build Changes - Enforce minimal cargo-make version: 0.32.1.
 - Added new `Orders` methods `request_url` (#518) and `msg_sender` (#502).
 - [BREAKING] `Orders::msg_mapper` returns `Rc<..>` instead of `Box<..>`.
-- Reexported `pub use wasm_bindgen_futures::{self, spawn_local};` in `lib.rs`.
+- Reexported `pub use wasm_bindgen_futures::{self, spawn_local, JsFuture};` and `pub use futures::{self, future::{self, FutureExt, TryFutureExt}};` in `lib.rs`.
 - Updated example `websocket`.
 - Fixed link handling (#527).
 
