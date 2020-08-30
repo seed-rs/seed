@@ -3,7 +3,8 @@
 ---
 
 - Tomáš Lauer
-- @sparky8251
+- [@sparky8251](https://github.com/sparky8251)
+- [@arn-the-long-beard](https://github.com/arn-the-long-beard)
 
 - Lodewijk Antonides
 - António Cascalheira
