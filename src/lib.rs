@@ -104,9 +104,12 @@ pub use crate::{
     virtual_dom::{Attrs, EventHandler, Style},
 };
 pub use console_error_panic_hook;
-pub use futures::future::{FutureExt, TryFutureExt};
+pub use futures::{
+    self,
+    future::{self, FutureExt, TryFutureExt},
+};
 use wasm_bindgen::{closure::Closure, JsCast};
-pub use wasm_bindgen_futures::{self, spawn_local};
+pub use wasm_bindgen_futures::{self, spawn_local, JsFuture};
 
 #[macro_use]
 pub mod shortcuts;

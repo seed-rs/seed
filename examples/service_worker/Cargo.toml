@@ -1,0 +1,56 @@
+[package]
+name = "service_worker"
+description = "Seed service worker example"
+repository = "https://github.com/seed-rs/seed"
+version = "0.1.0"
+authors = ["Will Johnson <william.c1.johnson@gmail.com>"]
+edition = "2018"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
+[dependencies]
+#common
+serde = "1.0"
+serde_json = "1.0"
+
+# server
+anyhow = { version = "1.0", optional = true }
+tokio = { version = "0.2", features = ["macros"], optional = true }
+warp = { version = "0.2", optional = true }
+tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.2", optional = true }
+web-push = { version = "0.7", optional = true }
+
+# client
+apply = { version = "0.3.0", optional = true }
+seed =  { path = "../../", optional = true }
+
+[dependencies.web-sys]
+version = "0.3.44"
+features = [
+  "CacheStorage",
+  "Notification",
+  "NotificationPermission",
+  "ServiceWorker",
+  "ServiceWorkerContainer",
+  "ServiceWorkerRegistration",
+  "ServiceWorkerState",
+  "PushManager",
+  "PushSubscription",
+  "PushSubscriptionJson",
+  "PushSubscriptionKeys",
+  "PushSubscriptionOptionsInit",
+]
+optional = true
+
+[features]
+default = []
+client = ["apply", "seed", "web-sys"]
+server = ["anyhow", "tokio", "warp", "tracing", "tracing-subscriber", "web-push"]

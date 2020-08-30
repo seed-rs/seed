@@ -134,6 +134,7 @@ members = [
     "examples/pages_keep_state",
     "examples/resize_observer",
     # "examples/server_integration",   # has own workspace
+    "examples/service_worker",
     "examples/subscribe",
     "examples/tea_component",
     "examples/todomvc",
