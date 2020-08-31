@@ -87,13 +87,7 @@ pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
     let closure = Closure::new(move |event: web_sys::Event| {
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
-            .and_then(|el| el.closest("[href]").ok())
-            .flatten()
-            .and_then(|href_el| match href_el.tag_name().to_lowercase().as_str() {
-                // Base, Link and Use tags use href for something other than navigation.
-                "base" | "link" | "use" => None,
-                _ => Some(href_el)
-            })
+            .and_then(|el| el.closest("a[href]").ok().flatten())
             .and_then(|href_el| href_el.get_attribute("href"))
             // The first character being / or empty href indicates a rel link, which is what
             // we're intercepting.
