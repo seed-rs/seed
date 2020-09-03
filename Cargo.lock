@@ -1637,6 +1637,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "page_trait"
+version = "0.1.0"
+dependencies = [
+ "seed",
+]
+
+[[package]]
 name = "pages"
 version = "0.1.0"
 dependencies = [

@@ -32,6 +32,7 @@
 - Add method to return detailed error response from server with `FetchError`.
 - [BREAKING] Added blanket `impl<Ms, T: IntoNodes<Ms>> IntoNode<Ms> for Option<T>`. This might conflict with local `impl`s of `IntoNodes`, but should make those unnecessary and safe to remove.
 - Added `charts` example.
+- Added `page_trait` example.
 
 ## v0.8.0
 
