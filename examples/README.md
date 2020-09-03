@@ -52,6 +52,10 @@ powered by [Fluent's Rust crate][url_crate_fluent].
 ### [Markdown](markdown)
 How to render markdown.
 
+## [Page trait](page_trait)
+How to reduce boilerplate when you have MANY similar pages.
+The demo is experimental and intended for experienced Rust and Seed developers.
+
 ### [Pages](pages)
 How to create and browse multiple pages in your app.
 

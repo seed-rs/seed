@@ -129,6 +129,7 @@ members = [
     "examples/i18n",
     "examples/markdown",
     "examples/fetch",
+    "examples/page_trait",
     "examples/pages",
     "examples/pages_hash_routing",
     "examples/pages_keep_state",
