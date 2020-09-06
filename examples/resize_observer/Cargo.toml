@@ -1,0 +1,11 @@
+[package]
+name = "resize_observer"
+version = "0.1.0"
+authors = ["Martin Kavík <martin@kavik.cz>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+seed = {path = "../../"}

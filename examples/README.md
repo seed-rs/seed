@@ -63,6 +63,9 @@ This example uses hash routing.
 How to create and browse multiple pages in your app.
 Pages keep their state.
 
+### [ResizeObserver](resize_observer)
+How to use [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
+
 ### [Subscribe](subscribe)
 How to create and use subscriptions, streams, notifications and commands.
 

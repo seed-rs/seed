@@ -132,6 +132,7 @@ members = [
     "examples/pages",
     "examples/pages_hash_routing",
     "examples/pages_keep_state",
+    "examples/resize_observer",
     # "examples/server_integration",   # has own workspace
     "examples/subscribe",
     "examples/tea_component",
