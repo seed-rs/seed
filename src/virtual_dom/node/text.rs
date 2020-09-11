@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fmt;
 
 /// For representing text nodes.
 /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Text)
@@ -12,6 +13,12 @@ pub struct Text {
 impl PartialEq for Text {
     fn eq(&self, other: &Self) -> bool {
         self.text == other.text
+    }
+}
+
+impl fmt::Display for Text {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.text)
     }
 }
 

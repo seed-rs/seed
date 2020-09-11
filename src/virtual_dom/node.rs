@@ -1,6 +1,7 @@
 use super::{AtValue, CSSValue, EventHandler, St};
 use crate::app::MessageMapper;
 use std::borrow::Cow;
+use std::fmt;
 
 pub mod el;
 pub mod into_nodes;
@@ -28,6 +29,16 @@ impl<Ms> Clone for Node<Ms> {
             Self::Element(element) => Self::Element(element.clone()),
             Self::Text(text) => Self::Text(text.clone()),
             Self::Empty => Self::Empty,
+        }
+    }
+}
+
+impl<Ms> fmt::Display for Node<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Element(element) => write!(f, "{}", element),
+            Self::Text(text) => write!(f, "{}", text),
+            Self::Empty => write!(f, ""),
         }
     }
 }
