@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.18"
+regex = "1.3.9"
 
 [dependencies]
 seed = {path = "../../"}

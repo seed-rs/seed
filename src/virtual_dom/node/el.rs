@@ -8,6 +8,7 @@ use crate::browser::{
     util,
 };
 use std::borrow::Cow;
+use std::fmt;
 
 // ------ ElKey ------
 
@@ -63,6 +64,58 @@ impl<Ms> Clone for El<Ms> {
             refs: self.refs.clone(),
             key: self.key.clone(),
         }
+    }
+}
+
+impl<Ms> fmt::Display for El<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let tag = self.tag.to_string();
+        let mut output = format!("<{}", &tag);
+
+        let mut attrs = self.attrs.clone();
+        
+        let style = self.style.to_string();
+        if !style.is_empty() {
+            attrs.add(At::Style, style);
+        }
+
+        if let Some(namespace) = self.namespace.as_ref() {
+            attrs.add(At::Xmlns, namespace.as_str());
+        }
+
+        let attributes = attrs.to_string();
+        if !attributes.is_empty() {
+            output += &format!(" {}", attributes);
+        }
+
+        output += ">";
+
+        for child in &self.children {
+            output += &child.to_string();
+        }
+
+        // https://developer.mozilla.org/en-US/docs/Glossary/empty_element
+        let empty_elements = [
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr",
+        ];
+        if !empty_elements.contains(&tag.to_lowercase().as_str()) {
+            output += &format!("</{}>", self.tag);
+        }
+
+        write!(f, "{}", output)
     }
 }
 
