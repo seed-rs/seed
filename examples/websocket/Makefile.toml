@@ -70,6 +70,16 @@ description = "Run websocket server on port 9000 in release mode"
 args = ["run", "--bin", "server", "--features", "server", "--release"]
 dependencies = ["build_server_release"]
 
+# ---- TEST ----
+
+[tasks.test_firefox]
+description = "Test with wasm-pack in Firefox"
+# @TODO: `--features` doesn't work - https://github.com/rustwasm/wasm-pack/issues/698 
+# @TODO uncomment once the issue is resolved.
+#command = "wasm-pack"
+#args = ["test", "--firefox", "--headless", "--", "--features", "client"]
+#dependencies = ["default::install-wasm-pack"]
+
 # ---- LINT ----
 
 [tasks.clippy]
