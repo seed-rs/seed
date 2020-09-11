@@ -136,6 +136,7 @@ members = [
     # "examples/server_integration",   # has own workspace
     "examples/service_worker",
     "examples/subscribe",
+    "examples/tests",
     "examples/tea_component",
     "examples/todomvc",
     "examples/unsaved_changes",

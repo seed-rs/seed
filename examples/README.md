@@ -73,6 +73,9 @@ How to create and use subscriptions, streams, notifications and commands.
 How to write a component in The Elm architecture.
 You'll also learn how to pass messages to the parent component.
 
+### [Tests](tests)
+How to test your app.
+
 ### [Fetch](fetch)
 How to make HTTP request using Fetch API.
 
