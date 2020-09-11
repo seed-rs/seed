@@ -2,6 +2,7 @@
 
 use super::Namespace;
 use crate::virtual_dom::{At, AtValue, Attrs, El, Mailbox, Node, Style, Text};
+use std::cmp::Ordering;
 use wasm_bindgen::JsCast;
 use web_sys::Document;
 
@@ -108,6 +109,7 @@ pub(crate) fn make_websys_el<Ms>(el: &mut El<Ms>, document: &web_sys::Document) 
             .expect("Problem creating web-sys element"),
     };
 
+    fix_attrs_order(&mut el.attrs);
     for (at, attr_value) in &el.attrs.vals {
         set_attr_value(&el_ws, at, attr_value);
     }
@@ -230,6 +232,8 @@ pub(crate) fn patch_el_details<Ms>(
     old_el_ws: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
 ) {
+    fix_attrs_order(&mut new.attrs);
+
     for (key, new_val) in &new.attrs.vals {
         match old.attrs.vals.get(key) {
             Some(old_val) => {
@@ -307,6 +311,22 @@ pub(crate) fn patch_el_details<Ms>(
         // We can't patch each part of style; rewrite the whole attribute.
         set_style(old_el_ws, &new.style)
     }
+}
+
+/// Some elements have order-sensitive attributes.
+///
+/// See the [example](https://github.com/seed-rs/seed/issues/335) of such element.
+#[allow(clippy::match_same_arms)]
+fn fix_attrs_order(attrs: &mut Attrs) {
+    attrs.vals.sort_by(|at_a, _, at_b, _| {
+        // Move `At::Value` at the end.
+        match (at_a, at_b) {
+            (At::Value, At::Value) => Ordering::Equal,
+            (At::Value, _) => Ordering::Greater,
+            (_, At::Value) => Ordering::Less,
+            _ => Ordering::Equal,
+        }
+    });
 }
 
 #[allow(clippy::too_many_lines)]
