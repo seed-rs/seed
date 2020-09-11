@@ -39,30 +39,26 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container", "my-container"],
-        style!{St::Margin => px(5), St::Padding => 0},
+        style! {St::Margin => px(5), St::Padding => 0},
         button![ev(Ev::Click, |_| Msg::Decrement), "-"],
         div![model],
         button![ev(Ev::Click, |_| Msg::Increment), "+"],
         hr![],
         svg![
-            attrs!{
+            attrs! {
                 At::Width => 50,
                 At::Height => 50,
                 At::ViewBox => "0 0 100 100",
             },
-            circle![
-                attrs!{
-                    At::Cx => 50, At::Cy => 50, At::R => 50,
-                },
-            ],
+            circle![attrs! {
+                At::Cx => 50, At::Cy => 50, At::R => 50,
+            },],
         ],
         hr![],
-        img![
-            attrs!{
-                At::Src => "/public/leopard.jpg",
-                At::Alt => "An intimidating leopard.",
-            },
-        ],
+        img![attrs! {
+            At::Src => "/public/leopard.jpg",
+            At::Alt => "An intimidating leopard.",
+        },],
     ]
 }
 
@@ -81,9 +77,9 @@ pub fn start() {
 
 #[cfg(test)]
 mod tests {
-    use wasm_bindgen_test::*;
+    use super::{view, Model};
     use regex::Regex;
-    use super::{Model, view};
+    use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
@@ -111,8 +107,7 @@ mod tests {
             </div>
         "#;
         let extra_whitespace = Regex::new(r"\n *").unwrap();
-        let expected_ugly_html = extra_whitespace.replace_all(expected_html,"");
+        let expected_ugly_html = extra_whitespace.replace_all(expected_html, "");
         assert_eq!(html, expected_ugly_html)
     }
 }
-
