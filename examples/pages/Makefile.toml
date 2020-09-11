@@ -16,6 +16,11 @@ alias = "default_start"
 [tasks.start_release]
 alias = "default_start_release"
 
+# ---- TEST ----
+
+[tasks.test_firefox]
+alias = "default_test_firefox"
+
 # ---- LINT ----
 
 [tasks.clippy]

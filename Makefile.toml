@@ -59,7 +59,7 @@ writefile ${STYLE_NAMES_FILE} ${content_for_style_names_file}
 
 [tasks.verify]
 description = "Format, lint with Clippy, build, run tests, simulate publish"
-dependencies = ["fmt_all", "clippy_all", "all", "test_h_firefox", "publish_dry_run"]
+dependencies = ["fmt_all", "clippy_all", "all", "test_h_firefox", "test_examples_firefox", "publish_dry_run"]
 
 [tasks.verify_for_ci]
 description = "Like `verify`, but fails if the code isn't formatted and you should run tests with other commands."
@@ -172,6 +172,11 @@ command = "wasm-pack"
 args = ["test", "--firefox", "--headless", "--", "--lib", "${@}"]
 dependencies = ["default::install-wasm-pack"]
 
+[tasks.test_examples_firefox]
+description = "Run tests in all examples in headless Firefox. Ex 'cargo make test_examples_firefox'"
+command = "cargo"
+args = ["make", "for_each", "test_firefox"]
+
 # ---- START ----
 
 [tasks.start]
@@ -220,6 +225,12 @@ dependencies = ["build"]
 extend = "default_start"
 description = "Build and start microserver in release mode"
 dependencies = ["build_release"]
+
+[tasks.default_test_firefox]
+description = "Test with wasm-pack in Firefox"
+command = "wasm-pack"
+args = ["test", "--firefox", "--headless"]
+dependencies = ["default::install-wasm-pack"]
 
 [tasks.default_clippy]
 description = "Lint with Clippy"

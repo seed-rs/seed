@@ -8,6 +8,9 @@ edition = "2018"
 crate-type = ["cdylib"]
 path = "src/lib.rs"
 
+[dev-dependencies]
+wasm-bindgen-test = "0.3.18"
+
 [dependencies]
 seed = { path = "../../../" }
 serde = "1.0.111"

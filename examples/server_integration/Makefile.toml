@@ -1,10 +1,11 @@
+[config]
+default_to_workspace = false
 
 # ---- BUILD ----
 
 [tasks.build]
 description = "Build client and server"
 clear = true
-workspace = false
 dependencies = ["build_client", "build_server"]
 
 [tasks.build_release]
@@ -14,7 +15,6 @@ dependencies = ["build_client_release", "build_server_release"]
 
 [tasks.build_client]
 description = "Build client"
-workspace = false
 install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
 command = "wasm-pack"
 args = ["build", "client", "--target", "web", "--out-name", "package", "--dev"]
@@ -26,7 +26,6 @@ args = ["build", "client", "--target", "web", "--out-name", "package", "--releas
 
 [tasks.build_server]
 description = "Build server"
-workspace = false
 command = "cargo"
 args = ["build", "--package", "server"]
 
@@ -39,7 +38,6 @@ args = ["build", "--package", "server", "--release"]
 
 [tasks.start]
 description = "Build and start Actix server with client on port 8000"
-workspace = false
 command = "cargo"
 args = ["run", "--package", "server"]
 dependencies = ["build"]
@@ -50,11 +48,17 @@ description = "Build and start Actix server with client on port 8000 in release 
 args = ["run", "--package", "server", "--release"]
 dependencies = ["build_release"]
 
+# ---- TEST ----
+
+[tasks.test_firefox]
+description = "Test with wasm-pack in Firefox"
+command = "wasm-pack"
+args = ["test", "client", "--firefox", "--headless"]
+
 # ---- LINT ----
 
 [tasks.fmt]
 description = "Format with rustfmt"
-workspace = false
 install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
 command = "cargo"
 args = ["fmt", "--all"]
@@ -67,7 +71,6 @@ args = ["fmt", "--all", "--", "--check"]
 [tasks.clippy]
 description = "Lint with Clippy"
 clear = true
-workspace = false
 install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
 command = "cargo"
 args = ["clippy", "--all-features", "--",
