@@ -73,7 +73,7 @@ impl<Ms> fmt::Display for El<Ms> {
         let mut output = format!("<{}", &tag);
 
         let mut attrs = self.attrs.clone();
-        
+
         let style = self.style.to_string();
         if !style.is_empty() {
             attrs.add(At::Style, style);
@@ -96,20 +96,8 @@ impl<Ms> fmt::Display for El<Ms> {
 
         // https://developer.mozilla.org/en-US/docs/Glossary/empty_element
         let empty_elements = [
-            "area",
-            "base",
-            "br",
-            "col",
-            "embed",
-            "hr",
-            "img",
-            "input",
-            "link",
-            "meta",
-            "param",
-            "source",
-            "track",
-            "wbr",
+            "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param",
+            "source", "track", "wbr",
         ];
         if !empty_elements.contains(&tag.to_lowercase().as_str()) {
             output += &format!("</{}>", self.tag);
