@@ -4,7 +4,7 @@ Example of communicating with a server using Websockets - simple chat.
 
 - Using web-sys's Websocket in client.
 - Serde for [de]serializiation.
-- [WS-RS (ws)](https://ws-rs.org/) as a websocket server.
+- [WS-RS (ws)](https://github.com/housleyjk/ws-rs) as a websocket server.
 - Demonstrates sending messages and receiving messages with sender id (see console or server logs).
 - There is not workspace - client and server dependencies are resolved by `features`, see `Cargo.toml` and `Makefile.toml`. 
 
