@@ -382,6 +382,17 @@ impl Url {
         self
     }
 
+    /// If the current `Url`'s hash path prefix is equal to `hash_path_base`,
+    /// then reset the internal hash path iterator and advance it to skip the prefix (aka `hash_path_base`).
+    ///
+    /// It's used mostly by Seed internals.
+    pub fn skip_hash_base_path(mut self, hash_path_base: &[String]) -> Self {
+        if self.hash_path.starts_with(hash_path_base) {
+            self.next_hash_path_part_index = hash_path_base.len();
+        }
+        self
+    }
+
     /// Decodes a Uniform Resource Identifier (URI) component.
     /// Aka percent-decoding.
     ///

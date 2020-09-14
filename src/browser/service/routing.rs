@@ -67,7 +67,7 @@ pub fn url_request_handler(
                 event.prevent_default(); // Prevent page refresh
             }
             notify(Notification::new(subs::UrlChanged(
-                url.skip_base_path(&base_path),
+                url.skip_base_path(&base_path).skip_hash_base_path(&[]),
             )));
         }
         subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
