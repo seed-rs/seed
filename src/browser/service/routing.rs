@@ -62,13 +62,12 @@ pub fn url_request_handler(
 
     match request.status() {
         subs::url_requested::UrlRequestStatus::Unhandled => {
-            push_route(url.clone());
             if let Some(event) = request.event.borrow_mut().take() {
                 event.prevent_default(); // Prevent page refresh
             }
-            notify(Notification::new(subs::UrlChanged(
-                url.skip_base_path(&base_path).skip_hash_base_path(&[]),
-            )));
+            let url = url.skip_base_path(&base_path).skip_hash_base_path(&[]);
+            push_route(url.clone());
+            notify(Notification::new(subs::UrlChanged(url)));
         }
         subs::url_requested::UrlRequestStatus::Handled(prevent_default) => {
             if prevent_default {
