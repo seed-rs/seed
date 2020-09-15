@@ -35,7 +35,8 @@
 - Fixed attribute ordering (#335).
 - Implemented `Display` for `Node` (#294).
 - Fixed url requests from pages when the hash routing is used.
-- Added method `Url::skip_hash_base_path`.
+- Fixed url encoding, serializing in `push_route` and the method `Url::hash_path`.
+- Added `Url` methods `skip_hash_base_path` and `encode_uri_component` (#424).
 
 ## v0.7.0
 - [BREAKING] Custom elements are now patched in-place (#364). Use `el_key` to force reinitialize an element.

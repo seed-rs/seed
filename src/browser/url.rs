@@ -294,7 +294,7 @@ impl Url {
 
     /// Get hash path.
     pub fn hash_path(&self) -> &[String] {
-        &self.path
+        &self.hash_path
     }
 
     /// Get hash.
@@ -414,6 +414,22 @@ impl Url {
         Ok(String::from(decoded))
     }
 
+    /// Encode to a Uniform Resource Identifier (URI) component.
+    /// Aka percent-encoding.
+    ///
+    /// _Note:_ All components are automatically encoded
+    /// in `Display` implementation for `Url` - i.e. `url.to_string()` returns encoded url.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// Url::encode_uri_component("Hello Günter"); // => "Hello%20G%C3%BCnter"
+    /// ```
+    pub fn encode_uri_component(component: impl AsRef<str>) -> String {
+        let encoded = js_sys::encode_uri_component(component.as_ref());
+        String::from(encoded)
+    }
+
     /// Get invalid components.
     ///
     /// Undecodable / unparsable components are invalid.
@@ -429,19 +445,36 @@ impl Url {
     }
 }
 
-/// `Url` components are automatically encoded.
+/// All components are automatically encoded.
 impl fmt::Display for Url {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let url = web_sys::Url::new_with_base(&self.path.join("/"), DUMMY_BASE_URL)
-            .expect("create native url");
+        let encoded_path = &self
+            .path
+            .iter()
+            .map(Url::encode_uri_component)
+            .collect::<Vec<_>>()
+            .join("/");
+
+        let encoded_hash_path = &self
+            .hash_path
+            .iter()
+            .map(Url::encode_uri_component)
+            .collect::<Vec<_>>()
+            .join("/");
+
+        let url =
+            web_sys::Url::new_with_base(encoded_path, DUMMY_BASE_URL).expect("create native url");
 
         url.set_search(&self.search.to_string());
+        url.set_hash(encoded_hash_path);
 
-        if let Some(hash) = &self.hash {
-            url.set_hash(hash);
-        }
-        // @TODO replace with `strip_prefix` once stable.
-        write!(fmt, "{}", &url.href().trim_start_matches(DUMMY_BASE_URL))
+        write!(
+            fmt,
+            "{}",
+            &url.href()
+                .strip_prefix(DUMMY_BASE_URL)
+                .expect("strip dummy base url")
+        )
     }
 }
 
@@ -729,22 +762,21 @@ mod tests {
 
     //(https://www.w3schools.com/tags/ref_urlencode.ASP)
     #[wasm_bindgen_test]
-    fn parse_url_decoding() {
-        // "/Hello Günter/path2?calc=5+6&x=1&x=2#heš"
-        let expected = "/Hello%20G%C3%BCnter/path2?calc=5%2B6&x=1&x=2#he%C5%A1";
+    fn parse_url_coding() {
+        // "/Hello \/ Günter/path2?calc\?=5+6&x=1&x=\&2#heš\/část\/hash path part"
+        let expected = "/Hello%20%2F%20G%C3%BCnter/path2?calc%3F=5%2B6&x=1&x=%262#he%C5%A1/%C4%8D%C3%A1st/hash%20path%20part";
         let native_url = web_sys::Url::new_with_base(expected, DUMMY_BASE_URL).unwrap();
         let url = Url::from(&native_url);
 
-        assert_eq!(url.path()[0], "Hello Günter");
-        assert_eq!(url.path()[1], "path2");
+        assert_eq!(url.path(), ["Hello / Günter", "path2"]);
         assert_eq!(
             url.search(),
-            &UrlSearch::new(vec![("calc", vec!["5+6"]), ("x", vec!["1", "2"]),])
+            &UrlSearch::new(vec![("calc?", vec!["5+6"]), ("x", vec!["1", "&2"]),])
         );
-        assert_eq!(url.hash(), Some(&"heš".to_owned()));
+        assert_eq!(url.hash(), Some(&"heš/část/hash path part".to_owned()));
+        assert_eq!(url.hash_path(), ["heš", "část", "hash path part"]);
 
-        let actual = url.to_string();
-        assert_eq!(expected, actual)
+        assert_eq!(expected, url.to_string())
     }
 
     #[wasm_bindgen_test]
