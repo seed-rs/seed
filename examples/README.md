@@ -79,6 +79,9 @@ How to test your app.
 ### [Fetch](fetch)
 How to make HTTP request using Fetch API.
 
+### [NoChange](no_change)
+How to increase render speed by `Node::NoChange`.
+
 ### [Todo MVC](todomvc)
 Classic TodoMVC example with Local Storage.
 
@@ -101,8 +104,8 @@ A demonstration of event-handlers attached to the `window`.
 ## Server
 Backend server integration & interaction examples.
 
-## Service Worker
-Service worker intergration demo. Includes registration, asset caching, state change messaging and notication subscription.
+### [Service Worker](service_worker)
+Service worker integration demo. Includes registration, asset caching, state change messaging and notification subscription.
 
 ### [Auth](auth)
 How to implement login / logout.
@@ -114,4 +117,4 @@ How to communicate with a GraphQL backend.
 Example of a workspace with [Actix](https://actix.rs/) server.
 
 ### [Websocket Chat](websocket)
-Example of communicating with a server using Websockets.
+Example of communicating with a server using WebSockets.
