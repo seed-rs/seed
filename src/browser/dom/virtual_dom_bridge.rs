@@ -38,7 +38,7 @@ pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>) {
     match node {
         Node::Element(el) => assign_ws_nodes_to_el(document, el),
         Node::Text(text) => assign_ws_nodes_to_text(document, text),
-        Node::Empty => (),
+        Node::Empty | Node::NoChange => (),
     }
 }
 
@@ -152,7 +152,7 @@ pub fn attach_children<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
             // Raise the active level once per recursion.
             Node::Element(child_el) => attach_el_and_children(child_el, el_ws, mailbox),
             Node::Text(child_text) => attach_text_node(child_text, el_ws),
-            Node::Empty => (),
+            Node::Empty | Node::NoChange => (),
         }
     }
 }
@@ -184,7 +184,7 @@ pub fn attach_el_and_children<Ms>(el: &mut El<Ms>, parent: &web_sys::Node, mailb
             // Raise the active level once per recursion.
             Node::Element(child_el) => attach_el_and_children(child_el, el_ws, mailbox),
             Node::Text(child_text) => attach_text_node(child_text, el_ws),
-            Node::Empty => (),
+            Node::Empty | Node::NoChange => (),
         }
     }
 

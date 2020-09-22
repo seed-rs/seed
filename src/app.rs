@@ -318,7 +318,7 @@ where
                 Node::Text(top_child_text) => {
                     virtual_dom_bridge::attach_text_node(top_child_text, &self.cfg.mount_point);
                 }
-                Node::Empty => (),
+                Node::Empty | Node::NoChange => (),
             }
         }
 

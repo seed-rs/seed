@@ -20,6 +20,7 @@ pub enum Node<Ms> {
     Element(El<Ms>),
     Text(Text),
     Empty,
+    NoChange,
 }
 
 // @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
@@ -29,6 +30,7 @@ impl<Ms> Clone for Node<Ms> {
             Self::Element(element) => Self::Element(element.clone()),
             Self::Text(text) => Self::Text(text.clone()),
             Self::Empty => Self::Empty,
+            Self::NoChange => Self::NoChange,
         }
     }
 }
@@ -39,6 +41,7 @@ impl<Ms> fmt::Display for Node<Ms> {
             Self::Element(element) => write!(f, "{}", element),
             Self::Text(text) => write!(f, "{}", text),
             Self::Empty => write!(f, ""),
+            Self::NoChange => write!(f, "[NoChange]"),
         }
     }
 }
@@ -183,7 +186,7 @@ impl<Ms> Node<Ms> {
         match self {
             Node::Text(t) => t.strip_ws_node(),
             Node::Element(e) => e.strip_ws_nodes_from_self_and_children(),
-            Node::Empty => (),
+            Node::Empty | Node::NoChange => (),
         }
     }
 
@@ -212,6 +215,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for Node<Ms> {
             Node::Element(el) => Node::Element(el.map_msg(f)),
             Node::Text(text) => Node::Text(text),
             Node::Empty => Node::Empty,
+            Node::NoChange => Node::NoChange,
         }
     }
 }
