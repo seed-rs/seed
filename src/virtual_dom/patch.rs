@@ -285,6 +285,9 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
             }
             Node::Text(new_text) => replace_el_by_text(document, old_el, new_text, parent),
             Node::Empty => remove_el(old_el, parent),
+            Node::NoChange => {
+                *new = Node::Element(old_el);
+            }
         },
         Node::Empty => {
             match new {
@@ -304,6 +307,9 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
                 }
                 // If new and old are empty, we don't need to do anything.
                 Node::Empty => (),
+                Node::NoChange => {
+                    *new = old;
+                }
             }
         }
         Node::Text(old_text) => {
@@ -314,8 +320,12 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
                 }
                 Node::Empty => remove_text(old_text, parent),
                 Node::Text(new_text) => patch_text(old_text, new_text),
+                Node::NoChange => {
+                    *new = Node::Text(old_text);
+                }
             }
         }
+        Node::NoChange => panic!("Node::NoChange cannot be an old VDOM node!"),
     };
     new.node_ws()
 }

@@ -142,7 +142,7 @@ impl PatchKey {
                 el_key: el.key.clone(),
             }),
             Node::Text(_) => Some(PatchKey::Text),
-            Node::Empty => None,
+            Node::Empty | Node::NoChange => None,
         }
     }
 }
@@ -358,7 +358,7 @@ where
         Some(match child_new {
             Node::Element(el_new) => PatchCommand::AppendEl { el_new },
             Node::Text(text_new) => PatchCommand::AppendText { text_new },
-            Node::Empty => return self.next_command(),
+            Node::Empty | Node::NoChange => return self.next_command(),
         })
     }
 
@@ -373,7 +373,7 @@ where
                 text_new,
                 next_node,
             },
-            Node::Empty => return self.next_command(),
+            Node::Empty | Node::NoChange => return self.next_command(),
         })
     }
 
@@ -393,11 +393,19 @@ where
                 }
                 Node::Text(text_new) => PatchCommand::ReplaceElByText { el_old, text_new },
                 Node::Empty => PatchCommand::RemoveEl { el_old },
+                Node::NoChange => {
+                    *child_new = Node::Element(el_old);
+                    return self.next_command();
+                }
             },
             Node::Text(text_old) => match child_new {
                 Node::Element(el_new) => PatchCommand::ReplaceTextByEl { text_old, el_new },
                 Node::Text(text_new) => PatchCommand::PatchText { text_old, text_new },
                 Node::Empty => PatchCommand::RemoveText { text_old },
+                Node::NoChange => {
+                    *child_new = Node::Text(text_old);
+                    return self.next_command();
+                }
             },
             Node::Empty => match child_new {
                 Node::Element(el_new) => {
@@ -422,7 +430,12 @@ where
                     }
                 }
                 Node::Empty => return self.next_command(),
+                Node::NoChange => {
+                    *child_new = child_old;
+                    return self.next_command();
+                }
             },
+            Node::NoChange => panic!("Node::NoChange cannot be an old VDOM node!"),
         })
     }
 
@@ -430,7 +443,7 @@ where
         Some(match child_old {
             Node::Element(el_old) => PatchCommand::RemoveEl { el_old },
             Node::Text(text_old) => PatchCommand::RemoveText { text_old },
-            Node::Empty => return self.next_command(),
+            Node::Empty | Node::NoChange => return self.next_command(),
         })
     }
 }

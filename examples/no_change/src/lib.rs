@@ -1,3 +1,5 @@
+#![allow(clippy::needless_pass_by_value)]
+
 use seed::{prelude::*, *};
 
 // ------ ------
@@ -34,10 +36,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => model.counter += 1,
         Msg::Decrement => model.counter -= 1,
-        Msg::ToggleRedrawTextField => {
-            log!("fsef");
-            model.redraw_text_field = not(model.redraw_text_field);
-        },
+        Msg::ToggleRedrawTextField => model.redraw_text_field = not(model.redraw_text_field),
     }
 }
 
@@ -51,20 +50,21 @@ fn view(model: &Model) -> Node<Msg> {
         div![model.counter],
         button![ev(Ev::Click, |_| Msg::Increment), "+"],
         fieldset![
-            input![
-                attrs!{
+            style! {St::MarginTop => px(10), St::Width => rem(20)},
+            if model.redraw_text_field {
+                input![attrs! {
                     At::Value => model.counter,
                     At::Disabled => true.as_at_value(),
-                }
-            ],
+                }]
+            } else {
+                Node::NoChange
+            },
             div![
                 ev(Ev::Click, |_| Msg::ToggleRedrawTextField),
-                input![
-                    attrs!{
-                        At::Type => "checkbox"
-                        At::Checked => model.redraw_text_field.as_at_value(),
-                    },
-                ],
+                input![attrs! {
+                    At::Type => "checkbox"
+                    At::Checked => model.redraw_text_field.as_at_value(),
+                },],
                 label!["Redraw the text field on each render"],
             ]
         ]
