@@ -155,10 +155,7 @@ fn view_form_field(mut label: Node<Msg>, control: Node<Msg>) -> Node<Msg> {
 }
 
 pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> Vec<Node<Msg>> {
-    let btn_disabled = match model {
-        Model::ReadyToSubmit(form) if !form.title.is_empty() => false,
-        _ => true,
-    };
+    let btn_enabled = matches!(model, Model::ReadyToSubmit(form) if !form.title.is_empty());
 
     let form_id = "A_FORM".to_string();
     let form = form![
@@ -225,9 +222,9 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
         button![
             style! {
                 "padding" => format!{"{} {}", px(2), px(12)},
-                "background-color" => if btn_disabled { CSSValue::Ignored } else { "aquamarine".into() },
+                "background-color" => if btn_enabled { CSSValue::from("aquamarine") } else { CSSValue::Ignored },
             },
-            attrs! {At::Disabled => btn_disabled.as_at_value()},
+            attrs! {At::Disabled => not(btn_enabled).as_at_value()},
             "Submit"
         ]
     ];
