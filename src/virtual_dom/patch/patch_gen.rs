@@ -377,6 +377,7 @@ where
         })
     }
 
+    #[allow(clippy::option_if_let_else)]
     fn patch_or_replace(
         &mut self,
         child_old: Node<Ms>,
@@ -555,10 +556,8 @@ fn fetch_next_item<'a, I, T>(source_iter: &'a mut I, queue: &'a mut VecDeque<T>)
 where
     I: Iterator<Item = T>,
 {
-    if let Some(item) = source_iter.next() {
+    source_iter.next().and_then(move |item| {
         queue.push_front(item);
         queue.front()
-    } else {
-        None
-    }
+    })
 }

@@ -31,10 +31,10 @@ pub enum StatusCategory {
 impl Status {
     /// Is response status category `ClientError` or `ServerError`? (Code 400-599)
     pub const fn is_error(&self) -> bool {
-        match self.category {
-            StatusCategory::ClientError | StatusCategory::ServerError => true,
-            _ => false,
-        }
+        matches!(
+            self.category,
+            StatusCategory::ClientError | StatusCategory::ServerError
+        )
     }
     /// Is response status category `Success`? (Code 200-299)
     pub fn is_ok(&self) -> bool {

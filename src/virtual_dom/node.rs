@@ -128,6 +128,7 @@ impl<Ms> Node<Ms> {
     }
 
     /// Retrive `key` attached to the `El`
+    #[allow(clippy::missing_const_for_fn)]
     pub fn el_key(&self) -> Option<&ElKey> {
         match self {
             Node::Element(el) => el.key.as_ref(),
@@ -143,25 +144,13 @@ impl<Ms> Node<Ms> {
     }
 
     pub const fn is_text(&self) -> bool {
-        if let Node::Text(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Node::Text(_))
     }
     pub const fn is_el(&self) -> bool {
-        if let Node::Element(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Node::Element(_))
     }
     pub const fn is_empty(&self) -> bool {
-        if let Node::Empty = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Node::Empty)
     }
 
     pub const fn text(&self) -> Option<&Text> {
@@ -197,6 +186,7 @@ impl<Ms> Node<Ms> {
         }
     }
 
+    #[allow(clippy::missing_const_for_fn)]
     pub fn node_ws(&self) -> Option<&web_sys::Node> {
         match self {
             Self::Element(El { node_ws: val, .. }) | Self::Text(Text { node_ws: val, .. }) => {

@@ -301,6 +301,7 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
+    #[allow(clippy::missing_const_for_fn)]
     pub fn hash(&self) -> Option<&String> {
         self.hash.as_ref()
     }

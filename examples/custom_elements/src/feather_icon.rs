@@ -9,8 +9,8 @@ pub fn view<Ms: 'static>(icon: &str, width: Option<u32>, height: Option<u32>) ->
         Tag::from("feather-icon"),
         attrs! {
             At::from("icon") => icon,
-            At::Width => if let Some(width) = width { AtValue::Some(width.to_string()) } else { AtValue::Ignored },
-            At::Height => if let Some(height) = height { AtValue::Some(height.to_string()) } else { AtValue::Ignored },
+            At::Width => width.map_or(AtValue::Ignored, |width| AtValue::Some(width.to_string())),
+            At::Height => height.map_or(AtValue::Ignored, |height| AtValue::Some(height.to_string())),
         }
     ]
 }
