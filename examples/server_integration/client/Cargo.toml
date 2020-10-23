@@ -13,6 +13,6 @@ wasm-bindgen-test = "0.3.18"
 
 [dependencies]
 seed = { path = "../../../" }
-serde = "1.0.111"
+serde = "1.0.117"
 
 shared = { path = "../shared"}
