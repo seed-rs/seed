@@ -9,4 +9,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-rand = {version = "0.7.3", features = ["wasm-bindgen"]}
+rand = { version = "0.7.3", features = ["wasm-bindgen"] }

@@ -10,5 +10,5 @@ crate-type = ["cdylib"]
 [dependencies]
 seed = {path = "../../"}
 graphql_client = "0.9.0"
-serde = "1.0.111"
+serde = "1.0.117"
 itertools = "0.9.0"

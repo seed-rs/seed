@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = { path = "../../" }
-strum = "0.18.0"
-strum_macros = "0.18.0"
-fluent = "0.12.0"
+strum = "0.19.5"
+strum_macros = "0.19.4"
+fluent = "0.13.1"
 unic-langid = "0.9.0"

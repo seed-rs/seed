@@ -51,9 +51,18 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
             Msg::ResourcesLoaded(
                 async {
                     Ok(Resources {
-                        img: loaders::fetch::image(&get_media_href("bunny.png")).await?,
-                        vertex: loaders::fetch::text(&get_media_href("vertex.glsl")).await?,
-                        fragment: loaders::fetch::text(&get_media_href("fragment.glsl")).await?,
+                        img: loaders::fetch::fetch_url(&get_media_href("bunny.png"))
+                            .await?
+                            .image("image/png")
+                            .await?,
+                        vertex: loaders::fetch::fetch_url(&get_media_href("vertex.glsl"))
+                            .await?
+                            .text()
+                            .await?,
+                        fragment: loaders::fetch::fetch_url(&get_media_href("fragment.glsl"))
+                            .await?
+                            .text()
+                            .await?,
                     })
                 }
                 .await,

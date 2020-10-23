@@ -17,7 +17,11 @@ async fn send_message(
     request_data: web::Json<shared::SendMessageRequestBody>,
 ) -> Result<web::Json<shared::SendMessageResponseBody>> {
     Ok(web::Json(shared::SendMessageResponseBody {
-        ordinal_number: state.count_actor.send(MsgIncrement).await?,
+        ordinal_number: state
+            .count_actor
+            .send(MsgIncrement)
+            .await
+            .expect("send MsgIncrement"),
         text: request_data.text.clone(),
     }))
 }
