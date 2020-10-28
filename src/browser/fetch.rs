@@ -61,7 +61,8 @@ pub type Result<T> = std::result::Result<T, FetchError>;
 /// `POST` request with `JSON` body:
 /// ```rust
 /// let form = Form{email: "foo@example.com"};
-/// let response = fetch(Request::new("/api").method(Method::Post).json(form)).await?;
+/// let request = Request::new("/api").method(Method::Post).json(form).expect("Error in parsing Request");
+/// let response = fetch(request).await?;
 /// let data: SubmitResponse = response.json().await?;
 /// ```
 ///
