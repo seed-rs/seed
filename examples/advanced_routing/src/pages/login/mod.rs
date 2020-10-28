@@ -35,53 +35,11 @@ pub struct Model {
 }
 
 pub enum Msg {
-    Login,
-    LoginSucceed(LoggedUser),
     AutoLogin(Role),
-    LoginFailed { message: String, code: String },
-    PasswordChanged(String),
-    TargetChanged(String),
-    Clear,
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+pub fn update(msg: Msg, _: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Login => {
-            model.request_state = RequestState::IsPending(true);
-            let request = Request::new("/api/auth")
-                .method(Method::Post)
-                .json(&model.credentials)
-                .expect("Serialization failed");
-
-            model.credentials.set_password("".to_string());
-            orders.perform_cmd(async {
-                let response = fetch(request).await.expect("HTTP request failed");
-
-                if response.status().is_ok() {
-                    Msg::LoginSucceed(response.json().await.unwrap())
-                } else {
-                    Msg::LoginFailed {
-                        message: response.text().await.unwrap(),
-                        code: response.status().code.to_string(),
-                    }
-                }
-            });
-        }
-        Msg::Clear => {
-            model.credentials = Default::default();
-            model.request_state = Default::default();
-        }
-        Msg::LoginSucceed(logged_user) => {
-            model.request_state = RequestState::Success(logged_user.clone());
-            orders.notify(logged_user);
-        }
-        Msg::LoginFailed { message, code } => {
-            model.request_state = RequestState::Failed { message, code }
-        }
-        Msg::PasswordChanged(pwd) => {
-            model.credentials.set_password(pwd);
-        }
-        Msg::TargetChanged(target) => model.credentials.set_target(target),
         Msg::AutoLogin(role) => {
             let logged_user = match role {
                 Role::StandardUser => LoggedUser::new(
@@ -99,7 +57,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Role::Admin,
                 ),
             };
-            model.request_state = RequestState::Success(logged_user.clone());
             orders.notify(logged_user);
         }
     }
@@ -123,10 +80,6 @@ pub fn view(model: &Model) -> Node<Msg> {
 
 fn form(model: &Model, status: &bool) -> Node<Msg> {
     form![
-        ev(Ev::Submit, |event| {
-            event.prevent_default();
-            Msg::Login
-        }),
         fieldset![
             attrs! {
                         At::Disabled=> status.as_at_value(),
@@ -143,7 +96,6 @@ fn form(model: &Model, status: &bool) -> Node<Msg> {
                 At::MaxLength=> "25",
                 At::Type=> "text"
                         },
-                input_ev(Ev::Input, Msg::TargetChanged),
             ],
             label![attrs! { At::For => "password"}, "Password"],
             input![
@@ -156,7 +108,6 @@ fn form(model: &Model, status: &bool) -> Node<Msg> {
                     At::Name => "password",
                     At::Type=> "password"
                 },
-                input_ev(Ev::Input, Msg::PasswordChanged),
             ],
         ],
         button![
