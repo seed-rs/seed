@@ -34,7 +34,6 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 
     Model {
         theme: Theme::default(),
-        register: Default::default(),
         login: Default::default(),
         dashboard: Default::default(),
         admin: Default::default(),
@@ -48,7 +47,6 @@ pub enum Routes {
     Login {
         query: IndexMap<String, String>, // -> http://localhost:8000/login?name=JohnDoe
     },
-    Register,
     #[guard = " => guard => forbidden"]
     Dashboard(DashboardRoutes), // -> http://localhost:8000/dashboard/*
     #[guard = " => admin_guard => forbidden_user"]
@@ -113,7 +111,6 @@ fn forbidden_user(model: &Model) -> Node<Msg> {
 // ------ ------
 
 struct Model {
-    pub register: pages::register::Model,
     pub login: pages::login::Model,
     pub dashboard: pages::dashboard::Model,
     pub admin: pages::admin::Model,
@@ -132,7 +129,6 @@ struct Model {
 pub enum Msg {
     UrlChanged(subs::UrlChanged),
     UrlRequested(subs::UrlRequested),
-    Register(pages::register::Msg),
     Login(pages::login::Msg),
     Admin(pages::admin::Msg),
     UserLogged(LoggedUser),
@@ -153,11 +149,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
         }
         Msg::UrlRequested(_) => {}
-        Msg::Register(register_message) => pages::register::update(
-            register_message,
-            &mut model.register,
-            &mut orders.proxy(Msg::Register),
-        ),
         Msg::Login(login_message) => pages::login::update(
             login_message,
             &mut model.login,
@@ -290,14 +281,6 @@ fn render_route(model: &Model) -> Node<Msg> {
             ],
             attrs! { At::Href => Routes::Login { query : make_query_for_john_doe() }.to_url()  },
             "Login for JohnDoe",
-        ]],
-        li![a![
-            C![
-                "route",
-                IF!(model.router.is_current_route(&Routes::Register) => "active-route" )
-            ],
-            attrs! { At::Href => &Routes::Register.to_url()  },
-            "Register",
         ]],
         li![a![
             C![
