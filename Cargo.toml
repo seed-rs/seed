@@ -116,6 +116,7 @@ features = [
 
 [workspace]
 members = [
+    "examples/advanced_routing",
     "examples/animation",
     "examples/auth",
     "examples/bunnies",
