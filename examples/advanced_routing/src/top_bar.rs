@@ -47,14 +47,7 @@ impl<Ms: 'static> TopBar<Ms> {
 
     fn view(mut self) -> Node<Ms> {
         let tag = Tag::Div;
-
         let content = div![self.title.take().map(Node::new_text),];
-
-        // if content.is_some() {
-        //     let mut node = content.unwrap();
-        //     node.add_style(St::TextAlign, "center");
-        // }
-
         let attrs = {
             let mut attrs = attrs! {};
 
@@ -85,7 +78,6 @@ impl<Ms: 'static> TopBar<Ms> {
                 Theme::Dark => "white",
                 Theme::Light => "black",
             };
-            // if self.outline {
             if self.user_logged_in {
                 css.merge(style! {
                     St::Color => color,
@@ -95,9 +87,6 @@ impl<Ms: 'static> TopBar<Ms> {
                 });
             } else {
                 css.merge(style! { St::Color => font_color,
-                // St::Display => "flex",
-                // St::AlignItems => "center",
-                // St::JustifyContent=> "center" ,
                 St::BackgroundColor => background });
             };
 

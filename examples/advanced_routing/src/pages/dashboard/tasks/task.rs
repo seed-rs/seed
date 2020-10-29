@@ -21,11 +21,6 @@ impl Clone for Model {
 pub enum Msg {
     ClickTask,
 }
-pub fn update(msg: Msg, _: &mut Model) {
-    match msg {
-        Msg::ClickTask => {}
-    }
-}
 pub fn view(model: &Model) -> Node<Msg> {
     div![
         "Title",

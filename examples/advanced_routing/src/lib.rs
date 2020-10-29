@@ -8,14 +8,11 @@ use crate::{
 };
 #[macro_use]
 extern crate seed_routing;
-use crate::pages::dashboard::{tasks::TasksRoutes, DashboardRoutes};
-use seed_routing::View;
-use seed_routing::*;
+use seed_routing::{View, *};
 pub mod models;
 mod pages;
 mod theme;
 mod top_bar;
-use crate::pages::admin::AdminRoutes;
 
 use std::fmt::Debug;
 
@@ -48,12 +45,12 @@ pub enum Routes {
         query: IndexMap<String, String>, // -> http://localhost:8000/login?name=JohnDoe
     },
     #[guard = " => guard => forbidden"]
-    Dashboard(DashboardRoutes), // -> http://localhost:8000/dashboard/*
+    Dashboard(pages::dashboard::Routes), // -> http://localhost:8000/dashboard/*
     #[guard = " => admin_guard => forbidden_user"]
     Admin {
         // -> /admin/:id/*
         id: String,
-        children: AdminRoutes,
+        children: pages::admin::Routes,
     },
     #[default_route]
     #[view = " => not_found"] // -> http://localhost:8000/not_found*
@@ -303,51 +300,51 @@ fn render_route(model: &Model) -> Node<Msg> {
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Admin { id : "1".to_string() , children : AdminRoutes::Root}) => "active-route" ),
+                    IF!(model.router.is_current_route(&Routes::Admin { id : "1".to_string() , children : pages::admin::Routes::Root}) => "active-route" ),
                     IF!(admin_guard(model).is_none() => "locked-route"   ),
                     IF!(admin_guard(model).is_some() && !admin_guard(model).unwrap() => "locked-admin-route" )
                 ],
-                attrs! { At::Href => &Routes::Admin { id : "1".to_string() , children : AdminRoutes::Root}.to_url()  },
+                attrs! { At::Href => &Routes::Admin { id : "1".to_string() , children : pages::admin::Routes::Root}.to_url()  },
                 "Admin project 1",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Admin { id : "2".to_string() , children : AdminRoutes::Root}) => "active-route" ),
+                    IF!(model.router.is_current_route(&Routes::Admin { id : "2".to_string() , children : pages::admin::Routes::Root}) => "active-route" ),
                     IF!(admin_guard(model).is_none() => "locked-route"   ),
                     IF!(admin_guard(model).is_some() && !admin_guard(model).unwrap() => "locked-admin-route" )
                 ],
-                attrs! { At::Href => &Routes::Admin { id : "2".to_string() , children : AdminRoutes::Root}.to_url()  },
+                attrs! { At::Href => &Routes::Admin { id : "2".to_string() , children : pages::admin::Routes::Root}.to_url()  },
                 "Admin project 2",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Admin { id : "3".to_string() , children : AdminRoutes::Root}) => "active-route" ),
+                    IF!(model.router.is_current_route(&Routes::Admin { id : "3".to_string() , children : pages::admin::Routes::Root}) => "active-route" ),
                     IF!(admin_guard(model).is_none() => "locked-route"   ),
                     IF!(admin_guard(model).is_some() && !admin_guard(model).unwrap() => "locked-admin-route" )
                 ],
-                attrs! { At::Href => &Routes::Admin { id : "3".to_string() , children : AdminRoutes::Root}.to_url()  },
+                attrs! { At::Href => &Routes::Admin { id : "3".to_string() , children : pages::admin::Routes::Root}.to_url()  },
                 "Admin project 3",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Admin { id : "3".to_string() , children : AdminRoutes::NotFound}) => "active-route" ),
+                    IF!(model.router.is_current_route(&Routes::Admin { id : "3".to_string() , children : pages::admin::Routes::NotFound}) => "active-route" ),
                     IF!(admin_guard(model).is_none() => "locked-route"   ),
                     IF!(admin_guard(model).is_some() && !admin_guard(model).unwrap() => "locked-admin-route" )
                 ],
-                attrs! { At::Href => &Routes::Admin { id : "3".to_string() , children : AdminRoutes::NotFound}.to_url()  },
+                attrs! { At::Href => &Routes::Admin { id : "3".to_string() , children : pages::admin::Routes::NotFound}.to_url()  },
                 "Not found project 3",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Admin { id : "1".to_string() , children : AdminRoutes::Manager}) => "active-route" ),
+                    IF!(model.router.is_current_route(&Routes::Admin { id : "1".to_string() , children : pages::admin::Routes::Manager}) => "active-route" ),
                     IF!(admin_guard(model).is_none() => "locked-route"   ),
                     IF!(admin_guard(model).is_some() && !admin_guard(model).unwrap() => "locked-admin-route" )
                 ],
-                attrs! { At::Href => &Routes::Admin { id : "1".to_string() , children : AdminRoutes::Manager}.to_url()  },
+                attrs! { At::Href => &Routes::Admin { id : "1".to_string() , children : pages::admin::Routes::Manager}.to_url()  },
                 "Manage project 1",
             ]],
         ],
@@ -356,46 +353,46 @@ fn render_route(model: &Model) -> Node<Msg> {
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Root)) => "active-route" ),
+                    IF!(model.router.is_current_route(&Routes::Dashboard(pages::dashboard::Routes::Root)) => "active-route" ),
                     IF!(guard(model).is_none() => "locked-route"   )
                 ],
-                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Root).to_url()  },
+                attrs! { At::Href => &Routes::Dashboard(pages::dashboard::Routes::Root).to_url()  },
                 "Profile",
             ]],
             li![a![
                 C![
                      "route",
-                     IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Message)) => "active-route" )
+                     IF!(model.router.is_current_route(&Routes::Dashboard(pages::dashboard::Routes::Message)) => "active-route" )
                 IF!(guard(model).is_none() => "locked-route"   )
                  ],
-                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Message).to_url()  },
+                attrs! { At::Href => &Routes::Dashboard(pages::dashboard::Routes::Message).to_url()  },
                 "Messages",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Statistics)) => "active-route" )
+                    IF!(model.router.is_current_route(&Routes::Dashboard(pages::dashboard::Routes::Statistics)) => "active-route" )
                        IF!(guard(model).is_none() => "locked-route"   )
                 ],
-                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Statistics).to_url()  },
+                attrs! { At::Href => &Routes::Dashboard(pages::dashboard::Routes::Statistics).to_url()  },
                 "Statistics",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Tasks { query: IndexMap::new() , children :  TasksRoutes::Root  })) => "active-route" )
+                    IF!(model.router.is_current_route(&Routes::Dashboard(pages::dashboard::Routes::Tasks { query: IndexMap::new() , children :  pages::dashboard::tasks::Routes::Root  })) => "active-route" )
                     IF!(guard(model).is_none() => "locked-route"   )
                 ],
-                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Tasks { query: IndexMap::new() , children :  TasksRoutes::Root  }) .to_url()  },
+                attrs! { At::Href => &Routes::Dashboard(pages::dashboard::Routes::Tasks { query: IndexMap::new() , children :  pages::dashboard::tasks::Routes::Root  }) .to_url()  },
                 "Tasks",
             ]],
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Tasks { query: make_query() , children :  TasksRoutes::Root  })) => "active-route" )
+                    IF!(model.router.is_current_route(&Routes::Dashboard(pages::dashboard::Routes::Tasks { query: make_query() , children :  pages::dashboard::tasks::Routes::Root  })) => "active-route" )
                     IF!(guard(model).is_none() => "locked-route"   )
                 ],
-                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Tasks { query: make_query() , children :  TasksRoutes::Root  }) .to_url()  },
+                attrs! { At::Href => &Routes::Dashboard(pages::dashboard::Routes::Tasks { query: make_query() , children :  pages::dashboard::tasks::Routes::Root  }) .to_url()  },
                 "Tasks with url query",
             ]],
         ],
@@ -408,7 +405,7 @@ fn make_query() -> IndexMap<String, String> {
     index_map
 }
 // fn cannot_user_access_dashboard(model: &Model) -> bool {
-//     Routes::Dashboard(DashboardRoutes::Root)
+//     Routes::Dashboard(pages::dashboard::Routes::Root)
 //         .check_before_load(model)
 //         .is_none()
 // }
