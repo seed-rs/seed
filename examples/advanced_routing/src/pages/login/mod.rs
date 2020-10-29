@@ -72,10 +72,6 @@ pub fn view(model: &Model) -> Node<Msg> {
             ". :)"
         ]],
         RequestState::IsPending(status) => form(model, status),
-        RequestState::Failed { message, code } => p![
-            C!["centred"],
-            format!("An error happened {} with the code {}", message, code)
-        ],
     }
 }
 

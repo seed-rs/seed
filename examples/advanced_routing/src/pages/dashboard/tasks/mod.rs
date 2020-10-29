@@ -29,13 +29,11 @@ pub fn init(
                 selected_no.push(no)
             }
         }
-
-        let init = Model {
+        Model {
             tasks: get_dummy_data(),
             checked_tasks_no: selected_no,
             is_default: false,
-        };
-        init
+        }
     }
 }
 #[derive(Clone)]
@@ -75,7 +73,6 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                 if let Some(index) = model.checked_tasks_no.iter().position(|no| no == &task_no) {
                     model.checked_tasks_no.remove(index);
                 }
-            } else if let Some(_) = model.checked_tasks_no.iter().position(|no| no == &task_no) {
             } else {
                 model.checked_tasks_no.push(task_no)
             }
