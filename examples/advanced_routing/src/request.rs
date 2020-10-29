@@ -1,11 +1,11 @@
 #[derive(Debug)]
-pub enum RequestState<T> {
+pub enum State<T> {
     Success(T),
     IsPending(bool),
 }
 
-impl<T> Default for RequestState<T> {
+impl<T> Default for State<T> {
     fn default() -> Self {
-        RequestState::IsPending(false)
+        State::IsPending(false)
     }
 }

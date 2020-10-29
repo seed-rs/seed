@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, Default)]
 /// Base Credential used for user authentication
-pub struct AuthData {
+pub struct Data {
     email: String,
     username: String,
     password: String,
 }
 /// Setters and getters for password
-impl AuthData {
+impl Data {
     pub fn set_password(&mut self, pwd: String) {
         self.password = pwd
     }

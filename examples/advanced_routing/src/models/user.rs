@@ -1,15 +1,7 @@
-use crate::models::auth::AuthData;
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Deserialize, Serialize, Default)]
-pub struct User {
-    pub first_name: String,
-    pub last_name: String,
-    #[serde(flatten)]
-    pub credentials: AuthData,
-}
 
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
-pub struct LoggedUser {
+pub struct LoggedData {
     pub first_name: String,
     pub last_name: String,
     username: String,
@@ -17,9 +9,9 @@ pub struct LoggedUser {
     pub role: Role,
 }
 
-impl LoggedUser {
+impl LoggedData {
     pub fn new(first_name: &str, last_name: &str, username: &str, email: &str, role: Role) -> Self {
-        LoggedUser {
+        LoggedData {
             first_name: first_name.to_string(),
             last_name: last_name.to_string(),
             username: username.to_string(),
@@ -29,7 +21,7 @@ impl LoggedUser {
     }
 }
 
-impl LoggedUser {
+impl LoggedData {
     pub fn username(&self) -> &str {
         &self.username
     }

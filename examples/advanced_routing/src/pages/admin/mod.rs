@@ -23,7 +23,11 @@ pub fn init(
             name: name.to_string(),
             description: description.to_string(),
         }
-    } else if !children.eq(&Routes::NotFound) {
+    } else if children.eq(&Routes::NotFound) {
+        let mut not_found_model = Model::default();
+        not_found_model.id = id.to_string();
+        not_found_model
+    } else {
         orders.notify(subs::UrlRequested::new(
             Root::Admin {
                 id: id.to_string(),
@@ -31,10 +35,6 @@ pub fn init(
             }
             .to_url(),
         ));
-        let mut not_found_model = Model::default();
-        not_found_model.id = id.to_string();
-        not_found_model
-    } else {
         let mut not_found_model = Model::default();
         not_found_model.id = id.to_string();
         not_found_model

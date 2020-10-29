@@ -2,7 +2,7 @@ mod request;
 use seed::{prelude::*, *};
 extern crate heck;
 use crate::{
-    models::user::{LoggedUser, Role},
+    models::user::{LoggedData, Role},
     theme::Theme,
     top_bar::TopBar,
 };
@@ -112,7 +112,7 @@ struct Model {
     pub dashboard: pages::dashboard::Model,
     pub admin: pages::admin::Model,
     router: Router<Routes>,
-    logged_user: Option<LoggedUser>,
+    logged_user: Option<LoggedData>,
     theme: Theme,
 }
 
@@ -128,7 +128,7 @@ pub enum Msg {
     UrlRequested(subs::UrlRequested),
     Login(pages::login::Msg),
     Admin(pages::admin::Msg),
-    UserLogged(LoggedUser),
+    UserLogged(LoggedData),
     Dashboard(pages::dashboard::Msg),
     GoBack,
     GoForward,

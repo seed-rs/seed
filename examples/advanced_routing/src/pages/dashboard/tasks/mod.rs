@@ -12,13 +12,7 @@ pub fn init(
     _: &Routes,
     _: &mut impl Orders<Msg>,
 ) -> Model {
-    if !model.is_default {
-        Model {
-            tasks: get_dummy_data(),
-            checked_tasks_no: model.checked_tasks_no.clone(),
-            is_default: false,
-        }
-    } else {
+    if model.is_default {
         let mut selected_no: Vec<u32> = vec![];
         for selected in query.iter() {
             if selected.0.contains("select") {
@@ -32,6 +26,12 @@ pub fn init(
         Model {
             tasks: get_dummy_data(),
             checked_tasks_no: selected_no,
+            is_default: false,
+        }
+    } else {
+        Model {
+            tasks: get_dummy_data(),
+            checked_tasks_no: model.checked_tasks_no.clone(),
             is_default: false,
         }
     }
