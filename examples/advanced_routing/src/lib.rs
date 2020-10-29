@@ -389,10 +389,24 @@ fn render_route(model: &Model) -> Node<Msg> {
                 attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Tasks { query: IndexMap::new() , children :  TasksRoutes::Root  }) .to_url()  },
                 "Tasks",
             ]],
+            li![a![
+                C![
+                    "route",
+                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Tasks { query: make_query() , children :  TasksRoutes::Root  })) => "active-route" )
+                    IF!(guard(model).is_none() => "locked-route"   )
+                ],
+                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Tasks { query: make_query() , children :  TasksRoutes::Root  }) .to_url()  },
+                "Tasks with url query",
+            ]],
         ],
     ]
 }
 
+fn make_query() -> IndexMap<String, String> {
+    let mut index_map: IndexMap<String, String> = IndexMap::new();
+    index_map.insert("select1".to_string(), "1".to_string());
+    index_map
+}
 // fn cannot_user_access_dashboard(model: &Model) -> bool {
 //     Routes::Dashboard(DashboardRoutes::Root)
 //         .check_before_load(model)

@@ -27,12 +27,11 @@ pub fn init(
     nested: &DashboardRoutes,
     orders: &mut impl Orders<Msg>,
 ) -> Model {
-    let mut model = Model::default();
-    nested.init(&mut model, orders);
-    model
+    nested.init(model, orders);
+    model.clone()
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Model {
     pub name: String,
     pub message: message::Model,

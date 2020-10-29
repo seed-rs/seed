@@ -4,7 +4,7 @@ pub fn init(_: Url, _: &mut Model, _: &mut impl Orders<Msg>) -> Model {
     Model::default()
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Model {
     pub messages: Vec<String>,
 }

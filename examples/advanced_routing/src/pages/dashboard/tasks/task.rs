@@ -7,6 +7,16 @@ pub struct Model {
     pub task_description: String,
 }
 
+impl Clone for Model {
+    fn clone(&self) -> Self {
+        Model {
+            task_no: self.task_no,
+            task_title: self.task_title.clone(),
+            task_description: self.task_description.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum Msg {
     ClickTask,

@@ -38,7 +38,7 @@ pub enum Msg {
     AutoLogin(Role),
 }
 
-pub fn update(msg: Msg, _: &mut Model, orders: &mut impl Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::AutoLogin(role) => {
             let logged_user = match role {
@@ -57,6 +57,7 @@ pub fn update(msg: Msg, _: &mut Model, orders: &mut impl Orders<Msg>) {
                     Role::Admin,
                 ),
             };
+            model.request_state = RequestState::Success(logged_user.clone());
             orders.notify(logged_user);
         }
     }
