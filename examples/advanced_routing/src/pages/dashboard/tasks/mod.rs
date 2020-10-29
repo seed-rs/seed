@@ -2,17 +2,37 @@ use crate::{pages::dashboard::DashboardRoutes, Routes};
 use seed::{prelude::*, *};
 use seed_routing::*;
 pub mod task;
+pub fn init(
+    _: Url,
+    _: &mut Model,
+    query: &IndexMap<String, String>,
+    _: &TasksRoutes,
+    _: &mut impl Orders<Msg>,
+) -> Model {
+    let mut selected_no: Vec<u32> = vec![];
+    for selected in query.iter() {
+        if selected.0.contains("select") {
+            let no: u32 = selected.1.parse().unwrap();
+            selected_no.push(no)
+        }
+    }
 
+    let init = Model {
+        tasks: get_dummy_data(),
+        selected_task_no: selected_no,
+    };
+    init
+}
 pub struct Model {
     pub tasks: Vec<task::Model>,
-    pub selected_task_no: Option<u32>,
+    pub selected_task_no: Vec<u32>,
 }
 
 impl Default for Model {
     fn default() -> Self {
         Model {
-            selected_task_no: None,
-            tasks: get_dummy_data(),
+            selected_task_no: vec![],
+            tasks: vec![],
         }
     }
 }
@@ -37,8 +57,8 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         Msg::ClickTask(_) => {}
         Msg::LoadTasks => model.tasks = get_dummy_data(),
         Msg::Task(task) => {
-            let index: usize = model.selected_task_no.unwrap() as usize;
-            task::update(task, model.tasks.get_mut(index).unwrap())
+            // let index: usize = model.selected_task_no.unwrap() as usize;
+            // task::update(task, model.tasks.get_mut(index).unwrap())
         }
     }
 }
@@ -59,9 +79,12 @@ pub fn list(tasks: &[task::Model]) -> Vec<Node<Msg>> {
 }
 
 pub fn render_task(task: &task::Model) -> Node<Msg> {
-    let task_url = Routes::Dashboard(DashboardRoutes::Tasks(TasksRoutes::Task {
-        id: task.task_no.to_string(),
-    }))
+    let task_url = Routes::Dashboard(DashboardRoutes::Tasks {
+        children: TasksRoutes::Task {
+            id: task.task_no.to_string(),
+        },
+        query: IndexMap::new(),
+    })
     .to_url();
     // let route =
     // Routes::Dashboard(DashboardRoutes::Tasks(TasksRoutes::Task(task.task_no)));

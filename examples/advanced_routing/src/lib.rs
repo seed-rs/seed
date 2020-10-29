@@ -8,7 +8,7 @@ use crate::{
 };
 #[macro_use]
 extern crate seed_routing;
-use crate::pages::dashboard::{task_list::TasksRoutes, DashboardRoutes};
+use crate::pages::dashboard::{tasks::TasksRoutes, DashboardRoutes};
 use seed_routing::View;
 use seed_routing::*;
 pub mod models;
@@ -383,10 +383,10 @@ fn render_route(model: &Model) -> Node<Msg> {
             li![a![
                 C![
                     "route",
-                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Tasks(TasksRoutes::Root))) => "active-route" )
+                    IF!(model.router.is_current_route(&Routes::Dashboard(DashboardRoutes::Tasks { query: IndexMap::new() , children :  TasksRoutes::Root  })) => "active-route" )
                     IF!(guard(model).is_none() => "locked-route"   )
                 ],
-                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Tasks(TasksRoutes::Root)).to_url()  },
+                attrs! { At::Href => &Routes::Dashboard(DashboardRoutes::Tasks { query: IndexMap::new() , children :  TasksRoutes::Root  }) .to_url()  },
                 "Tasks",
             ]],
         ],

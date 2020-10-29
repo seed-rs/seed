@@ -1,4 +1,9 @@
 use seed::{prelude::*, *};
+
+pub fn init(_: Url, _: &mut Model, _: &mut impl Orders<Msg>) -> Model {
+    Model::default()
+}
+
 #[derive(Default)]
 pub struct Model {
     pub messages: Vec<String>,
