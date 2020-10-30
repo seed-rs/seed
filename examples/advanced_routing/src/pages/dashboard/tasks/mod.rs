@@ -8,19 +8,19 @@ pub mod task;
 pub fn init(
     _: Url,
     model: &mut Model,
-    query: &IndexMap<String, String>,
+    query: &IndexMap<String, String,>,
     _: &Routes,
-    _: &mut impl Orders<Msg>,
+    _: &mut impl Orders<Msg,>,
 ) -> Model {
     if model.is_default {
-        let mut selected_no: Vec<u32> = vec![];
+        let mut selected_no: Vec<u32,> = vec![];
         for selected in query.iter() {
-            if selected.0.contains("select") {
+            if selected.0.contains("select",) {
                 let no: u32 = selected
                     .1
                     .parse()
-                    .expect("expect value from query parameters");
-                selected_no.push(no)
+                    .expect("expect value from query parameters",);
+                selected_no.push(no,)
             }
         }
         Model {
@@ -38,8 +38,8 @@ pub fn init(
 }
 #[derive(Clone)]
 pub struct Model {
-    pub tasks: Vec<task::Model>,
-    pub checked_tasks_no: Vec<u32>,
+    pub tasks: Vec<task::Model,>,
+    pub checked_tasks_no: Vec<u32,>,
     pub is_default: bool,
 }
 
@@ -54,53 +54,53 @@ impl Default for Model {
 }
 #[derive(Debug, PartialEq, Clone, AsUrl)]
 pub enum Routes {
-    Task { id: String },
+    Task { id: String, },
     //     #[as_path = ""] this makes run time error
     Root,
 }
 
 #[derive(Debug, Copy, Clone)]
 pub enum Msg {
-    ClickTask(u32, bool),
-    Task(task::Msg),
+    ClickTask(u32, bool,),
+    Task(task::Msg,),
     LoadTasks,
 }
 
-pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg,>,) {
     match msg {
-        Msg::ClickTask(task_no, will_uncheck) => {
+        Msg::ClickTask(task_no, will_uncheck,) => {
             if will_uncheck {
-                if let Some(index) = model.checked_tasks_no.iter().position(|no| no == &task_no) {
-                    model.checked_tasks_no.remove(index);
+                if let Some(index,) = model.checked_tasks_no.iter().position(|no| no == &task_no,) {
+                    model.checked_tasks_no.remove(index,);
                 }
             } else {
-                model.checked_tasks_no.push(task_no)
+                model.checked_tasks_no.push(task_no,)
             }
-        }
+        },
         Msg::LoadTasks => model.tasks = get_dummy_data(),
-        Msg::Task(_) => {}
+        Msg::Task(_,) => {},
     }
 }
 
-fn render_tasks(model: &Model) -> Node<Msg> {
+fn render_tasks(model: &Model,) -> Node<Msg,> {
     ul![list(&model.tasks, &model.checked_tasks_no)]
 }
 
-pub fn list(tasks: &[task::Model], list: &[u32]) -> Vec<Node<Msg>> {
+pub fn list(tasks: &[task::Model], list: &[u32],) -> Vec<Node<Msg,>,> {
     let mut tasks_list = Vec::new();
     for t in tasks {
-        tasks_list.push(render_task(t, list.contains(&t.task_no)));
+        tasks_list.push(render_task(t, list.contains(&t.task_no,),),);
     }
     tasks_list
 }
 
-pub fn render_task(task: &task::Model, is_checked: bool) -> Node<Msg> {
+pub fn render_task(task: &task::Model, is_checked: bool,) -> Node<Msg,> {
     let task_url = Root::Dashboard(Parent::Tasks {
         children: Routes::Task {
             id: task.task_no.to_string(),
         },
         query: IndexMap::new(),
-    })
+    },)
     .to_url();
 
     let task_no = task.task_no;
@@ -123,10 +123,10 @@ pub fn render_task(task: &task::Model, is_checked: bool) -> Node<Msg> {
         ]
     ]]
 }
-fn is_current_url(url: Url) -> bool {
+fn is_current_url(url: Url,) -> bool {
     Url::current() == url
 }
-pub fn get_dummy_data() -> Vec<task::Model> {
+pub fn get_dummy_data() -> Vec<task::Model,> {
     vec![
         task::Model {
             task_no: 0,
@@ -145,14 +145,14 @@ pub fn get_dummy_data() -> Vec<task::Model> {
         },
     ]
 }
-pub fn view(task_routes: &Routes, model: &Model) -> Node<Msg> {
+pub fn view(task_routes: &Routes, model: &Model,) -> Node<Msg,> {
     div![vec![
         render_tasks(model),
         match task_routes {
-            Routes::Task { id } => {
-                let task = model.tasks.iter().find(|t| t.task_no.to_string() == *id);
-                task::view(task.unwrap()).map_msg(Msg::Task)
-            }
+            Routes::Task { id, } => {
+                let task = model.tasks.iter().find(|t| t.task_no.to_string() == *id,);
+                task::view(task.unwrap(),).map_msg(Msg::Task,)
+            },
             Routes::Root => div!["no task selected"],
         },
     ]]

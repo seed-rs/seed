@@ -10,7 +10,7 @@ use seed_routing::*;
 pub enum Routes {
     Message,
     Tasks {
-        query: IndexMap<String, String>,
+        query: IndexMap<String, String,>,
         children: tasks::Routes,
     },
     Statistics,
@@ -19,8 +19,8 @@ pub enum Routes {
     #[as_path = ""]
     Root,
 }
-pub fn init(_: Url, model: &mut Model, nested: &Routes, orders: &mut impl Orders<Msg>) -> Model {
-    nested.init(model, orders);
+pub fn init(_: Url, model: &mut Model, nested: &Routes, orders: &mut impl Orders<Msg,>,) -> Model {
+    nested.init(model, orders,);
     model.clone()
 }
 
@@ -34,29 +34,31 @@ pub struct Model {
 
 pub enum Msg {
     ChangeName,
-    Message(message::Msg),
-    Statistics(statistics::Msg),
-    Tasks(tasks::Msg),
+    Message(message::Msg,),
+    Statistics(statistics::Msg,),
+    Tasks(tasks::Msg,),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg,>,) {
     match msg {
-        Msg::ChangeName => {}
-        Msg::Message(message) => {
-            message::update(message, &mut model.message, &mut orders.proxy(Msg::Message))
-        }
-        Msg::Statistics(statistics) => statistics::update(
+        Msg::ChangeName => {},
+        Msg::Message(message,) => message::update(
+            message,
+            &mut model.message,
+            &mut orders.proxy(Msg::Message,),
+        ),
+        Msg::Statistics(statistics,) => statistics::update(
             statistics,
             &mut model.statistics,
-            &mut orders.proxy(Msg::Statistics),
+            &mut orders.proxy(Msg::Statistics,),
         ),
-        Msg::Tasks(task) => tasks::update(task, &mut model.tasks, &mut orders.proxy(Msg::Tasks)),
+        Msg::Tasks(task,) => tasks::update(task, &mut model.tasks, &mut orders.proxy(Msg::Tasks,),),
     }
 }
-pub fn view(dashboard_routes: &Routes, model: &Model) -> Node<Msg> {
-    dashboard_routes.view(model)
+pub fn view(dashboard_routes: &Routes, model: &Model,) -> Node<Msg,> {
+    dashboard_routes.view(model,)
 }
 
-pub fn root(_: &Model) -> Node<Msg> {
+pub fn root(_: &Model,) -> Node<Msg,> {
     div!["root for dashboard"]
 }

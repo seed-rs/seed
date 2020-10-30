@@ -8,7 +8,7 @@ pub struct Model {
 }
 
 impl Clone for Model {
-    fn clone(&self) -> Self {
+    fn clone(&self,) -> Self {
         Model {
             task_no: self.task_no,
             task_title: self.task_title.clone(),
@@ -21,7 +21,7 @@ impl Clone for Model {
 pub enum Msg {
     ClickTask,
 }
-pub fn view(model: &Model) -> Node<Msg> {
+pub fn view(model: &Model,) -> Node<Msg,> {
     div![
         "Title",
         h3![model.task_title.to_string()],
