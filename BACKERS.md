@@ -13,6 +13,7 @@
 - @sabine
 - Craig Mayhew
 - Ke Ding
+- Yann Delaby
 
 ---
 
