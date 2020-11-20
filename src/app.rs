@@ -147,7 +147,7 @@ where
         // Allows panic messages to output to the browser console.error.
         console_error_panic_hook::set_once();
 
-        let base_path: Rc<Vec<String>> = Rc::new(
+        let base_path: Rc<[String]> = Rc::from(
             util::document()
                 .query_selector("base")
                 .expect("query element with 'base' tag")
@@ -158,9 +158,10 @@ where
                         .trim_matches('/')
                         .split('/')
                         .map(ToOwned::to_owned)
-                        .collect()
+                        .collect::<Vec<_>>()
                 })
-                .unwrap_or_default(),
+                .unwrap_or_default()
+                .as_slice()
         );
 
         let app = Self {
