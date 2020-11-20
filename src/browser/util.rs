@@ -3,9 +3,9 @@
 
 // @TODO refactor (ideally once `Unsized` and `Specialization` are stable)
 
+use std::borrow::Cow;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
-use std::borrow::Cow;
 
 #[deprecated(
     since = "0.8.0",
@@ -181,21 +181,32 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), Cow<'
     set!(HtmlTextAreaElement);
     set!(HtmlSelectElement);
     set!(HtmlProgressElement, |_| value.parse().map_err(|error| {
-        Cow::from(format!("Can't parse value to `f64` for `HtmlProgressElement`. Error: {:?}", error))
+        Cow::from(format!(
+            "Can't parse value to `f64` for `HtmlProgressElement`. Error: {:?}",
+            error
+        ))
     }));
     set!(HtmlOptionElement);
     set!(HtmlButtonElement);
     set!(HtmlDataElement);
     set!(HtmlMeterElement, |_| value.parse().map_err(|error| {
-        Cow::from(format!("Can't parse value to `f64` for `HtmlMeterElement`. Error: {:?}", error))
+        Cow::from(format!(
+            "Can't parse value to `f64` for `HtmlMeterElement`. Error: {:?}",
+            error
+        ))
     }));
     set!(HtmlLiElement, |_| value.parse().map_err(|error| {
-        Cow::from(format!("Can't parse value to `i32` for `HtmlLiElement`. Error: {:?}", error))
+        Cow::from(format!(
+            "Can't parse value to `i32` for `HtmlLiElement`. Error: {:?}",
+            error
+        ))
     }));
     set!(HtmlOutputElement);
     set!(HtmlParamElement);
 
-    Err(Cow::from("Can't use function `set_value` for given element."))
+    Err(Cow::from(
+        "Can't use function `set_value` for given element.",
+    ))
 }
 
 fn set_html_input_element_value(
@@ -214,7 +225,11 @@ fn set_html_input_element_value(
     //   - https://html.spec.whatwg.org/multipage/input.html#do-not-apply
     let selection_update_required = match input.type_().as_str() {
         // https://www.w3schools.com/tags/att_input_value.asp
-        "file" => return Err(Cow::from(r#"The value attribute cannot be used with <input type="file">."#)),
+        "file" => {
+            return Err(Cow::from(
+                r#"The value attribute cannot be used with <input type="file">."#,
+            ))
+        }
         "text" | "password" | "search" | "tel" | "url" | "week" | "month" => true,
         _ => false,
     };
@@ -256,16 +271,18 @@ pub fn get_checked(target: &web_sys::EventTarget) -> Result<bool, Cow<str>> {
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         // https://www.w3schools.com/tags/att_input_checked.asp
         return match input.type_().as_str() {
-            "file" => Err(
-                Cow::from(r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#),
-            ),
+            "file" => Err(Cow::from(
+                r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#,
+            )),
             _ => Ok(input.checked()),
         };
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
         return Ok(input.checked());
     }
-    Err(Cow::from("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `get_checked`."))
+    Err(Cow::from(
+        "Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `get_checked`.",
+    ))
 }
 
 #[allow(clippy::missing_errors_doc)]
@@ -275,16 +292,18 @@ pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), Cow
     if let Some(input) = target.dyn_ref::<web_sys::HtmlInputElement>() {
         // https://www.w3schools.com/tags/att_input_checked.asp
         return match input.type_().as_str() {
-            "file" => Err(
-                Cow::from(r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#),
-            ),
+            "file" => Err(Cow::from(
+                r#"The checked attribute can be used with <input type="checkbox"> and <input type="radio">."#,
+            )),
             _ => Ok(input.set_checked(value)),
         };
     }
     if let Some(input) = target.dyn_ref::<web_sys::HtmlMenuItemElement>() {
         return Ok(input.set_checked(value));
     }
-    Err(Cow::from("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `set_checked`."))
+    Err(Cow::from(
+        "Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `set_checked`.",
+    ))
 }
 
 // @TODO: Delete once `Closure::new` is stable

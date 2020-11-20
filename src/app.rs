@@ -161,7 +161,7 @@ where
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default()
-                .as_slice()
+                .as_slice(),
         );
 
         let app = Self {

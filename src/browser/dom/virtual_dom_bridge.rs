@@ -2,10 +2,10 @@
 
 use super::Namespace;
 use crate::virtual_dom::{At, AtValue, Attrs, El, Mailbox, Node, Style, Text};
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use wasm_bindgen::JsCast;
 use web_sys::Document;
-use std::borrow::Cow;
 
 /// Convenience function to reduce repetition
 fn set_style(el_ws: &web_sys::Node, style: &Style) {
@@ -58,9 +58,9 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
         AtValue::Some(value) => {
             node_to_element(el_ws)
                 .and_then(|element| {
-                    element
-                        .set_attribute(at.as_str(), value)
-                        .map_err(|error| Cow::from(format!("Problem setting an attribute: {:?}", error)))
+                    element.set_attribute(at.as_str(), value).map_err(|error| {
+                        Cow::from(format!("Problem setting an attribute: {:?}", error))
+                    })
                 })
                 .unwrap_or_else(|err| {
                     crate::error(err);
@@ -69,9 +69,9 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
         AtValue::None => {
             node_to_element(el_ws)
                 .and_then(|element| {
-                    element
-                        .set_attribute(at.as_str(), "")
-                        .map_err(|error| Cow::from(format!("Problem setting an attribute: {:?}", error)))
+                    element.set_attribute(at.as_str(), "").map_err(|error| {
+                        Cow::from(format!("Problem setting an attribute: {:?}", error))
+                    })
                 })
                 .unwrap_or_else(|err| {
                     crate::error(err);
@@ -80,9 +80,9 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
         AtValue::Ignored => {
             node_to_element(el_ws)
                 .and_then(|element| {
-                    element
-                        .remove_attribute(at.as_str())
-                        .map_err(|error| Cow::from(format!("Problem removing an attribute: {:?}", error)))
+                    element.remove_attribute(at.as_str()).map_err(|error| {
+                        Cow::from(format!("Problem removing an attribute: {:?}", error))
+                    })
                 })
                 .unwrap_or_else(|err| {
                     crate::error(err);

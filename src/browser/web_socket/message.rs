@@ -17,9 +17,9 @@ impl WebSocketMessage {
     ///
     /// Returns `WebSocketError::TextError` if data isn't a valid utf-8 string.
     pub fn text(&self) -> Result<String> {
-        self.data
-            .as_string()
-            .ok_or_else(|| WebSocketError::TextError("data is not a valid utf-8 string"))
+        self.data.as_string().ok_or(WebSocketError::TextError(
+            "data is not a valid utf-8 string",
+        ))
     }
 
     /// JSON parse message data into provided type.
