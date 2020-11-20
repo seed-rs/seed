@@ -308,9 +308,9 @@ pub trait Orders<Ms: 'static> {
 
     /// Cheap clone base path loaded from element `<base href="/base/path/">`.
     ///
-    /// Returns empty `Vec` if there is no `base` element in your HTML
+    /// Returns empty slice if there is no `base` element in your HTML
     /// or there were problems with parsing.
-    fn clone_base_path(&self) -> Rc<Vec<String>> {
+    fn clone_base_path(&self) -> Rc<[String]> {
         Rc::clone(&self.clone_app().cfg.base_path)
     }
 

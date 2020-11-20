@@ -25,7 +25,7 @@ pub fn push_route<U: Into<Url>>(url: U) -> Url {
 pub fn setup_popstate_listener(
     updated_listener: impl Fn(Closure<dyn FnMut(web_sys::Event)>) + 'static,
     notify: impl Fn(Notification) + 'static,
-    base_path: Rc<Vec<String>>,
+    base_path: Rc<[String]>,
 ) {
     let closure = Closure::new(move |ev: web_sys::Event| {
         let ev = ev
@@ -55,7 +55,7 @@ pub fn setup_popstate_listener(
 #[allow(clippy::needless_pass_by_value)]
 pub fn url_request_handler(
     sub_data: subs::UrlRequested,
-    base_path: Rc<Vec<String>>,
+    base_path: Rc<[String]>,
     notify: impl Fn(Notification) + 'static,
 ) {
     let subs::UrlRequested(url, request) = sub_data;
