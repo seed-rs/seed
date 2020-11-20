@@ -6,7 +6,6 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use wasm_bindgen::JsCast;
 use web_sys::Document;
-use std::borrow::Cow;
 
 /// Convenience function to reduce repetition
 fn set_style(el_ws: &web_sys::Node, style: &Style) {
