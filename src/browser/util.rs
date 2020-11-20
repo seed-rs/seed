@@ -6,7 +6,6 @@
 use std::borrow::Cow;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
-use std::borrow::Cow;
 
 #[deprecated(
     since = "0.8.0",
