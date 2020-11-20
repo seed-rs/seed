@@ -14,6 +14,7 @@
 - Craig Mayhew
 - Ke Ding
 - Yann Delaby
+- Dusty Pomerleau
 
 ---
 
