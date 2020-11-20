@@ -16,7 +16,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 
 struct Model {
-    base_path: Rc<Vec<String>>,
+    base_path: Rc<[String]>,
     initial_url: Url,
     next_path_part: Option<String>,
     remaining_path_parts: Vec<String>,
@@ -24,7 +24,7 @@ struct Model {
 }
 
 impl Model {
-    fn new(mut url: Url, base_path: Rc<Vec<String>>) -> Self {
+    fn new(mut url: Url, base_path: Rc<[String]>) -> Self {
         log!(&url);
         log!(url.to_string());
         log!("_______________________________");
