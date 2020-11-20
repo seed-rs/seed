@@ -506,7 +506,7 @@ impl FromStr for Url {
     fn from_str(str_url: &str) -> Result<Self, Self::Err> {
         web_sys::Url::new_with_base(str_url, DUMMY_BASE_URL)
             .map(|url| Url::from(&url))
-            .map_err(|_| format!("`{}` is invalid relative URL", str_url))
+            .map_err(|error| format!("`{}` is invalid relative URL. Error: {:?}", str_url, error))
     }
 }
 
