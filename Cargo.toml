@@ -117,6 +117,7 @@ features = [
 [workspace]
 members = [
     "examples/animation",
+    "examples/animation-no-wasm-bindgen-start",
     "examples/auth",
     "examples/bunnies",
     "examples/component_builder",

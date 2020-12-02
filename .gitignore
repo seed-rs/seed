@@ -3,6 +3,7 @@
 **.wasm
 **/*.rs.bk
 **/*.log
+dist
 
 # --- Dependencies and Build artifacts ---
 **/node_modules

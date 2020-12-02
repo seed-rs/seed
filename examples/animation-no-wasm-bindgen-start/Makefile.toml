@@ -1,0 +1,31 @@
+extend = "../../Makefile.toml"
+
+# ---- BUILD ----
+
+[tasks.build]
+command = "trunk"
+args = ["build"]
+
+[tasks.build_release]
+command = "trunk"
+args = ["build", "--release"]
+
+# ---- START ----
+
+[tasks.start]
+command = "trunk"
+args = ["serve"]
+
+[tasks.start_release]
+command = "trunk"
+args = ["serve", "--release"]
+
+# ---- TEST ----
+
+[tasks.test_firefox]
+alias = "default_test_firefox"
+
+# ---- LINT ----
+
+[tasks.clippy]
+alias = "default_clippy"
