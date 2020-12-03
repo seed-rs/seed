@@ -129,3 +129,18 @@ See more on our [about](https://seed-rs.org/guide/about) page.
 
 # Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+# Supported By
+See [BACKERS.md](BACKERS.md).
+
+<p>This project is supported by:</p>
+<p>
+  <!-- referral link from console -->
+  <a href="https://m.do.co/c/f02c252209c1">
+    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_horizontal_blue.svg" width="201px">
+  </a>
+</p>
+
+[Official Website](seed-rs.org) is served by Netlify.
+
+[![Netlify](https://www.netlify.com/img/global/badges/netlify-light.svg)](https://www.netlify.com)
