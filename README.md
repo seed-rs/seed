@@ -141,6 +141,6 @@ See [BACKERS.md](BACKERS.md).
   </a>
 </p>
 
-[Official Website](seed-rs.org) is served by Netlify.
+[Official Website](https://seed-rs.org) is served by Netlify.
 
 [![Netlify](https://www.netlify.com/img/global/badges/netlify-light.svg)](https://www.netlify.com)
