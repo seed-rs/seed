@@ -8,27 +8,27 @@ pub struct Data {
 }
 /// Setters and getters for password
 impl Data {
-    pub fn set_password(&mut self, pwd: String,) {
+    pub fn set_password(&mut self, pwd: String) {
         self.password = pwd
     }
 
-    pub fn password(&self,) -> &str {
+    pub fn password(&self) -> &str {
         self.password.as_str()
     }
 
-    pub fn set_email(&mut self, email: String,) {
+    pub fn set_email(&mut self, email: String) {
         self.email = email
     }
 
-    pub fn email(&self,) -> &str {
+    pub fn email(&self) -> &str {
         self.email.as_str()
     }
 
-    pub fn set_username(&mut self, username: String,) {
+    pub fn set_username(&mut self, username: String) {
         self.username = username
     }
 
-    pub fn username(&self,) -> &str {
+    pub fn username(&self) -> &str {
         self.username.as_str()
     }
 }
@@ -40,20 +40,20 @@ pub struct LoginCredentials {
 }
 
 impl LoginCredentials {
-    pub fn target(&self,) -> &str {
+    pub fn target(&self) -> &str {
         &self.target
     }
 
-    pub fn password(&self,) -> &str {
+    pub fn password(&self) -> &str {
         &self.password
     }
 
     /// Set email or username
-    pub fn set_target(&mut self, target: String,) {
+    pub fn set_target(&mut self, target: String) {
         self.target = target;
     }
 
-    pub fn set_password(&mut self, password: String,) {
+    pub fn set_password(&mut self, password: String) {
         self.password = password;
     }
 }

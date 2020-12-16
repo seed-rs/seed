@@ -10,9 +10,7 @@ pub struct LoggedData {
 }
 
 impl LoggedData {
-    pub fn new(
-        first_name: &str, last_name: &str, username: &str, email: &str, role: Role,
-    ) -> Self {
+    pub fn new(first_name: &str, last_name: &str, username: &str, email: &str, role: Role) -> Self {
         LoggedData {
             first_name: first_name.to_string(),
             last_name: last_name.to_string(),
@@ -24,11 +22,11 @@ impl LoggedData {
 }
 
 impl LoggedData {
-    pub fn username(&self,) -> &str {
+    pub fn username(&self) -> &str {
         &self.username
     }
 
-    pub fn email(&self,) -> &str {
+    pub fn email(&self) -> &str {
         &self.email
     }
 }

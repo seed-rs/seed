@@ -1,4 +1,4 @@
-use crate::{router, Routes as Root};
+use crate::{router, Route as Root};
 pub use router::View;
 use router::*;
 
@@ -12,18 +12,18 @@ pub fn init(
     _: &mut Model,
     id: &str,
     children: &Routes,
-    orders: &mut impl Orders<Msg,>,
+    orders: &mut impl Orders<Msg>,
 ) -> Model {
     let models = load_models();
-    let model_to_load = models.get(id,);
+    let model_to_load = models.get(id);
 
-    if let Some((name, description,),) = model_to_load {
+    if let Some((name, description)) = model_to_load {
         Model {
             id: id.to_string(),
             name: name.to_string(),
             description: description.to_string(),
         }
-    } else if children.eq(&Routes::NotFound,) {
+    } else if children.eq(&Routes::NotFound) {
         let mut not_found_model = Model::default();
         not_found_model.id = id.to_string();
         not_found_model
@@ -34,7 +34,7 @@ pub fn init(
                 children: Routes::NotFound,
             }
             .to_url(),
-        ),);
+        ));
         let mut not_found_model = Model::default();
         not_found_model.id = id.to_string();
         not_found_model
@@ -60,12 +60,12 @@ pub enum Routes {
     NotFound,
 }
 
-pub fn update(_: Msg, _: &mut Model, _: &mut impl Orders<Msg,>,) {}
+pub fn update(_: Msg, _: &mut Model, _: &mut impl Orders<Msg>) {}
 
-pub fn view(routes: &Routes, model: &Model,) -> Node<Msg,> {
-    routes.view(model,)
+pub fn view(routes: &Routes, model: &Model) -> Node<Msg> {
+    routes.view(model)
 }
-fn manager(model: &Model,) -> Node<Msg,> {
+fn manager(model: &Model) -> Node<Msg> {
     div![
         "Management",
         h3![&model.name],
@@ -73,15 +73,15 @@ fn manager(model: &Model,) -> Node<Msg,> {
         p![&model.description]
     ]
 }
-fn root(model: &Model,) -> Node<Msg,> {
+fn root(model: &Model) -> Node<Msg> {
     div!["Root", h3![&model.name], br![], p![&model.description]]
 }
-fn not_found(model: &Model,) -> Node<Msg,> {
+fn not_found(model: &Model) -> Node<Msg> {
     div!["model not found with id ", span![&model.id]]
 }
 
-fn load_models() -> HashMap<String, (String, String,),> {
-    let mut models: HashMap<String, (String, String,),> = HashMap::new();
+fn load_models() -> HashMap<String, (String, String)> {
+    let mut models: HashMap<String, (String, String)> = HashMap::new();
 
     models.insert(
         "1".to_string(),

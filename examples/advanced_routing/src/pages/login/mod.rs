@@ -11,18 +11,18 @@ use seed::{prelude::*, *};
 pub fn init(
     _: Url,
     _: &mut Model,
-    query: &IndexMap<String, String,>,
-    _: &mut impl Orders<Msg,>,
+    query: &IndexMap<String, String>,
+    _: &mut impl Orders<Msg>,
 ) -> Model {
-    let name = query.get("name",);
+    let name = query.get("name");
 
-    if let Some(name_from_query,) = name {
+    if let Some(name_from_query) = name {
         let mut model = Model {
             credentials: Default::default(),
             request_state: Default::default(),
         };
 
-        model.credentials.set_target(name_from_query.to_string(),);
+        model.credentials.set_target(name_from_query.to_string());
         model
     } else {
         Model {
@@ -35,16 +35,16 @@ pub fn init(
 #[derive(Default, Debug)]
 pub struct Model {
     credentials: LoginCredentials,
-    request_state: State<LoggedData,>,
+    request_state: State<LoggedData>,
 }
 
 pub enum Msg {
-    AutoLogin(Role,),
+    AutoLogin(Role),
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg,>,) {
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::AutoLogin(role,) => {
+        Msg::AutoLogin(role) => {
             let logged_user = match role {
                 Role::StandardUser => LoggedData::new(
                     "John",
@@ -61,25 +61,25 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg,>,) {
                     Role::Admin,
                 ),
             };
-            model.request_state = State::Success(logged_user.clone(),);
-            orders.notify(logged_user,);
-        },
+            model.request_state = State::Success(logged_user.clone());
+            orders.notify(logged_user);
+        }
     }
 }
-pub fn view(model: &Model,) -> Node<Msg,> {
+pub fn view(model: &Model) -> Node<Msg> {
     match &model.request_state {
-        State::Success(user,) => div![p![
+        State::Success(user) => div![p![
             C!["centred"],
             "Welcome ",
             style! {St::Color => "darkblue"},
             user.username(),
             ". :)"
         ]],
-        State::IsPending(status,) => form(model, status,),
+        State::IsPending(status) => form(model, status),
     }
 }
 
-fn form(model: &Model, status: &bool,) -> Node<Msg,> {
+fn form(model: &Model, status: &bool) -> Node<Msg> {
     form![
         fieldset![
             attrs! {
