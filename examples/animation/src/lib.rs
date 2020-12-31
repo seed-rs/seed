@@ -40,14 +40,12 @@ struct Car {
 
 impl Car {
     /// Pixels per second.
-    /// _Note_:
-    /// Optional feature "wasm-bindgen" has to be enabled for crate `rand` (otherwise it panics).
     fn generate_speed() -> f64 {
-        thread_rng().gen_range(400., 800.)
+        thread_rng().gen_range(400.0..=800.0)
     }
 
     fn generate_color() -> CarColor {
-        let hue = thread_rng().gen_range(0, 360);
+        let hue = thread_rng().gen_range(0..=360);
         format!("hsl({}, 80%, 50%)", hue)
     }
 }
