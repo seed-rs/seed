@@ -9,4 +9,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-rand = { version = "0.7.3", features = ["wasm-bindgen"] }
+rand = { version = "0.8.0" }
+# https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
+getrandom = { version = "0.2", features = ["js"] }

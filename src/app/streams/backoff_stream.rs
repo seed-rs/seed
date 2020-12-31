@@ -54,7 +54,7 @@ impl Stream for BackoffStream {
 
 fn wait_time(retries: usize, max_seconds: u32) -> u32 {
     let retries = u32::try_from(retries).unwrap_or(u32::max_value());
-    let random_ms = SmallRng::from_entropy().gen_range(0, 1001);
+    let random_ms = SmallRng::from_entropy().gen_range(0..=1000);
 
     let duration = 2_u32
         .saturating_pow(retries)
