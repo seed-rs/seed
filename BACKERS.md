@@ -15,6 +15,7 @@
 - Ke Ding
 - Yann Delaby
 - Dusty Pomerleau
+- Devin Alvaro
 
 ---
 
