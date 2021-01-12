@@ -152,5 +152,6 @@ members = [
 
 exclude = [
     # it has own workspace
+    "examples/e2e_encryption",
     "examples/server_integration",
 ]
