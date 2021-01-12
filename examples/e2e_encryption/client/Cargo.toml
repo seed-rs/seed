@@ -1,0 +1,22 @@
+[package]
+name = "client"
+version = "0.1.0"
+authors = ["Your Name <email@address.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.19"
+
+[dependencies]
+seed = { path = "../../../" }
+
+# sync with the `rand_core`'s one in `shared`
+# change "wasm-bindgen" to "js" for >=0.2
+getrandom = { version = "0.1.16", features = ["wasm-bindgen"] } 
+
+shared = { path = "../shared" }
+

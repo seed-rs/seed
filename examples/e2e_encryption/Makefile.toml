@@ -1,0 +1,84 @@
+[config]
+default_to_workspace = false
+
+# ---- BUILD ----
+
+[tasks.build]
+description = "Build client and server"
+clear = true
+dependencies = ["build_client", "build_server"]
+
+[tasks.build_release]
+extend = "build"
+description = "Build client and server in release mode"
+dependencies = ["build_client_release", "build_server_release"]
+
+[tasks.build_client]
+description = "Build client"
+install_crate = { crate_name = "wasm-pack", binary = "wasm-pack", test_arg = "-V" }
+command = "wasm-pack"
+args = ["build", "client", "--target", "web", "--out-name", "package", "--dev"]
+
+[tasks.build_client_release]
+extend = "build_client"
+description = "Build client in release mode"
+args = ["build", "client", "--target", "web", "--out-name", "package", "--release"]
+
+[tasks.build_server]
+description = "Build server"
+command = "cargo"
+args = ["build", "--package", "server"]
+
+[tasks.build_server_release]
+extend = "build_server"
+description = "Build server in release mode"
+args = ["build", "--package", "server", "--release"]
+
+# ---- START ----
+
+[tasks.start]
+description = "Build and start Actix server with client on port 8000"
+command = "cargo"
+args = ["run", "--package", "server"]
+dependencies = ["build"]
+
+[tasks.start_release]
+extend = "start"
+description = "Build and start Actix server with client on port 8000 in release mode"
+args = ["run", "--package", "server", "--release"]
+dependencies = ["build_release"]
+
+# ---- TEST ----
+
+[tasks.test_firefox]
+description = "Test with wasm-pack in Firefox"
+command = "wasm-pack"
+args = ["test", "client", "--firefox", "--headless"]
+
+# ---- LINT ----
+
+[tasks.fmt]
+description = "Format with rustfmt"
+install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt", binary = "rustfmt", test_arg = "--help" }
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fmt_check]
+extend = "fmt"
+description = "Check format with rustfmt"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.clippy]
+description = "Lint with Clippy"
+clear = true
+install_crate = { rustup_component_name = "clippy", binary = "cargo-clippy", test_arg = "--help" }
+command = "cargo"
+args = ["clippy", "--all-features", "--",
+    "--deny", "warnings",
+    "--deny", "clippy::pedantic",
+    "--deny", "clippy::nursery",
+    "--allow", "clippy::wildcard_imports", # for `use seed::{prelude::*, *};`
+    "--allow", "clippy::future_not_send", # JS/WASM is single threaded
+    "--allow", "clippy::used_underscore_binding", # some libraries break this rule
+    "--allow", "clippy::eval_order_dependence", # false positives
+]

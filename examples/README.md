@@ -110,6 +110,9 @@ Service worker integration demo. Includes registration, asset caching, state cha
 ### [Auth](auth)
 How to implement login / logout.
 
+## [E2E encryption](e2e_encryption)
+Demonstrates how to register, log in and communicate with the server over an unsecured network.
+
 ### [GraphQL](graphql)
 How to communicate with a GraphQL backend.
 
