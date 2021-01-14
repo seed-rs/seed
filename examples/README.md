@@ -66,6 +66,9 @@ Pages keep their state.
 ### [ResizeObserver](resize_observer)
 How to use [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
 
+## [Rust from JS](rust_from_js)
+How to call Rust functions from Javascript.
+
 ### [Subscribe](subscribe)
 How to create and use subscriptions, streams, notifications and commands.
 

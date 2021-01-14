@@ -1,0 +1,27 @@
+extend = "../../Makefile.toml"
+
+# ---- BUILD ----
+
+[tasks.build]
+alias = "default_build"
+
+[tasks.build_release]
+alias = "default_build_release"
+
+# ---- START ----
+
+[tasks.start]
+alias = "default_start"
+
+[tasks.start_release]
+alias = "default_start_release"
+
+# ---- TEST ----
+
+[tasks.test_firefox]
+alias = "default_test_firefox"
+
+# ---- LINT ----
+
+[tasks.clippy]
+alias = "default_clippy"

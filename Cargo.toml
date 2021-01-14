@@ -136,7 +136,7 @@ members = [
     "examples/pages_hash_routing",
     "examples/pages_keep_state",
     "examples/resize_observer",
-    # "examples/server_integration",   # has own workspace
+    "examples/rust_from_js",
     "examples/service_worker",
     "examples/subscribe",
     "examples/tests",
@@ -150,8 +150,8 @@ members = [
     "examples/window_events",
 ]
 
+# they have own workspaces
 exclude = [
-    # it has own workspace
     "examples/e2e_encryption",
     "examples/server_integration",
 ]
