@@ -21,7 +21,7 @@ Seed is a front-end Rust framework for creating fast and reliable web apps with 
 # Examples
 The examples provided in this repository are a good place to get started. They also act as an integration testing suite we run before every commit to ensure there are no unintended breaking changes to the user space. Because of Rust's compile-time checking, testing is that much more robust and changes can be pushed confidently.
 
-To build any of [examples](examples/), you need `cargo-make`. Install it by `cargo install --force cargo-make` (or see [cargo-make](https://github.com/sagiegurari/cargo-make#installation) for more).
+To build any of [examples](examples/), you need `cargo-make`. Install it by `cargo install cargo-make` (or see [cargo-make](https://github.com/sagiegurari/cargo-make#installation) for more).
 
 Run [examples](examples/) with `cargo make start example_name` from the Seed repository root. Here's our counter example:
 
