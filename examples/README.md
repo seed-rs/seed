@@ -85,6 +85,9 @@ How to make HTTP request using Fetch API.
 ### [NoChange](no_change)
 How to increase render speed by `Node::NoChange`.
 
+## [Record Screen](record_screen)
+How to record the screen using the [Screen Capture API](https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen_Capture).
+
 ### [Todo MVC](todomvc)
 Classic TodoMVC example with Local Storage.
 

@@ -27,14 +27,14 @@ enclose = "1.1.8"
 gloo-timers = { version = "0.2.1", features = ["futures"] }
 gloo-file = { version = "0.1.0", features = ["futures"] }
 indexmap = "1.6.0"
-js-sys = "0.3.45"
+js-sys = "0.3.46"
 pulldown-cmark = "0.8.0"
 rand = { version = "0.8.0", features = ["small_rng"] }
 # https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
 getrandom = { version = "0.2", features = ["js"] }
 serde = { version = "1.0.117", features = ['derive'] }
 serde_json = "1.0.59"
-wasm-bindgen = { version = "0.2.68", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.69", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.18"
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug
@@ -137,6 +137,7 @@ members = [
     "examples/pages_keep_state",
     "examples/resize_observer",
     "examples/rust_from_js",
+    "examples/record_screen",
     "examples/service_worker",
     "examples/subscribe",
     "examples/tests",
@@ -155,3 +156,16 @@ exclude = [
     "examples/e2e_encryption",
     "examples/server_integration",
 ]
+
+[patch.crates-io]
+# wasm-bindgen = { path = "d:/repos/wasm-bindgen" }
+# wasm-bindgen-test = { path = "d:/repos/wasm-bindgen/crates/test" }
+# wasm-bindgen-futures = { path = "d:/repos/wasm-bindgen/crates/futures" }
+# js-sys = { path = "d:/repos/wasm-bindgen/crates/js-sys" }
+# web-sys = { path = "d:/repos/wasm-bindgen/crates/web-sys" }
+
+wasm-bindgen = { git = "https://github.com/MartinKavik/wasm-bindgen", branch = "feat/webidl_getDisplayMedia" }
+wasm-bindgen-test = { git = "https://github.com/MartinKavik/wasm-bindgen", branch = "feat/webidl_getDisplayMedia" }
+wasm-bindgen-futures = { git = "https://github.com/MartinKavik/wasm-bindgen", branch = "feat/webidl_getDisplayMedia" }
+js-sys = { git = "https://github.com/MartinKavik/wasm-bindgen", branch = "feat/webidl_getDisplayMedia" }
+web-sys = { git = "https://github.com/MartinKavik/wasm-bindgen", branch = "feat/webidl_getDisplayMedia" }
