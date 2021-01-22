@@ -87,7 +87,13 @@ pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
         event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
             .and_then(|el| el.closest("a[href]").ok().flatten())
-            .and_then(|href_el| href_el.get_attribute("href"))
+            .and_then(|href_el| {
+                if href_el.has_attribute("download") {
+                    None
+                } else {
+                    href_el.get_attribute("href")
+                }
+            })
             // The first character being / or empty href indicates a rel link, which is what
             // we're intercepting.
             // @TODO: Resolve it properly, see Elm implementation:
