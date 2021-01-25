@@ -3,6 +3,7 @@
 ## [unreleased]
 - [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`. It means also `Orders::clone_base_path` returns a slice.
 - Prevent link listener from intercepting links with the `download` attribute.
+- Added examples `record_screen` and `e2e_encryption`.
 
 ## v0.8.0
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).

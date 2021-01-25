@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.18"
+wasm-bindgen-test = "0.3.20"
 
 [dependencies]
 seed = { path = "../../../" }

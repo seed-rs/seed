@@ -12,9 +12,6 @@ path = "src/client.rs"
 name = "server"
 path = "src/server.rs"
 
-# [dev-dependencies]
-# wasm-bindgen-test = "0.3.18"
-
 [dependencies]
 # common
 serde = { version = "1.0.117", features = ["derive"] }
