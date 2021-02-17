@@ -181,8 +181,13 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::SaveEditingTodo => {
             if let Some(editing_todo) = data.editing_todo.take() {
-                if let Some(todo) = data.todos.get_mut(&editing_todo.id) {
-                    todo.title = editing_todo.title;
+                let title = editing_todo.title.trim();
+                if title.is_empty() {
+                    data.todos.shift_remove(&editing_todo.id);
+                } else {
+                    if let Some(todo) = data.todos.get_mut(&editing_todo.id) {
+                        todo.title = title.to_owned();
+                    }
                 }
             }
         }
