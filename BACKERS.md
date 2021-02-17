@@ -16,6 +16,7 @@
 - Yann Delaby
 - Dusty Pomerleau
 - Devin Alvaro
+- Jesus Guzman Jr.
 
 ---
 
