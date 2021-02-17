@@ -259,7 +259,7 @@ impl WebSocket {
 impl Drop for WebSocket {
     fn drop(&mut self) {
         if matches!(self.state(), State::Connecting | State::Open) {
-            let _ = self.ws.close();
+            self.ws.close().expect("close WebSocket connection");
         }
         self.ws.set_onopen(None);
         self.ws.set_onclose(None);

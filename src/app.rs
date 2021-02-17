@@ -142,7 +142,7 @@ where
         // @TODO: Remove as soon as Webkit is fixed and older browsers are no longer in use.
         // https://github.com/seed-rs/seed/issues/241
         // https://bugs.webkit.org/show_bug.cgi?id=202881
-        let _ = util::document().query_selector("html");
+        std::mem::drop(util::document().query_selector("html"));
 
         // Allows panic messages to output to the browser console.error.
         console_error_panic_hook::set_once();
