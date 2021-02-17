@@ -184,10 +184,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let title = editing_todo.title.trim();
                 if title.is_empty() {
                     data.todos.shift_remove(&editing_todo.id);
-                } else {
-                    if let Some(todo) = data.todos.get_mut(&editing_todo.id) {
-                        todo.title = title.to_owned();
-                    }
+                } else if let Some(todo) = data.todos.get_mut(&editing_todo.id) {
+                    todo.title = title.to_owned();
                 }
             }
         }

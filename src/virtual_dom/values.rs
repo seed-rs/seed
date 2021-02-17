@@ -29,6 +29,7 @@ impl<T: ToString> From<T> for CSSValue {
 
 // impl ToCSSValue for CSSValue
 #[doc(hidden)]
+#[allow(clippy::wrong_self_convention)]
 pub trait ToCSSValueForCSSValue {
     fn to_css_value(self) -> CSSValue;
 }
