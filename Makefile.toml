@@ -290,6 +290,28 @@ description = "Lint examples with Clippy"
 command = "cargo"
 args = ["make", "for_each", "clippy"]
 
+# ---- CLEAN----
+
+[tasks.clean]
+description = "Clean only Seed"
+command = "cargo"
+args = ["clean"]
+
+[tasks.clean_pkg]
+description = "Generic Clean command"
+command = "cargo"
+args = ["clean","--target-dir" ,"pkg"]
+
+[tasks.clean_examples]
+description = "Clean all examples pkg"
+command = "cargo"
+args = ["make", "for_each", "clean_pkg"]
+
+[tasks.clean_all]
+description = "Clean all artifact in seed and examples"
+dependencies = ["clean", "clean_examples"]
+
+
 [tasks.for_each]
 description = "Run chosen task for each example in its root. Ex: 'cargo make for_each build'"
 script = [
@@ -308,4 +330,23 @@ for path in ${handle}
     exec --fail-on-error cargo make --cwd ${example_root} ${task}
 end
 '''
+]
+[tasks.for_each_pkg]
+description = "Run chosen task for each example in its root. Ex: 'cargo make for_each build'"
+script = [
+    '''
+    #!@duckscript
+    defined = is_defined 1
+    assert ${defined} "Wrong number of arguments! Correct example: 'cargo make for_each build'"
+
+    task = set ${1}
+
+    handle = glob_array examples/*/Makefile.toml
+
+    for path in ${handle}
+        example_root = dirname ${path}
+        echo Example root: ${example_root}
+        exec --fail-on-error cargo make --cwd ${example_root} ${task}
+    end
+    '''
 ]
