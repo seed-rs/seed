@@ -42,7 +42,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Drop => {
             if let Some(id) = model.who_is_getting_dragged {
-                let div_drag = get_div_from_id(id, &model);
+                let div_drag = get_div_from_id(id, model);
 
                 let zone: HtmlDivElement =
                     model.drop_zone.get().expect("should get the div drop zone");
@@ -56,7 +56,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             model.who_is_getting_dragged = None;
         }
         Msg::MouseChange(id, enter) => {
-            let div_drag = get_div_from_id(id, &model);
+            let div_drag = get_div_from_id(id, model);
             let text = if enter {
                 "Drag me and let's go!"
             } else {
@@ -67,12 +67,12 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             div_drag.set_draggable(draggable);
         }
         Msg::Dragging(id) => {
-            let div_drag = get_div_from_id(id, &model);
+            let div_drag = get_div_from_id(id, model);
             div_drag.set_inner_text("OUUUUUUUUUUUUUIII");
             model.who_is_getting_dragged = Some(id);
         }
         Msg::DragEnded(id) => {
-            let div_drag = get_div_from_id(id, &model);
+            let div_drag = get_div_from_id(id, model);
 
             if let Some(container) = div_drag.parent_element() {
                 if container.id() == "drop_zone" {
