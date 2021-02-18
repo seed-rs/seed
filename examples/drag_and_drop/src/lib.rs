@@ -75,10 +75,10 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             let div_drag = get_div_from_id(id, &model);
 
             if let Some(container) = div_drag.parent_element() {
-                if container.id() != "drop_zone" {
-                    div_drag.set_inner_text("NOO :(");
-                } else {
+                if container.id() == "drop_zone" {
                     div_drag.set_inner_text("Now I am happy");
+                } else {
+                    div_drag.set_inner_text("NOO :(");
                 }
             }
             model.who_is_getting_dragged = None
