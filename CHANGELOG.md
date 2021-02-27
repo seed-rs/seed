@@ -5,6 +5,7 @@
 - Prevent link listener from intercepting links with the `download` attribute.
 - Added examples `record_screen` and `e2e_encryption`.
 - Adapted to Rust 1.50.0.
+- Added `Response::blob`
 
 ## v0.8.0
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).
