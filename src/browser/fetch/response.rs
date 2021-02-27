@@ -55,6 +55,20 @@ impl Response {
             .to_vec())
     }
 
+    /// Get a `Blob` from response body.
+    ///
+    /// # Errors
+    /// Returns `FetchError::PromiseError`.
+    pub async fn blob(&self) -> Result<web_sys::Blob> {
+        self.raw_response
+            .blob()
+            .map_err(FetchError::PromiseError)
+            .map(JsFuture::from)?
+            .await
+            .map_err(FetchError::PromiseError)
+            .map(web_sys::Blob::from)
+    }
+
     /// Get request status.
     pub fn status(&self) -> Status {
         Status::from(&self.raw_response)
@@ -131,5 +145,17 @@ mod tests {
 
         let vec = response.bytes().await.unwrap();
         assert_eq!(&vec, b"response");
+    }
+
+    #[wasm_bindgen_test]
+    async fn response_blob() {
+        let mut body = Vec::from(&b"response"[..]);
+        let response = Response {
+            raw_response: web_sys::Response::new_with_opt_u8_array(Some(&mut body)).unwrap(),
+        };
+
+        let promise = response.blob().await.unwrap().text();
+        let text = JsFuture::from(promise).await.unwrap();
+        assert_eq!(&text, "response");
     }
 }
