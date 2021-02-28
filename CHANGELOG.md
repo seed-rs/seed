@@ -3,7 +3,7 @@
 ## [unreleased]
 - [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`. It means also `Orders::clone_base_path` returns a slice.
 - Prevent link listener from intercepting links with the `download` attribute.
-- Added examples `record_screen` and `e2e_encryption`.
+- Added examples `record_screen`, `e2e_encryption` and `counters`.
 - Adapted to Rust 1.50.0.
 - Added `Response::blob`
 

@@ -123,6 +123,7 @@ members = [
     "examples/bunnies",
     "examples/component_builder",
     "examples/counter",
+    "examples/counters",
     "examples/canvas",
     "examples/custom_elements",
     "examples/drop_zone",

@@ -28,6 +28,9 @@ How to write reusable views / components with builder pattern.
 ### [Counter](counter)
 Intended as a demo of basic functionality.
 
+### [Counters](counters)
+How to use multiple "components".
+
 ### [Custom Elements](custom_elements)
 How to create and use custom elements.
 
