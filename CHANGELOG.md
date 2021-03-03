@@ -6,6 +6,7 @@
 - Added examples `record_screen`, `e2e_encryption` and `counters`.
 - Adapted to Rust 1.50.0.
 - Added `Response::blob`
+- Added `panic-hook` feature, enabled by default, to conditionally include `console_error_panic_hook`
 
 ## v0.8.0
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).
