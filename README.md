@@ -7,7 +7,7 @@
   <img src="https://raw.githubusercontent.com/seed-rs/seed-rs.org/81ed1acc77062ede3295683f21f2d39611843192/seed_branding/seed_logo.min.svg" width="256" title="Seed logo">
 </p>
 
-### [Website](https://seed-rs.org) | [Forum](https://seed.discourse.group) | [Chat](https://discord.gg/JHHcHp5)
+### [Website](https://seed-rs.org) | [Chat](https://discord.gg/JHHcHp5)
 ---
 Seed is a front-end Rust framework for creating fast and reliable web apps with an elm-like architecture.
 
@@ -105,8 +105,8 @@ Our main focus is on developer experience, the benefits of which are currently:
 See more on our [about](https://seed-rs.org/guide/about) page.
 
 # Why Not Use Seed
-- Seed is under rapid development, so there may be breaking changes at times. However, Seed is more than stable enough for personal projects, and production apps are in development.
-- Finding Rust/WASM/Seed help outside of [Discord](https://discord.gg/JHHcHp5) or [Discourse](https://seed.discourse.group) may be difficult, as tutorials and guides outside the official ones aren't yet prevalent.
+- Seed is still under development, so there may be breaking changes at times. However, Seed is more than stable enough for personal projects, and production apps are in development.
+- Finding Rust/WASM/Seed help outside of [Discord](https://discord.gg/JHHcHp5) may be difficult, as tutorials and guides outside the official ones aren't yet prevalent.
 - Seed doesn't have as many existing reusable components that more mature frameworks have (date-pickers, etc.), so you may need to implement them yourself, or adapt them from existing solutions.
 
 # Documentation
