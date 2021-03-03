@@ -21,7 +21,7 @@ version_check = "0.9.2"
 wasm-bindgen-test = "0.3.20"
 
 [dependencies]
-console_error_panic_hook = "0.1.6"
+console_error_panic_hook = { version = "0.1.6", optional = true }
 cookie = { version = "0.14.2", features = ["percent-encode"] }
 enclose = "1.1.8"
 gloo-timers = { version = "0.2.1", features = ["futures"] }
@@ -157,3 +157,7 @@ exclude = [
     "examples/e2e_encryption",
     "examples/server_integration",
 ]
+
+[features]
+default = ["panic-hook"]
+panic-hook = ["console_error_panic_hook"]

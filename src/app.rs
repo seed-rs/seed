@@ -145,6 +145,7 @@ where
         std::mem::drop(util::document().query_selector("html"));
 
         // Allows panic messages to output to the browser console.error.
+        #[cfg(feature = "panic-hook")]
         console_error_panic_hook::set_once();
 
         let base_path: Rc<[String]> = Rc::from(
