@@ -249,6 +249,10 @@ where
     }
 
     pub(crate) fn process_effect_queue(&self, mut queue: VecDeque<Effect<Ms>>) {
+        if std::thread::panicking() {
+            return;
+        }
+
         while let Some(effect) = queue.pop_front() {
             match effect {
                 Effect::Msg(msg) => {
@@ -328,6 +332,10 @@ where
     }
 
     fn rerender_vdom(&self) {
+        if std::thread::panicking() {
+            return;
+        }
+
         let new_render_timestamp = window().performance().expect("get `Performance`").now();
 
         // Create a new vdom: The top element, and all its children. Does not yet
