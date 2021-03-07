@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 pulldown-cmark = "0.8.0"
 
 [dependencies]
-seed = {path = "../../"}
+seed = { path = "../../", features = ["markdown"] }
