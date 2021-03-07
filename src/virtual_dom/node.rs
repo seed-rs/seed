@@ -49,6 +49,7 @@ impl<Ms> fmt::Display for Node<Ms> {
 // Element methods
 impl<Ms> Node<Ms> {
     /// See `El::from_markdown`
+    #[cfg(feature = "markdown")]
     pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
         El::from_markdown(markdown)
     }

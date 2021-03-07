@@ -8,7 +8,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = { path = "../../" }
+seed = { path = "../../", features = ["markdown"] }
 rand = { version = "0.7.3", features = ["wasm-bindgen", "small_rng"] }
 scarlet = "1.1.0"
 static_assertions = "1.1.0"
