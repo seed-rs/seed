@@ -116,3 +116,10 @@ impl AsAtValue for bool {
         }
     }
 }
+
+impl<T: ToString> AsAtValue for Option<T> {
+    fn as_at_value(&self) -> AtValue {
+        self.as_ref()
+            .map_or(AtValue::Ignored, |v| AtValue::from(v.to_string()))
+    }
+}
