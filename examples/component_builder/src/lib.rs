@@ -21,12 +21,12 @@ type Model = i32;
 //    Update
 // ------ ------
 
-#[derive(Copy, Clone)]
 enum Msg {
     Increment,
     Decrement,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => *model += 1,
