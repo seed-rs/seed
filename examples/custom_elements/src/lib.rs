@@ -26,11 +26,11 @@ struct Model {
 //    Update
 // ------ ------
 
-#[derive(Copy, Clone)]
 enum Msg {
     RotateCheckboxState,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::RotateCheckboxState => model.checkbox_state = model.checkbox_state.next(),

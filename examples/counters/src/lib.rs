@@ -26,11 +26,11 @@ struct Model {
 //    Update
 // ------ ------
 
-#[derive(Clone, Copy)]
 enum Msg {
     Counter(counter::Msg, CounterId),
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Counter(msg, id) => counter::update(msg, &mut model.counters[id]),

@@ -16,12 +16,12 @@ pub struct Model {
 //    Update
 // ------ ------
 
-#[derive(Copy, Clone)]
 pub enum Msg {
     Increment,
     Decrement,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update<Ms: 'static>(
     msg: Msg,
     model: &mut Model,

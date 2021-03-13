@@ -28,7 +28,6 @@ struct Model {
 // ------ ------
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Copy, Clone)]
 enum Msg {
     CounterA(counter::Msg),
     CounterB(counter::Msg),

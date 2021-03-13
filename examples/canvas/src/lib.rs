@@ -51,12 +51,12 @@ impl Default for Color {
 //    Update
 // ------ ------
 
-#[derive(Copy, Clone)]
 enum Msg {
     Rendered,
     ChangeColor,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Rendered => {
