@@ -30,11 +30,11 @@ struct Model;
 //    Update
 // ------ ------
 
-#[derive(Clone, Copy)]
 enum Msg {
     Rerender,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, _: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Rerender => log!("Rerendered"),

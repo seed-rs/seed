@@ -118,7 +118,7 @@ enum Drag {
 //    Update
 // ------ ------
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 enum Msg {
     // ------ Selecting ------
     SelectNone,
@@ -144,6 +144,7 @@ enum Msg {
     ToggleEmpty,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     log!("update:", msg);
     match msg {

@@ -52,7 +52,6 @@ struct Model {
 //    Update
 // ------ ------
 
-#[derive(Copy, Clone)]
 enum Msg {
     Resized(f64, f64),
 }
