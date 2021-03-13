@@ -44,23 +44,23 @@ fn view(model: &Model) -> Node<Msg> {
         style! { St::Display => "flex" },
         Button::new("-")
             .disabled(true)
-            .add_on_click(|_| Msg::Decrement),
+            .add_on_click(|| Msg::Decrement),
         Button::new("-")
             .secondary()
             .large()
             .outline()
-            .add_on_click(|_| Msg::Decrement),
-        Button::new("-").add_on_click(|_| Msg::Decrement),
+            .add_on_click(|| Msg::Decrement),
+        Button::new("-").add_on_click(|| Msg::Decrement),
         div![model],
-        Button::new("+").add_on_click(|_| Msg::Increment),
+        Button::new("+").add_on_click(|| Msg::Increment),
         Button::new("+")
             .secondary()
             .large()
             .outline()
-            .add_on_click(|_| Msg::Increment),
+            .add_on_click(|| Msg::Increment),
         Button::new("+")
             .disabled(true)
-            .add_on_click(|_| Msg::Increment),
+            .add_on_click(|| Msg::Increment),
         Button::new("seed-rs.org").a("https://seed-rs.org"),
     ]
 }
