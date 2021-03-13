@@ -4,7 +4,7 @@ use seed::virtual_dom::IntoNodes;
 use seed::{prelude::*, Style as Css, *};
 use std::borrow::Cow;
 use std::rc::Rc;
-use web_sys::{HtmlElement, MouseEvent};
+use web_sys::HtmlElement;
 
 // ------ Button ------
 
@@ -17,7 +17,7 @@ pub struct Button<Ms: 'static> {
     element: Element,
     attrs: Attrs,
     disabled: bool,
-    on_clicks: Vec<Rc<dyn Fn(MouseEvent) -> Ms>>,
+    on_clicks: Vec<Rc<dyn Fn() -> Ms>>,
     content: Vec<Node<Ms>>,
     el_ref: ElRef<HtmlElement>,
     css: Css,
@@ -110,12 +110,8 @@ impl<Ms> Button<Ms> {
         self
     }
 
-    pub fn add_on_click(
-        mut self,
-        on_click: impl FnOnce(MouseEvent) -> Ms + Clone + 'static,
-    ) -> Self {
-        self.on_clicks
-            .push(Rc::new(move |event| on_click.clone()(event)));
+    pub fn add_on_click(mut self, on_click: impl FnOnce() -> Ms + Clone + 'static) -> Self {
+        self.on_clicks.push(Rc::new(move || on_click.clone()()));
         self
     }
 
@@ -217,7 +213,7 @@ impl<Ms> Button<Ms> {
 
         if !self.disabled {
             for on_click in self.on_clicks {
-                button.add_event_handler(mouse_ev(Ev::Click, move |event| on_click(event)));
+                button.add_event_handler(ev(Ev::Click, move |_| on_click()));
             }
         }
 
