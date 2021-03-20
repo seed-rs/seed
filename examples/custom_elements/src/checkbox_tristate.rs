@@ -5,10 +5,12 @@ use std::fmt;
 //     View
 // ------ ------
 
-pub fn view<Ms: 'static>(state: State) -> Node<Ms> {
+pub fn view<Ms: 'static>(name: &str, label: &str, state: State) -> Node<Ms> {
     custom![
         Tag::from("checkbox-tristate"),
         attrs! {
+            At::from("name") => name
+            At::from("label") => label
             At::from("state") => state
         },
     ]

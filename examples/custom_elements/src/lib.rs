@@ -50,7 +50,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
             },
             ev(Ev::Click, |_| Msg::RotateCheckboxState),
             "checkbox-tristate",
-            checkbox_tristate::view(model.checkbox_state),
+            checkbox_tristate::view("checkbox-tristate", "Label", model.checkbox_state),
         ],
         hr![],
         div![
