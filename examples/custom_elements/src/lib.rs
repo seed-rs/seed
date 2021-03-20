@@ -44,13 +44,10 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 fn view(model: &Model) -> impl IntoNodes<Msg> {
     vec![
         div![
-            style! {
-                St::Cursor => "pointer",
-                St::UserSelect => "none",
-            },
-            ev(Ev::Click, |_| Msg::RotateCheckboxState),
             "checkbox-tristate",
-            checkbox_tristate::view("checkbox-tristate", "Label", model.checkbox_state),
+            checkbox_tristate::view("checkbox-tristate", "Label", model.checkbox_state, || {
+                Msg::RotateCheckboxState
+            }),
         ],
         hr![],
         div![

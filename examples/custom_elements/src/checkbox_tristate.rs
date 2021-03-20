@@ -5,9 +5,13 @@ use std::fmt;
 //     View
 // ------ ------
 
-pub fn view<Ms: 'static>(name: &str, label: &str, state: State) -> Node<Ms> {
+pub fn view<Ms: 'static, F>(name: &str, label: &str, state: State, on_click: F) -> Node<Ms>
+where
+    F: FnOnce() -> Ms + Clone + 'static,
+{
     custom![
         Tag::from("checkbox-tristate"),
+        ev(Ev::from("cluck"), move |_| on_click()),
         attrs! {
             At::from("name") => name
             At::from("label") => label

@@ -18,10 +18,14 @@ class CheckboxTristateElement extends LitElement {
 
     render() {
         return html`
-            <div>
+            <div @click=${this._onClick} style="user-select: none;">
                 <input type="checkbox" name="${this.name}"></input>
                 <label for="${this.name}">${this.label}</label>
             </div>`;
+    }
+
+    _onClick(event) {
+      this.dispatchEvent(new MouseEvent("cluck", event));
     }
 
     updated(changedProperties) {
