@@ -3,22 +3,30 @@ import { LitElement, html, css } from 'https://unpkg.com/lit-element/lit-element
 class CheckboxTristateElement extends LitElement {
     static get properties() {
         return {
+            name: { type: String },
+            label: { type: String },
             state: { type: String },
         };
     }
 
     constructor() {
         super();
+        this.name = null;
+        this.label = "";
         this.state = "unchecked";
     }
 
     render() {
-        return html`<input type="checkbox"></input>`;
+        return html`
+            <div>
+                <input type="checkbox" name="${this.name}"></input>
+                <label for="${this.name}">${this.label}</label>
+            </div>`;
     }
 
     updated(changedProperties) {
         if (changedProperties.has("state")) {
-            const checkbox = this.firstElementChild;
+            const checkbox = this.getElementsByTagName("input")[0];
             switch (this.state) {
                 case "unchecked":
                     checkbox.checked = false;
