@@ -27,13 +27,17 @@ struct Model {
 // ------ ------
 
 enum Msg {
-    RotateCheckboxState,
+    RotateCheckboxState(String),
 }
 
 #[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::RotateCheckboxState => model.checkbox_state = model.checkbox_state.next(),
+        Msg::RotateCheckboxState(name) => {
+            if name == "checkbox-tristate" {
+                model.checkbox_state = model.checkbox_state.next()
+            }
+        }
     }
 }
 
@@ -45,9 +49,12 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
     vec![
         div![
             "checkbox-tristate",
-            checkbox_tristate::view("checkbox-tristate", "Label", model.checkbox_state, || {
+            checkbox_tristate::view(
+                "checkbox-tristate",
+                "Label",
+                model.checkbox_state,
                 Msg::RotateCheckboxState
-            }),
+            ),
         ],
         hr![],
         div![

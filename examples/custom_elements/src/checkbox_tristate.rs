@@ -7,11 +7,15 @@ use std::fmt;
 
 pub fn view<Ms: 'static, F>(name: &str, label: &str, state: State, on_click: F) -> Node<Ms>
 where
-    F: FnOnce() -> Ms + Clone + 'static,
+    F: FnOnce(String) -> Ms + Clone + 'static,
 {
+    let handler = move |event: web_sys::Event| {
+        let event = event.dyn_ref::<web_sys::CustomEvent>().unwrap().clone();
+        on_click(event.detail().as_string().unwrap())
+    };
     custom![
         Tag::from("checkbox-tristate"),
-        ev(Ev::from("cluck"), move |_| on_click()),
+        ev(Ev::from("cluck"), handler),
         attrs! {
             At::from("name") => name
             At::from("label") => label

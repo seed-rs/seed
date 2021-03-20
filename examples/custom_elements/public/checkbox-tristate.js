@@ -24,8 +24,10 @@ class CheckboxTristateElement extends LitElement {
             </div>`;
     }
 
-    _onClick(event) {
-      this.dispatchEvent(new MouseEvent("cluck", event));
+    _onClick() {
+      this.dispatchEvent(new CustomEvent("cluck", {
+        detail: this.name
+      }));
     }
 
     updated(changedProperties) {
