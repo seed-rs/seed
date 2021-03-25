@@ -265,7 +265,14 @@ macro_rules! empty {
 #[macro_export]
 macro_rules! raw {
     ($raw_html:expr) => {
-        Node::from_html($raw_html)
+        Node::from_html(None, $raw_html)
+    };
+}
+
+#[macro_export]
+macro_rules! raw_svg {
+    ($raw_svg:expr) => {
+        Node::from_html(Some(&Namespace::Svg), $raw_svg)
     };
 }
 
