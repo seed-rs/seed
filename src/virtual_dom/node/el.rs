@@ -177,16 +177,16 @@ impl<Ms> El<Ms> {
         let mut html_text = String::new();
         pulldown_cmark::html::push_html(&mut html_text, parser);
 
-        Self::from_html(&html_text)
+        Self::from_html(None, &html_text)
     }
 
     /// Create elements from an HTML string.
-    pub fn from_html(html: &str) -> Vec<Node<Ms>> {
+    pub fn from_html(namespace: Option<&Namespace>, html: &str) -> Vec<Node<Ms>> {
         // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.
         // We allow web_sys to parse into a DOM tree, then analyze the tree to create our vdom
         // element.
         let wrapper = util::document()
-            .create_element("placeholder")
+            .create_element_ns(namespace.map(Namespace::as_str), "placeholder")
             .expect("Problem creating web-sys element");
         wrapper.set_inner_html(html);
 

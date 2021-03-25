@@ -183,6 +183,7 @@ pub mod prelude {
         browser::dom::event_handler::{
             drag_ev, ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, touch_ev,
         },
+        browser::dom::Namespace,
         browser::fetch::{self, fetch, FetchError, Header, Method, Request, Response, Status},
         browser::util::{
             request_animation_frame, ClosureNew, RequestAnimationFrameHandle,

@@ -1,5 +1,6 @@
 use super::{AtValue, CSSValue, EventHandler, St};
 use crate::app::MessageMapper;
+use crate::browser::dom::Namespace;
 use std::borrow::Cow;
 use std::fmt;
 
@@ -55,8 +56,8 @@ impl<Ms> Node<Ms> {
     }
 
     /// See `El::from_html`
-    pub fn from_html(html: &str) -> Vec<Node<Ms>> {
-        El::from_html(html)
+    pub fn from_html(namespace: Option<&Namespace>, html: &str) -> Vec<Node<Ms>> {
+        El::from_html(namespace, html)
     }
 
     /// See `El::add_child`
