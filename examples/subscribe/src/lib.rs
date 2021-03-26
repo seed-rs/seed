@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use seed::{prelude::*, *};
 
 mod counter;
@@ -203,9 +202,10 @@ fn divider() -> Node<Msg> {
 }
 
 fn with_spaces(nodes: Vec<Node<Msg>>) -> impl Iterator<Item = Node<Msg>> {
-    nodes.into_iter().intersperse(span![
-        style! {St::Width => rem(1), St::Display => "inline-block"}
-    ])
+    itertools::Itertools::intersperse(
+        nodes.into_iter(),
+        span![style! {St::Width => rem(1), St::Display => "inline-block"}],
+    )
 }
 
 // ------ ------

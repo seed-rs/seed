@@ -8,6 +8,7 @@ use wasm_bindgen::JsCast;
 
 /// Create an event that passes a String of field text, for fast input handling.
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn input_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(String) -> MsU + 'static + Clone,
@@ -34,6 +35,7 @@ pub fn input_ev<Ms: 'static, MsU: 'static>(
 /// Create an event that passes a `web_sys::KeyboardEvent`, allowing easy access
 /// to items like `key_code`() and key().
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn keyboard_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::KeyboardEvent) -> MsU + 'static + Clone,
@@ -52,6 +54,7 @@ pub fn keyboard_ev<Ms: 'static, MsU: 'static>(
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn mouse_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::MouseEvent) -> MsU + 'static + Clone,
@@ -70,6 +73,7 @@ pub fn mouse_ev<Ms: 'static, MsU: 'static>(
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn touch_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::TouchEvent) -> MsU + 'static + Clone,
@@ -88,6 +92,7 @@ pub fn touch_ev<Ms: 'static, MsU: 'static>(
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn drag_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::DragEvent) -> MsU + 'static + Clone,
@@ -106,6 +111,7 @@ pub fn drag_ev<Ms: 'static, MsU: 'static>(
 
 /// See `keyboard_ev`
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn pointer_ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::PointerEvent) -> MsU + 'static + Clone,
@@ -141,6 +147,7 @@ pub fn raw_ev<Ms: 'static, MsU: 'static>(
 ///
 /// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 #[allow(clippy::shadow_unrelated)]
+#[allow(clippy::missing_panics_doc)]
 pub fn ev<Ms: 'static, MsU: 'static>(
     trigger: impl Into<Ev>,
     handler: impl FnOnce(web_sys::Event) -> MsU + 'static + Clone,

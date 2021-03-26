@@ -43,6 +43,7 @@ impl I18n {
 
 // ------ Lang ------
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, Display, EnumIter, EnumString, AsRefStr, Eq, PartialEq)]
 pub enum Lang {
     #[strum(serialize = "en-US")]

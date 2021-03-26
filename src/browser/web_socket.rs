@@ -195,6 +195,7 @@ impl WebSocket {
     /// - `State::Closed` - The connection is closed or couldn't be opened.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
+    #[allow(clippy::missing_panics_doc)]
     pub fn state(&self) -> State {
         match self.ws.ready_state() {
             0 => State::Connecting,

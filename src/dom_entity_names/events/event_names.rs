@@ -1,4 +1,5 @@
 // Comprehensive list: https://developer.mozilla.org/en-US/docs/Web/Events
+#![allow(clippy::upper_case_acronyms)]
 make_events! {
     Cached => "cached", Error => "error", Abort => "abort", Load => "load", BeforeUnload => "beforeunload",
     Unload => "unload", Online => "online", Offline => "offline", Focus => "focus", Blur => "blur",

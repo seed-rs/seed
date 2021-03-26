@@ -649,6 +649,7 @@ impl UrlSearch {
 
     /// Push the value into the vector of values corresponding to the key.
     /// - If the key and values are not present, they will be crated.
+    #[allow(clippy::missing_panics_doc)]
     pub fn push_value<'a>(&mut self, key: impl Into<Cow<'a, str>>, value: String) {
         let key = key.into();
         if self.search.contains_key(key.as_ref()) {

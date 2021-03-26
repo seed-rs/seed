@@ -45,6 +45,7 @@ pub struct FetchObject<T> {
 
 impl<T> FetchObject<T> {
     #[allow(clippy::missing_errors_doc)]
+    #[allow(clippy::missing_panics_doc)]
     /// Get successful `Response` (status code 100-399) or `FailReason`.
     pub fn response(self) -> ResponseResult<T> {
         let response = match self.result {
