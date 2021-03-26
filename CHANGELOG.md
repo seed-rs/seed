@@ -4,7 +4,6 @@
 - [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`. It means also `Orders::clone_base_path` returns a slice.
 - Prevent link listener from intercepting links with the `download` attribute.
 - Added examples `record_screen`, `e2e_encryption` and `counters`.
-- Adapted to Rust 1.50.0.
 - Added `Response::blob`
 - Added `panic-hook` feature, enabled by default, to conditionally include `console_error_panic_hook`
 - [BREAKING] Hid markdown funnctionality behind optional `markdown` feature
@@ -12,6 +11,7 @@
 - [BREAKING] Added argument `Option<&Namespace>` to functions `Node::from_html` and `El::from_html`.
 - Added macro `raw_svg!` (#589).
 - Added `browser::dom::Namespace` to `prelude`. 
+- Adapted to Rust 1.51.0.
 
 ## v0.8.0
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).

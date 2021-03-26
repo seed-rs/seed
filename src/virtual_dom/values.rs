@@ -11,6 +11,7 @@
 ///    "display" => CSSValue::Some("block".to_string()),
 ///}
 /// ```
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CSSValue {
     /// The whole CSS property is ignored (i.e. not rendered).
@@ -30,6 +31,7 @@ impl<T: ToString> From<T> for CSSValue {
 // impl ToCSSValue for CSSValue
 #[doc(hidden)]
 #[allow(clippy::wrong_self_convention)]
+#[allow(clippy::upper_case_acronyms)]
 pub trait ToCSSValueForCSSValue {
     fn to_css_value(self) -> CSSValue;
 }
@@ -42,6 +44,7 @@ impl ToCSSValueForCSSValue for CSSValue {
 
 // impl<T: ToString> ToCSSValue for T
 #[doc(hidden)]
+#[allow(clippy::upper_case_acronyms)]
 pub trait ToCSSValueForToString {
     fn to_css_value(&self) -> CSSValue;
 }
@@ -54,6 +57,7 @@ impl<T: ToString> ToCSSValueForToString for T {
 
 // impl<T: ToString> ToCSSValue for Option<T>
 #[doc(hidden)]
+#[allow(clippy::upper_case_acronyms)]
 pub trait ToCSSValueForOptionToString {
     fn to_css_value(&self) -> CSSValue;
 }

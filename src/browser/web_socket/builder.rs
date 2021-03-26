@@ -75,6 +75,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     /// to `State::Open`; this indicates that the connection is ready to send and receive data.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onopen)
+    #[allow(clippy::missing_panics_doc)]
     pub fn on_open<MsU: 'static>(
         mut self,
         handler: impl FnOnce() -> MsU + Clone + 'static,
@@ -95,6 +96,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     /// to `State::Closed`.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onclose)
+    #[allow(clippy::missing_panics_doc)]
     pub fn on_close<MsU: 'static>(
         mut self,
         handler: impl FnOnce(CloseEvent) -> MsU + Clone + 'static,
@@ -113,6 +115,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     /// Set `on_error` Web Socket handler.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onerror)
+    #[allow(clippy::missing_panics_doc)]
     pub fn on_error<MsU: 'static>(
         mut self,
         handler: impl FnOnce() -> MsU + Clone + 'static,
@@ -133,6 +136,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     /// from the server.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onmessage)
+    #[allow(clippy::missing_panics_doc)]
     pub fn on_message<MsU: 'static>(
         mut self,
         handler: impl FnOnce(WebSocketMessage) -> MsU + Clone + 'static,
