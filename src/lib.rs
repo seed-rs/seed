@@ -13,6 +13,7 @@
 //! }
 //!
 //! // `Model` describes our app state.
+//! #[derive(Default)]
 //! struct Model { counter:i32 }
 //!
 //! // `Msg` describes the different events you can modify state with.
@@ -23,7 +24,7 @@
 //! // `update` describes how to handle each `Msg`.
 //! fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 //!     match msg {
-//!         Msg::Increment => *model.counter += 1,
+//!         Msg::Increment => model.counter += 1,
 //!     }
 //! }
 //!
