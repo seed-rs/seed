@@ -9,12 +9,11 @@
 //!
 //! // `init` describes what should happen when your app started.
 //! fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-//!     Model::default()
+//!     Model { counter: 0 }
 //! }
 //!
 //! // `Model` describes our app state.
-//! #[derive(Default)]
-//! struct Model { counter:i32 }
+//! struct Model { counter: i32 }
 //!
 //! // `Msg` describes the different events you can modify state with.
 //! enum Msg {
