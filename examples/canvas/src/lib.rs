@@ -3,7 +3,7 @@
 //! [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawWindow)
 
 use seed::{prelude::*, *};
-use web_sys::HtmlCanvasElement;
+use web_sys::{HtmlCanvasElement, WheelEvent};
 
 // ------ ------
 //     Init
@@ -18,10 +18,20 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
 //     Model
 // ------ ------
 
-#[derive(Default)]
 struct Model {
     fill_color: Color,
+    zoom: f64,
     canvas: ElRef<HtmlCanvasElement>,
+}
+
+impl Default for Model {
+    fn default() -> Self {
+        Self {
+            fill_color: Color::default(),
+            zoom: 1.,
+            canvas: ElRef::<HtmlCanvasElement>::default(),
+        }
+    }
 }
 
 // ------ Color -------
@@ -54,13 +64,14 @@ impl Default for Color {
 enum Msg {
     Rendered,
     ChangeColor,
+    Zoom(WheelEvent),
 }
 
 #[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Rendered => {
-            draw(&model.canvas, model.fill_color);
+            draw(&model.canvas, model.fill_color, model.zoom);
             // We want to call `.skip` to prevent infinite loop.
             // (However infinite loops are useful for animations.)
             orders.after_next_render(|_| Msg::Rendered).skip();
@@ -72,19 +83,33 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Color::A
             };
         }
+        Msg::Zoom(wheel_ev) => {
+            if wheel_ev.delta_y() < 0. {
+                model.zoom -= 0.1;
+            } else if wheel_ev.delta_y() > 0. {
+                model.zoom += 0.1;
+            }
+        }
     }
 }
 
-fn draw(canvas: &ElRef<HtmlCanvasElement>, fill_color: Color) {
+fn draw(canvas: &ElRef<HtmlCanvasElement>, fill_color: Color, zoom: f64) {
     let canvas = canvas.get().expect("get canvas element");
     let ctx = seed::canvas_context_2d(&canvas);
 
-    ctx.rect(0., 0., 200., 100.);
+    // clear canvas
+    ctx.begin_path();
+    ctx.clear_rect(0., 0., 400., 200.);
+
+    let width = 200. * zoom;
+    let height = 100. * zoom;
+
+    ctx.rect(0., 0., width, height);
     ctx.set_fill_style(&JsValue::from_str(fill_color.as_str()));
     ctx.fill();
 
     ctx.move_to(0., 0.);
-    ctx.line_to(200., 100.);
+    ctx.line_to(width, height);
     ctx.stroke();
 }
 
@@ -98,12 +123,16 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
         canvas![
             el_ref(&model.canvas),
             attrs![
-                At::Width => px(200),
-                At::Height => px(100),
+                At::Width => px(400),
+                At::Height => px(200),
             ],
             style![
                 St::Border => "1px solid black",
             ],
+            wheel_ev(Ev::Wheel, |e| {
+                e.prevent_default();
+                Msg::Zoom(e)
+            }),
         ],
         button!["Change color", ev(Ev::Click, |_| Msg::ChangeColor)],
     ]
