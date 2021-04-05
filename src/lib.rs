@@ -93,7 +93,7 @@ pub use crate::{
     app::App,
     browser::dom::cast::{
         to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
-        to_textarea, to_touch_event,
+        to_textarea, to_touch_event, to_wheel_event,
     },
     browser::fetch,
     browser::url::Url,
@@ -182,6 +182,7 @@ pub mod prelude {
         browser::dom::css_units::*,
         browser::dom::event_handler::{
             drag_ev, ev, input_ev, keyboard_ev, mouse_ev, pointer_ev, raw_ev, simple_ev, touch_ev,
+            wheel_ev,
         },
         browser::dom::Namespace,
         browser::fetch::{self, fetch, FetchError, Header, Method, Request, Response, Status},
