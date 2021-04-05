@@ -60,3 +60,10 @@ pub fn to_drag_event(event: &web_sys::Event) -> &web_sys::DragEvent {
         .dyn_ref::<web_sys::DragEvent>()
         .expect("Unable to cast as a drag event")
 }
+
+/// See `to_keyboard_event`
+pub fn to_wheel_event(event: &web_sys::Event) -> &web_sys::WheelEvent {
+    event
+        .dyn_ref::<web_sys::WheelEvent>()
+        .expect("Unable to cast as a wheel event")
+}

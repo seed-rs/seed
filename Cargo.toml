@@ -112,6 +112,7 @@ features = [
     "Window",
     "KeyboardEvent",
     "InputEvent",
+    "WheelEvent",
     "Url",
     "UrlSearchParams",
 ]
