@@ -61,10 +61,15 @@ impl Default for Color {
 //    Update
 // ------ ------
 
+enum Zoom {
+    In,
+    Out
+}
+
 enum Msg {
     Rendered,
     ChangeColor,
-    Zoom(WheelEvent),
+    Zoom(Zoom),
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -83,12 +88,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Color::A
             };
         }
-        Msg::Zoom(wheel_ev) => {
-            if wheel_ev.delta_y() < 0. {
-                model.zoom -= 0.1;
-            } else if wheel_ev.delta_y() > 0. {
-                model.zoom += 0.1;
-            }
+        Msg::Zoom(zoom) => {
+            model.zoom += match zoom {
+                Zoom::In => -0.1,
+                Zoom::Out => 0.1,
+            };
         }
     }
 }
@@ -129,9 +133,16 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
             style![
                 St::Border => "1px solid black",
             ],
-            wheel_ev(Ev::Wheel, |e| {
-                e.prevent_default();
-                Msg::Zoom(e)
+            wheel_ev(Ev::Wheel, |event| {
+                let delta_y = event.delta_y();
+                (delta_y != 0.0).then(|| {
+                    event.prevent_default();
+                    Msg::Zoom(if delta_y < 0.0 {
+                        Zoom::In
+                    } else {
+                        Zoom::Out
+                    })
+                })
             }),
         ],
         button!["Change color", ev(Ev::Click, |_| Msg::ChangeColor)],
