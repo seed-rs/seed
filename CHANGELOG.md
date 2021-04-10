@@ -1,6 +1,8 @@
 # Changelog
 
 ## [unreleased]
+- Added helpers for wheel event: `wheel_ev` and `to_wheel_event`.
+- Use `wheel_ev` in `canvas` example to zoom rectangle with mouse scroll wheel.
 - [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`. It means also `Orders::clone_base_path` returns a slice.
 - Prevent link listener from intercepting links with the `download` attribute.
 - Added examples `record_screen`, `e2e_encryption` and `counters`.
