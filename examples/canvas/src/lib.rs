@@ -3,7 +3,7 @@
 //! [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawWindow)
 
 use seed::{prelude::*, *};
-use web_sys::{HtmlCanvasElement, WheelEvent};
+use web_sys::HtmlCanvasElement;
 
 // ------ ------
 //     Init
@@ -63,7 +63,7 @@ impl Default for Color {
 
 enum Zoom {
     In,
-    Out
+    Out,
 }
 
 enum Msg {
@@ -137,11 +137,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                 let delta_y = event.delta_y();
                 (delta_y != 0.0).then(|| {
                     event.prevent_default();
-                    Msg::Zoom(if delta_y < 0.0 {
-                        Zoom::In
-                    } else {
-                        Zoom::Out
-                    })
+                    Msg::Zoom(if delta_y < 0.0 { Zoom::In } else { Zoom::Out })
                 })
             }),
         ],
