@@ -33,7 +33,7 @@ impl I18n {
             .get_message(key.as_ref())
             .expect("get fluent message");
 
-        let pattern = mmessage.value.expect("get value for fluent message");
+        let pattern = mmessage.value().expect("get value for fluent message");
 
         self.ftl_bundle
             .format_pattern(pattern, args, &mut vec![])
@@ -82,7 +82,7 @@ impl Lang {
         let ftl_resource =
             FluentResource::try_new(self.ftl_messages().to_owned()).expect("parse FTL messages");
 
-        let mut bundle = FluentBundle::new(&[self.to_language_identifier()]);
+        let mut bundle = FluentBundle::new(vec![self.to_language_identifier()]);
         bundle.add_resource(ftl_resource).expect("add FTL resource");
         bundle
     }
