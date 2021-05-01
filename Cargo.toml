@@ -129,6 +129,7 @@ members = [
     "examples/custom_elements",
     "examples/drop_zone",
     "examples/el_key",
+    "examples/experimental_component",
     "examples/graphql",
     "examples/i18n",
     "examples/markdown",
