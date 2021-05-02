@@ -1,4 +1,5 @@
 pub mod attrs;
+pub mod component;
 pub mod el_ref;
 pub mod event_handler_manager;
 pub mod mailbox;
@@ -11,6 +12,7 @@ pub mod values;
 pub mod view;
 
 pub use attrs::Attrs;
+pub use component::Component;
 pub use el_ref::{el_ref, ElRef, SharedNodeWs};
 pub use event_handler_manager::{EventHandler, EventHandlerManager, Listener};
 pub use mailbox::Mailbox;

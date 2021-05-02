@@ -14,6 +14,7 @@
 - Added macro `raw_svg!` (#589).
 - Added `browser::dom::Namespace` to `prelude`. 
 - Adapted to Rust 1.51.0.
+- Added an experimental component API, feature-flagged behind `experimental-component-api`, and the `experimental-component` example to demonstrate its use.
 
 ## v0.8.0
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).

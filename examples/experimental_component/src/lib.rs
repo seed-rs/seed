@@ -67,15 +67,6 @@ fn view(model: &Model) -> Node<Msg> {
     ]
 }
 
-#[macro_export]
-macro_rules! comp {
-    ($init:expr, $($opt_field:ident => $opt_val:expr),* $(,)?) => {
-        $init.into_component()
-            $( .$opt_field($opt_val) )*
-            .into_node()
-    };
-}
-
 // ------ ------
 //     Start
 // ------ ------

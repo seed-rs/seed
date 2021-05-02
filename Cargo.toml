@@ -164,3 +164,4 @@ exclude = [
 default = ["panic-hook"]
 panic-hook = ["console_error_panic_hook"]
 markdown = ["pulldown-cmark"]
+experimental-component-api = []

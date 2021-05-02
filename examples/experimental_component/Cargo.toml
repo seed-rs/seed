@@ -8,4 +8,4 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = {path = "../../"}
+seed = { path = "../../", features = ["experimental-component-api"] }

@@ -553,3 +553,17 @@ macro_rules! key_value_pairs {
         }
      };
 }
+
+#[cfg(feature = "experimental-component-api")]
+/// Instantiates and renders a `Component`
+///
+/// NOTE: This is an experimental API that requires the `experimental-component-api` feature.
+#[macro_export]
+macro_rules! comp {
+    ($init:expr, $($opt_field:ident => $opt_val:expr),* $(,)?) => {
+        $crate::virtual_dom::component::instantiate(
+            $init.into_component()
+                $( .$opt_field($opt_val) )*
+        )
+    };
+}

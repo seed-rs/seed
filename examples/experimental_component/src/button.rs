@@ -9,8 +9,8 @@ pub struct Button<S> {
 }
 
 impl<S: Into<Cow<'static, str>>> Button<S> {
-    pub fn into_component<Ms>(self) -> Component<Ms> {
-        Component {
+    pub fn into_component<Ms>(self) -> ButtonComponent<Ms> {
+        ButtonComponent {
             label: self.label.into(),
             outlined: false,
             disabled: false,
@@ -19,14 +19,15 @@ impl<S: Into<Cow<'static, str>>> Button<S> {
     }
 }
 
-pub struct Component<Ms: 'static> {
+#[allow(clippy::module_name_repetitions)]
+pub struct ButtonComponent<Ms: 'static> {
     label: Cow<'static, str>,
     outlined: bool,
     disabled: bool,
     on_clicks: Vec<Rc<dyn Fn() -> Ms>>,
 }
 
-impl<Ms> Component<Ms> {
+impl<Ms> ButtonComponent<Ms> {
     pub const fn outlined(mut self, outlined: bool) -> Self {
         self.outlined = outlined;
         self
@@ -41,8 +42,10 @@ impl<Ms> Component<Ms> {
         self.on_clicks.push(Rc::new(move || on_click.clone()()));
         self
     }
+}
 
-    pub fn into_node(self) -> Node<Ms> {
+impl<Ms> Component<Ms> for ButtonComponent<Ms> {
+    fn render(&self) -> Node<Ms> {
         let attrs = {
             let mut attrs = attrs! {};
 
@@ -84,7 +87,7 @@ impl<Ms> Component<Ms> {
         let mut button = button![css, attrs, self.label];
 
         if !self.disabled {
-            for on_click in self.on_clicks {
+            for on_click in self.on_clicks.iter().cloned() {
                 button.add_event_handler(ev(Ev::Click, move |_| on_click()));
             }
         }
