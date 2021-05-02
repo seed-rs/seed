@@ -1,11 +1,6 @@
 ## Experimental component API example
 
-Demonstrates a component API that has:
-
-- Labeled required properties, ensured to be present at compile-time
-- Labeled optional properties
-- Polymorphic for all properties
-- A convenient consumer interface, through a stupidly simple macro that is very easy to understand
+Demonstrates how to use the experimental component API.
 
 ---
 
