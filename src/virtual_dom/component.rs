@@ -1,7 +1,7 @@
 use super::Node;
 
 pub trait Component<Ms> {
-    fn render(&self) -> Node<Ms>;
+    fn view(&self) -> Node<Ms>;
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -13,5 +13,5 @@ pub fn instantiate<Ms, C: Component<Ms>>(component: C) -> Node<Ms> {
     // The boundary node will own the state container and remember the component
     // configuration, so that it can do a local re-render when triggered by a
     // hook.
-    component.render()
+    component.view()
 }

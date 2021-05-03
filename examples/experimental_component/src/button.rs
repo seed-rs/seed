@@ -45,7 +45,7 @@ impl<Ms> ButtonComponent<Ms> {
 }
 
 impl<Ms> Component<Ms> for ButtonComponent<Ms> {
-    fn render(&self) -> Node<Ms> {
+    fn view(&self) -> Node<Ms> {
         let attrs = {
             let mut attrs = attrs! {};
 
