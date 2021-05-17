@@ -35,7 +35,7 @@ make_attrs! {
     OnToggle => "ontoggle", OnUnload => "onunload", OnVolumeChange => "onvolumechange", OnWaiting => "onwaiting",
     OnWheel => "onwheel", Open => "open", Optimum => "optimum", Pattern => "pattern", Placeholder => "placeholder",
     Poster => "poster", Preload => "preload", ReadOnly => "readonly", Rel => "rel", Required => "required",
-    Reversed => "reversed", Rows => "rows", RowSpan => "rowspan", Sandbox => "sandbox", Scope => "scope",
+    Role => "role", Reversed => "reversed", Rows => "rows", RowSpan => "rowspan", Sandbox => "sandbox", Scope => "scope",
     Selected => "selected", Shape => "shape", Size => "size", Span => "span", SpellCheck => "spellcheck",
     Src => "src", SrcDoc => "srcdoc", SrcLang => "srclang", SrcSet => "srcset", Start => "start",
     Step => "step", Style => "style", TabIndex => "tabindex", Target => "target", Title => "title",
