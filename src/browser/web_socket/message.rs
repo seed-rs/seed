@@ -48,7 +48,7 @@ impl WebSocketMessage {
         }
 
         if let Some(blob) = self.data.dyn_ref::<web_sys::Blob>() {
-            let blob = gloo_file::Blob::from(blob.to_owned());
+            let blob = gloo_file::Blob::from(blob.clone());
             let bytes = gloo_file::futures::read_as_bytes(&blob)
                 .await
                 .map_err(WebSocketError::FileReaderError)?;
