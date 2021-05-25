@@ -174,7 +174,7 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
                     ],
                     button![
                         ev(Ev::Click, {
-                            let message_text = model.input_text.to_owned();
+                            let message_text = model.input_text.clone();
                             move |_| Msg::SendMessage(shared::ClientMessage { text: message_text })
                         }),
                         "Send"
@@ -192,7 +192,7 @@ fn view(model: &Model) -> Vec<Node<Msg>> {
                     ],
                     button![
                         ev(Ev::Click, {
-                            let message_text = model.input_binary.to_owned();
+                            let message_text = model.input_binary.clone();
                             move |_| {
                                 Msg::SendBinaryMessage(shared::ClientMessage { text: message_text })
                             }

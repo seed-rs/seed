@@ -1,3 +1,4 @@
+#![allow(clippy::use_self)]
 use fluent::{FluentArgs, FluentBundle, FluentResource};
 use strum_macros::{AsRefStr, Display, EnumIter, EnumString};
 use unic_langid::LanguageIdentifier;

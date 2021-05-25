@@ -121,11 +121,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .take()
                 .expect("registration state")
                 .finish(
-                    r2.expect("r2 bytes")
-                        .to_vec()
-                        .as_slice()
-                        .try_into()
-                        .expect("r2"),
+                    r2.expect("r2 bytes").as_slice().try_into().expect("r2"),
                     model.public_key.as_ref().expect("public key reference"),
                     &mut model.rng,
                 )
@@ -169,11 +165,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .take()
                 .expect("registration state")
                 .finish(
-                    l2.expect("l2 bytes")
-                        .to_vec()
-                        .as_slice()
-                        .try_into()
-                        .expect("l2"),
+                    l2.expect("l2 bytes").as_slice().try_into().expect("l2"),
                     model.public_key.as_ref().expect("public key reference"),
                     &mut model.rng,
                 )

@@ -174,7 +174,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                     model
                         .user
                         .as_ref()
-                        .map(|user| user.username.to_owned())
+                        .map(|user| user.username.clone())
                         .unwrap_or_default()
                 ),
                 div![&model.secret_message],

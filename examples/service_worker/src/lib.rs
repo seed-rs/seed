@@ -71,8 +71,8 @@ struct WorkerData {
     subscription_saved: bool,
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct PushSubscription {
     endpoint: String,
     expiration_time: Option<String>,
