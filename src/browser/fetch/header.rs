@@ -31,6 +31,24 @@ impl<'a> IntoIterator for Headers<'a> {
     }
 }
 
+impl<'a> From<web_sys::Headers> for Headers<'a> {
+    fn from(hs: web_sys::Headers) -> Self {
+        let mut headers = Headers::default();
+
+        for pair in js_sys::Object::entries(hs.as_ref()).entries() {
+            if let Some((h, v)) = pair
+                .ok()
+                .and_then(|js| js.into_serde::<(String, String)>().ok())
+            {
+                let header = Header::custom(h, v);
+                headers.set(header);
+            }
+        }
+
+        headers
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Header<'a> {
     pub(crate) name: Cow<'a, str>,
