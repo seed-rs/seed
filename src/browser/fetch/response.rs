@@ -1,6 +1,6 @@
 //! The Response interface of the Fetch API represents the response to a request.
 
-use super::{FetchError, Result, Status};
+use super::{FetchError, Headers, Result, Status};
 use serde::de::DeserializeOwned;
 use wasm_bindgen_futures::JsFuture;
 
@@ -100,6 +100,11 @@ impl Response {
     /// [issue]: https://github.com/seed-rs/seed/issues
     pub const fn raw_response(&self) -> &web_sys::Response {
         &self.raw_response
+    }
+
+    /// Get the [`Headers`] associated with the `Response`.
+    pub fn headers(&self) -> Headers {
+        Headers::from(self.raw_response.headers())
     }
 }
 
