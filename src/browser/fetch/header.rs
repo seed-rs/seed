@@ -1,6 +1,8 @@
 //! HTTP headers
 
 use std::borrow::Cow;
+use std::collections::HashMap;
+use wasm_bindgen::JsValue;
 
 /// Request headers.
 #[derive(Clone, Debug, Default)]
@@ -34,12 +36,14 @@ impl<'a> IntoIterator for Headers<'a> {
 impl<'a> From<web_sys::Headers> for Headers<'a> {
     fn from(hs: web_sys::Headers) -> Self {
         let mut headers = Headers::default();
+        let js: &JsValue = hs.as_ref();
 
-        for pair in js_sys::Object::entries(hs.as_ref()).entries() {
-            if let Some((h, v)) = pair
-                .ok()
-                .and_then(|js| js.into_serde::<(String, String)>().ok())
-            {
+        // FIXME This `into_serde` decodes successfully, but the resulting
+        // `HashMap` had nothing in it. It's unclear if the original `Headers`
+        // had any content though, so I'm not sure if this is working as
+        // intended.
+        if let Ok(hm) = js.into_serde::<HashMap<String, String>>() {
+            for (h, v) in hm {
                 let header = Header::custom(h, v);
                 headers.set(header);
             }
