@@ -21,6 +21,7 @@
 - Implemented `From<impl AsRef<web_sys::Headers>>` for `Headers`.
 - Implemented `FromIterator<(impl Into<Cow<'a, str>>, impl Into<Cow<'a, str>>)>` for `Headers`.
 - Derived `Eq` and `PartialEq` for `Header`.
+- Added `Header::name()` and `Header::value()`.
 
 ## v0.8.0
 
