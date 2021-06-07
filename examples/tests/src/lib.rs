@@ -92,7 +92,7 @@ mod tests {
         // ---- ACT ----
         let html = node.to_string();
 
-        // ---- ASSERT
+        // ---- ASSERT ----
         let expected_html = r#"
             <div class="container my-container" style="margin:5px;padding:0">
                 <button>-</button>

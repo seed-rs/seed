@@ -9,13 +9,18 @@
 - Added examples `record_screen`, `e2e_encryption` and `counters`.
 - Added `Response::blob`
 - Added `panic-hook` feature, enabled by default, to conditionally include `console_error_panic_hook`
-- [BREAKING] Hid markdown funnctionality behind optional `markdown` feature
+- [BREAKING] Hid markdown functionality behind optional `markdown` feature
 - Implemented `AsAtValue` for `Option<T>`
 - [BREAKING] Added argument `Option<&Namespace>` to functions `Node::from_html` and `El::from_html`.
 - Added macro `raw_svg!` (#589).
 - Added `browser::dom::Namespace` to `prelude`.
 - Adapted to Rust 1.51.0.
 - Added `At::Role` variant.
+- Added `Response::headers`.
+- Added `Headers::new`.
+- Implemented `From<impl AsRef<web_sys::Headers>>` for `Headers`.
+- Implemented `FromIterator<(impl Into<Cow<'a, str>>, impl Into<Cow<'a, str>>)>` for `Headers`.
+- Derived `Eq` and `PartialEq` for `Header`.
 
 ## v0.8.0
 
