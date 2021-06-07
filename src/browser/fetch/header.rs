@@ -10,7 +10,7 @@ use std::iter::FromIterator;
 pub struct Headers<'a>(Vec<Header<'a>>);
 
 impl<'a> Headers<'a> {
-    // Create a new empty `Headers`.
+    /// Create a new empty `Headers`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -80,6 +80,16 @@ pub struct Header<'a> {
 }
 
 impl<'a> Header<'a> {
+    /// The "key" of the `Header`, like `Content-Type`, etc.
+    pub fn name(&'a self) -> &'a str {
+        &self.name
+    }
+
+    /// The "value" of the `Header`.
+    pub fn value(&'a self) -> &'a str {
+        &self.value
+    }
+
     /// Create `Content-Type` header.
     pub fn content_type(value: impl Into<Cow<'a, str>>) -> Header<'a> {
         Self::custom("Content-Type", value)
