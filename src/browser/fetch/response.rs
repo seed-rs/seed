@@ -104,7 +104,7 @@ impl Response {
 
     /// Get the [`Headers`] associated with the `Response`.
     pub fn headers(&self) -> Headers {
-        Headers::from(self.raw_response.headers())
+        Headers::from(&self.raw_response.headers())
     }
 }
 

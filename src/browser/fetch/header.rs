@@ -1,14 +1,20 @@
 //! HTTP headers
 
 use std::borrow::Cow;
-use std::collections::HashMap;
-use wasm_bindgen::JsValue;
+use std::iter::FromIterator;
+
+// ------ Headers ------
 
 /// Request headers.
 #[derive(Clone, Debug, Default)]
 pub struct Headers<'a>(Vec<Header<'a>>);
 
 impl<'a> Headers<'a> {
+    // Create a new empty `Headers`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Sets a new value for an existing header or adds the header if
     /// it does not already exist.
     pub fn set(&mut self, header: Header<'a>) {
@@ -24,6 +30,20 @@ impl<'a> Headers<'a> {
     }
 }
 
+impl<'a, N, V> FromIterator<(N, V)> for Headers<'a>
+where
+    N: Into<Cow<'a, str>>,
+    V: Into<Cow<'a, str>>,
+{
+    fn from_iter<I: IntoIterator<Item = (N, V)>>(iter: I) -> Self {
+        let mut headers = Self::default();
+        for (name, value) in iter {
+            headers.set(Header::custom(name, value));
+        }
+        headers
+    }
+}
+
 impl<'a> IntoIterator for Headers<'a> {
     type Item = Header<'a>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
@@ -33,27 +53,27 @@ impl<'a> IntoIterator for Headers<'a> {
     }
 }
 
-impl<'a> From<web_sys::Headers> for Headers<'a> {
-    fn from(hs: web_sys::Headers) -> Self {
-        let mut headers = Headers::default();
-        let js: &JsValue = hs.as_ref();
-
-        // FIXME This `into_serde` decodes successfully, but the resulting
-        // `HashMap` had nothing in it. It's unclear if the original `Headers`
-        // had any content though, so I'm not sure if this is working as
-        // intended.
-        if let Ok(hm) = js.into_serde::<HashMap<String, String>>() {
-            for (h, v) in hm {
-                let header = Header::custom(h, v);
-                headers.set(header);
-            }
-        }
-
-        headers
+#[allow(clippy::fallible_impl_from)]
+impl<'a, FT: AsRef<web_sys::Headers>> From<FT> for Headers<'a> {
+    fn from(headers: FT) -> Self {
+        // @TODO refactor once https://github.com/rustwasm/wasm-bindgen/pull/1913 is merged
+        js_sys::try_iter(headers.as_ref())
+            .unwrap()
+            .unwrap()
+            .map(|entry| js_sys::Array::from(&entry.unwrap()))
+            .map(|entry| {
+                (
+                    entry.get(0).as_string().unwrap(),
+                    entry.get(1).as_string().unwrap(),
+                )
+            })
+            .collect()
     }
 }
 
-#[derive(Clone, Debug)]
+// ------ Header ------
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Header<'a> {
     pub(crate) name: Cow<'a, str>,
     pub(crate) value: Cow<'a, str>,
@@ -81,5 +101,31 @@ impl<'a> Header<'a> {
             name: name.into(),
             value: value.into(),
         }
+    }
+}
+
+// ====== ====== TESTS ====== ======
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn test_headers_from_ws_headers() {
+        // ---- ARRANGE ----
+        let ws_headers = web_sys::Headers::new().unwrap();
+        ws_headers
+            .append("a_header_name", "a_header_value")
+            .unwrap();
+        // ---- ACT ----
+        let headers = Headers::from(&ws_headers);
+        // ---- ASSERT ----
+        assert_eq!(
+            headers.into_iter().next().unwrap(),
+            Header::custom("a_header_name", "a_header_value")
+        );
     }
 }
