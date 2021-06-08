@@ -22,6 +22,7 @@
 - Implemented `FromIterator<(impl Into<Cow<'a, str>>, impl Into<Cow<'a, str>>)>` for `Headers`.
 - Derived `Eq` and `PartialEq` for `Header`.
 - Added `Header::name()` and `Header::value()`.
+- Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox
 
 ## v0.8.0
 

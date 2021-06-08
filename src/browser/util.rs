@@ -213,6 +213,11 @@ fn set_html_input_element_value(
     input: &web_sys::HtmlInputElement,
     value: &str,
 ) -> Result<(), Cow<'static, str>> {
+    // Don't update if value hasn't changed
+    if value == input.value() {
+        return Ok(());
+    }
+
     // In some cases we need to set selection manually because
     // otherwise the cursor would jump at the end on some platforms.
 
