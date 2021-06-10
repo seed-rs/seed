@@ -32,12 +32,14 @@ use crate::util::window;
 use std::convert::TryInto;
 use wasm_bindgen_futures::JsFuture;
 
+pub mod form_data;
 pub mod header;
 mod method;
 mod request;
 mod response;
 mod status;
 
+pub use form_data::FormData;
 pub use header::{Header, Headers};
 pub use method::*;
 pub use request::*;
