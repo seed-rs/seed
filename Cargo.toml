@@ -83,6 +83,7 @@ features = [
     "HtmlTextAreaElement",
     "HtmlSelectElement",
     "HtmlButtonElement",
+    "HtmlFormElement",
     "Location",
     "MessageEvent",
     "MouseEvent",
