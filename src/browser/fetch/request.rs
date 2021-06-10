@@ -1,5 +1,6 @@
 //! The Request of the Fetch API.
 
+use super::form_data::FormData;
 use super::{fetch, FetchError, Header, Headers, Method, Response, Result};
 use crate::browser::Url;
 use gloo_timers::callback::Timeout;
@@ -105,6 +106,13 @@ impl<'a> Request<'a> {
     pub fn bytes(mut self, bytes: impl AsRef<[u8]>) -> Self {
         self.body = Some(Uint8Array::from(bytes.as_ref()).into());
         self.header(Header::content_type("application/octet-stream"))
+    }
+
+    /// Set request body to the provided form data object.
+    /// It will also set `Content-Type` header to `multipart/form-data`.
+    pub fn form_data(mut self, form_data: FormData) -> Self {
+        self.body = Some(form_data.into());
+        self
     }
 
     /// Set request mode.
