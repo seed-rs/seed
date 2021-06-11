@@ -23,6 +23,7 @@
 - Derived `Eq` and `PartialEq` for `Header`.
 - Added `Header::name()` and `Header::value()`.
 - Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox
+- Added `fetch::form_data::FormData` and `Request.form_data`
 
 ## v0.8.0
 
