@@ -4,6 +4,7 @@ mod checkbox_tristate;
 mod code_block;
 mod feather_icon;
 mod math_tex;
+mod sl_input;
 
 // ------ ------
 //     Init
@@ -20,6 +21,7 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 #[derive(Default)]
 struct Model {
     pub checkbox_state: checkbox_tristate::State,
+    input_value: String,
 }
 
 // ------ ------
@@ -28,6 +30,7 @@ struct Model {
 
 enum Msg {
     RotateCheckboxState(String),
+    InputChanged(String),
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -37,6 +40,9 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             if name == "checkbox-tristate" {
                 model.checkbox_state = model.checkbox_state.next()
             }
+        }
+        Msg::InputChanged(value) => {
+            model.input_value = value;
         }
     }
 }
@@ -70,6 +76,12 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
         div![
             "math-tex",
             math_tex::view(r"\mathbb{1} = \sum_i \lvert i \rangle \langle i \rvert"),
+        ],
+        hr![],
+        div![
+            "sl-input",
+            sl_input![sl_input::on_input(Msg::InputChanged)],
+            &model.input_value,
         ],
     ]
 }
