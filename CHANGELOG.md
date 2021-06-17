@@ -25,6 +25,7 @@
 - Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox.
 - Added `fetch::form_data::FormData` and `Request.form_data`.
 - Added `sl_input` to the `custom_elements` example.
+- [BREAKING] Changed `Request.body` to take its argument by reference
 
 ## v0.8.0
 
