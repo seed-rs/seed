@@ -285,7 +285,7 @@ pub(crate) fn patch_el_details<Ms>(
                             AtValue::Some(_) | AtValue::None => {
                                 crate::util::set_checked(old_el_ws, false)
                             }
-                            _ => Ok(()),
+                            AtValue::Ignored => Ok(()),
                         },
                         _ => Ok(()),
                     }

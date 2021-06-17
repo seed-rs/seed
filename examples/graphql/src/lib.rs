@@ -1,8 +1,4 @@
-#![allow(
-    clippy::filter_map,
-    clippy::large_enum_variant,
-    clippy::cognitive_complexity
-)]
+#![allow(clippy::large_enum_variant, clippy::cognitive_complexity)]
 
 use graphql_client::{GraphQLQuery, Response as GQLResponse};
 use itertools::Itertools;

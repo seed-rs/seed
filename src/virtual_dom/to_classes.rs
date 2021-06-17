@@ -1,5 +1,7 @@
+#![allow(clippy::wrong_self_convention)]
+
 /// Allows to use different types of input values in `C!` macro.
-#[allow(clippy::wrong_self_convention)]
+
 pub trait ToClasses {
     fn to_classes(self) -> Option<Vec<String>>;
 }
