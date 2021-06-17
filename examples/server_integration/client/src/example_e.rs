@@ -116,7 +116,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 async fn send_request(form: FormData) -> fetch::Result<String> {
     Request::new(get_request_url())
         .method(fetch::Method::Post)
-        .body(form.into())
+        .body(&form.into())
         .fetch()
         .await?
         .text()

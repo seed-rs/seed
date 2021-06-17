@@ -16,7 +16,7 @@ pub struct Request<'a> {
     url: Cow<'a, str>,
     headers: Headers<'a>,
     method: Method,
-    body: Option<JsValue>,
+    body: Option<Cow<'a, JsValue>>,
     cache: Option<web_sys::RequestCache>,
     credentials: Option<web_sys::RequestCredentials>,
     integrity: Option<String>,
@@ -67,8 +67,8 @@ impl<'a> Request<'a> {
     ///
     /// ## Panics
     /// This method will panic when request method is GET or HEAD.
-    pub fn body(mut self, body: JsValue) -> Self {
-        self.body = Some(body);
+    pub fn body(mut self, body: &'a JsValue) -> Self {
+        self.body = Some(Cow::Borrowed(body));
 
         #[cfg(debug_assertions)]
         match self.method {
@@ -90,28 +90,28 @@ impl<'a> Request<'a> {
     /// return `FetchError::SerdeError`.
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
         let body = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
-        self.body = Some(body.into());
+        self.body = Some(Cow::Owned(body.into()));
         Ok(self.header(Header::content_type("application/json; charset=utf-8")))
     }
 
     /// Set request body to a provided string.
     /// It will also set `Content-Type` header to `text/plain; charset=utf-8`.
     pub fn text(mut self, text: impl AsRef<str>) -> Self {
-        self.body = Some(JsValue::from(text.as_ref()));
+        self.body = Some(Cow::Owned(JsValue::from(text.as_ref())));
         self.header(Header::content_type("text/plain; charset=utf-8"))
     }
 
     /// Set request body to the provided bytes.
     /// It will also set `Content-Type` header to `application/octet-stream`.
     pub fn bytes(mut self, bytes: impl AsRef<[u8]>) -> Self {
-        self.body = Some(Uint8Array::from(bytes.as_ref()).into());
+        self.body = Some(Cow::Owned(Uint8Array::from(bytes.as_ref()).into()));
         self.header(Header::content_type("application/octet-stream"))
     }
 
     /// Set request body to the provided form data object.
     /// It will also set `Content-Type` header to `multipart/form-data`.
     pub fn form_data(mut self, form_data: FormData) -> Self {
-        self.body = Some(form_data.into());
+        self.body = Some(Cow::Owned(form_data.into()));
         self
     }
 
@@ -251,8 +251,8 @@ impl TryFrom<Request<'_>> for web_sys::Request {
         init.method(request.method.as_str());
 
         // body
-        if let Some(body) = &request.body {
-            init.body(Some(body));
+        if let Some(body) = request.body {
+            init.body(Some(&body));
         }
 
         // cache
@@ -371,7 +371,7 @@ mod tests {
             request
                 .body
                 .unwrap()
-                .dyn_into::<Uint8Array>()
+                .dyn_ref::<Uint8Array>()
                 .unwrap()
                 .to_vec(),
             Vec::from([6, 2, 8, 3, 1, 8])
