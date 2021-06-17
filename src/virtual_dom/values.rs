@@ -1,3 +1,5 @@
+#![allow(clippy::wrong_self_convention)]
+
 // ------------- CSSValue -------------
 
 /// CSS property value.

@@ -14,7 +14,6 @@
 - [BREAKING] Added argument `Option<&Namespace>` to functions `Node::from_html` and `El::from_html`.
 - Added macro `raw_svg!` (#589).
 - Added `browser::dom::Namespace` to `prelude`.
-- Adapted to Rust 1.51.0.
 - Added `At::Role` variant.
 - Added `Response::headers`.
 - Added `Headers::new`.
@@ -25,7 +24,8 @@
 - Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox.
 - Added `fetch::form_data::FormData` and `Request.form_data`.
 - Added `sl_input` to the `custom_elements` example.
-- [BREAKING] Changed `Request.body` to take its argument by reference
+- [BREAKING] Changed `Request.body` to take its argument by reference.
+- Adapted to Rust 1.53.0.
 
 ## v0.8.0
 
