@@ -71,7 +71,7 @@ It should be stable enough for personal projects. There are some using it in pro
 - [Rust IRC](https://www.irccloud.com/invite?channel=%23%23rust&hostname=chat.freenode.net&port=6697&ssl=1)
 
 ## Roadmap
-The roadmap can eb found [here](https://github.com/seed-rs/seed/milestones).
+The roadmap can be found [here](https://github.com/seed-rs/seed/milestones).
 
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md).
