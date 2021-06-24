@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="en" data-framework="rust"><head>
+  <meta charset="utf-8">
+  <title>Seed • TodoMVC</title>
+  <link rel="stylesheet" href="/index-ee3396eb41c39383.css">
+
+<link rel="preload" href="/index-2a3451f6063cfd92_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/index-2a3451f6063cfd92.js"></head>
+
+<body>
+  <section id="app" class="todoapp"></section>
+
+  <footer class="info">
+    <p>Double-click to edit a todo</p>
+    <p>
+      Created by <a href="http://github.com/David-OConnor/">David O'Connor</a>
+    </p>
+    <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+  </footer>
+
+  <script type="module">
+    import init from '/pkg/package.js';
+    init('/pkg/package_bg.wasm');
+  </script>
+
+
+<script type="module">import init from '/index-2a3451f6063cfd92.js';init('/index-2a3451f6063cfd92_bg.wasm');</script></body></html>

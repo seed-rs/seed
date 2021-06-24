@@ -1,0 +1,31 @@
+[package]
+name = "intersection_observer"
+version = "0.1.0"
+authors = ["allan2"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.18"
+
+[dependencies]
+seed = { path = "../../" }
+js-sys = { version = "0.3.51" }
+
+[dependencies.web-sys]
+version = "0.3.51"
+features = [
+    "IntersectionObserver",
+    "IntersectionObserverInit",
+    "IntersectionObserverEntry",
+]
+
+[profile.release]
+lto = true
+opt-level = 'z'
+codegen-units = 1
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ['-Os']

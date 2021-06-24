@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="modulepreload" href="/pkg/package.js" as="script" type="text/javascript">
+    <link rel="preload" href="/pkg/package_bg.wasm" as="fetch" type="application/wasm" crossorigin="anonymous">
+    <title>Test</title>
+    <link rel="stylesheet" href="/index-28f8c258c059637b.css">
+
+<link rel="preload" href="/index-42ff83818cafddc6_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/index-42ff83818cafddc6.js"></head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        import init from '/pkg/package.js';
+        init('/pkg/package_bg.wasm');
+    </script>
+
+
+<script type="module">import init from '/index-42ff83818cafddc6.js';init('/index-42ff83818cafddc6_bg.wasm');</script></body></html>
