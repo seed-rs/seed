@@ -1,9 +1,15 @@
-## Examples
-For specific details see corresponding READMEs.
+# Examples
 
-Consider first looking at [Counter](./counter).
+This is a collection of examples written in Seed.
 
-Most of the examples can be run by simply:
+These examples also serve as a testing suite for Seed development. Changes to the Seed framework are tested against these examples to ensure there aren't unintended changes to user space.
+
+A good first example to look at is the [Counter example](./counter).
+
+## How to use
+`cargo-make` is required. To install it, run `cargo install cargo-make`.
+
+To run an example:
 ```sh
 cd examples/$EXAMPLE_DIR
 cargo make start
