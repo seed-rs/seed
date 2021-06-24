@@ -25,15 +25,14 @@ The Seed templating system uses a macro syntax that makes Rustaceans feel right 
 Seed has a batteries-included approach. This means less time writing boilerplate and less time installing dependencies.
 
 ## Why not Seed?
-- It's under active development. That comes with occasional breaking changes.
-- WebAssembly is new. In the present time, interacting with the DOM isn't as performant as JavaScript.
-- The community is smaller. It's harder to find support outside of Discord.
+- It's newer. It's harder to find support outside of Discord.
+- WebAssembly is newer with less support. [Browser compatibility is at 92.9%](https://caniuse.com/?search=webassembly).
 - Pre-built components are rare. You will likely have to roll your own components such as date pickers.
 - No server-side rendering yet [(#232)](#232).
-
+- You may prefer other Rust frameworks like [MoonZoon](https://github.com/MoonZoon/MoonZoon) or [Yew](https://github.com/yewstack/yew).
 
 ## Getting Started
-To get started right away, we can use quickstart template:
+To get started right away, we can use the quickstart template:
 ```sh
 cargo install cargo-generate
 cargo install trunk
@@ -43,18 +42,31 @@ cd seed-quickstart
 trunk serve
 ```
 
+If you get an error about wasm being linked against a different version of `wasm-bindgen`, just follow the suggestion to run `cargo update -p wasm-bindgen`. This will fix the linkings.
+
 You should now see a working counter app in your browser at `localhost:8080`.
 
+## Getting into Seed
+The [Seed website](https://seed-rs.org/) and the [library docs](https://docs.rs/seed/latest) are the best way to learn about the functionalities of Seed.
 
-We currently have two template repositories:
+The [Seed examples](examples/) are another good resource.
+
+[Trunk](https://github.com/thedodd/trunk) is the recommended application bundler for Seed. Seed projects are typically run with `trunk serve` instead of `cargo run`. You might also see `cargo make start project_name` in the examples. Going forward, we recommend using Trunk. 
+
+[Seed Styles](https://github.com/seed-rs/styles_hooks) is a styling library for Seed to create global and scoped styles.
+
+To use web APIs, there is [web-sys](https://github.com/rustwasm/wasm-bindgen/tree/master/crates/web-sys) which is a part of the [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) project. wasm-bindgen is a dependency of Seed.
+
+There are also two template repositories. However, they are not currently up to date.
 - [Quickstart](https://github.com/seed-rs/seed-quickstart)
 - [Webpack quickstart](https://github.com/seed-rs/seed-quickstart-webpack)
 
-The [examples](examples/) are another good resource.
-
 ## FAQ
 ### How stable is Seed?
-It should be stable enough for personal projects. There are some using it in production. However, keep in mind Seed is still growing and improving and the framework is changing.
+As a framework, Seed is mostly feature-complete. You can build complete web apps in Seed. Projects built in Seed do use Rust `stable`. Being in Rust, it's easy to create robust, predictable programs.
+
+### What's next for Seed?
+Check out the [roadmap](https://github.com/seed-rs/seed/milestones).
 
 ## Documentation
 - Guides can be found at [seed-rs.org](https://seed-rs.org)
@@ -63,15 +75,12 @@ It should be stable enough for personal projects. There are some using it in pro
 ## Resources
 ### Seed
 - [Awesome-seed-rs](https://github.com/seed-rs/awesome-seed-rs): A curated list of resources
-- [Seed Realworld](https://github.com/seed-rs/seed-rs-realworld): A detailed realworld example
-- [Engineering Rust Web Applications](https://erwabook.com/intro/): A book describing full-stack Rust web development. It uses Seed!
+- [Seed Realworld](https://github.com/seed-rs/seed-rs-realworld): A detailed realworld example (outdated but still helpful)
+- [Engineering Rust Web Applications](https://erwabook.com/intro/): A book describing full-stack Rust web development using Seed (oudated but still helpful)
 
 ### Rust
 - [Rust Discord](https://discordapp.com/invite/rust-lang)
 - [Rust IRC](https://www.irccloud.com/invite?channel=%23%23rust&hostname=chat.freenode.net&port=6697&ssl=1)
-
-## Roadmap
-The roadmap can be found [here](https://github.com/seed-rs/seed/milestones).
 
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md).
