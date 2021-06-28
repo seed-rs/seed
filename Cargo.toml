@@ -132,6 +132,7 @@ members = [
     "examples/el_key",
     "examples/graphql",
     "examples/i18n",
+    "examples/intersection_observer",
     "examples/markdown",
     "examples/fetch",
     "examples/no_change",
