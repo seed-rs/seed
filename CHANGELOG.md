@@ -6,7 +6,7 @@
 - Use `wheel_ev` in `canvas` example to zoom rectangle with mouse scroll wheel.
 - [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`. It means also `Orders::clone_base_path` returns a slice.
 - Prevent link listener from intercepting links with the `download` attribute.
-- Added examples `record_screen`, `e2e_encryption` and `counters`.
+- Added examples `drag_and_drop`, `record_screen`, `e2e_encryption` and `counters`.
 - Added `Response::blob`
 - Added `panic-hook` feature, enabled by default, to conditionally include `console_error_panic_hook`
 - [BREAKING] Hid markdown functionality behind optional `markdown` feature
