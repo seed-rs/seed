@@ -38,6 +38,7 @@ enum Msg {
     Drop,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Drop => {
