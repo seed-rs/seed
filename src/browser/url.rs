@@ -741,7 +741,7 @@ impl From<web_sys::UrlSearchParams> for UrlSearch {
                 }
             };
 
-            url_search.push_value(key, value)
+            url_search.push_value(key, value);
         }
 
         url_search.invalid_components = invalid_components;

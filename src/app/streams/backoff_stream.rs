@@ -68,6 +68,6 @@ fn wait_time(retries: usize, max_seconds: u32) -> u32 {
 fn start_timeout(ms: u32, tick_sender: &Rc<mpsc::UnboundedSender<()>>) -> Timeout {
     let tick_sender = Rc::clone(tick_sender);
     Timeout::new(ms, move || {
-        tick_sender.unbounded_send(()).expect("send backoff tick")
+        tick_sender.unbounded_send(()).expect("send backoff tick");
     })
 }

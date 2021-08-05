@@ -213,7 +213,7 @@ where
                 url_requested,
                 Rc::clone(&s.cfg.base_path),
                 move |notification| s.notify_with_notification(notification),
-            )
+            );
         }));
 
         app.process_effect_queue(orders.effects);
@@ -402,7 +402,7 @@ where
 
         if let Some(message) = message {
             for l in self.data.msg_listeners.borrow().iter() {
-                (l)(&message)
+                (l)(&message);
             }
 
             (self.cfg.update)(

@@ -10,7 +10,7 @@ pub type Result<T> = std::result::Result<T, WebStorageError>;
 
 // ------ WebStorageError ------
 
-#[allow(clippy::module_name_repetitions, clippy::pub_enum_variant_names)]
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum WebStorageError {
     GetStorageError(JsValue),

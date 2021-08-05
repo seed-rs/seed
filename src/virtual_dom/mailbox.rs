@@ -12,7 +12,7 @@ impl<Ms> Mailbox<Ms> {
     }
 
     pub fn send(&self, message: Option<Ms>) {
-        (self.func)(message)
+        (self.func)(message);
     }
 }
 

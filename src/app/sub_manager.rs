@@ -42,7 +42,7 @@ impl<Ms: 'static> SubManager<Ms> {
             .insert(id, sub);
 
         subs.entry(type_id).and_modify(|subs_group| {
-            subs_group.sort_by(|_, sub_a, _, sub_b| Ord::cmp(&sub_b.priority, &sub_a.priority))
+            subs_group.sort_by(|_, sub_a, _, sub_b| Ord::cmp(&sub_b.priority, &sub_a.priority));
         });
     }
 
@@ -59,7 +59,7 @@ impl<Ms: 'static> SubManager<Ms> {
             .insert(id, sub);
 
         subs.entry(type_id).and_modify(|subs_group| {
-            subs_group.sort_by(|_, sub_a, _, sub_b| Ord::cmp(&sub_b.priority, &sub_a.priority))
+            subs_group.sort_by(|_, sub_a, _, sub_b| Ord::cmp(&sub_b.priority, &sub_a.priority));
         });
 
         let subs = Rc::clone(&self.subs);

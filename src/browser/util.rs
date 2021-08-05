@@ -27,7 +27,7 @@ impl Drop for RequestAnimationFrameHandle {
     fn drop(&mut self) {
         window()
             .cancel_animation_frame(self.request_id)
-            .expect("Problem cancelling animation frame request")
+            .expect("Problem cancelling animation frame request");
     }
 }
 
