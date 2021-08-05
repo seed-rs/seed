@@ -2,6 +2,8 @@
 
 use super::{FetchError, Headers, Result, Status};
 use serde::de::DeserializeOwned;
+use serde_wasm_bindgen as swb;
+use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
 /// Response of the fetch request.
@@ -35,8 +37,15 @@ impl Response {
     /// # Errors
     /// Returns `FetchError::SerdeError` or `FetchError::PromiseError`.
     pub async fn json<T: DeserializeOwned + 'static>(&self) -> Result<T> {
-        let text = self.text().await?;
-        serde_json::from_str(&text).map_err(FetchError::SerdeError)
+        let js: JsValue = self
+            .raw_response
+            .json()
+            .map_err(FetchError::PromiseError)
+            .map(JsFuture::from)?
+            .await
+            .map_err(FetchError::PromiseError)?;
+
+        Ok(swb::from_value(js)?)
     }
 
     /// Return response body as `Vec<u8>`.

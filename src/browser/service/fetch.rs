@@ -8,6 +8,7 @@ use std::future::Future;
 
 use gloo_timers::callback::Timeout;
 use serde::{de::DeserializeOwned, Serialize};
+use serde_wasm_bindgen as swb;
 use std::{borrow::Cow, cell::RefCell, collections::HashMap, convert::identity, rc::Rc};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
@@ -31,7 +32,7 @@ pub type FetchResult<T> = Result<ResponseWithDataResult<T>, RequestError>;
 /// Type for `ResponseWithDataResult.data`.
 pub type DataResult<T> = Result<T, DataError>;
 
-type Json = String;
+type Json = JsValue;
 
 // ---------- FetchObject ----------
 
@@ -99,7 +100,7 @@ pub enum RequestError {
 #[derive(Debug, Clone)]
 pub enum DataError {
     DomException(web_sys::DomException),
-    SerdeError(Rc<serde_json::Error>, Json),
+    SerdeError(Rc<swb::Error>, Json),
 }
 
 // ---------- RequestController ----------
@@ -343,10 +344,8 @@ impl Request {
     /// Serialize a Rust data structure as JSON; eg the payload in a POST request.
     /// _Note_: If you want to setup `Content-Type` header automatically, use method `send_json`.
     pub fn body_json<T: Serialize>(self, body_json: &T) -> Self {
-        let json =
-            serde_json::to_string(body_json).expect("fetch: serialize body to JSON - failed");
-        let json_as_js_value = JsValue::from_str(&json);
-        self.body(json_as_js_value)
+        let json = swb::to_value(body_json).expect("fetch: serialize body to JSON - failed");
+        self.body(json)
     }
 
     /// Set body to serialized `data`
@@ -550,6 +549,7 @@ impl Request {
         let fetch_result = fetch_object.result;
         let request = fetch_object.request;
 
+        // FIXME What is this giant gross match ladder?
         let fetch_object = match fetch_result {
             // There was problem with fetching - just change generic parameter from String to T.
             Err(request_error) => FetchObject::<T> {
@@ -557,35 +557,49 @@ impl Request {
                 result: Err(request_error),
             },
             Ok(response) => {
-                match response.data {
+                match response.raw.json() {
                     // There was problem with converting to String
                     // - just change generic parameter from String to T.
-                    Err(data_error) => FetchObject::<T> {
+                    Err(json_error) => FetchObject::<T> {
                         request,
                         result: Ok(ResponseWithDataResult {
                             raw: response.raw,
                             status: response.status,
-                            data: Err(data_error),
+                            data: Err(DataError::DomException(json_error.into())),
                         }),
                     },
-                    Ok(text) => {
-                        match serde_json::from_str(&text) {
+                    Ok(promise) => {
+                        match JsFuture::from(promise).await {
                             // Deserialization failed.
-                            Err(serde_error) => FetchObject::<T> {
+                            Err(js_value_error) => FetchObject::<T> {
                                 request,
                                 result: Ok(ResponseWithDataResult {
                                     raw: response.raw,
                                     status: response.status,
-                                    data: Err(DataError::SerdeError(Rc::new(serde_error), text)),
+                                    // data: Err(DataError::SerdeError(Rc::new(js_value_error), text)),
+                                    data: Err(DataError::DomException(js_value_error.into())),
                                 }),
                             },
-                            Ok(value) => FetchObject::<T> {
-                                request,
-                                result: Ok(ResponseWithDataResult {
-                                    raw: response.raw,
-                                    status: response.status,
-                                    data: Ok(value),
-                                }),
+                            Ok(js_value) => match swb::from_value(js_value.clone()) {
+                                Err(serde_error) => FetchObject::<T> {
+                                    request,
+                                    result: Ok(ResponseWithDataResult {
+                                        raw: response.raw,
+                                        status: response.status,
+                                        data: Err(DataError::SerdeError(
+                                            Rc::new(serde_error),
+                                            js_value,
+                                        )),
+                                    }),
+                                },
+                                Ok(value) => FetchObject::<T> {
+                                    request,
+                                    result: Ok(ResponseWithDataResult {
+                                        raw: response.raw,
+                                        status: response.status,
+                                        data: Ok(value),
+                                    }),
+                                },
                             },
                         }
                     }

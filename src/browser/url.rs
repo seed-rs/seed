@@ -1,5 +1,6 @@
 use crate::browser::util;
 use serde::{Deserialize, Serialize};
+use serde_wasm_bindgen as swb;
 use std::{borrow::Cow, collections::BTreeMap, fmt, str::FromStr};
 use wasm_bindgen::JsValue;
 
@@ -40,9 +41,7 @@ impl Url {
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
     pub fn go_and_push(&self) {
         // We use data to evaluate the path instead of the path displayed in the url.
-        let data = JsValue::from_str(
-            &serde_json::to_string(&self).expect("Problem serializing route data"),
-        );
+        let data: JsValue = swb::to_value(&self).expect("Problem serializing route data");
 
         util::history()
             .push_state_with_url(&data, "", Some(&self.to_string()))
@@ -57,9 +56,7 @@ impl Url {
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
     pub fn go_and_replace(&self) {
         // We use data to evaluate the path instead of the path displayed in the url.
-        let data = JsValue::from_str(
-            &serde_json::to_string(&self).expect("Problem serializing route data"),
-        );
+        let data: JsValue = swb::to_value(&self).expect("Problem serializing route data");
 
         util::history()
             .replace_state_with_url(&data, "", Some(&self.to_string()))

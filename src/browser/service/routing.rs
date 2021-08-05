@@ -3,18 +3,18 @@ use super::super::{
     Url,
 };
 use crate::app::{subs, Notification};
+use serde_wasm_bindgen as swb;
 use std::rc::Rc;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use wasm_bindgen::{closure::Closure, JsCast};
 
-// Add a new route using history's `push_state` method.
-//
-// # References
-// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
+/// Add a new route using history's `push_state` method.
+///
+/// # References
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
 pub fn push_route<U: Into<Url>>(url: U) -> Url {
     let url = url.into();
     // We use data to evaluate the path instead of the path displayed in the url.
-    let data =
-        JsValue::from_str(&serde_json::to_string(&url).expect("Problem serializing route data"));
+    let data = swb::to_value(&url).expect("Problem serializing route data");
 
     util::history()
         .push_state_with_url(&data, "", Some(&url.to_string()))
@@ -32,12 +32,10 @@ pub fn setup_popstate_listener(
             .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
-        let url = match ev.state().as_string() {
-            Some(state_str) => {
-                serde_json::from_str(&state_str).expect("Problem deserializing popstate state")
-            }
+        let url = match swb::from_value(ev.state()) {
+            Ok(url) => url,
             // Only update when requested for an update by the user.
-            None => Url::current(),
+            Err(_) => Url::current(),
         };
 
         notify(Notification::new(subs::UrlChanged(
@@ -79,8 +77,9 @@ pub fn url_request_handler(
     }
 }
 
-// Set up a listener that intercepts clicks on elements containing an Href attribute,
-// so we can prevent page refresh for internal links, and route internally.  Run this on load.
+/// Set up a listener that intercepts clicks on elements containing an Href
+/// attribute, so we can prevent page refresh for internal links, and route
+/// internally. Run this on load.
 #[allow(clippy::option_map_unit_fn)]
 pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
     let closure = Closure::new(move |event: web_sys::Event| {

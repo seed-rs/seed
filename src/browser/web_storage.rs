@@ -1,5 +1,7 @@
 use crate::browser::util::window;
+use js_sys::JSON;
 use serde::{de::DeserializeOwned, Serialize};
+use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
 use web_sys::Storage;
 
@@ -14,13 +16,21 @@ pub enum WebStorageError {
     GetStorageError(JsValue),
     StorageNotFoundError,
     ClearError(JsValue),
-    GetlengthError(JsValue),
+    GetLengthError(JsValue),
     GetKeyError(JsValue),
     KeyNotFoundError,
     RemoveError(JsValue),
     GetError(JsValue),
     InsertError(JsValue),
-    SerdeError(serde_json::Error),
+    SerdeError(swb::Error),
+    ParseError(JsValue),
+    ConversionError,
+}
+
+impl From<swb::Error> for WebStorageError {
+    fn from(v: swb::Error) -> Self {
+        Self::SerdeError(v)
+    }
 }
 
 // ------ LocalStorage ------
@@ -115,7 +125,7 @@ pub trait WebStorage {
     fn len() -> Result<u32> {
         Self::storage()?
             .length()
-            .map_err(WebStorageError::GetlengthError)
+            .map_err(WebStorageError::GetLengthError)
     }
 
     /// Returns the key in the given position.
@@ -155,13 +165,17 @@ pub trait WebStorage {
     /// or find the key or deserialize the value.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/getItem)
-    fn get<T: DeserializeOwned>(key: impl AsRef<str>) -> Result<T> {
-        Self::storage()?
+    fn get<T>(key: impl AsRef<str>) -> Result<T>
+    where
+        T: DeserializeOwned,
+    {
+        let item: String = Self::storage()?
             .get_item(key.as_ref())
             .map_err(WebStorageError::GetError)?
-            .ok_or(WebStorageError::KeyNotFoundError)
-            .map(|value| serde_json::from_str(&value))?
-            .map_err(WebStorageError::SerdeError)
+            .ok_or(WebStorageError::KeyNotFoundError)?;
+        let js: JsValue = JSON::parse(&item).map_err(WebStorageError::ParseError)?;
+
+        Ok(swb::from_value(js)?)
     }
 
     /// Insert a key-value pair. The value will be serialized.
@@ -174,8 +188,13 @@ pub trait WebStorage {
     /// or serialize the value or insert/update the pair.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem)
-    fn insert<T: Serialize + ?Sized>(key: impl AsRef<str>, value: &T) -> Result<()> {
-        let value = serde_json::to_string(value).map_err(WebStorageError::SerdeError)?;
+    fn insert<T>(key: impl AsRef<str>, value: &T) -> Result<()>
+    where
+        T: Serialize,
+    {
+        let value = swb::to_value(value)?
+            .as_string()
+            .ok_or(WebStorageError::ConversionError)?;
 
         Self::storage()?
             .set_item(key.as_ref(), &value)

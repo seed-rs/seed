@@ -29,6 +29,7 @@
 //! [fetch-mdn]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 
 use crate::util::window;
+use serde_wasm_bindgen as swb;
 use std::convert::TryInto;
 use wasm_bindgen_futures::JsFuture;
 
@@ -88,13 +89,20 @@ pub async fn fetch<'a>(request: impl Into<Request<'a>>) -> Result<Response> {
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum FetchError {
-    SerdeError(serde_json::Error),
+    SerdeError(swb::Error),
     DomException(web_sys::DomException),
     PromiseError(wasm_bindgen::JsValue),
     NetworkError(wasm_bindgen::JsValue),
     /// Request construction failed.
     RequestError(wasm_bindgen::JsValue),
     StatusError(Status),
+    ConversionError,
+}
+
+impl From<swb::Error> for FetchError {
+    fn from(v: swb::Error) -> Self {
+        Self::SerdeError(v)
+    }
 }
 
 #[cfg(test)]

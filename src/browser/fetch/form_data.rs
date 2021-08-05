@@ -21,6 +21,7 @@
 
 use crate::fetch::{FetchError, Result};
 use serde::Serialize;
+use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
 
 pub struct FormData(web_sys::FormData);
@@ -60,9 +61,12 @@ impl FormData {
     #[allow(clippy::missing_panics_doc)]
     pub fn append_json<T>(&mut self, name: &str, data: &T) -> Result<()>
     where
-        T: Serialize + ?Sized,
+        T: Serialize,
     {
-        let str = serde_json::to_string(data).map_err(FetchError::SerdeError)?;
+        // FIXME Can a different `append` be used to append a `JsValue` directly?
+        let str = swb::to_value(data)?
+            .as_string()
+            .ok_or(FetchError::ConversionError)?;
         self.0.append_with_str(name, &str).unwrap();
         Ok(())
     }
@@ -72,7 +76,7 @@ impl FormData {
     /// Will return `Err` if serialization fails.
     pub fn with_json<T>(mut self, name: &str, data: &T) -> Result<Self>
     where
-        T: Serialize + ?Sized,
+        T: Serialize,
     {
         self.append_json(name, data)?;
         Ok(self)

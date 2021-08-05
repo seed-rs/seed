@@ -1,5 +1,6 @@
 use super::{Result, WebSocketError};
 use serde::de::DeserializeOwned;
+use serde_wasm_bindgen as swb;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::MessageEvent;
 
@@ -27,11 +28,12 @@ impl WebSocketMessage {
     /// # Errors
     ///
     /// Returns
-    /// - `WebSocketError::TextError` if data isn't a valid utf-8 string.
     /// - `WebSocketError::SerdeError` when JSON decoding fails.
-    pub fn json<T: DeserializeOwned + 'static>(&self) -> Result<T> {
-        let text = self.text()?;
-        serde_json::from_str(&text).map_err(WebSocketError::SerdeError)
+    pub fn json<T>(&self) -> Result<T>
+    where
+        T: DeserializeOwned + 'static,
+    {
+        swb::from_value(self.data.clone()).map_err(WebSocketError::SerdeError)
     }
 
     /// Return message data as `Vec<u8>`.

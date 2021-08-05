@@ -1,6 +1,7 @@
 use crate::app::Orders;
 use gloo_file::FileReadError;
 use serde::Serialize;
+use serde_wasm_bindgen as swb;
 use wasm_bindgen::{JsCast, JsValue};
 
 mod builder;
@@ -49,11 +50,18 @@ pub type CloseEvent = web_sys::CloseEvent;
 pub enum WebSocketError {
     TextError(&'static str),
     SendError(JsValue),
-    SerdeError(serde_json::Error),
+    SerdeError(swb::Error),
+    ConversionError,
     PromiseError(JsValue),
     FileReaderError(FileReadError),
     OpenError(JsValue),
     CloseError(JsValue),
+}
+
+impl From<swb::Error> for WebSocketError {
+    fn from(v: swb::Error) -> Self {
+        Self::SerdeError(v)
+    }
 }
 
 // ------ WebSocket ------
@@ -106,7 +114,10 @@ impl WebSocket {
     /// # Errors
     ///
     /// Returns error when sending fails.
-    pub fn send_text(&self, message: impl AsRef<str>) -> Result<()> {
+    pub fn send_text<S>(&self, message: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         self.ws
             .send_with_str(message.as_ref())
             .map_err(WebSocketError::SendError)
@@ -117,8 +128,13 @@ impl WebSocket {
     /// # Errors
     ///
     /// Returns error when JSON serialization or sending fails.
-    pub fn send_json<T: Serialize + ?Sized>(&self, data: &T) -> Result<()> {
-        let data = serde_json::to_string(data).map_err(WebSocketError::SerdeError)?;
+    pub fn send_json<T>(&self, data: &T) -> Result<()>
+    where
+        T: Serialize,
+    {
+        let data = swb::to_value(data)?
+            .as_string()
+            .ok_or(WebSocketError::ConversionError)?;
         self.send_text(data)
     }
 
