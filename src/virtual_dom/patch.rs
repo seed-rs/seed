@@ -226,24 +226,24 @@ pub(crate) fn patch_els<'a, Ms, Mdl, INodes, OI, NI>(
             PatchCommand::AppendEl { el_new } => append_el(document, el_new, old_el_ws, mailbox),
             PatchCommand::AppendText { text_new } => append_text(document, text_new, old_el_ws),
             PatchCommand::InsertEl { el_new, next_node } => {
-                insert_el(document, el_new, old_el_ws, next_node, mailbox)
+                insert_el(document, el_new, old_el_ws, next_node, mailbox);
             }
             PatchCommand::InsertText {
                 text_new,
                 next_node,
             } => insert_text(document, text_new, old_el_ws, next_node),
             PatchCommand::PatchEl { el_old, el_new } => {
-                patch_el(document, el_old, el_new, mailbox, app)
+                patch_el(document, el_old, el_new, mailbox, app);
             }
             PatchCommand::PatchText { text_old, text_new } => patch_text(text_old, text_new),
             PatchCommand::ReplaceElByEl { el_old, el_new } => {
-                replace_el_by_el(document, el_old, el_new, old_el_ws, mailbox)
+                replace_el_by_el(document, el_old, el_new, old_el_ws, mailbox);
             }
             PatchCommand::ReplaceTextByEl { text_old, el_new } => {
-                replace_text_by_el(document, text_old, el_new, old_el_ws, mailbox)
+                replace_text_by_el(document, text_old, el_new, old_el_ws, mailbox);
             }
             PatchCommand::ReplaceElByText { el_old, text_new } => {
-                replace_el_by_text(document, el_old, text_new, old_el_ws)
+                replace_el_by_text(document, el_old, text_new, old_el_ws);
             }
             PatchCommand::RemoveEl { el_old } => remove_el(el_old, old_el_ws),
             PatchCommand::RemoveText { text_old } => remove_text(text_old, old_el_ws),

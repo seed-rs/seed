@@ -125,7 +125,7 @@ pub(crate) fn make_websys_el<Ms>(el: &mut El<Ms>, document: &web_sys::Document) 
     // Style is just an attribute in the actual Dom, but is handled specially in our vdom;
     // merge the different parts of style here.
     if el.style.vals.keys().len() > 0 {
-        set_style(&el_ws, &el.style)
+        set_style(&el_ws, &el.style);
     }
 
     el_ws.into()
@@ -263,7 +263,7 @@ pub(crate) fn patch_el_details<Ms>(
         }
         .unwrap_or_else(|err| {
             crate::error(err);
-        })
+        });
     }
     // Remove attributes that aren't in the new vdom.
     for (key, old_val) in &old.attrs.vals {
@@ -291,7 +291,7 @@ pub(crate) fn patch_el_details<Ms>(
                     }
                     .unwrap_or_else(|err| {
                         crate::error(err);
-                    })
+                    });
                 }
                 None => {
                     crate::error("Minor error on html element (setting attrs)");
@@ -310,7 +310,7 @@ pub(crate) fn patch_el_details<Ms>(
     // Patch style.
     if old.style != new.style {
         // We can't patch each part of style; rewrite the whole attribute.
-        set_style(old_el_ws, &new.style)
+        set_style(old_el_ws, &new.style);
     }
 }
 

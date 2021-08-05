@@ -43,7 +43,7 @@ pub type CloseEvent = web_sys::CloseEvent;
 
 // ------ WebSocketError ------
 
-#[allow(clippy::pub_enum_variant_names, clippy::module_name_repetitions)]
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 /// `WebSocket` error enum.
 /// You can find more details in documentation for methods that return those errors.
@@ -257,16 +257,16 @@ impl WebSocket {
         }
 
         if let Some(on_open) = &callbacks.on_open {
-            ws.set_onopen(Some(on_open.as_ref().unchecked_ref()))
+            ws.set_onopen(Some(on_open.as_ref().unchecked_ref()));
         }
         if let Some(on_close) = &callbacks.on_close {
-            ws.set_onclose(Some(on_close.as_ref().unchecked_ref()))
+            ws.set_onclose(Some(on_close.as_ref().unchecked_ref()));
         }
         if let Some(on_error) = &callbacks.on_error {
-            ws.set_onerror(Some(on_error.as_ref().unchecked_ref()))
+            ws.set_onerror(Some(on_error.as_ref().unchecked_ref()));
         }
         if let Some(on_message) = &callbacks.on_message {
-            ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()))
+            ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
         }
 
         Ok(Self { ws, callbacks })

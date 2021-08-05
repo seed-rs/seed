@@ -641,7 +641,7 @@ impl Request {
         for (name, value) in &self.headers {
             headers
                 .append(name.as_str(), value.as_str())
-                .expect("fetch: cannot create header")
+                .expect("fetch: cannot create header");
         }
         init.headers(&headers);
 

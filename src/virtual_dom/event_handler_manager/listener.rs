@@ -98,6 +98,6 @@ impl<T> Portal<T> {
 
     pub fn update(&self, f: impl FnOnce(T) -> T) {
         // @TODO replace with `Cell::update` once stable
-        self.0.set(self.0.take().map(f))
+        self.0.set(self.0.take().map(f));
     }
 }

@@ -198,7 +198,7 @@ impl<Ms> El<Ms> {
                 .expect("Can't find child in raw html element.");
 
             if let Some(child_vdom) = virtual_dom_bridge::node_from_ws(&child) {
-                result.push(child_vdom)
+                result.push(child_vdom);
             }
         }
         result

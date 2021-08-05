@@ -68,7 +68,7 @@ impl<Ms> EventHandlerManager<Ms> {
                             Rc::clone(&group.event_handlers),
                             mailbox.clone(),
                         ))
-                    })
+                    });
             }
         }
     }

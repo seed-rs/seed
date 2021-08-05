@@ -38,19 +38,19 @@ impl<Ms> UpdateEl<Ms> for Style {
 
 impl<Ms> UpdateEl<Ms> for EventHandler<Ms> {
     fn update_el(self, el: &mut El<Ms>) {
-        el.event_handler_manager.add_event_handlers(vec![self])
+        el.event_handler_manager.add_event_handlers(vec![self]);
     }
 }
 
 impl<Ms> UpdateEl<Ms> for El<Ms> {
     fn update_el(self, el: &mut El<Ms>) {
-        el.children.push(Node::Element(self))
+        el.children.push(Node::Element(self));
     }
 }
 
 impl<Ms> UpdateEl<Ms> for Node<Ms> {
     fn update_el(self, el: &mut El<Ms>) {
-        el.children.push(self)
+        el.children.push(self);
     }
 }
 
@@ -77,13 +77,13 @@ impl<Ms> UpdateEl<Ms> for ElKey {
 
 impl<Ms> UpdateEl<Ms> for String {
     fn update_el(self, el: &mut El<Ms>) {
-        el.children.push(Node::Text(Text::new(self)))
+        el.children.push(Node::Text(Text::new(self)));
     }
 }
 
 impl<Ms> UpdateEl<Ms> for &str {
     fn update_el(self, el: &mut El<Ms>) {
-        el.children.push(Node::Text(Text::new(self.to_string())))
+        el.children.push(Node::Text(Text::new(self.to_string())));
     }
 }
 
@@ -137,19 +137,19 @@ impl<Ms, T: UpdateEl<Ms>, I: Iterator<Item = T>> UpdateElForIterator<Ms> for I {
 
 impl<Ms, T: UpdateEl<Ms>> UpdateEl<Ms> for Option<T> {
     fn update_el(self, el: &mut El<Ms>) {
-        self.into_iter().update_el(el)
+        self.into_iter().update_el(el);
     }
 }
 
 impl<Ms, T: UpdateEl<Ms>> UpdateEl<Ms> for Vec<T> {
     fn update_el(self, el: &mut El<Ms>) {
-        self.into_iter().update_el(el)
+        self.into_iter().update_el(el);
     }
 }
 
 impl<Ms, T: UpdateEl<Ms> + Clone> UpdateEl<Ms> for &[T] {
     fn update_el(self, el: &mut El<Ms>) {
-        self.iter().update_el(el)
+        self.iter().update_el(el);
     }
 }
 
