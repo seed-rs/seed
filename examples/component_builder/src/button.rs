@@ -244,7 +244,7 @@ impl<Ms> Default for Button<Ms> {
 // E.g. `div![Button::new("My button")]`
 impl<Ms> UpdateEl<Ms> for Button<Ms> {
     fn update_el(self, el: &mut El<Ms>) {
-        self.view().update_el(el)
+        self.view().update_el(el);
     }
 }
 

@@ -38,10 +38,10 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::CounterA(msg) => {
-            counter::update(msg, &mut model.counter_a, Msg::CounterChanged, orders)
+            counter::update(msg, &mut model.counter_a, Msg::CounterChanged, orders);
         }
         Msg::CounterB(msg) => {
-            counter::update(msg, &mut model.counter_b, Msg::CounterChanged, orders)
+            counter::update(msg, &mut model.counter_b, Msg::CounterChanged, orders);
         }
         Msg::CounterClicked(counter_id) => log!("CounterClicked", counter_id),
         Msg::CounterChanged(value) => log!("CounterChanged", value),

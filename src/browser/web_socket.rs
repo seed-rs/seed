@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 use crate::app::Orders;
 use gloo_file::FileReadError;
 use serde::Serialize;

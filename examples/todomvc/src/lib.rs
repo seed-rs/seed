@@ -137,7 +137,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let all_todos_completed = data.todos.values().all(|todo| todo.completed);
 
             for (_, todo) in &mut data.todos {
-                todo.completed = !all_todos_completed
+                todo.completed = !all_todos_completed;
             }
         }
 
@@ -176,7 +176,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::EditingTodoTitleChanged(title) => {
             if let Some(ref mut editing_todo) = data.editing_todo {
-                editing_todo.title = title
+                editing_todo.title = title;
             }
         }
         Msg::SaveEditingTodo => {

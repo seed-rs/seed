@@ -86,7 +86,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::StartTimer => {
             model.timer_handle =
-                Some(orders.stream_with_handle(streams::interval(1000, || Msg::OnTick)))
+                Some(orders.stream_with_handle(streams::interval(1000, || Msg::OnTick)));
         }
         Msg::StopTimer => {
             model.timer_handle = None;

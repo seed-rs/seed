@@ -6,6 +6,8 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
+# https://github.com/leudz/shipyard/issues/129
+path = "src/empty_lib.rs"
 
 [dependencies]
 seed = {path = "../../"}
