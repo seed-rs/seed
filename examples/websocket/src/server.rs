@@ -83,5 +83,5 @@ fn handle_binary_message(client_id: usize, msg: Message) -> Message {
 
 fn main() {
     // Listen on an address and call the closure for each connection
-    listen("127.0.0.1:9000", |out| Server { out }).unwrap()
+    listen("127.0.0.1:9000", |out| Server { out }).unwrap();
 }

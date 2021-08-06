@@ -70,7 +70,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             if let Some(controller) = &model.request_controller {
                 controller.disable_timeout().expect("disable timeout");
             }
-            model.status = Status::WaitingForResponse(TimeoutStatus::Disabled)
+            model.status = Status::WaitingForResponse(TimeoutStatus::Disabled);
         }
 
         Msg::Fetched(fetch_result) => {

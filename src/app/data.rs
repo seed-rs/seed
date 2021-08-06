@@ -6,7 +6,7 @@ use wasm_bindgen::closure::Closure;
 
 type StoredPopstate = RefCell<Option<Closure<dyn FnMut(web_sys::Event)>>>;
 
-#[allow(clippy::type_complexity)]
+#[allow(clippy::type_complexity, dead_code)]
 pub(crate) struct AppData<Ms: 'static, Mdl> {
     pub model: RefCell<Option<Mdl>>,
     pub(crate) root_el: RefCell<Option<El<Ms>>>,

@@ -44,7 +44,7 @@ async fn form(mut form: Multipart) -> String {
         let mut field_bytes: Vec<u8> = Vec::new();
         while let Some(Ok(bytes)) = field.next().await {
             for byte in bytes {
-                field_bytes.push(byte)
+                field_bytes.push(byte);
             }
         }
 
@@ -60,6 +60,7 @@ async fn form(mut form: Multipart) -> String {
     output
 }
 
+#[allow(clippy::unused_async)]
 async fn index() -> Result<NamedFile> {
     Ok(NamedFile::open("./client/index.html")?)
 }

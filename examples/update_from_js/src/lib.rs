@@ -42,7 +42,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 //
                 // _Note:_ Create an issue in Seed's repo if this solution is not usable for you,
                 // we can find another one or try to integrate some locks.
-                orders.perform_cmd(async { enableClock() });
+                orders.perform_cmd(async {
+                    enableClock();
+                });
             } else {
                 log!("JS is NOT ready!");
             }
@@ -81,11 +83,11 @@ pub fn start() -> Box<[JsValue]> {
 
 fn create_closures_for_js(app: &App<Msg, Model, Node<Msg>>) -> Box<[JsValue]> {
     let js_ready = wrap_in_permanent_closure(enc!((app) move |ready| {
-        app.update(Msg::JsReady(ready))
+        app.update(Msg::JsReady(ready));
     }));
 
     let tick = wrap_in_permanent_closure(enc!((app) move |time| {
-        app.update(Msg::Tick(time))
+        app.update(Msg::Tick(time));
     }));
 
     vec![js_ready, tick].into_boxed_slice()
