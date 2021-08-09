@@ -16,6 +16,7 @@
 use apply::Apply;
 use futures::future::try_join_all;
 use seed::{prelude::*, *};
+use serde_wasm_bindgen as swb;
 
 // ------ ------
 //     Init
@@ -111,7 +112,7 @@ pub enum ServiceWorkerError {
     InvalidPermissions,
     WorkerRegistration(JsValue),
     RequestPermission(JsValue),
-    SerdeJson(serde_json::error::Error),
+    SerdeJson(swb::Error),
     WorkerUnregistration(Option<JsValue>),
 }
 
@@ -132,7 +133,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         get_subscription
                             .await
                             .ok()
-                            .and_then(|subscription| subscription.into_serde().ok())
+                            .and_then(|subscription| swb::from_value(subscription).ok())
                     })
                 });
             };
@@ -273,12 +274,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .expect("get `PushManager`");
             // @TODO: Replace the call to `subscribe` with the web_sys equivalent when wasm_bindgen releases a version >= 0.2.68.
             orders.perform_cmd(async move {
-                Msg::Subscribed(
-                    subscribe(&push_manager, key)
-                        .await
-                        .into_serde()
-                        .map_err(ServiceWorkerError::SerdeJson),
-                )
+                let js = subscribe(&push_manager, key).await;
+                Msg::Subscribed(swb::from_value(js).map_err(ServiceWorkerError::SerdeJson))
             });
         }
         Msg::NotificationPermissionRequested(Ok(_)) => {
@@ -328,7 +325,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                             .await
                             .expect("get cache keys");
                         let keys: Vec<String> =
-                            JsValue::into_serde(&keys).map_err(ServiceWorkerError::SerdeJson)?;
+                            swb::from_value(keys).map_err(ServiceWorkerError::SerdeJson)?;
 
                         let futures = keys
                             .into_iter()
