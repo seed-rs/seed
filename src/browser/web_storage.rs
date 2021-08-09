@@ -165,8 +165,9 @@ pub trait WebStorage {
     /// or find the key or deserialize the value.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/getItem)
-    fn get<T>(key: impl AsRef<str>) -> Result<T>
+    fn get<S, T>(key: S) -> Result<T>
     where
+        S: AsRef<str>,
         T: DeserializeOwned,
     {
         let item: String = Self::storage()?
@@ -188,8 +189,9 @@ pub trait WebStorage {
     /// or serialize the value or insert/update the pair.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem)
-    fn insert<T>(key: impl AsRef<str>, value: &T) -> Result<()>
+    fn insert<S, T>(key: S, value: &T) -> Result<()>
     where
+        S: AsRef<str>,
         T: Serialize,
     {
         let value = swb::to_value(value)?
@@ -219,7 +221,7 @@ mod tests {
         LocalStorage::clear().unwrap();
 
         let value: String = {
-            LocalStorage::insert("a_key", "a_value").unwrap();
+            LocalStorage::insert(&"a_key", &"a_value").unwrap();
             LocalStorage::get("a_key").unwrap()
         };
         assert_eq!("a_value", value)
@@ -230,8 +232,8 @@ mod tests {
         LocalStorage::clear().unwrap();
         assert_eq!(0, LocalStorage::len().unwrap());
 
-        LocalStorage::insert("key_1", "a_value").unwrap();
-        LocalStorage::insert("key_2", "a_value").unwrap();
+        LocalStorage::insert(&"key_1", &"a_value").unwrap();
+        LocalStorage::insert(&"key_2", &"a_value").unwrap();
         assert_eq!(2, LocalStorage::len().unwrap());
 
         LocalStorage::clear().unwrap();
@@ -242,7 +244,7 @@ mod tests {
     fn local_storage_key() {
         SessionStorage::clear().unwrap();
 
-        SessionStorage::insert("a_key", "a_value").unwrap();
+        SessionStorage::insert(&"a_key", &"a_value").unwrap();
         assert_eq!("a_key", SessionStorage::key(0).unwrap());
     }
 
@@ -250,7 +252,7 @@ mod tests {
     fn local_storage_remove() {
         SessionStorage::clear().unwrap();
 
-        SessionStorage::insert("a_key", "a_value").unwrap();
+        SessionStorage::insert(&"a_key", &"a_value").unwrap();
         SessionStorage::remove("a_key").unwrap();
         assert_eq!(0, SessionStorage::len().unwrap());
     }
@@ -262,7 +264,7 @@ mod tests {
         SessionStorage::clear().unwrap();
 
         let value: String = {
-            SessionStorage::insert("a_key", "a_value").unwrap();
+            SessionStorage::insert(&"a_key", &"a_value").unwrap();
             SessionStorage::get("a_key").unwrap()
         };
         assert_eq!("a_value", value)
@@ -273,8 +275,8 @@ mod tests {
         SessionStorage::clear().unwrap();
         assert_eq!(0, SessionStorage::len().unwrap());
 
-        SessionStorage::insert("key_1", "a_value").unwrap();
-        SessionStorage::insert("key_2", "a_value").unwrap();
+        SessionStorage::insert(&"key_1", &"a_value").unwrap();
+        SessionStorage::insert("&key_2", &"a_value").unwrap();
         assert_eq!(2, SessionStorage::len().unwrap());
 
         SessionStorage::clear().unwrap();
@@ -285,7 +287,7 @@ mod tests {
     fn session_storage_key() {
         SessionStorage::clear().unwrap();
 
-        SessionStorage::insert("a_key", "a_value").unwrap();
+        SessionStorage::insert(&"a_key", &"a_value").unwrap();
         assert_eq!("a_key", SessionStorage::key(0).unwrap());
     }
 
@@ -293,7 +295,7 @@ mod tests {
     fn session_storage_remove() {
         SessionStorage::clear().unwrap();
 
-        SessionStorage::insert("a_key", "a_value").unwrap();
+        SessionStorage::insert(&"a_key", &"a_value").unwrap();
         SessionStorage::remove("a_key").unwrap();
         assert_eq!(0, SessionStorage::len().unwrap());
     }
