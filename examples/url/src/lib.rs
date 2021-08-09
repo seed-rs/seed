@@ -55,7 +55,7 @@ enum Msg {
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::UrlChanged(subs::UrlChanged(url)) => {
-            *model = Model::new(url, orders.clone_base_path())
+            *model = Model::new(url, orders.clone_base_path());
         }
         Msg::GoToUrl(url) => {
             orders.request_url(url);
@@ -79,7 +79,7 @@ fn view(model: &Model) -> Node<Msg> {
                             ("x", vec!["1"])
                         ]))
                         .set_hash("hash")
-                        .go_and_load()
+                        .go_and_load();
                 })
             ],
         ],
@@ -102,7 +102,7 @@ fn view(model: &Model) -> Node<Msg> {
             button![
                 "Go to '/' and don't trigger `UrlChanged`",
                 ev(Ev::Click, |_| {
-                    Url::new().go_and_push()
+                    Url::new().go_and_push();
                 })
             ],
         ],
@@ -110,7 +110,7 @@ fn view(model: &Model) -> Node<Msg> {
             button![
                 "Go back",
                 ev(Ev::Click, |_| {
-                    Url::go_back(1)
+                    Url::go_back(1);
                 })
             ],
         ],
@@ -124,7 +124,7 @@ fn view(model: &Model) -> Node<Msg> {
             button![
                 "Go to 'https://example.com'",
                 ev(Ev::Click, |_| {
-                    Url::go_and_load_with_str("https://example.com")
+                    Url::go_and_load_with_str("https://example.com");
                 })
             ],
         ],

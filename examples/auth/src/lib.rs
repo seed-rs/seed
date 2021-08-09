@@ -62,7 +62,7 @@ impl Page {
         match url.next_path_part() {
             None => {
                 if let Some(user) = user {
-                    send_request_to_top_secret(user.token.clone(), orders)
+                    send_request_to_top_secret(user.token.clone(), orders);
                 };
                 Self::Home
             }

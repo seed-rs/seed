@@ -38,7 +38,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::RotateCheckboxState(name) => {
             if name == "checkbox-tristate" {
-                model.checkbox_state = model.checkbox_state.next()
+                model.checkbox_state = model.checkbox_state.next();
             }
         }
         Msg::InputChanged(value) => {

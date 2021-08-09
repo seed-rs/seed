@@ -130,12 +130,12 @@ fn clear_file_input() {
         .and_then(|element| element.dyn_into::<web_sys::HtmlInputElement>().ok())
         .map(|file_input| {
             // Note: `file_input.set_files(None)` doesn't work
-            file_input.set_value("")
+            file_input.set_value("");
         });
 }
 
 fn toggle(value: &mut bool) {
-    *value = !*value
+    *value = !*value;
 }
 
 // ------ ------

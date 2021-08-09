@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 use crate::browser::dom::virtual_dom_bridge;
 use crate::browser::{
     service::routing,
