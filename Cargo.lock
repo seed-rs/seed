@@ -2276,6 +2276,7 @@ dependencies = [
  "apply",
  "seed",
  "serde",
+ "serde-wasm-bindgen 0.3.0",
  "serde_json",
  "tokio",
  "tracing",
