@@ -53,7 +53,7 @@ dependencies = ["build_release"]
 [tasks.test_firefox]
 description = "Test with wasm-pack in Firefox"
 command = "wasm-pack"
-args = ["test", "client", "--firefox", "--headless"]
+args = ["test", "--firefox", "--headless", "client"]
 
 # ---- LINT ----
 
