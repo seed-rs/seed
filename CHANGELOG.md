@@ -26,6 +26,8 @@
 - Added `sl_input` to the `custom_elements` example.
 - [BREAKING] Changed `Request.body` to take its argument by reference.
 - Adapted to Rust 1.53.0.
+- Removed internal `serde_json` usage in favour of `serde-wasm-bindgen`. This reduces final binary size for downstream users.
+- [BREAKING] Removed the deprecated `browser::service::fetch` module.
 
 ## v0.8.0
 

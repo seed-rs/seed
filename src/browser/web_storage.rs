@@ -166,10 +166,10 @@ pub trait WebStorage {
     /// or find the key or deserialize the value.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/getItem)
-    fn get<S, T>(key: S) -> Result<T>
+    fn get<K, V>(key: K) -> Result<V>
     where
-        S: AsRef<str>,
-        T: DeserializeOwned,
+        K: AsRef<str>,
+        V: DeserializeOwned,
     {
         let item: String = Self::storage()?
             .get_item(key.as_ref())
@@ -191,10 +191,10 @@ pub trait WebStorage {
     /// or serialize the value or insert/update the pair.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem)
-    fn insert<S, T>(key: S, value: &T) -> Result<()>
+    fn insert<K, V>(key: K, value: &V) -> Result<()>
     where
-        S: AsRef<str>,
-        T: Serialize,
+        K: AsRef<str>,
+        V: Serialize,
     {
         let js: JsValue = swb::to_value(value)?;
         let st: JsString = JSON::stringify(&js).map_err(WebStorageError::StringifyError)?;

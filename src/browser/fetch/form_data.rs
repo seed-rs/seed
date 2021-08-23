@@ -63,7 +63,7 @@ impl FormData {
     where
         T: Serialize,
     {
-        // FIXME Can a different `append` be used to append a `JsValue` directly?
+        // @TODO Can a different `append` be used to append a `JsValue` directly?
         let str = swb::to_value(data)?
             .as_string()
             .ok_or(FetchError::ConversionError)?;
