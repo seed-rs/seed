@@ -17,7 +17,7 @@ pub use mailbox::Mailbox;
 pub use node::{el_key, El, ElKey, IntoNodes, Node, Text};
 pub use style::Style;
 pub use to_classes::ToClasses;
-pub use update_el::{UpdateEl, UpdateElForIterator};
+pub use update_el::{UpdateEl, UpdateElForIterator, UpdateElForOptionIterator};
 pub use values::{AsAtValue, AtValue, CSSValue};
 pub use view::View;
 

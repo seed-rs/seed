@@ -14,6 +14,11 @@ pub trait UpdateElForIterator<Ms> {
     fn update_el(self, el: &mut El<Ms>);
 }
 
+/// Similar to `UpdateEl`, specialized for `Option<I> where I: Iterator`.
+pub trait UpdateElForOptionIterator<Ms> {
+    fn update_el_iter(self, el: &mut El<Ms>);
+}
+
 // ------ Implementations ------
 
 impl<Ms, T: UpdateEl<Ms> + Clone> UpdateEl<Ms> for &T {
@@ -131,6 +136,16 @@ impl<Ms, T: UpdateEl<Ms>, I: Iterator<Item = T>> UpdateElForIterator<Ms> for I {
     fn update_el(self, el: &mut El<Ms>) {
         for item in self {
             item.update_el(el);
+        }
+    }
+}
+
+impl<Ms, T: UpdateEl<Ms>, I: Iterator<Item = T>> UpdateElForOptionIterator<Ms> for Option<I> {
+    fn update_el_iter(self, el: &mut El<Ms>) {
+        if let Some(iter) = self {
+            for item in iter {
+                item.update_el(el);
+            }
         }
     }
 }
