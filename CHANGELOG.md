@@ -28,6 +28,7 @@
 - Adapted to Rust 1.53.0.
 - Removed internal `serde_json` usage in favour of `serde-wasm-bindgen`. This reduces final binary size for downstream users.
 - [BREAKING] Removed the deprecated `browser::service::fetch` module.
+- Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
 
 ## v0.8.0
 
