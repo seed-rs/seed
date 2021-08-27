@@ -196,9 +196,10 @@ pub trait WebStorage {
         K: AsRef<str>,
         V: Serialize + ?Sized,
     {
-        let js: JsValue = swb::to_value(value)?;
-        let st: JsString = JSON::stringify(&js).map_err(WebStorageError::StringifyError)?;
-        let value: String = st.as_string().ok_or(WebStorageError::ConversionError)?;
+        let value: String = JSON::stringify(&swb::to_value(value)?)
+            .map_err(WebStorageError::StringifyError)?
+            .as_string()
+            .ok_or(WebStorageError::ConversionError)?;
 
         Self::storage()?
             .set_item(key.as_ref(), &value)
