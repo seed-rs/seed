@@ -61,7 +61,7 @@ impl FormData {
     #[allow(clippy::missing_panics_doc)]
     pub fn append_json<T>(&mut self, name: &str, data: &T) -> Result<()>
     where
-        T: Serialize,
+        T: Serialize + ?Sized,
     {
         // @TODO Can a different `append` be used to append a `JsValue` directly?
         let str = swb::to_value(data)?
@@ -76,7 +76,7 @@ impl FormData {
     /// Will return `Err` if serialization fails.
     pub fn with_json<T>(mut self, name: &str, data: &T) -> Result<Self>
     where
-        T: Serialize,
+        T: Serialize + ?Sized,
     {
         self.append_json(name, data)?;
         Ok(self)

@@ -89,10 +89,7 @@ impl<'a> Request<'a> {
     ///
     /// This method can fail if JSON serialization fail. It will then
     /// return `FetchError::SerdeError`.
-    pub fn json<T>(mut self, data: &T) -> Result<Self>
-    where
-        T: Serialize,
-    {
+    pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
         let body = swb::to_value(data)?;
         self.body = Some(Cow::Owned(body));
         Ok(self.header(Header::content_type("application/json; charset=utf-8")))

@@ -130,10 +130,7 @@ impl WebSocket {
     /// # Errors
     ///
     /// Returns error when JSON serialization or sending fails.
-    pub fn send_json<T>(&self, data: &T) -> Result<()>
-    where
-        T: Serialize,
-    {
+    pub fn send_json<T: Serialize + ?Sized>(&self, data: &T) -> Result<()> {
         let data = swb::to_value(data)?
             .as_string()
             .ok_or(WebSocketError::ConversionError)?;
