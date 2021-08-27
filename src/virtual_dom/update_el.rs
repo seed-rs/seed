@@ -15,6 +15,7 @@ pub trait UpdateElForIterator<Ms> {
 }
 
 /// Similar to `UpdateEl`, specialized for `Option<I> where I: Iterator`.
+#[allow(clippy::module_name_repetitions)]
 pub trait UpdateElForOptionIterator<Ms> {
     fn update_el(self, el: &mut El<Ms>);
 }
