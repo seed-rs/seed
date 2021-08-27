@@ -199,7 +199,8 @@ pub mod prelude {
         shortcuts::*,
         virtual_dom::{
             el_key, el_ref::el_ref, AsAtValue, At, AtValue, CSSValue, El, ElRef, Ev, EventHandler,
-            IntoNodes, Node, St, Tag, ToClasses, UpdateEl, UpdateElForIterator, View,
+            IntoNodes, Node, St, Tag, ToClasses, UpdateEl, UpdateElForIterator,
+            UpdateElForOptionIterator, View,
         },
     };
     pub use indexmap::IndexMap; // for attrs and style to work.
