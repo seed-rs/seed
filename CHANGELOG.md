@@ -29,6 +29,7 @@
 - Removed internal `serde_json` usage in favour of `serde-wasm-bindgen`. This reduces final binary size for downstream users.
 - [BREAKING] Removed the deprecated `browser::service::fetch` module.
 - Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
+- Add method to return detailed error response from server with `FetchError`.
 
 ## v0.8.0
 

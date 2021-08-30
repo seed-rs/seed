@@ -101,6 +101,26 @@ impl Response {
         }
     }
 
+    /// Check that response status is ok (2xx), in case of error return a tuple of error and Option<String>
+    /// with the error response from a server.
+    ///
+    /// ```rust
+    /// fetch(url).await?.check_detailed_status()?
+    /// ```
+    ///
+    /// # Errors
+    /// Returns a tuple of `FetchError` and `Option<String>` with error details if status isn't 2xx.
+    pub async fn check_detailed_status(
+        self,
+    ) -> std::result::Result<Self, (FetchError, Option<String>)> {
+        let status = self.status();
+        if status.is_ok() {
+            Ok(self)
+        } else {
+            Err((FetchError::StatusError(status), self.text().await.ok()))
+        }
+    }
+
     /// Get underlying `web_sys::Response`.
     ///
     /// This is an escape path if current API can't handle your needs.
