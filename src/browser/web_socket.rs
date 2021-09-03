@@ -2,6 +2,7 @@
 
 use crate::app::Orders;
 use gloo_file::FileReadError;
+use js_sys::JSON;
 use serde::Serialize;
 use serde_wasm_bindgen as swb;
 use wasm_bindgen::{JsCast, JsValue};
@@ -131,7 +132,8 @@ impl WebSocket {
     ///
     /// Returns error when JSON serialization or sending fails.
     pub fn send_json<T: Serialize + ?Sized>(&self, data: &T) -> Result<()> {
-        let data = swb::to_value(data)?
+        let data = JSON::stringify(&swb::to_value(data)?)
+            .map_err(|_| WebSocketError::ConversionError)?
             .as_string()
             .ok_or(WebSocketError::ConversionError)?;
         self.send_text(data)
