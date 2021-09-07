@@ -20,6 +20,7 @@
 //! details on the behavior of the underlying API.
 
 use crate::fetch::{FetchError, Result};
+use js_sys::JSON;
 use serde::Serialize;
 use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
@@ -64,9 +65,9 @@ impl FormData {
         T: Serialize + ?Sized,
     {
         // @TODO Can a different `append` be used to append a `JsValue` directly?
-        let str = swb::to_value(data)?
-            .as_string()
-            .ok_or(FetchError::ConversionError)?;
+        let str: String = JSON::stringify(&swb::to_value(data)?)
+            .map_err(|_| FetchError::ConversionError)?
+            .into();
         self.0.append_with_str(name, &str).unwrap();
         Ok(())
     }

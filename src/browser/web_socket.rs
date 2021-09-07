@@ -132,10 +132,9 @@ impl WebSocket {
     ///
     /// Returns error when JSON serialization or sending fails.
     pub fn send_json<T: Serialize + ?Sized>(&self, data: &T) -> Result<()> {
-        let data = JSON::stringify(&swb::to_value(data)?)
+        let data: String = JSON::stringify(&swb::to_value(data)?)
             .map_err(|_| WebSocketError::ConversionError)?
-            .as_string()
-            .ok_or(WebSocketError::ConversionError)?;
+            .into();
         self.send_text(data)
     }
 
