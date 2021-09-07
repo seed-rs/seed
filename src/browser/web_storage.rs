@@ -198,8 +198,7 @@ pub trait WebStorage {
     {
         let value: String = JSON::stringify(&swb::to_value(value)?)
             .map_err(WebStorageError::StringifyError)?
-            .as_string()
-            .ok_or(WebStorageError::ConversionError)?;
+            .into();
 
         Self::storage()?
             .set_item(key.as_ref(), &value)
