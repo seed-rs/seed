@@ -28,7 +28,7 @@ Seed has a batteries-included approach. This means less time writing boilerplate
 - It's newer. It's harder to find support outside of Discord.
 - WebAssembly is newer with less support. [Browser compatibility is at 92.9%](https://caniuse.com/?search=webassembly).
 - Pre-built components are rare. You will likely have to roll your own components such as date pickers.
-- No server-side rendering yet [(#232)](#232).
+- No server-side rendering yet [#232](https://github.com/seed-rs/seed/issues/232).
 - You may prefer other Rust frameworks like [MoonZoon](https://github.com/MoonZoon/MoonZoon) or [Yew](https://github.com/yewstack/yew).
 
 ## Getting Started
