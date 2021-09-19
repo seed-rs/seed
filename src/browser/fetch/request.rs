@@ -83,6 +83,25 @@ impl<'a> Request<'a> {
         self
     }
 
+    /// Set request body to provided `JsValue` by reference. Consider using
+    /// `json`, `text` or `bytes` methods instead.
+    ///
+    /// ## Panics
+    /// This method will panic when request method is GET or HEAD.
+    pub fn body_ref(mut self, body: &'a JsValue) -> Self {
+        self.body = Some(Cow::Borrowed(body));
+
+        #[cfg(debug_assertions)]
+        match self.method {
+            Method::Get | Method::Head => {
+                error!("GET and HEAD requests shoudn't have a body");
+            }
+            _ => {}
+        }
+
+        self
+    }
+
     /// Set request body by JSON encoding provided data.
     /// It will also set `Content-Type` header to `application/json; charset=utf-8`.
     ///
