@@ -24,7 +24,6 @@
 - Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox.
 - Added `fetch::form_data::FormData` and `Request.form_data`.
 - Added `sl_input` to the `custom_elements` example.
-- [BREAKING] Changed `Request.body` to take its argument by reference.
 - Adapted to Rust 1.53.0.
 - Added `swb` and `serde-json` features to use either `serde-wasm-bindgen` or `serde_json`. `swb` reduces final binary size for downstream users.
 - [BREAKING] Removed the deprecated `browser::service::fetch` module.
@@ -35,6 +34,7 @@
 - Added `page_trait` example.
 - Added `on_insert` event on elements, triggered when they are inserted into the DOM.
 - [BREAKING] `fetch::Error::SerdeError` changed to `fetch::Error::JsonError`
+- Added `Request.body_ref` to take the body by reference.
 
 ## v0.8.0
 
