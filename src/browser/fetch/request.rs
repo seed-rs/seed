@@ -64,12 +64,13 @@ impl<'a> Request<'a> {
         self
     }
 
-    /// Set request body to provided `JsValue`. Consider using `json`, `text`, or `bytes` methods instead.
+    /// Set request body to provided `JsValue`. Consider using `json`, `text`
+    /// or `bytes` methods instead.
     ///
     /// ## Panics
     /// This method will panic when request method is GET or HEAD.
-    pub fn body(mut self, body: &'a JsValue) -> Self {
-        self.body = Some(Cow::Borrowed(body));
+    pub fn body(mut self, body: JsValue) -> Self {
+        self.body = Some(Cow::Owned(body));
 
         #[cfg(debug_assertions)]
         match self.method {
