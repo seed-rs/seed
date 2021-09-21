@@ -1,4 +1,4 @@
-[![crates.io version](https://meritbadge.herokuapp.com/seed)](https://crates.io/crates/seed)
+[![crates.io version](https://img.shields.io/crates/v/seed.svg)](https://crates.io/crates/seed)
 [![crates.io downloads](https://img.shields.io/crates/d/seed.svg)](https://crates.io/crates/seed)
 [![docs.rs](https://docs.rs/seed/badge.svg)](https://docs.rs/seed)
 [![Built with cargo-make](https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg)](https://sagiegurari.github.io/cargo-make)
