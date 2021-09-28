@@ -14,7 +14,7 @@ impl<Ms> IntoNodes<Ms> for Node<Ms> {
     }
 }
 
-impl<Ms> IntoNodes<Ms> for Option<Node<Ms>> {
+impl<Ms, T: IntoNodes<Ms>> IntoNodes<Ms> for Option<T> {
     fn into_nodes(self) -> Vec<Node<Ms>> {
         self.map(IntoNodes::into_nodes).unwrap_or_default()
     }
@@ -23,11 +23,5 @@ impl<Ms> IntoNodes<Ms> for Option<Node<Ms>> {
 impl<Ms> IntoNodes<Ms> for Vec<Node<Ms>> {
     fn into_nodes(self) -> Vec<Node<Ms>> {
         self
-    }
-}
-
-impl<Ms> IntoNodes<Ms> for Option<Vec<Node<Ms>>> {
-    fn into_nodes(self) -> Vec<Node<Ms>> {
-        self.unwrap_or_default()
     }
 }
