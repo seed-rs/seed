@@ -8,7 +8,7 @@ pub mod el;
 pub mod into_nodes;
 pub mod text;
 
-pub use el::{el_key, El, ElKey};
+pub use el::{el_key, on_insert, El, ElKey, InsertEventHandler};
 pub use into_nodes::IntoNodes;
 pub use text::Text;
 

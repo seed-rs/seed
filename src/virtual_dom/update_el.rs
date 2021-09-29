@@ -1,4 +1,4 @@
-use super::{Attrs, El, ElKey, ElRef, EventHandler, Node, Style, Tag, Text};
+use super::{Attrs, El, ElKey, ElRef, EventHandler, InsertEventHandler, Node, Style, Tag, Text};
 
 // ------ Traits ------
 
@@ -45,6 +45,12 @@ impl<Ms> UpdateEl<Ms> for Style {
 impl<Ms> UpdateEl<Ms> for EventHandler<Ms> {
     fn update_el(self, el: &mut El<Ms>) {
         el.event_handler_manager.add_event_handlers(vec![self]);
+    }
+}
+
+impl<Ms> UpdateEl<Ms> for InsertEventHandler<Ms> {
+    fn update_el(self, el: &mut El<Ms>) {
+        el.insert_handlers.push(self);
     }
 }
 

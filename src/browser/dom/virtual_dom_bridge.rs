@@ -179,6 +179,12 @@ pub fn attach_el_and_children<Ms>(el: &mut El<Ms>, parent: &web_sys::Node, mailb
     el.event_handler_manager
         .attach_listeners(el_ws.clone(), None, mailbox);
 
+    for handler in &el.insert_handlers {
+        log!("attach_el_and_children");
+        let msg = handler.0(el_ws.clone());
+        mailbox.send(Some(msg));
+    }
+
     // appending the its children to the el_ws
     for child in &mut el.children {
         match child {
