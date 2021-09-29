@@ -9,6 +9,7 @@ use crate::browser::{
 };
 use std::borrow::Cow;
 use std::fmt;
+use std::rc::Rc;
 
 // ------ ElKey ------
 
@@ -48,6 +49,7 @@ pub struct El<Ms> {
     pub node_ws: Option<web_sys::Node>,
     pub refs: Vec<SharedNodeWs>,
     pub key: Option<ElKey>,
+    pub insert_handlers: Vec<InsertEventHandler<Ms>>,
 }
 
 // @TODO remove custom impl once https://github.com/rust-lang/rust/issues/26925 is fixed
@@ -63,6 +65,7 @@ impl<Ms> Clone for El<Ms> {
             node_ws: self.node_ws.clone(),
             refs: self.refs.clone(),
             key: self.key.clone(),
+            insert_handlers: vec![],
         }
     }
 }
@@ -132,6 +135,7 @@ impl<Ms: 'static, OtherMs: 'static> MessageMapper<Ms, OtherMs> for El<Ms> {
             event_handler_manager: self.event_handler_manager.map_msg(f),
             refs: self.refs,
             key: self.key,
+            insert_handlers: vec![],
         }
     }
 }
@@ -156,6 +160,7 @@ impl<Ms> El<Ms> {
             node_ws: None,
             refs: Vec::new(),
             key: None,
+            insert_handlers: vec![],
         }
     }
 
@@ -307,4 +312,20 @@ impl<Ms> El<Ms> {
     pub const fn is_custom(&self) -> bool {
         matches!(self.tag, Tag::Custom(_))
     }
+}
+
+pub struct InsertEventHandler<Ms>(pub(crate) Rc<dyn Fn(web_sys::Node) -> Ms>);
+
+impl<Ms> fmt::Debug for InsertEventHandler<Ms> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "InsertEventHandler")
+    }
+}
+
+/// Attaches an event handler that will trigger the given `Msg` when the element
+/// is inserted into the DOM.
+pub fn on_insert<Ms: 'static>(
+    handler: impl FnOnce(web_sys::Node) -> Ms + 'static + Clone,
+) -> InsertEventHandler<Ms> {
+    InsertEventHandler(Rc::new(move |event| handler.clone()(event)))
 }
