@@ -1,0 +1,11 @@
+[package]
+name = "on_insert"
+version = "0.1.0"
+authors = ["Glenn Slotte <glenn@slotte.net>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+seed = {path = "../../"}
