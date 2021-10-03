@@ -18,9 +18,6 @@ fn set_style(el_ws: &web_sys::Node, style: &Style) {
 
 pub(crate) fn assign_ws_nodes_to_el<Ms>(document: &Document, el: &mut El<Ms>) {
     let node_ws = make_websys_el(el, document);
-    for ref_ in &mut el.refs {
-        ref_.set(node_ws.clone());
-    }
     el.node_ws = Some(node_ws);
     for mut child in &mut el.children {
         assign_ws_nodes(document, &mut child);
@@ -142,17 +139,16 @@ pub fn attach_text_node(text: &mut Text, parent: &web_sys::Node) {
 
 /// Similar to `attach_el_and_children`, but without attaching the elemnt. Useful for
 /// patching, where we want to insert the element at a specific place.
-pub fn attach_children<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
-    let el_ws = el
-        .node_ws
-        .as_ref()
-        .expect("Missing websys el in attach_children");
-    // appending the its children to the el_ws
-    for child in &mut el.children {
+pub fn attach_children<Ms>(
+    children: &mut [Node<Ms>],
+    parent: &web_sys::Node,
+    mailbox: &Mailbox<Ms>,
+) {
+    for child in children.iter_mut() {
         match child {
             // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, mailbox),
-            Node::Text(child_text) => attach_text_node(child_text, el_ws),
+            Node::Element(child_el) => attach_el_and_children(child_el, parent, mailbox),
+            Node::Text(child_text) => attach_text_node(child_text, parent),
             Node::Empty | Node::NoChange => (),
         }
     }
@@ -176,28 +172,13 @@ pub fn attach_el_and_children<Ms>(el: &mut El<Ms>, parent: &web_sys::Node, mailb
         crate::error("Minor problem with html element (append)");
     }
 
-    el.event_handler_manager
-        .attach_listeners(el_ws.clone(), None, mailbox);
-
-    for handler in &el.insert_handlers {
-        log!("attach_el_and_children");
-        let msg = handler.0(el_ws.clone());
-        mailbox.send(Some(msg));
-    }
-
-    // appending the its children to the el_ws
-    for child in &mut el.children {
-        match child {
-            // Raise the active level once per recursion.
-            Node::Element(child_el) => attach_el_and_children(child_el, el_ws, mailbox),
-            Node::Text(child_text) => attach_text_node(child_text, el_ws),
-            Node::Empty | Node::NoChange => (),
-        }
-    }
+    attach_children(&mut el.children, el_ws, mailbox);
 
     // Note: Call `set_default_element_state` after child appending,
     // otherwise it breaks autofocus in Firefox
     set_default_element_state(el_ws, el);
+
+    wire_up_el(el, mailbox);
 }
 
 fn set_default_element_state<Ms>(el_ws: &web_sys::Node, el: &El<Ms>) {
@@ -504,6 +485,21 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
     }
 }
 
+pub(crate) fn insert_el_and_children<Ms>(
+    el: &mut El<Ms>,
+    parent: &web_sys::Node,
+    next: Option<web_sys::Node>,
+    mailbox: &Mailbox<Ms>,
+) {
+    let el_ws = el.node_ws.take().expect("Missing websys el in insert_el");
+
+    insert_node(&el_ws, parent, next);
+    attach_children(&mut el.children, &el_ws, mailbox);
+
+    el.node_ws.replace(el_ws);
+    wire_up_el(el, mailbox);
+}
+
 /// Insert a new node into the specified part of the DOM tree.
 pub(crate) fn insert_node(
     node: &web_sys::Node,
@@ -532,4 +528,25 @@ pub(crate) fn replace_child(new: &web_sys::Node, old: &web_sys::Node, parent: &w
     parent
         .replace_child(new, old)
         .expect("Problem replacing element");
+}
+
+#[inline]
+fn wire_up_el<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
+    // TODO: Cannot pass `el_ws` into this function, because it would borrow `el` both mutably and immutably
+    let el_ws = el
+        .node_ws
+        .as_ref()
+        .expect("Missing websys el in attach_el_and_children");
+
+    for ref_ in &mut el.refs {
+        ref_.set(el_ws.clone());
+    }
+
+    el.event_handler_manager
+        .attach_listeners(el_ws.clone(), None, mailbox);
+
+    for handler in &el.insert_handlers {
+        let msg = handler.0(el_ws.clone());
+        mailbox.send(Some(msg));
+    }
 }
