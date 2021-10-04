@@ -314,7 +314,7 @@ impl<Ms> El<Ms> {
     }
 }
 
-pub struct InsertEventHandler<Ms>(pub(crate) Rc<dyn Fn(web_sys::Node) -> Option<Ms>>);
+pub struct InsertEventHandler<Ms>(pub(crate) Rc<dyn Fn(web_sys::Element) -> Option<Ms>>);
 
 impl<Ms> fmt::Debug for InsertEventHandler<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -325,10 +325,10 @@ impl<Ms> fmt::Debug for InsertEventHandler<Ms> {
 /// Attaches an event handler that will trigger the given `Msg` when the element
 /// is inserted into the DOM.
 pub fn on_insert<Ms: 'static, MsU: 'static>(
-    handler: impl FnOnce(web_sys::Node) -> MsU + 'static + Clone,
+    handler: impl FnOnce(web_sys::Element) -> MsU + 'static + Clone,
 ) -> InsertEventHandler<Ms> {
     let handler = map_callback_return_to_option_ms!(
-        dyn Fn(web_sys::Node) -> Option<Ms>,
+        dyn Fn(web_sys::Element) -> Option<Ms>,
         handler.clone(),
         "Handler can return only Msg, Option<Msg> or ()!",
         Rc

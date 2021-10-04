@@ -532,20 +532,23 @@ pub(crate) fn replace_child(new: &web_sys::Node, old: &web_sys::Node, parent: &w
 
 #[inline]
 fn wire_up_el<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
-    // TODO: Cannot pass `el_ws` into this function, because it would borrow `el` both mutably and immutably
-    let el_ws = el
+    let node_ws = el
         .node_ws
         .as_ref()
         .expect("Missing websys el in attach_el_and_children");
 
     for ref_ in &mut el.refs {
-        ref_.set(el_ws.clone());
+        ref_.set(node_ws.clone());
     }
 
     el.event_handler_manager
-        .attach_listeners(el_ws.clone(), None, mailbox);
+        .attach_listeners(node_ws.clone(), None, mailbox);
 
     for handler in &el.insert_handlers {
+        let el_ws = node_ws
+            .dyn_ref::<web_sys::Element>()
+            .expect("Problem casting Node as Element while wiring up el");
+
         let maybe_msg = handler.0(el_ws.clone());
         mailbox.send(maybe_msg);
     }
