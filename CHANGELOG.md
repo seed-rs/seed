@@ -31,6 +31,7 @@
 - Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
 - Add method to return detailed error response from server with `FetchError`.
 - [BREAKING] Added blanket `impl<Ms, T: IntoNodes<Ms>> IntoNode<Ms> for Option<T>`. This might conflict with local `impl`s of `IntoNodes`, but should make those unnecessary and safe to remove.
+- Added `on_insert` event on elements, triggered when they are inserted into the DOM.
 
 ## v0.8.0
 
