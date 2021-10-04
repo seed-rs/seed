@@ -546,7 +546,7 @@ fn wire_up_el<Ms>(el: &mut El<Ms>, mailbox: &Mailbox<Ms>) {
         .attach_listeners(el_ws.clone(), None, mailbox);
 
     for handler in &el.insert_handlers {
-        let msg = handler.0(el_ws.clone());
-        mailbox.send(Some(msg));
+        let maybe_msg = handler.0(el_ws.clone());
+        mailbox.send(maybe_msg);
     }
 }
