@@ -324,6 +324,12 @@ impl<Ms> fmt::Debug for InsertEventHandler<Ms> {
 
 /// Attaches an event handler that will trigger the given `Msg` when the element
 /// is inserted into the DOM.
+///
+/// Handler has to return `Msg`, `Option<Msg>` or `()`.
+///
+/// # Panics
+///
+/// Panics when the handler doesn't return `Msg` or `()`. (It will be changed to a compile-time error).
 pub fn on_insert<Ms: 'static, MsU: 'static>(
     handler: impl FnOnce(web_sys::Element) -> MsU + 'static + Clone,
 ) -> InsertEventHandler<Ms> {
