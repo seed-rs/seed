@@ -33,6 +33,7 @@
 - [BREAKING] Added blanket `impl<Ms, T: IntoNodes<Ms>> IntoNode<Ms> for Option<T>`. This might conflict with local `impl`s of `IntoNodes`, but should make those unnecessary and safe to remove.
 - Added `charts` example.
 - Added `page_trait` example.
+- Added `on_insert` event on elements, triggered when they are inserted into the DOM.
 
 ## v0.8.0
 
