@@ -871,6 +871,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gloo-utils"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f00ff0fa8a9f48627e10417adf4b1b3a7c25edf51baa654f6b3c219c0fa8435"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "graphql"
 version = "0.1.0"
 dependencies = [
@@ -2219,6 +2230,7 @@ dependencies = [
  "getrandom 0.2.3",
  "gloo-file",
  "gloo-timers",
+ "gloo-utils",
  "indexmap",
  "js-sys",
  "pulldown-cmark",

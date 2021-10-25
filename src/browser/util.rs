@@ -7,6 +7,8 @@ use std::borrow::Cow;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 
+pub use gloo_utils::{document, history, window};
+
 #[deprecated(
     since = "0.8.0",
     note = "see [`request_animation_frame`](fn.request_animation_frame.html)"
@@ -31,26 +33,9 @@ impl Drop for RequestAnimationFrameHandle {
     }
 }
 
-/// Convenience function to avoid repeating expect logic.
-pub fn window() -> web_sys::Window {
-    web_sys::window().expect("Can't find the global Window")
-}
-
-/// Convenience function to access the `web_sys` DOM document.
-pub fn document() -> web_sys::Document {
-    window()
-        .document()
-        .expect("Can't find the window's document")
-}
-
 /// Convenience function to access the `web_sys` DOM body.
 pub fn body() -> web_sys::HtmlElement {
     document().body().expect("Can't find the document's body")
-}
-
-/// Convenience function to access the `web_sys` history.
-pub fn history() -> web_sys::History {
-    window().history().expect("Can't find history")
 }
 
 /// Convenience function to access the `web_sys::HtmlDocument`.
