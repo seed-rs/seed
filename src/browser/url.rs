@@ -207,7 +207,7 @@ impl Url {
     /// Url::new().set_path(&["my", "path"])
     /// ```
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
     pub fn set_path<T: ToString>(
         mut self,
@@ -230,7 +230,7 @@ impl Url {
     /// Url::new().set_hash_path(&["my", "path"])
     /// ```
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
     pub fn set_hash_path<T: ToString>(
         mut self,
@@ -274,7 +274,7 @@ impl Url {
     /// ])
     /// ```
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
     pub fn set_search(mut self, search: impl Into<UrlSearch>) -> Self {
         self.search = search.into();
@@ -283,7 +283,7 @@ impl Url {
 
     /// Get path.
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
     pub fn path(&self) -> &[String] {
         &self.path
@@ -305,7 +305,7 @@ impl Url {
 
     /// Get search.
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
     pub const fn search(&self) -> &UrlSearch {
         &self.search
@@ -313,7 +313,7 @@ impl Url {
 
     /// Get mutable search.
     ///
-    /// # Refenences
+    /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
     pub fn search_mut(&mut self) -> &mut UrlSearch {
         &mut self.search
