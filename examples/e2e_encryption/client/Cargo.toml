@@ -2,7 +2,7 @@
 name = "client"
 version = "0.1.0"
 authors = ["Your Name <email@address.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]

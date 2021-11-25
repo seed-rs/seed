@@ -1,7 +1,6 @@
 //! HTTP headers
 
 use std::borrow::Cow;
-use std::iter::FromIterator;
 
 // ------ Headers ------
 

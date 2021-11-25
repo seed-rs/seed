@@ -7,7 +7,7 @@ use gloo_timers::callback::Timeout;
 use js_sys::Uint8Array;
 use serde::Serialize;
 use serde_wasm_bindgen as swb;
-use std::{borrow::Cow, cell::RefCell, convert::TryFrom, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, rc::Rc};
 use wasm_bindgen::JsValue;
 
 /// Its methods configure the request, and handle the response. Many of them return the original
