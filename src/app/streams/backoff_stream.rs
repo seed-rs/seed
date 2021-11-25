@@ -2,7 +2,6 @@ use futures::channel::mpsc;
 use futures::stream::Stream;
 use gloo_timers::callback::Timeout;
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use std::convert::TryFrom;
 use std::pin::Pin;
 use std::rc::Rc;
 use std::task::{Context, Poll};
