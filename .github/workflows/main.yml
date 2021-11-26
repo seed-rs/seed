@@ -14,7 +14,7 @@ jobs:
         os: [ubuntu-latest, macos-latest] # windows-latest is too slow at the moment
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       # @TODO: Doesn't work + `cargo.lock` is not usable anymore.
       #      - name: Cache Rust dependencies
