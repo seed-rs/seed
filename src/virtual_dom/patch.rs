@@ -132,8 +132,8 @@ fn replace_by_el<'a, Ms>(
         ref_.set(new_node.clone());
     }
     new.node_ws = Some(new_node);
-    for mut child in &mut new.children {
-        virtual_dom_bridge::assign_ws_nodes(document, &mut child);
+    for child in &mut new.children {
+        virtual_dom_bridge::assign_ws_nodes(document, child);
     }
     virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
 

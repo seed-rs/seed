@@ -90,6 +90,8 @@ impl From<swb::Error> for WebSocketError {
 #[must_use = "WebSocket is closed on drop"]
 pub struct WebSocket {
     ws: web_sys::WebSocket,
+
+    #[allow(dead_code)]
     callbacks: Callbacks,
 }
 

@@ -140,6 +140,7 @@ where
         &mut self,
         handler: impl FnOnce(SubMs) -> MsU + Clone + 'static,
     ) -> &mut Self {
+        #[allow(clippy::redundant_closure)]
         let handler = map_callback_return_to_option_ms!(
             dyn Fn(SubMs) -> Option<Ms>,
             handler.clone(),
@@ -147,6 +148,7 @@ where
             Rc
         );
 
+        #[allow(clippy::redundant_closure)]
         self.app
             .data
             .sub_manager
@@ -166,6 +168,7 @@ where
             Rc
         );
 
+        #[allow(clippy::redundant_closure)]
         self.app
             .data
             .sub_manager

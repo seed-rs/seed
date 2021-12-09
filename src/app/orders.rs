@@ -167,6 +167,7 @@ pub trait Orders<Ms: 'static> {
     /// ```
     fn msg_sender(&self) -> Rc<dyn Fn(Option<Ms>)> {
         let (app, msg_mapper) = (self.clone_app(), self.msg_mapper());
+        #[allow(clippy::redundant_closure)]
         let msg_sender =
             move |msg: Option<Ms>| app.update_with_option(msg.map(|msg| msg_mapper(msg)));
         Rc::new(msg_sender)
