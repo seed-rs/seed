@@ -117,6 +117,7 @@ where
             Box
         );
 
+        #[allow(clippy::redundant_closure)]
         let cmd = cmd.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         CmdManager::perform_cmd_with_handle(cmd)
     }
@@ -143,6 +144,7 @@ where
         );
 
         let f = self.f.clone();
+        #[allow(clippy::redundant_closure)]
         self.clone_app()
             .data
             .after_next_render_callbacks
@@ -165,6 +167,7 @@ where
         );
 
         let f = self.f.clone();
+        #[allow(clippy::redundant_closure)]
         self.clone_app()
             .data
             .sub_manager
@@ -185,6 +188,7 @@ where
         );
 
         let f = self.f.clone();
+        #[allow(clippy::redundant_closure)]
         self.clone_app()
             .data
             .sub_manager
@@ -203,6 +207,7 @@ where
             Box
         );
 
+        #[allow(clippy::redundant_closure)]
         let stream = stream.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         StreamManager::stream(stream);
         self
@@ -222,6 +227,7 @@ where
             Box
         );
 
+        #[allow(clippy::redundant_closure)]
         let stream = stream.map(move |msg| app.mailbox().send(handler(msg).map(|msg| f(msg))));
         StreamManager::stream_with_handle(stream)
     }

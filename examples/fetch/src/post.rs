@@ -82,10 +82,9 @@ pub fn view(model: &Model) -> Node<Msg> {
             ]
         ],
         button!["Submit"],
-        if let Some(message) = &model.message {
-            span![message]
-        } else {
-            empty![]
-        },
+        model
+            .message
+            .as_ref()
+            .map_or(empty![], |message| span![message]),
     ]
 }

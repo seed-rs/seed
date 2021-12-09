@@ -6,7 +6,7 @@ extern crate version_check;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    if let Some(true) = version_check::is_feature_flaggable() {
+    if version_check::is_feature_flaggable() == Some(true) {
         println!("cargo:rustc-cfg=use_nightly");
     }
 }
