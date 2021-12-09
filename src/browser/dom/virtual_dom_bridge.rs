@@ -22,8 +22,8 @@ pub(crate) fn assign_ws_nodes_to_el<Ms>(document: &Document, el: &mut El<Ms>) {
         ref_.set(node_ws.clone());
     }
     el.node_ws = Some(node_ws);
-    for mut child in &mut el.children {
-        assign_ws_nodes(document, &mut child);
+    for child in &mut el.children {
+        assign_ws_nodes(document, child);
     }
 }
 pub(crate) fn assign_ws_nodes_to_text(document: &Document, text: &mut Text) {
@@ -44,7 +44,7 @@ pub(crate) fn assign_ws_nodes<Ms>(document: &Document, node: &mut Node<Ms>) {
 }
 
 fn node_to_element(el_ws: &web_sys::Node) -> Result<&web_sys::Element, Cow<str>> {
-    if let web_sys::Node::ELEMENT_NODE = el_ws.node_type() {
+    if el_ws.node_type() == web_sys::Node::ELEMENT_NODE {
         el_ws
             .dyn_ref::<web_sys::Element>()
             .ok_or_else(|| Cow::from("Problem casting Node as Element"))
@@ -96,7 +96,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
 ///
 /// # References
 /// * [`web_sys` Element](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Element.html)
-/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element\)
+/// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element)
 /// * See also: [`web_sys` Node](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Node.html)
 pub(crate) fn make_websys_el<Ms>(el: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
     let tag = el.tag.as_str();
