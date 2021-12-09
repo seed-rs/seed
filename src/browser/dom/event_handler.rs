@@ -177,6 +177,7 @@ pub fn ev<Ms: 'static, MsU: 'static>(
         "Handler can return only Msg, Option<Msg> or ()!",
         Rc
     );
+    #[allow(clippy::redundant_closure)]
     EventHandler::new(trigger, move |event| handler(event))
 }
 

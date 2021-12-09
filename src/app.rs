@@ -409,7 +409,7 @@ where
 
             (self.cfg.update)(
                 message,
-                &mut self.data.model.borrow_mut().as_mut().unwrap(),
+                self.data.model.borrow_mut().as_mut().unwrap(),
                 &mut orders,
             );
         }

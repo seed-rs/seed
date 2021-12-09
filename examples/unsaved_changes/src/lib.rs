@@ -70,8 +70,8 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             if calculate_hash(&model.text) == model.saved_text_hash {
                 return;
             }
-            if let Ok(true) =
-                window().confirm_with_message("Do you want to leave? Data won't be saved.")
+            if Ok(true)
+                == window().confirm_with_message("Do you want to leave? Data won't be saved.")
             {
                 return;
             }

@@ -187,6 +187,7 @@ fn create_js_handler<T: wasm_bindgen::convert::FromWasmAbi + 'static, Ms: 'stati
     let mailbox = app.mailbox();
     // @TODO replace with `Closure::new` once stable.
     Closure::wrap(Box::new(move |data| {
+        #[allow(clippy::redundant_closure)]
         mailbox.send(handler(data).map(|msg| msg_mapper(msg)));
     }) as Box<dyn Fn(T)>)
 }

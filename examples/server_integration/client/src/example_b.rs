@@ -22,6 +22,7 @@ pub struct Model {
 
 #[derive(Debug, Deserialize)]
 pub struct ExpectedResponseData {
+    #[allow(dead_code)]
     something: String,
 }
 

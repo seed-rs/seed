@@ -8,7 +8,6 @@ use shared::{
     rand_core::OsRng,
     DefaultCipherSuite,
 };
-use std::convert::TryInto;
 
 // ------ ------
 //     Init
