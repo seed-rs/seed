@@ -54,6 +54,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     /// Set preferred Web Socket sub-protocols.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket)
+    #[must_use]
     pub fn protocols(mut self, protocols: &'a [&'a str]) -> Self {
         self.protocols = protocols;
         self
@@ -66,6 +67,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     /// - For small binary messages, like CBOR, `ArrayBuffer` is more efficient than Blob handling.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/binaryType)
+    #[must_use]
     pub fn use_array_buffers(mut self) -> Self {
         self.binary_type = Some(BinaryType::Arraybuffer);
         self
@@ -76,6 +78,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onopen)
     #[allow(clippy::missing_panics_doc)]
+    #[must_use]
     pub fn on_open<MsU: 'static>(
         mut self,
         handler: impl FnOnce() -> MsU + Clone + 'static,
@@ -97,6 +100,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onclose)
     #[allow(clippy::missing_panics_doc)]
+    #[must_use]
     pub fn on_close<MsU: 'static>(
         mut self,
         handler: impl FnOnce(CloseEvent) -> MsU + Clone + 'static,
@@ -116,6 +120,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onerror)
     #[allow(clippy::missing_panics_doc)]
+    #[must_use]
     pub fn on_error<MsU: 'static>(
         mut self,
         handler: impl FnOnce() -> MsU + Clone + 'static,
@@ -137,6 +142,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/onmessage)
     #[allow(clippy::missing_panics_doc)]
+    #[must_use]
     pub fn on_message<MsU: 'static>(
         mut self,
         handler: impl FnOnce(WebSocketMessage) -> MsU + Clone + 'static,

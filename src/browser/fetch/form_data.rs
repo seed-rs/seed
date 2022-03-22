@@ -39,6 +39,7 @@ impl FormData {
         self.0.append_with_blob(name, blob).unwrap();
     }
     /// The builder-style variant of `append_blob`.
+    #[must_use]
     pub fn with_blob(mut self, name: &str, blob: &web_sys::Blob) -> Self {
         self.append_blob(name, blob);
         self
@@ -50,6 +51,7 @@ impl FormData {
         self.0.append_with_str(name, str).unwrap();
     }
     /// The builder-style variant of `append_str`,
+    #[must_use]
     pub fn with_str(mut self, name: &str, str: &str) -> Self {
         self.append_str(name, str);
         self

@@ -166,6 +166,7 @@ impl Url {
     /// ```rust,no_run
     ///let link_to_blog = url.add_path_part("blog");
     /// ````
+    #[must_use]
     pub fn add_path_part(mut self, path_part: impl Into<String>) -> Self {
         self.path.push(path_part.into());
         self
@@ -179,6 +180,7 @@ impl Url {
     /// ```rust,no_run
     ///let link_to_blog = url.add_hash_path_part("blog");
     /// ````
+    #[must_use]
     pub fn add_hash_path_part(mut self, hash_path_part: impl Into<String>) -> Self {
         self.hash_path.push(hash_path_part.into());
         self.hash = Some(self.hash_path.join("/"));
@@ -186,6 +188,7 @@ impl Url {
     }
 
     /// Clone the `Url` and strip remaining path parts.
+    #[must_use]
     pub fn to_base_url(&self) -> Self {
         let mut url = self.clone();
         url.path.truncate(self.next_path_part_index);
@@ -193,6 +196,7 @@ impl Url {
     }
 
     /// Clone the `Url` and strip remaining hash path parts.
+    #[must_use]
     pub fn to_hash_base_url(&self) -> Self {
         let mut url = self.clone();
         url.hash_path.truncate(self.next_hash_path_part_index);
@@ -209,6 +213,7 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
+    #[must_use]
     pub fn set_path<T: ToString>(
         mut self,
         into_path_iterator: impl IntoIterator<Item = T>,
@@ -232,6 +237,7 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname)
+    #[must_use]
     pub fn set_hash_path<T: ToString>(
         mut self,
         into_hash_path_iterator: impl IntoIterator<Item = T>,
@@ -256,6 +262,7 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash)
+    #[must_use]
     pub fn set_hash(mut self, hash: impl Into<String>) -> Self {
         let hash = hash.into();
         self.hash_path = hash.split('/').map(ToOwned::to_owned).collect();
@@ -276,6 +283,7 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/search)
+    #[must_use]
     pub fn set_search(mut self, search: impl Into<UrlSearch>) -> Self {
         self.search = search.into();
         self
@@ -373,6 +381,7 @@ impl Url {
     ///
     /// It's used mostly by Seed internals, but it can be useful in combination
     /// with `orders.clone_base_path()`.
+    #[must_use]
     pub fn skip_base_path(mut self, path_base: &[String]) -> Self {
         if self.path.starts_with(path_base) {
             self.next_path_part_index = path_base.len();
@@ -384,6 +393,7 @@ impl Url {
     /// then reset the internal hash path iterator and advance it to skip the prefix (aka `hash_path_base`).
     ///
     /// It's used mostly by Seed internals.
+    #[must_use]
     pub fn skip_hash_base_path(mut self, hash_path_base: &[String]) -> Self {
         if self.hash_path.starts_with(hash_path_base) {
             self.next_hash_path_part_index = hash_path_base.len();

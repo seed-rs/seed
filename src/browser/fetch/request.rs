@@ -36,6 +36,7 @@ impl<'a> Request<'a> {
     /// `Request` to the [`fetch`](./fn.fetch.html) function.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+    #[must_use]
     pub fn new(url: impl Into<Cow<'a, str>>) -> Self {
         Self {
             url: url.into(),
@@ -47,18 +48,21 @@ impl<'a> Request<'a> {
     #[allow(clippy::missing_const_for_fn)]
     /// Set headers for this request.
     /// It will replace any existing headers.
+    #[must_use]
     pub fn headers(mut self, headers: Headers<'a>) -> Self {
         self.headers = headers;
         self
     }
 
     /// Set specific header.
+    #[must_use]
     pub fn header(mut self, header: Header<'a>) -> Self {
         self.headers.set(header);
         self
     }
 
     /// Set HTTP method. Default method is `GET`.
+    #[must_use]
     pub const fn method(mut self, method: Method) -> Self {
         self.method = method;
         self
@@ -68,6 +72,7 @@ impl<'a> Request<'a> {
     ///
     /// ## Panics
     /// This method will panic when request method is GET or HEAD.
+    #[must_use]
     pub fn body(mut self, body: &'a JsValue) -> Self {
         self.body = Some(Cow::Borrowed(body));
 
@@ -97,6 +102,7 @@ impl<'a> Request<'a> {
 
     /// Set request body to a provided string.
     /// It will also set `Content-Type` header to `text/plain; charset=utf-8`.
+    #[must_use]
     pub fn text(mut self, text: impl AsRef<str>) -> Self {
         self.body = Some(Cow::Owned(JsValue::from(text.as_ref())));
         self.header(Header::content_type("text/plain; charset=utf-8"))
@@ -104,6 +110,7 @@ impl<'a> Request<'a> {
 
     /// Set request body to the provided bytes.
     /// It will also set `Content-Type` header to `application/octet-stream`.
+    #[must_use]
     pub fn bytes(mut self, bytes: impl AsRef<[u8]>) -> Self {
         self.body = Some(Cow::Owned(Uint8Array::from(bytes.as_ref()).into()));
         self.header(Header::content_type("application/octet-stream"))
@@ -111,6 +118,7 @@ impl<'a> Request<'a> {
 
     /// Set request body to the provided form data object.
     /// It will also set `Content-Type` header to `multipart/form-data`.
+    #[must_use]
     pub fn form_data(mut self, form_data: FormData) -> Self {
         self.body = Some(Cow::Owned(form_data.into()));
         self
@@ -119,6 +127,7 @@ impl<'a> Request<'a> {
     /// Set request mode.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/mode)
+    #[must_use]
     pub const fn mode(mut self, mode: web_sys::RequestMode) -> Self {
         self.mode = Some(mode);
         self
@@ -127,6 +136,7 @@ impl<'a> Request<'a> {
     /// Set request credentials.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials)
+    #[must_use]
     pub const fn credentials(mut self, credentials: web_sys::RequestCredentials) -> Self {
         self.credentials = Some(credentials);
         self
@@ -135,6 +145,7 @@ impl<'a> Request<'a> {
     /// Set request cache mode.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/cache)
+    #[must_use]
     pub const fn cache(mut self, cache: web_sys::RequestCache) -> Self {
         self.cache = Some(cache);
         self
@@ -143,6 +154,7 @@ impl<'a> Request<'a> {
     /// Set request redirect mode.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/redirect)
+    #[must_use]
     pub const fn redirect(mut self, redirect: web_sys::RequestRedirect) -> Self {
         self.redirect = Some(redirect);
         self
@@ -151,6 +163,7 @@ impl<'a> Request<'a> {
     /// Set request referrer.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrer)
+    #[must_use]
     pub fn referrer(mut self, referrer: &impl ToString) -> Self {
         self.referrer = Some(referrer.to_string());
         self
@@ -159,6 +172,7 @@ impl<'a> Request<'a> {
     /// Set request referrer policy.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/referrerPolicy)
+    #[must_use]
     pub const fn referrer_policy(mut self, referrer_policy: web_sys::ReferrerPolicy) -> Self {
         self.referrer_policy = Some(referrer_policy);
         self
@@ -167,12 +181,14 @@ impl<'a> Request<'a> {
     /// Set request subresource integrity.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/integrity)
+    #[must_use]
     pub fn integrity(mut self, integrity: &impl ToString) -> Self {
         self.integrity = Some(integrity.to_string());
         self
     }
 
     /// Set request timeout in milliseconds.
+    #[must_use]
     pub const fn timeout(mut self, timeout: u32) -> Self {
         self.timeout = Some(timeout);
         self
