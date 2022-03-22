@@ -113,5 +113,6 @@ where
 
 #[wasm_bindgen]
 extern "C" {
+    #[allow(clippy::missing_const_for_fn)]
     fn enableClock();
 }
