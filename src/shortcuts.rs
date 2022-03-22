@@ -44,15 +44,28 @@ macro_rules! with_dollar_sign {
     }
 }
 
-#[macro_export]
 /// Create struct `Urls`. It's useful especially for building `Url`s in nested modules.
 ///
 /// # Example
 ///
 /// ```rust,no_run
+/// use seed::{prelude::*, *};
 ///
-/// mod page;
+/// mod page {
+///     pub mod admin {
+///         use seed::{prelude::*, *};
+///         struct_urls!();
+///         impl<'a> Urls<'a> { }
+///     }
+/// }
+///
 /// const ADMIN: &str = "admin";
+///
+/// struct Model {
+///     base_url: Url
+/// }
+///
+/// enum Msg { }
 ///
 /// fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
 ///     Model {
@@ -74,12 +87,13 @@ macro_rules! with_dollar_sign {
 ///     }
 /// }
 ///
-/// fn view(model: &Model) -> Node<Msg> {
+/// fn view(mdl: &Model) -> Node<Msg> {
 ///     a![
-///         attrs!{ At::Href => Urls::new(base_url).home() }
+///         attrs!{ At::Href => Urls::new(mdl.base_url.clone()).home() }
 ///     ]
 /// }
 /// ```
+#[macro_export]
 macro_rules! struct_urls {
     () => {
         pub struct Urls<'a> {
@@ -399,11 +413,13 @@ pub fn _all_classes_to_attrs(all_classes: &[String]) -> Attrs {
 /// # Example
 ///
 /// ```rust,no_run
-///div![
-///    C!["btn", IF!(active => "active")],
-///    "Button",
-///    IF!(not(disabled) => ev(Ev::Click, Msg::Clicked)),
-///]
+/// use seed::{prelude::*, *};
+/// let active = false;
+/// div![
+///     C!["btn", IF!(active => "active")],
+///     "Button",
+///     IF!(not(disabled) => ev(Ev::Click, Msg::Clicked)),
+/// ]
 /// ```
 #[macro_export]
 macro_rules! IF {
@@ -455,14 +471,16 @@ macro_rules! style {
 /// # Example
 ///
 /// ```rust,no_run
-/// nodes![
-///     md!["# Hello"],
+/// use seed::{prelude::*, *};
+/// type Msg = ();
+/// let _ : Vec<Node<Msg>> = nodes![
+///     h1!["Hello"],
 ///     h2!["world"],
 ///     vec![
 ///         div!["Do you like"],
 ///         div!["Seed?"]
 ///     ],
-/// ]
+/// ];
 /// ```
 macro_rules! nodes {
     (  $($element:expr $(,)?)* ) => {

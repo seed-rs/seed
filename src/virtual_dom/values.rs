@@ -7,11 +7,13 @@
 /// # Example
 ///
 /// ```rust,no_run
-///style! {
-///    "padding" => px(12),
-///    "background-color" => if disabled { CSSValue::Ignored } else { "green".into() },
-///    "display" => CSSValue::Some("block".to_string()),
-///}
+/// use seed::{prelude::*, *};
+/// let disabled = true;
+/// let style = style! {
+///     "padding" => px(12),
+///     "background-color" => if disabled { CSSValue::Ignored } else { "green".into() },
+///     "display" => CSSValue::Some("block".to_string()),
+/// };
 /// ```
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -78,11 +80,19 @@ impl<T: ToString> ToCSSValueForOptionToString for Option<T> {
 /// # Example
 ///
 /// ```rust,no_run
-///attrs! {
-///    At::Disabled => false.as_at_value(),  // same as `=> AtValue::Ignored`
-///    At::Value => model.message,
-///    At::AutoFocus => AtValue::None,
-///}
+/// use seed::{prelude::*, *};
+///
+/// struct Model {
+///     message: String
+/// }
+///
+/// let model = Model { message: "foo".to_string() };
+///
+/// let _ = attrs! {
+///     At::Disabled => false.as_at_value(),  // same as `=> AtValue::Ignored`
+///     At::Value => model.message,
+///     At::AutoFocus => AtValue::None,
+/// };
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AtValue {

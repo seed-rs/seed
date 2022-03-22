@@ -19,26 +19,33 @@ pub fn el_ref<E: Clone>(reference: &ElRef<E>) -> ElRef<E> {
 /// # Example
 ///
 /// ```rust,no_run
+/// use seed::{prelude::*, *};
+///
 /// #[derive(Default)]
 /// struct Model {
 ///     canvas: ElRef<web_sys::HtmlCanvasElement>,
 /// }
 ///
-/// fn view(model: &Model) -> impl IntoNodes<Msg> {
+/// enum Msg {
+///     Rendered
+/// }
+///
+/// fn view(mdl: &Model) -> impl IntoNodes<Msg> {
 ///     canvas![
-///         el_ref(&model.canvas),
+///         el_ref(&mdl.canvas),
 ///         attrs![ /* ... */ ],
 ///     ]
 ///}
 ///
-/// fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+/// fn update(msg: Msg, mdl: &mut Model, orders: &mut impl Orders<Msg>) {
 ///     match msg {
 ///         Msg::Rendered => {
-///             let canvas = canvas.get().expect("get canvas element");
+///             let canvas = mdl.canvas.get().expect("get canvas element");
 ///             // ...
 ///             orders.after_next_render(|_| Msg::Rendered).skip();
 ///         }
-/// // ...
+///     }
+/// }
 /// ```
 #[derive(Debug, Clone)]
 pub struct ElRef<E> {
@@ -88,16 +95,26 @@ impl<E: Clone + JsCast> ElRef<E> {
     /// # Example
     ///
     /// ```rust,no_run
-    /// let input: ElRef<HtmlInputElement> = model.refs.my_input.clone();
-    /// orders.after_next_render(move |_| {
-    ///     input
-    ///         .map_type::<HtmlElement>()
-    ///         .get()
-    ///         .expect("get `my_input`")
-    ///         .focus()
-    ///         .expect("focus 'my_input'");
-    ///  });
+    /// use seed::{prelude::*, *};
+    /// use web_sys::{HtmlInputElement, HtmlElement};
     ///
+    /// struct Model {
+    ///   my_input: ElRef<HtmlInputElement>
+    /// }
+    ///
+    /// enum Msg {}
+    ///
+    /// fn update(_: Msg, mdl: &mut Model, orders: &mut impl Orders<Msg>) {
+    ///     let input: ElRef<HtmlInputElement> = mdl.my_input.clone();
+    ///     orders.after_next_render(move |_| {
+    ///         input
+    ///             .map_type::<HtmlElement>()
+    ///             .get()
+    ///             .expect("get `my_input`")
+    ///             .focus()
+    ///             .expect("focus 'my_input'");
+    ///     });
+    /// }
     pub fn map_type<T>(&self) -> ElRef<T> {
         ElRef {
             shared_node_ws: self.shared_node_ws.clone(),
