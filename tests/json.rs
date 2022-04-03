@@ -39,6 +39,30 @@ fn roundtrip_string() {
     roundtrip(foo);
 }
 
+#[wasm_bindgen_test]
+async fn serialize_json_request() {
+    use seed::fetch::{Method, Request};
+    use serde::{Deserialize, Serialize};
+    use wasm_bindgen_futures::JsFuture;
+
+    #[derive(Deserialize, Serialize)]
+    pub struct FormEmail {
+        email: String,
+    }
+    let email_form = FormEmail {
+        email: "foo@bar.com".to_string(),
+    };
+    let request = Request::new("/api/email")
+        .method(Method::Post)
+        .json(&email_form)
+        .expect("Serialization failed");
+    let request: web_sys::Request = request.try_into().unwrap();
+    let json = JsFuture::from(request.json().unwrap()).await.unwrap();
+    let obj: js_sys::Object = json.try_into().unwrap();
+    let email = js_sys::Reflect::get(&obj, &JsValue::from("email")).unwrap();
+    assert_eq!(email, JsValue::from("foo@bar.com"));
+}
+
 fn roundtrip<T>(data: T)
 where
     T: Serialize + DeserializeOwned + std::fmt::Debug + std::cmp::PartialEq,
