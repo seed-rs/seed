@@ -89,7 +89,7 @@ macro_rules! with_dollar_sign {
 ///
 /// fn view(mdl: &Model) -> Node<Msg> {
 ///     a![
-///         attrs!{ At::Href => Urls::new(mdl.base_url.clone()).home() }
+///         attrs!{ At::Href => Urls::new(&mdl.base_url).home() }
 ///     ]
 /// }
 /// ```
