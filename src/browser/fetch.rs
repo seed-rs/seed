@@ -90,6 +90,7 @@ pub async fn fetch<'a>(request: impl Into<Request<'a>>) -> Result<Response> {
 #[derive(Debug)]
 pub enum FetchError {
     SerdeError(swb::Error),
+    StringifyError(wasm_bindgen::JsValue),
     DomException(web_sys::DomException),
     PromiseError(wasm_bindgen::JsValue),
     NetworkError(wasm_bindgen::JsValue),
