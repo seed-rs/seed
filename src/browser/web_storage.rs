@@ -1,7 +1,5 @@
-use crate::browser::util::window;
-use js_sys::JSON;
+use crate::browser::{json, util::window};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
 use web_sys::Storage;
 
@@ -22,15 +20,13 @@ pub enum WebStorageError {
     RemoveError(JsValue),
     GetError(JsValue),
     InsertError(JsValue),
-    SerdeError(swb::Error),
-    ParseError(JsValue),
-    StringifyError(JsValue),
+    JsonError(json::Error),
     ConversionError,
 }
 
-impl From<swb::Error> for WebStorageError {
-    fn from(v: swb::Error) -> Self {
-        Self::SerdeError(v)
+impl From<json::Error> for WebStorageError {
+    fn from(v: json::Error) -> Self {
+        Self::JsonError(v)
     }
 }
 
@@ -175,10 +171,7 @@ pub trait WebStorage {
             .get_item(key.as_ref())
             .map_err(WebStorageError::GetError)?
             .ok_or(WebStorageError::KeyNotFoundError)?;
-        let js: JsValue = JSON::parse(&item).map_err(WebStorageError::ParseError)?;
-        let val = swb::from_value(js)?;
-
-        Ok(val)
+        Ok(json::from_str(&item)?)
     }
 
     /// Insert a key-value pair. The value will be serialized.
@@ -196,9 +189,7 @@ pub trait WebStorage {
         K: AsRef<str>,
         V: Serialize + ?Sized,
     {
-        let value: String = JSON::stringify(&swb::to_value(value)?)
-            .map_err(WebStorageError::StringifyError)?
-            .into();
+        let value = json::to_string(value)?;
 
         Self::storage()?
             .set_item(key.as_ref(), &value)

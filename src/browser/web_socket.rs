@@ -1,10 +1,8 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::app::Orders;
+use crate::{app::Orders, browser::json};
 use gloo_file::FileReadError;
-use js_sys::JSON;
 use serde::Serialize;
-use serde_wasm_bindgen as swb;
 use wasm_bindgen::{JsCast, JsValue};
 
 mod builder;
@@ -53,7 +51,7 @@ pub type CloseEvent = web_sys::CloseEvent;
 pub enum WebSocketError {
     TextError(&'static str),
     SendError(JsValue),
-    SerdeError(swb::Error),
+    JsonError(json::Error),
     ConversionError,
     PromiseError(JsValue),
     FileReaderError(FileReadError),
@@ -61,9 +59,9 @@ pub enum WebSocketError {
     CloseError(JsValue),
 }
 
-impl From<swb::Error> for WebSocketError {
-    fn from(v: swb::Error) -> Self {
-        Self::SerdeError(v)
+impl From<json::Error> for WebSocketError {
+    fn from(v: json::Error) -> Self {
+        Self::JsonError(v)
     }
 }
 
@@ -134,9 +132,7 @@ impl WebSocket {
     ///
     /// Returns error when JSON serialization or sending fails.
     pub fn send_json<T: Serialize + ?Sized>(&self, data: &T) -> Result<()> {
-        let data: String = JSON::stringify(&swb::to_value(data)?)
-            .map_err(|_| WebSocketError::ConversionError)?
-            .into();
+        let data: String = json::to_string(data)?;
         self.send_text(data)
     }
 

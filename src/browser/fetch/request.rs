@@ -2,11 +2,10 @@
 
 use super::form_data::FormData;
 use super::{fetch, FetchError, Header, Headers, Method, Response, Result};
-use crate::browser::Url;
+use crate::browser::{json, Url};
 use gloo_timers::callback::Timeout;
 use js_sys::Uint8Array;
 use serde::Serialize;
-use serde_wasm_bindgen as swb;
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
 use wasm_bindgen::JsValue;
 
@@ -95,8 +94,7 @@ impl<'a> Request<'a> {
     /// This method can fail if JSON serialization fail. It will then
     /// return `FetchError::SerdeError`.
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
-        let body = data.serialize(&swb::Serializer::json_compatible())?;
-        let body = js_sys::JSON::stringify(&body).map_err(FetchError::StringifyError)?;
+        let body = json::to_js_string(data)?;
         self.body = Some(Cow::Owned(body.into()));
         Ok(self.header(Header::content_type("application/json; charset=utf-8")))
     }

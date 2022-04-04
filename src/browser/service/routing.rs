@@ -2,8 +2,10 @@ use super::super::{
     util::{self, ClosureNew},
     Url,
 };
-use crate::app::{subs, Notification};
-use serde_wasm_bindgen as swb;
+use crate::{
+    app::{subs, Notification},
+    browser::json,
+};
 use std::rc::Rc;
 use wasm_bindgen::{closure::Closure, JsCast};
 
@@ -14,7 +16,7 @@ use wasm_bindgen::{closure::Closure, JsCast};
 pub fn push_route<U: Into<Url>>(url: U) -> Url {
     let url = url.into();
     // We use data to evaluate the path instead of the path displayed in the url.
-    let data = swb::to_value(&url).expect("Problem serializing route data");
+    let data = json::to_js_value(&url).expect("Problem serializing route data");
 
     util::history()
         .push_state_with_url(&data, "", Some(&url.to_string()))
@@ -32,7 +34,7 @@ pub fn setup_popstate_listener(
             .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
-        let url = match swb::from_value(ev.state()) {
+        let url = match json::from_js_value(&ev.state()) {
             Ok(url) => url,
             // Only update when requested for an update by the user.
             Err(_) => Url::current(),

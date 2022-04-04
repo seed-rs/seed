@@ -1,8 +1,8 @@
 //! The Response interface of the Fetch API represents the response to a request.
 
 use super::{FetchError, Headers, Result, Status};
+use crate::browser::json;
 use serde::de::DeserializeOwned;
-use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
@@ -45,7 +45,7 @@ impl Response {
             .await
             .map_err(FetchError::PromiseError)?;
 
-        Ok(swb::from_value(js)?)
+        Ok(json::from_js_value(&js)?)
     }
 
     /// Return response body as `Vec<u8>`.

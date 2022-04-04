@@ -1,5 +1,6 @@
 pub mod dom;
 pub mod fetch;
+mod json;
 pub mod service;
 pub mod url;
 pub mod util;

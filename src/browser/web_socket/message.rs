@@ -1,6 +1,6 @@
 use super::{Result, WebSocketError};
+use crate::browser::json;
 use serde::de::DeserializeOwned;
-use serde_wasm_bindgen as swb;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::MessageEvent;
 
@@ -33,7 +33,7 @@ impl WebSocketMessage {
     where
         T: DeserializeOwned + 'static,
     {
-        swb::from_value(self.data.clone()).map_err(WebSocketError::SerdeError)
+        json::from_js_value(&self.data).map_err(WebSocketError::JsonError)
     }
 
     /// Return message data as `Vec<u8>`.

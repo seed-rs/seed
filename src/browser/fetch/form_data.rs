@@ -19,10 +19,8 @@
 //! See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/FormData) for
 //! details on the behavior of the underlying API.
 
-use crate::fetch::{FetchError, Result};
-use js_sys::JSON;
+use crate::{browser::json, fetch::Result};
 use serde::Serialize;
-use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
 
 pub struct FormData(web_sys::FormData);
@@ -67,9 +65,7 @@ impl FormData {
         T: Serialize + ?Sized,
     {
         // @TODO Can a different `append` be used to append a `JsValue` directly?
-        let str: String = JSON::stringify(&swb::to_value(data)?)
-            .map_err(|_| FetchError::ConversionError)?
-            .into();
+        let str: String = json::to_string(data)?;
         self.0.append_with_str(name, &str).unwrap();
         Ok(())
     }
