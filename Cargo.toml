@@ -20,6 +20,7 @@ version_check = "0.9.4"
 [dev-dependencies]
 wasm-bindgen-test = "0.3.28"
 serde_json = "1.0.79"
+serde-wasm-bindgen = "0.4.2"
 
 [dependencies]
 console_error_panic_hook = { version = "0.1.7", optional = true }
@@ -35,7 +36,8 @@ rand = { version = "0.8.5", features = ["small_rng"] }
 # https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
 getrandom = { version = "0.2.5", features = ["js"] }
 serde = { version = "1.0.136", features = ['derive'] }
-serde-wasm-bindgen = "0.4.2"
+serde_json = { version = "1.0", optional = true }
+serde-wasm-bindgen = { version = "0.4.2", optional = true }
 wasm-bindgen = "0.2.78" # v0.2.79 is not working, see https://github.com/rustwasm/wasm-bindgen/issues/2774
 wasm-bindgen-futures = "0.4.28"
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
@@ -169,6 +171,7 @@ exclude = [
 ]
 
 [features]
-default = ["panic-hook"]
+default = ["panic-hook", "serde_json", "wasm-bindgen/serde-serialize"]
+swb = ["serde-wasm-bindgen"]
 panic-hook = ["console_error_panic_hook"]
 markdown = ["pulldown-cmark"]

@@ -24,11 +24,11 @@ where
     Ok(js_string)
 }
 
-pub fn from_str<T>(data: &str) -> Result<T>
+pub fn from_str<T>(v: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    let v = JSON::parse(data).map_err(Error::Parse)?;
+    let v = JSON::parse(v).map_err(Error::Parse)?;
     let v = from_js_value(&v)?;
     Ok(v)
 }
