@@ -113,18 +113,18 @@ pub fn chart<Ms: Clone + 'static>(
             data.iter()
                 .enumerate()
                 .filter_map(|(i, (x, y))| IF!(i % 15 == 0 => {
-                    let onenter = onenter.clone();
-                    let onout = onout.clone();
+                    let on_enter = on_enter.clone();
+                    let on_out = on_out.clone();
                     let data = (*x, *y);
                     Some(g![
                         C!["data-point"],
                         mouse_ev(Ev::MouseOver, move |event| {
-                            onenter(Tooltip {
+                            on_enter(Tooltip {
                                 position: (event.x(), event.y()),
                                 data,
                             })
                         }),
-                        mouse_ev(Ev::MouseOut, move |_| onout),
+                        mouse_ev(Ev::MouseOut, move |_| on_out),
                         circle![attrs! {
                             Cx => x / dx + f64::from(padding),
                             Cy => -y / dx + f64::from(height - padding),
