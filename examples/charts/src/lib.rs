@@ -1,8 +1,12 @@
 //! Charts example
 
+use seed::{prelude::*, *};
+
 mod line;
 
-use seed::{prelude::*, *};
+// ------ ------
+//     Model
+// ------ ------
 
 type Point = (f64, f64);
 
@@ -32,11 +36,19 @@ fn f1(x: f64) -> f64 {
     x.sin() + 1.0
 }
 
-#[derive(Clone)]
+// ------ ------
+//   Messages
+// ------ ------
+
+#[derive(Clone, Copy)]
 enum Msg {
     ShowTooltip(line::Tooltip),
     HideTooltip,
 }
+
+// ------ ------
+//    Update
+// ------ ------
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
@@ -48,6 +60,10 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         }
     }
 }
+
+// ------ ------
+//     View
+// ------ ------
 
 fn view(model: &Model) -> Node<Msg> {
     div![

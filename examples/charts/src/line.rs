@@ -1,11 +1,19 @@
 use itertools::Itertools;
 use seed::{prelude::*, *};
 
+// ------ ------
+//     Model
+// ------ ------
+
 #[derive(Copy, Clone)]
 pub struct Tooltip {
     pub position: (i32, i32),
     pub data: (f64, f64),
 }
+
+// ------ ------
+//     View
+// ------ ------
 
 #[allow(clippy::too_many_lines)]
 pub fn chart<Ms: Clone + 'static>(
