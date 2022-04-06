@@ -13,17 +13,12 @@ pub trait PageTrait: Sized {
     fn update(&mut self, msg: Self::Message, orders: &mut impl Orders<Self::Message>);
 
     fn invoke_update(&mut self, mut msg: Box<dyn Any>, orders: &mut impl Orders<Box<dyn Any>>) {
-        if let Some(msg) = msg
-            .downcast_mut::<Option<Self::Message>>()
-            .and_then(Option::take)
-        {
-            self.update(
-                msg,
-                &mut orders.proxy(|msg| Box::new(Some(msg)) as Box<dyn Any>),
-            );
-        } else {
-            error!("Msg not handled!");
-        }
+
+        msg.downcast_mut::<Option<Self::Message>>().and_then(Option::take)
+            .map_or_else(||{
+              error!("Msg not handled!");
+            }, |msg|
+            self.update(msg, &mut orders.proxy(|msg| Box::new(Some(msg)) as Box<dyn Any>)));
     }
 
     fn view(&self) -> Vec<Node<Self::Message>>;
