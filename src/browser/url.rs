@@ -1,6 +1,7 @@
 #[cfg(any(feature = "serde-json", feature = "swb"))]
 use crate::browser::json;
 use crate::browser::util;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::BTreeMap, fmt, str::FromStr};
 use wasm_bindgen::JsValue;
@@ -17,7 +18,11 @@ pub const DUMMY_BASE_URL: &str = "http://example.com";
 /// are considered different also during comparison.
 ///
 /// (If the features above are problems for you, create an [issue](https://github.com/seed-rs/seed/issues/new))
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(
+    any(feature = "serde-json", feature = "swb"),
+    derive(Serialize, Deserialize)
+)]
 pub struct Url {
     next_path_part_index: usize,
     next_hash_path_part_index: usize,
@@ -610,7 +615,11 @@ impl From<&web_sys::Url> for Url {
 // ------ UrlSearch ------
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
+#[cfg_attr(
+    any(feature = "serde-json", feature = "swb"),
+    derive(Serialize, Deserialize)
+)]
 pub struct UrlSearch {
     search: BTreeMap<String, Vec<String>>,
     invalid_components: Vec<String>,

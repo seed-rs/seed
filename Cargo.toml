@@ -35,7 +35,7 @@ pulldown-cmark = { version = "0.9.1", optional = true }
 rand = { version = "0.8.5", features = ["small_rng"] }
 # https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
 getrandom = { version = "0.2.5", features = ["js"] }
-serde = { version = "1.0.136", features = ['derive'] }
+serde = { version = "1.0.136", features = ['derive'], optional = true }
 serde_json = { version = "1.0", optional = true }
 serde-wasm-bindgen = { version = "0.4.2", optional = true }
 wasm-bindgen = "0.2.78" # v0.2.79 is not working, see https://github.com/rustwasm/wasm-bindgen/issues/2774
@@ -172,7 +172,7 @@ exclude = [
 
 [features]
 default = ["panic-hook", "serde-json"]
-serde-json = ["serde_json", "wasm-bindgen/serde-serialize"]
-swb = ["serde-wasm-bindgen"]
+serde-json = ["serde", "serde_json", "wasm-bindgen/serde-serialize"]
+swb = ["serde", "serde-wasm-bindgen"]
 panic-hook = ["console_error_panic_hook"]
 markdown = ["pulldown-cmark"]
