@@ -19,7 +19,9 @@
 //! See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/FormData) for
 //! details on the behavior of the underlying API.
 
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use crate::{browser::json, fetch::Result};
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use serde::Serialize;
 use wasm_bindgen::JsValue;
 
@@ -60,6 +62,7 @@ impl FormData {
     /// ## Errors
     /// Will return `Err` if serialization fails.
     #[allow(clippy::missing_panics_doc)]
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
     pub fn append_json<T>(&mut self, name: &str, data: &T) -> Result<()>
     where
         T: Serialize + ?Sized,
@@ -73,6 +76,7 @@ impl FormData {
     ///
     /// ## Errors
     /// Will return `Err` if serialization fails.
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
     pub fn with_json<T>(mut self, name: &str, data: &T) -> Result<Self>
     where
         T: Serialize + ?Sized,

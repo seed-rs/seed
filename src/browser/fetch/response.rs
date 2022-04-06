@@ -1,8 +1,11 @@
 //! The Response interface of the Fetch API represents the response to a request.
 
 use super::{FetchError, Headers, Result, Status};
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use crate::browser::json;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use serde::de::DeserializeOwned;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
@@ -36,6 +39,7 @@ impl Response {
     ///
     /// # Errors
     /// Returns `FetchError::SerdeError` or `FetchError::PromiseError`.
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
     pub async fn json<T: DeserializeOwned + 'static>(&self) -> Result<T> {
         let js: JsValue = self
             .raw_response

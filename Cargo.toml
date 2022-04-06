@@ -171,7 +171,8 @@ exclude = [
 ]
 
 [features]
-default = ["panic-hook", "serde_json", "wasm-bindgen/serde-serialize"]
+default = ["panic-hook", "serde-json"]
+serde-json = ["serde_json", "wasm-bindgen/serde-serialize"]
 swb = ["serde-wasm-bindgen"]
 panic-hook = ["console_error_panic_hook"]
 markdown = ["pulldown-cmark"]

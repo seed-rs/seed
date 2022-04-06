@@ -1,5 +1,7 @@
 use super::{Result, WebSocketError};
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use crate::browser::json;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use serde::de::DeserializeOwned;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::MessageEvent;
@@ -29,6 +31,7 @@ impl WebSocketMessage {
     ///
     /// Returns
     /// - `WebSocketError::SerdeError` when JSON decoding fails.
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
     pub fn json<T>(&self) -> Result<T>
     where
         T: DeserializeOwned + 'static,

@@ -1,13 +1,14 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::browser::dom::virtual_dom_bridge;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
+use crate::browser::service::routing;
 use crate::browser::{
-    service::routing,
     util::{self, window, ClosureNew},
     Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
-use enclose::{enc, enclose};
+use enclose::enclose;
 use std::{
     any::Any,
     cell::{Cell, RefCell},
@@ -30,6 +31,7 @@ pub mod render_info;
 pub mod stream_manager;
 pub mod streams;
 pub mod sub_manager;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 pub mod subs;
 
 pub use cfg::AppCfg;
@@ -198,29 +200,33 @@ where
             &mut orders,
         );
         app.data.model.replace(Some(new_model));
+        #[cfg(any(feature = "serde-json", feature = "swb"))]
+        app.setup_routing(&mut orders);
+        app.process_effect_queue(orders.effects);
+        app.rerender_vdom();
+        app
+    }
 
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    fn setup_routing(&self, orders: &mut impl Orders<Ms>) {
+        use enclose::enc;
         routing::setup_popstate_listener(
-            enc!((app => s) move |closure| {
+            enc!((self => s) move |closure| {
                 s.data.popstate_closure.replace(Some(closure));
             }),
-            enc!((app => s) move |notification| s.notify_with_notification(notification)),
-            Rc::clone(&app.cfg.base_path),
+            enc!((self => s) move |notification| s.notify_with_notification(notification)),
+            Rc::clone(&self.cfg.base_path),
         );
         routing::setup_link_listener(
-            enc!((app => s) move |notification| s.notify_with_notification(notification)),
+            enc!((self => s) move |notification| s.notify_with_notification(notification)),
         );
-
-        orders.subscribe(enc!((app => s) move |url_requested| {
+        orders.subscribe(enc!((self => s) move |url_requested| {
             routing::url_request_handler(
                 url_requested,
                 Rc::clone(&s.cfg.base_path),
                 move |notification| s.notify_with_notification(notification),
             );
         }));
-
-        app.process_effect_queue(orders.effects);
-        app.rerender_vdom();
-        app
     }
 
     /// Invoke your `update` function with provided message.

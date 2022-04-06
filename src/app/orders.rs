@@ -1,4 +1,7 @@
-use super::{subs, App, CmdHandle, RenderInfo, StreamHandle, SubHandle};
+#[cfg(any(feature = "serde-json", feature = "swb"))]
+use super::subs;
+use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle};
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
@@ -318,6 +321,7 @@ pub trait Orders<Ms: 'static> {
     /// Simulate `<a href="[url]">` element click.
     ///
     /// A thin wrapper for `orders.notify(subs::UrlRequested::new(url))`
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
     fn request_url(&mut self, url: Url) -> &mut Self {
         self.notify(subs::UrlRequested::new(url))
     }

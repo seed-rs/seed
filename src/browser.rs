@@ -1,5 +1,6 @@
 pub mod dom;
 pub mod fetch;
+#[cfg(any(feature = "serde-json", feature = "swb"))]
 mod json;
 pub mod service;
 pub mod url;

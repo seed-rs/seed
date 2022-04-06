@@ -15,7 +15,7 @@ mod swb;
 #[cfg(feature = "swb")]
 pub use swb::*;
 
-#[cfg(not(feature = "swb"))]
+#[cfg(feature = "serde-json")]
 mod serde_json;
-#[cfg(not(feature = "swb"))]
+#[cfg(feature = "serde-json")]
 pub use self::serde_json::*;

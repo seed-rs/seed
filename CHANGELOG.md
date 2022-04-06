@@ -26,7 +26,7 @@
 - Added `sl_input` to the `custom_elements` example.
 - [BREAKING] Changed `Request.body` to take its argument by reference.
 - Adapted to Rust 1.53.0.
-- Removed internal `serde_json` usage in favour of `serde-wasm-bindgen`. This reduces final binary size for downstream users.
+- Added `swb` and `serde-json` features to use either `serde-wasm-bindgen` or `serde_json`. `swb` reduces final binary size for downstream users.
 - [BREAKING] Removed the deprecated `browser::service::fetch` module.
 - Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
 - Add method to return detailed error response from server with `FetchError`.
@@ -34,6 +34,7 @@
 - Added `charts` example.
 - Added `page_trait` example.
 - Added `on_insert` event on elements, triggered when they are inserted into the DOM.
+- [BREAKING] `fetch::Error::SerdeError` changed to `fetch::Error::JsonError`
 
 ## v0.8.0
 

@@ -174,9 +174,11 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 /// for element-creation macros, input event constructors, and the `History` struct.
 /// Expose the `wasm_bindgen` prelude.
 pub mod prelude {
+    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    pub use crate::app::subs;
     pub use crate::{
         app::{
-            cmds, streams, subs, App, CmdHandle, GetElement, MessageMapper, Orders, RenderInfo,
+            cmds, streams, App, CmdHandle, GetElement, MessageMapper, Orders, RenderInfo,
             StreamHandle, SubHandle,
         },
         browser::dom::css_units::*,
