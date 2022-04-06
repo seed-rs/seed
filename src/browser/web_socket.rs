@@ -52,7 +52,6 @@ pub enum WebSocketError {
     TextError(&'static str),
     SendError(JsValue),
     JsonError(json::Error),
-    ConversionError,
     PromiseError(JsValue),
     FileReaderError(FileReadError),
     OpenError(JsValue),

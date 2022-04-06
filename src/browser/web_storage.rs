@@ -21,7 +21,6 @@ pub enum WebStorageError {
     GetError(JsValue),
     InsertError(JsValue),
     JsonError(json::Error),
-    ConversionError,
 }
 
 impl From<json::Error> for WebStorageError {

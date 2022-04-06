@@ -95,7 +95,6 @@ pub enum FetchError {
     /// Request construction failed.
     RequestError(wasm_bindgen::JsValue),
     StatusError(Status),
-    ConversionError,
 }
 
 impl From<json::Error> for FetchError {
