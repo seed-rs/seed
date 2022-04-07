@@ -95,6 +95,7 @@ impl<'a> Request<'a> {
     ///
     /// ## Panics
     /// This method will panic when request method is GET or HEAD.
+    #[must_use]
     pub fn body_ref(mut self, body: &'a JsValue) -> Self {
         self.body = Some(Cow::Borrowed(body));
 
