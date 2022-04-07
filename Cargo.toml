@@ -11,6 +11,7 @@ readme = "README.md"
 keywords = ["wasm", "webassembly", "frontend", "framework", "web"]
 categories = ["wasm", "web-programming"]
 edition = "2021"
+rust-version = "1.60.0"
 
 build = "build.rs"
 
@@ -172,7 +173,7 @@ exclude = [
 
 [features]
 default = ["panic-hook", "serde-json"]
-serde-json = ["serde", "serde_json", "wasm-bindgen/serde-serialize"]
-swb = ["serde", "serde-wasm-bindgen"]
-panic-hook = ["console_error_panic_hook"]
-markdown = ["pulldown-cmark"]
+serde-json = ["dep:serde", "dep:serde_json", "wasm-bindgen/serde-serialize"]
+serde-wasm-bindgen = ["dep:serde", "dep:serde-wasm-bindgen"]
+panic-hook = ["dep:console_error_panic_hook"]
+markdown = ["dep:pulldown-cmark"]

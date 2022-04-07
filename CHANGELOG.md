@@ -22,8 +22,8 @@
 - Added `Headers::new`.
 - Added `Header::name()` and `Header::value()`.
 - Added `fetch::form_data::FormData` and `Request.form_data`.
-- Added `swb` and `serde-json` features to use either `serde-wasm-bindgen` or `serde_json`.
-  `swb` reduces final binary size for downstream users.`serde-json` is enabled by default.
+- Added `serde-wasm-bindgen` and `serde-json` features to use either `serde-wasm-bindgen` or `serde_json` for JSON de-/serialization.
+  `serde-wasm-bindgen` reduces final binary size for downstream users.`serde-json` is enabled by default.
 - Added method to return detailed error response from server with `FetchError`.
 - Added `Request.body_ref` to take the body by reference.
 - Added `sl_input` to the `custom_elements` example.
@@ -37,7 +37,7 @@
 - Use `wheel_ev` in `canvas` example to zoom rectangle with mouse scroll wheel.
 - Derived `Eq` and `PartialEq` for `Header`.
 - Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
-- Adapted to Rust 1.53.0.
+- Adapted to Rust 1.60.0.
 - Updated dependencies
 
 ## v0.8.0
