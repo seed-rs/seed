@@ -51,7 +51,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                 if res.is_ok() {
                     log!("it worked");
                 } else {
-                    log!("it did failed")
+                    log!("it did failed");
                 }
             }
             model.who_is_getting_dragged = None;
@@ -82,7 +82,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                     div_drag.set_inner_text("NOO :(");
                 }
             }
-            model.who_is_getting_dragged = None
+            model.who_is_getting_dragged = None;
         }
         Msg::DragOver => {}
     }
