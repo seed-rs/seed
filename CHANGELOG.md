@@ -1,40 +1,44 @@
 # Changelog
 
-## [unreleased]
+## v0.9.0
 
+- [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`.
+  It means also `Orders::clone_base_path` returns a slice.
+- [BREAKING] Hid markdown functionality behind optional `markdown` feature
+- [BREAKING] Added argument `Option<&Namespace>` to functions `Node::from_html` and `El::from_html`.
+- [BREAKING] Added blanket `impl<Ms, T: IntoNodes<Ms>> IntoNode<Ms> for Option<T>`.
+  This might conflict with local `impl`s of `IntoNodes`, but should make those unnecessary and safe to remove.
+- [BREAKING] Removed the deprecated `browser::service::fetch` module.
+- [BREAKING] `fetch::Error::SerdeError` changed to `fetch::Error::JsonError`
+- Fixed: Prevent link listener from intercepting links with the `download` attribute.
+- Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox.
 - Added helpers for wheel event: `wheel_ev` and `to_wheel_event`.
-- Use `wheel_ev` in `canvas` example to zoom rectangle with mouse scroll wheel.
-- [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`. It means also `Orders::clone_base_path` returns a slice.
-- Prevent link listener from intercepting links with the `download` attribute.
-- Added examples `drag_and_drop`, `record_screen`, `e2e_encryption` and `counters`.
 - Added `Response::blob`
 - Added `panic-hook` feature, enabled by default, to conditionally include `console_error_panic_hook`
-- [BREAKING] Hid markdown functionality behind optional `markdown` feature
-- Implemented `AsAtValue` for `Option<T>`
-- [BREAKING] Added argument `Option<&Namespace>` to functions `Node::from_html` and `El::from_html`.
 - Added macro `raw_svg!` (#589).
 - Added `browser::dom::Namespace` to `prelude`.
 - Added `At::Role` variant.
 - Added `Response::headers`.
 - Added `Headers::new`.
-- Implemented `From<impl AsRef<web_sys::Headers>>` for `Headers`.
-- Implemented `FromIterator<(impl Into<Cow<'a, str>>, impl Into<Cow<'a, str>>)>` for `Headers`.
-- Derived `Eq` and `PartialEq` for `Header`.
 - Added `Header::name()` and `Header::value()`.
-- Fixed an issue in vdom where inputs with invalid contents being cleared on Firefox.
 - Added `fetch::form_data::FormData` and `Request.form_data`.
+- Added `swb` and `serde-json` features to use either `serde-wasm-bindgen` or `serde_json`.
+  `swb` reduces final binary size for downstream users.`serde-json` is enabled by default.
+- Added method to return detailed error response from server with `FetchError`.
+- Added `Request.body_ref` to take the body by reference.
 - Added `sl_input` to the `custom_elements` example.
-- Adapted to Rust 1.53.0.
-- Added `swb` and `serde-json` features to use either `serde-wasm-bindgen` or `serde_json`. `swb` reduces final binary size for downstream users.
-- [BREAKING] Removed the deprecated `browser::service::fetch` module.
-- Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
-- Add method to return detailed error response from server with `FetchError`.
-- [BREAKING] Added blanket `impl<Ms, T: IntoNodes<Ms>> IntoNode<Ms> for Option<T>`. This might conflict with local `impl`s of `IntoNodes`, but should make those unnecessary and safe to remove.
+- Added examples `drag_and_drop`, `record_screen`, `e2e_encryption` and `counters`.
 - Added `charts` example.
 - Added `page_trait` example.
 - Added `on_insert` event on elements, triggered when they are inserted into the DOM.
-- [BREAKING] `fetch::Error::SerdeError` changed to `fetch::Error::JsonError`
-- Added `Request.body_ref` to take the body by reference.
+- Implemented `AsAtValue` for `Option<T>`
+- Implemented `From<impl AsRef<web_sys::Headers>>` for `Headers`.
+- Implemented `FromIterator<(impl Into<Cow<'a, str>>, impl Into<Cow<'a, str>>)>` for `Headers`.
+- Use `wheel_ev` in `canvas` example to zoom rectangle with mouse scroll wheel.
+- Derived `Eq` and `PartialEq` for `Header`.
+- Element macros like `div!` can now contain `Iterator`s inside of `Option` values. Previously only one or the other was possible.
+- Adapted to Rust 1.53.0.
+- Updated dependencies
 
 ## v0.8.0
 
