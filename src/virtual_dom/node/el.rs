@@ -339,5 +339,5 @@ pub fn on_insert<Ms: 'static, MsU: 'static>(
         "Handler can return only Msg, Option<Msg> or ()!",
         Rc
     );
-    InsertEventHandler(Rc::new(move |event| handler(event)))
+    InsertEventHandler(handler)
 }
