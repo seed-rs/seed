@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## v0.9.1
 
 - Fix: `serde-wasm-bindgen` feature.
 
