@@ -1,2 +1,2 @@
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 pub(crate) mod routing;

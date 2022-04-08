@@ -1,6 +1,6 @@
 pub mod dom;
 pub mod fetch;
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 mod json;
 pub mod service;
 pub mod url;

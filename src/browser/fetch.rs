@@ -28,7 +28,7 @@
 //! [status]: ./struct.Status.html
 //! [fetch-mdn]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use crate::browser::json;
 use crate::util::window;
 use std::convert::TryInto;
@@ -90,7 +90,7 @@ pub async fn fetch<'a>(request: impl Into<Request<'a>>) -> Result<Response> {
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum FetchError {
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     JsonError(json::Error),
     DomException(web_sys::DomException),
     PromiseError(wasm_bindgen::JsValue),
@@ -100,7 +100,7 @@ pub enum FetchError {
     StatusError(Status),
 }
 
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 impl From<json::Error> for FetchError {
     fn from(v: json::Error) -> Self {
         Self::JsonError(v)

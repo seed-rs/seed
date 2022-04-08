@@ -1,10 +1,10 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::app::Orders;
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use crate::browser::json;
 use gloo_file::FileReadError;
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use serde::Serialize;
 use wasm_bindgen::{JsCast, JsValue};
 
@@ -54,7 +54,7 @@ pub type CloseEvent = web_sys::CloseEvent;
 pub enum WebSocketError {
     TextError(&'static str),
     SendError(JsValue),
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     JsonError(json::Error),
     PromiseError(JsValue),
     FileReaderError(FileReadError),
@@ -62,7 +62,7 @@ pub enum WebSocketError {
     CloseError(JsValue),
 }
 
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 impl From<json::Error> for WebSocketError {
     fn from(v: json::Error) -> Self {
         Self::JsonError(v)
@@ -135,7 +135,7 @@ impl WebSocket {
     /// # Errors
     ///
     /// Returns error when JSON serialization or sending fails.
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     pub fn send_json<T: Serialize + ?Sized>(&self, data: &T) -> Result<()> {
         let data: String = json::to_string(data)?;
         self.send_text(data)

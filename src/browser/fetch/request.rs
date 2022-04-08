@@ -2,12 +2,12 @@
 
 use super::form_data::FormData;
 use super::{fetch, FetchError, Header, Headers, Method, Response, Result};
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use crate::browser::json;
 use crate::browser::Url;
 use gloo_timers::callback::Timeout;
 use js_sys::Uint8Array;
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use serde::Serialize;
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
 use wasm_bindgen::JsValue;
@@ -117,7 +117,7 @@ impl<'a> Request<'a> {
     ///
     /// This method can fail if JSON serialization fail. It will then
     /// return `FetchError::SerdeError`.
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     pub fn json<T: Serialize + ?Sized>(mut self, data: &T) -> Result<Self> {
         let body = json::to_js_string(data)?;
         self.body = Some(Cow::Owned(body.into()));

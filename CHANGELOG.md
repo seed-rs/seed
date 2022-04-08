@@ -1,5 +1,9 @@
 # Changelog
 
+## [unreleased]
+
+- Fix: `serde-wasm-bindgen` feature.
+
 ## v0.9.0
 
 - [BREAKING] Base path changed from `Rc<Vec<String>>` to `Rc<[String]>`.

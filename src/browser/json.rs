@@ -10,12 +10,12 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[cfg(feature = "swb")]
+#[cfg(feature = "serde-wasm-bindgen")]
 mod swb;
-#[cfg(feature = "swb")]
+#[cfg(feature = "serde-wasm-bindgen")]
 pub use swb::*;
 
-#[cfg(all(not(feature = "swb"), feature = "serde-json"))]
+#[cfg(all(not(feature = "serde-wasm-bindgen"), feature = "serde-json"))]
 mod serde_json;
-#[cfg(all(not(feature = "swb"), feature = "serde-json"))]
+#[cfg(all(not(feature = "serde-wasm-bindgen"), feature = "serde-json"))]
 pub use self::serde_json::*;

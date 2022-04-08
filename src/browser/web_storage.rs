@@ -1,7 +1,7 @@
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use crate::browser::json;
 use crate::browser::util::window;
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use serde::{de::DeserializeOwned, Serialize};
 use wasm_bindgen::JsValue;
 use web_sys::Storage;
@@ -23,11 +23,11 @@ pub enum WebStorageError {
     RemoveError(JsValue),
     GetError(JsValue),
     InsertError(JsValue),
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     JsonError(json::Error),
 }
 
-#[cfg(any(feature = "serde-json", feature = "swb"))]
+#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 impl From<json::Error> for WebStorageError {
     fn from(v: json::Error) -> Self {
         Self::JsonError(v)
@@ -166,7 +166,7 @@ pub trait WebStorage {
     /// or find the key or deserialize the value.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/getItem)
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     fn get<K, V>(key: K) -> Result<V>
     where
         K: AsRef<str>,
@@ -189,7 +189,7 @@ pub trait WebStorage {
     /// or serialize the value or insert/update the pair.
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem)
-    #[cfg(any(feature = "serde-json", feature = "swb"))]
+    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
     fn insert<K, V>(key: K, value: &V) -> Result<()>
     where
         K: AsRef<str>,
