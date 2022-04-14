@@ -1,5 +1,9 @@
 # Changelog
 
+## [unreleased]
+
+- Fix: Make `fetch::JsonError` public.
+
 ## v0.9.1
 
 - Fix: `serde-wasm-bindgen` feature.

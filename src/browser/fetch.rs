@@ -43,6 +43,7 @@ mod status;
 
 pub use form_data::FormData;
 pub use header::{Header, Headers};
+pub use json::Error as JsonError;
 pub use method::*;
 pub use request::*;
 pub use response::*;
@@ -91,7 +92,7 @@ pub async fn fetch<'a>(request: impl Into<Request<'a>>) -> Result<Response> {
 #[derive(Debug)]
 pub enum FetchError {
     #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
-    JsonError(json::Error),
+    JsonError(JsonError),
     DomException(web_sys::DomException),
     PromiseError(wasm_bindgen::JsValue),
     NetworkError(wasm_bindgen::JsValue),
