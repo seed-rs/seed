@@ -124,6 +124,7 @@ pub mod tests {
     use wasm_bindgen_test::*;
     wasm_bindgen_test_configure!(run_in_browser);
 
+
     #[wasm_bindgen_test]
     async fn get_bytes_from_message() {
         let bytes = "some test message".as_bytes();
@@ -135,5 +136,35 @@ pub mod tests {
         };
         let result_bytes = ws_msg.bytes().await.unwrap();
         assert_eq!(bytes, &*result_bytes);
+    }
+
+    use wasm_bindgen::JsValue;
+    use serde::{Serialize, Deserialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Test {
+        a: i32,
+        b: i32,
+    }
+
+    #[wasm_bindgen_test]
+    async fn convert_message_to_struct() {
+        let test = Test { a: 1, b: 2 };
+        let text = serde_json::to_string(&test).unwrap();
+
+        let message_event = web_sys::MessageEvent::new("test").unwrap();
+        let ws_msg = WebSocketMessage {
+            data: JsValue::from_str(&text),
+            message_event,
+        };
+
+        let result_bytes = ws_msg.bytes().await.unwrap();
+        assert_eq!(text.as_bytes(), &*result_bytes);
+        assert_eq!(text, ws_msg.text().unwrap());
+
+        let result  = ws_msg.json::<Test>().unwrap();
+
+        assert_eq!(result.a, 1);
+        assert_eq!(result.b, 2);
     }
 }
