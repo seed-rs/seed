@@ -3,7 +3,7 @@ macro_rules! make_attrs {
     // Create shortcut macros for any element; populate these functions in this module.
     { $($attr_camel:ident => $attr:expr),+ } => {
 
-        /// The At enum restricts element-creation to only valid event names, as defined here:
+        /// The At enum restricts element-creation to only valid attribute names, as defined here:
         /// [https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes)
         #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         pub enum At {
