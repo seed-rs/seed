@@ -3,6 +3,7 @@
 ## [unreleased]
 
 - Fix: Make `fetch::JsonError` public.
+- Adapted to Rust 1.61.0.
 
 ## v0.9.1
 

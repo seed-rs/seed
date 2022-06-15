@@ -4,6 +4,7 @@
 // @TODO merge with `pub use` & `prelude` in `lib.rs` and `browser::util`?
 
 use crate::virtual_dom::{At, Attrs};
+use std::fmt;
 use wasm_bindgen::JsValue;
 
 /// Allows to write nested macros.
@@ -495,13 +496,10 @@ macro_rules! nodes {
     };
 }
 
-#[cfg(use_nightly)]
-pub const fn wrap_debug<T>(object: T) -> dbg::WrapDebug<T> {
-    dbg::WrapDebug(object)
-}
-
-#[cfg(not(use_nightly))]
-pub fn wrap_debug<T: std::fmt::Debug>(object: T) -> T {
+pub const fn wrap_debug<T>(object: T) -> T
+where
+    T: fmt::Debug,
+{
     object
 }
 
