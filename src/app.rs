@@ -4,7 +4,7 @@ use crate::browser::dom::virtual_dom_bridge;
 #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
 use crate::browser::service::routing;
 use crate::browser::{
-    util::{self, window, ClosureNew},
+    util::{self, window},
     Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};

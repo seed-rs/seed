@@ -1,7 +1,4 @@
-use super::super::{
-    util::{self, ClosureNew},
-    Url,
-};
+use super::super::{util, Url};
 use crate::{
     app::{subs, Notification},
     browser::json,
@@ -83,9 +80,13 @@ pub fn url_request_handler(
 /// attribute, so we can prevent page refresh for internal links, and route
 /// internally. Run this on load.
 #[allow(clippy::option_map_unit_fn)]
-pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
-    let closure = Closure::new(move |event: web_sys::Event| {
-        event.target()
+pub fn setup_link_listener<F>(notify: F)
+where
+    F: Fn(Notification) + 'static,
+{
+    let closure: Closure<dyn Fn(web_sys::Event) -> _> =
+        Closure::new(move |event: web_sys::Event| {
+            event.target()
             .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
             .and_then(|el| el.closest("a[href]").ok().flatten())
             .and_then(|href_el| {
@@ -123,7 +124,7 @@ pub fn setup_link_listener(notify: impl Fn(Notification) + 'static) {
                     )));
                 }
             });
-    });
+        });
 
     (util::document().as_ref() as &web_sys::EventTarget)
         .add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
