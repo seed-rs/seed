@@ -14,7 +14,7 @@ jobs:
         os: [ubuntu-latest, macos-latest] # windows-latest is too slow at the moment
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # @TODO: Doesn't work + `cargo.lock` is not usable anymore.
       #      - name: Cache Rust dependencies
@@ -31,8 +31,22 @@ jobs:
           profile: minimal
           toolchain: stable
 
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - uses: actions/cache@v3
+        id: cache-cargo-bins
+        with:
+          path: |
+            ~/.cargo/bin/wasm-pack*
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install wasm-pack
+        if: steps.cache-cargo-bins.outputs.cache-hit != 'true'
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
       - name: Install cargo-make
-        run: cargo install cargo-make
+        uses: davidB/rust-cargo-make@v1
 
       - name: Run tests - Windows or Ubuntu
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
