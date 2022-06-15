@@ -39,7 +39,7 @@ getrandom = { version = "0.2.6", features = ["js"] }
 serde = { version = "1.0.136", features = ['derive'], optional = true }
 serde_json = { version = "1.0.79", optional = true }
 serde-wasm-bindgen = { version = "0.4.2", optional = true }
-wasm-bindgen = "0.2.80"
+wasm-bindgen = "0.2.81"
 wasm-bindgen-futures = "0.4.30"
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug

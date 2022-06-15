@@ -3,6 +3,7 @@
 ## [unreleased]
 
 - Fix: Make `fetch::JsonError` public.
+- Fix: Make Seed compile with `wasm_bindgen >= v0.2.81`
 
 ## v0.9.1
 
