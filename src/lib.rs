@@ -189,8 +189,7 @@ pub mod prelude {
         browser::dom::Namespace,
         browser::fetch::{self, fetch, FetchError, Header, Method, Request, Response, Status},
         browser::util::{
-            request_animation_frame, ClosureNew, RequestAnimationFrameHandle,
-            RequestAnimationFrameTime,
+            request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime,
         },
         browser::web_socket::{self, CloseEvent, WebSocket, WebSocketError, WebSocketMessage},
         browser::web_storage::{self, LocalStorage, SessionStorage, WebStorage},
