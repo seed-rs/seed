@@ -55,7 +55,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket)
     #[must_use]
-    pub fn protocols(mut self, protocols: &'a [&'a str]) -> Self {
+    pub const fn protocols(mut self, protocols: &'a [&'a str]) -> Self {
         self.protocols = protocols;
         self
     }
@@ -68,7 +68,7 @@ impl<'a, U: AsRef<str>, Ms: 'static, O: Orders<Ms>> Builder<'a, U, Ms, O> {
     ///
     /// [MDN reference](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/binaryType)
     #[must_use]
-    pub fn use_array_buffers(mut self) -> Self {
+    pub const fn use_array_buffers(mut self) -> Self {
         self.binary_type = Some(BinaryType::Arraybuffer);
         self
     }
