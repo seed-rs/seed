@@ -1,3 +1,5 @@
+#![allow(clippy::use_self)]
+
 use enclose::enc;
 use indexmap::IndexMap;
 use seed::{prelude::*, *};
@@ -77,17 +79,17 @@ enum TodoFilter {
 }
 
 impl Default for TodoFilter {
-    fn default() -> Self {
-        Self::All
+    fn default() -> TodoFilter {
+        TodoFilter::All
     }
 }
 
 impl TodoFilter {
     const fn to_url_path(self) -> &'static str {
         match self {
-            Self::All => "",
-            Self::Active => "active",
-            Self::Completed => "completed",
+            TodoFilter::All => "",
+            TodoFilter::Active => "active",
+            TodoFilter::Completed => "completed",
         }
     }
 }
