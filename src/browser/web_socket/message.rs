@@ -36,7 +36,15 @@ impl WebSocketMessage {
     where
         T: DeserializeOwned + 'static,
     {
-        json::from_js_value(&self.data).map_err(WebSocketError::JsonError)
+        if self.data.has_type::<js_sys::JsString>() {
+            let json_string = self.data.as_string().ok_or(WebSocketError::TextError(
+                "value is not a valid utf-8 string",
+            ))?;
+            json::from_str(&json_string)
+        } else {
+            json::from_js_value(&self.data)
+        }
+        .map_err(WebSocketError::JsonError)
     }
 
     /// Return message data as `Vec<u8>`.
@@ -124,7 +132,6 @@ pub mod tests {
     use wasm_bindgen_test::*;
     wasm_bindgen_test_configure!(run_in_browser);
 
-
     #[wasm_bindgen_test]
     async fn get_bytes_from_message() {
         let bytes = "some test message".as_bytes();
@@ -138,8 +145,8 @@ pub mod tests {
         assert_eq!(bytes, &*result_bytes);
     }
 
+    use serde::{Deserialize, Serialize};
     use wasm_bindgen::JsValue;
-    use serde::{Serialize, Deserialize};
 
     #[derive(Serialize, Deserialize)]
     pub struct Test {
@@ -148,21 +155,21 @@ pub mod tests {
     }
 
     #[wasm_bindgen_test]
-    async fn convert_message_to_struct() {
+    async fn convert_json_string_message_to_struct() {
         let test = Test { a: 1, b: 2 };
-        let text = serde_json::to_string(&test).unwrap();
-
-        let message_event = web_sys::MessageEvent::new("test").unwrap();
+        let json_string = serde_json::to_string(&test).unwrap();
+        let js_string = JsValue::from_str(&json_string);
+        let message_event = web_sys::MessageEvent::new("test-event").unwrap();
         let ws_msg = WebSocketMessage {
-            data: JsValue::from_str(&text),
+            data: js_string,
             message_event,
         };
 
         let result_bytes = ws_msg.bytes().await.unwrap();
-        assert_eq!(text.as_bytes(), &*result_bytes);
-        assert_eq!(text, ws_msg.text().unwrap());
+        assert_eq!(json_string.as_bytes(), &*result_bytes);
+        assert_eq!(json_string, ws_msg.text().unwrap());
 
-        let result  = ws_msg.json::<Test>().unwrap();
+        let result = ws_msg.json::<Test>().unwrap();
 
         assert_eq!(result.a, 1);
         assert_eq!(result.b, 2);

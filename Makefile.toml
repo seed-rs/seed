@@ -160,6 +160,11 @@ description = "Run headless Seed's tests with Firefox."
 extend = "test"
 args = ["test", "--headless", "--firefox"]
 
+[tasks.test_h_firefox_serde_wasm_bindgen]
+description = "Run headless Seed's tests with Firefox."
+extend = "test"
+args = ["test", "--headless", "--firefox", "--features", "serde-wasm-bindgen"]
+
 [tasks.test_h_release]
 extend = "test_h"
 description = "Run headless Seed's tests in release mode. Ex: 'cargo make test_h firefox'. Test envs: [chrome, firefox, safari]"
