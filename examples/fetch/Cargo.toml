@@ -9,5 +9,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = {path = "../../"}
-serde = { version = "1.0.117", features = ["derive"] }
-futures = "0.3.6"
+serde = { version = "1.0.137", features = ["derive"] }
+futures = "0.3.21"

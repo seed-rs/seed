@@ -17,24 +17,24 @@ path = "src/main.rs"
 
 [dependencies]
 #common
-serde = "1.0.117"
+serde = "1.0.137"
 
 # server
-anyhow = { version = "1.0.33", optional = true }
-serde_json = { version = "1.0.59", optional = true }
-tokio = { version = "0.2", features = ["macros", "sync", "fs"], optional = true }
-tracing = { version = "0.1.21", optional = true }
-tracing-subscriber = { version = "0.2.14", optional = true }
-warp = { version = "0.2.5", optional = true }
-web-push = { version = "0.7.2", optional = true }
+anyhow = { version = "1.0.57", optional = true }
+serde_json = { version = "1.0.81", optional = true }
+tokio = { version = "1.19.2", features = ["macros", "sync", "fs", "rt-multi-thread"], optional = true }
+tracing = { version = "0.1.35", optional = true }
+tracing-subscriber = { version = "0.3.11", optional = true, features = ["env-filter"] }
+warp = { version = "0.3.2", optional = true }
+web-push = { version = "0.9.2", optional = true }
 
 # client
 apply = { version = "0.3.0", optional = true }
 seed =  { path = "../../", optional = true }
-serde-wasm-bindgen = { version = "0.3.1", optional = true }
+serde-wasm-bindgen = { version = "0.4.3", optional = true }
 
 [dependencies.web-sys]
-version = "0.3.47"
+version = "0.3.58"
 features = [
   "CacheStorage",
   "Notification",

@@ -69,7 +69,7 @@ async fn send_notification_handler(db: Db) -> Result<impl warp::Reply, std::conv
         let mut builder = WebPushMessageBuilder::new(subscription).unwrap();
 
         builder.set_payload(
-            ContentEncoding::AesGcm,
+            ContentEncoding::Aes128Gcm,
             "This is a push message coming from the server!".as_bytes(),
         );
 
@@ -82,7 +82,7 @@ async fn send_notification_handler(db: Db) -> Result<impl warp::Reply, std::conv
         let signature = sig_builder.build().unwrap();
         builder.set_vapid_signature(signature);
 
-        let client = WebPushClient::new();
+        let client = WebPushClient::new().unwrap();
 
         client
             .send(builder.build().expect("build web push builder"))

@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 seed = { path = "../../", features = ["markdown"] }
-rand = { version = "0.7.3", features = ["wasm-bindgen", "small_rng"] }
+rand = { version = "0.8.5", features = ["small_rng"] }
+regex = "1.5.6"
 scarlet = "1.1.0"
 static_assertions = "1.1.0"
-regex = "1.4.1"

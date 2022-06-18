@@ -8,8 +8,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.20"
-regex = "1.4.1"
+wasm-bindgen-test = "0.3.31"
+regex = "1.5.6"
 
 [dependencies]
 seed = {path = "../../"}
