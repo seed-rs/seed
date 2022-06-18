@@ -19,4 +19,3 @@ seed = { path = "../../../" }
 getrandom = { version = "0.1.16", features = ["wasm-bindgen"] } 
 
 shared = { path = "../shared" }
-

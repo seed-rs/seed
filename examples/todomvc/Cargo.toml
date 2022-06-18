@@ -8,8 +8,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = {path = "../../"}
-serde = "1.0.117"
-uuid = { version = "0.8.1", features = ["serde", "v4", "wasm-bindgen"] }
-indexmap = { version = "1.6.0", features = ["serde-1"] }
+seed = { path = "../../" }
+serde = "1.0.137"
+uuid = { version = "1.1.2", features = ["serde", "v4"] }
+indexmap = { version = "1.9.0", features = ["serde-1"] }
 enclose = "1.1.8"

@@ -5,6 +5,7 @@ authors = ["Your Name <email@address.com>"]
 edition = "2018"
 
 [dependencies]
+cocoon = "0.3.0"
 curve25519-dalek = "3.0.2"
 opaque-ke = "0.2.1"
 sha2 = "0.9.2"
@@ -12,6 +13,3 @@ scrypt = "0.5.0"
 generic-array = "0.14.4"
 digest = "0.9.0"
 rand_core = { version = "0.5.1" }  # sync with the one in `opaque-ke`
-
-# cocoon = "0.2.2"  # https://github.com/fadeevab/cocoon/pull/5
-cocoon = { git = "https://github.com/MartinKavik/cocoon", branch = "fix/adapt_to_variable_usize" }
