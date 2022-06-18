@@ -7,6 +7,7 @@
 - Make `fetch::JsonError` public.
 - Adapted to Rust 1.61.0.
 - Make Seed compile with `wasm_bindgen >= v0.2.81`
+- Decoding WebSocket JSON messages
 
 ## v0.9.1
 
