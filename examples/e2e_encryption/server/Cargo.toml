@@ -5,7 +5,7 @@ authors = ["Your Name <email@address.com>"]
 edition = "2021"
 
 [dependencies]
-tokio = { version = "0.2", features = ["full"] }  # sync with the one in `warp`
+tokio = { version = "1.8", features = ["full"] }  # sync with the one in `warp`
 warp = "0.2"
 
 shared = { path = "../shared" }
