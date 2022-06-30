@@ -1,6 +1,7 @@
 # Changelog
 
 ## [unreleased]
+- Make Seed compile with `wasm_bindgen >= v0.2.81`
 
 ## v0.8.0
 - [BREAKING] Rename `linear_gradient!` to `linearGradient!` for consistency with the other svg macros (same with `radial_gradient!` and `mesh_gradient!`) (#377).

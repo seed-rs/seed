@@ -1,7 +1,7 @@
 use crate::browser::dom::virtual_dom_bridge;
 use crate::browser::{
     service::routing,
-    util::{self, window, ClosureNew},
+    util::{self, window},
     Url, DUMMY_BASE_URL,
 };
 use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};

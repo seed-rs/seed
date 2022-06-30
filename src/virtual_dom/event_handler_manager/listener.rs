@@ -1,4 +1,3 @@
-use crate::browser::util::ClosureNew;
 use crate::virtual_dom::{Ev, EventHandler, Mailbox};
 use enclose::enc;
 use std::{

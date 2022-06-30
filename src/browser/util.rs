@@ -286,25 +286,6 @@ pub fn set_checked(target: &web_sys::EventTarget, value: bool) -> Result<(), &'s
     Err("Only `HtmlInputElement` and `HtmlMenuItemElement` can be used in function `set_checked`.")
 }
 
-// @TODO: Delete once `Closure::new` is stable
-// https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html
-/// Prevent repetition when wrapping closures.
-pub trait ClosureNew<T> {
-    #[allow(clippy::new_ret_no_self)]
-    fn new(inner: impl FnMut(T) + 'static) -> Closure<dyn FnMut(T)>
-    where
-        T: wasm_bindgen::convert::FromWasmAbi + 'static;
-}
-impl<T> ClosureNew<T> for Closure<T> {
-    #[allow(clippy::new_ret_no_self)]
-    fn new(inner: impl FnMut(T) + 'static) -> Closure<dyn FnMut(T)>
-    where
-        T: wasm_bindgen::convert::FromWasmAbi + 'static,
-    {
-        Closure::wrap(Box::new(inner))
-    }
-}
-
 /// Convenience function for logging to the web browser's console.  See also
 /// the log! macro, which is more flexible.
 #[cfg(use_nightly)]
