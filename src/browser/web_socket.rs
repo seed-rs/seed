@@ -79,7 +79,6 @@ pub enum WebSocketError {
 #[must_use = "WebSocket is closed on drop"]
 pub struct WebSocket {
     ws: web_sys::WebSocket,
-    callbacks: Callbacks,
 }
 
 impl WebSocket {
@@ -252,7 +251,7 @@ impl WebSocket {
             ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()))
         }
 
-        Ok(Self { ws, callbacks })
+        Ok(Self { ws })
     }
 }
 
