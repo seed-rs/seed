@@ -2,14 +2,14 @@ use super::super::{
     At, AtValue, Attrs, CSSValue, EventHandler, EventHandlerManager, Node, SharedNodeWs, St, Style,
     Tag, Text,
 };
-use crate::app::MessageMapper;
-use crate::browser::{
-    dom::{virtual_dom_bridge, Namespace},
-    util,
+use crate::{
+    app::MessageMapper,
+    browser::{
+        dom::{virtual_dom_bridge, Namespace},
+        util,
+    },
 };
-use std::borrow::Cow;
-use std::fmt;
-use std::rc::Rc;
+use std::{borrow::Cow, fmt, fmt::Write as _, rc::Rc};
 
 // ------ ElKey ------
 
@@ -88,7 +88,7 @@ impl<Ms> fmt::Display for El<Ms> {
 
         let attributes = attrs.to_string();
         if !attributes.is_empty() {
-            output += &format!(" {}", attributes);
+            let _ = write!(output, " {attributes}");
         }
 
         output += ">";
@@ -103,10 +103,10 @@ impl<Ms> fmt::Display for El<Ms> {
             "source", "track", "wbr",
         ];
         if !empty_elements.contains(&tag.to_lowercase().as_str()) {
-            output += &format!("</{}>", self.tag);
+            let _ = write!(output, "</{}>", self.tag);
         }
 
-        write!(f, "{}", output)
+        write!(f, "{output}")
     }
 }
 
