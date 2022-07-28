@@ -4,7 +4,7 @@ use crate::browser::{
     util::{self, window},
     Url, DUMMY_BASE_URL,
 };
-use crate::virtual_dom::{patch, El, IntoNodes, Mailbox, Node, Tag};
+use crate::virtual_dom::{patch, El, EventHandlerManager, IntoNodes, Mailbox, Node, Tag};
 use enclose::{enc, enclose};
 use std::{
     any::Any,
@@ -175,6 +175,8 @@ where
                 model: RefCell::new(None),
                 root_el: RefCell::new(None),
                 popstate_closure: RefCell::new(None),
+                hashchange_closure: RefCell::new(None),
+                window_event_handler_manager: RefCell::new(EventHandlerManager::new()),
                 sub_manager: RefCell::new(SubManager::new()),
                 msg_listeners: RefCell::new(Vec::new()),
                 scheduled_render_handle: RefCell::new(None),

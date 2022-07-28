@@ -1,6 +1,6 @@
 use super::{RenderInfo, SubManager};
 use crate::browser::util;
-use crate::virtual_dom::El;
+use crate::virtual_dom::{El, EventHandlerManager};
 use std::cell::{Cell, RefCell};
 use wasm_bindgen::closure::Closure;
 
@@ -11,6 +11,8 @@ pub(crate) struct AppData<Ms: 'static, Mdl> {
     pub model: RefCell<Option<Mdl>>,
     pub(crate) root_el: RefCell<Option<El<Ms>>>,
     pub popstate_closure: StoredPopstate,
+    pub hashchange_closure: StoredPopstate,
+    pub window_event_handler_manager: RefCell<EventHandlerManager<Ms>>,
     pub sub_manager: RefCell<SubManager<Ms>>,
     pub msg_listeners: RefCell<Vec<Box<dyn Fn(&Ms)>>>,
     pub scheduled_render_handle: RefCell<Option<util::RequestAnimationFrameHandle>>,
