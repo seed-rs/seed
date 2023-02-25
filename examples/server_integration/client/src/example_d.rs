@@ -1,5 +1,7 @@
+use gloo_net::http::Request;
+use gloo_timers::callback::Timeout;
 use seed::{prelude::*, *};
-use std::borrow::Cow;
+use std::{cell::RefCell, rc::Rc};
 
 pub const TITLE: &str = "Example D";
 pub const DESCRIPTION: &str =
@@ -8,20 +10,33 @@ pub const DESCRIPTION: &str =
 
 const TIMEOUT: u32 = 2000;
 
-fn get_request_url() -> impl Into<Cow<'static, str>> {
+type FetchResult<T> = Result<T, gloo_net::Error>;
+
+fn get_request_url() -> String {
     let response_delay_ms: u32 = 2500;
-    format!("/api/delayed-response/{}", response_delay_ms)
+    format!("/api/delayed-response/{response_delay_ms}")
 }
 
 // ------ ------
 //     Model
 // ------ ------
 
-#[derive(Default)]
 pub struct Model {
-    pub fetch_result: Option<fetch::Result<String>>,
-    pub request_controller: Option<fetch::RequestController>,
+    pub fetch_result: Option<FetchResult<String>>,
+    pub timeout_handle: Rc<RefCell<Option<Timeout>>>,
+    pub abort_controller: Rc<web_sys::AbortController>,
     pub status: Status,
+}
+
+impl Default for Model {
+    fn default() -> Self {
+        Self {
+            fetch_result: None,
+            timeout_handle: Rc::new(RefCell::new(None)),
+            abort_controller: Rc::new(web_sys::AbortController::new().unwrap()),
+            status: Status::default(),
+        }
+    }
 }
 
 pub enum TimeoutStatus {
@@ -47,28 +62,32 @@ impl Default for Status {
 pub enum Msg {
     SendRequest,
     DisableTimeout,
-    Fetched(fetch::Result<String>),
+    Fetched(FetchResult<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
-            let (request, controller) = Request::new(get_request_url())
-                .timeout(TIMEOUT)
-                .controller();
+            let abort_signal = model.abort_controller.signal();
+            let request = Request::get(&get_request_url()).abort_signal(Some(&abort_signal));
+            let abort_controller = Rc::clone(&model.abort_controller);
+            model.timeout_handle.replace(Some(
+                // abort request on timeout
+                Timeout::new(TIMEOUT, move || abort_controller.abort()),
+            ));
 
             model.status = Status::WaitingForResponse(TimeoutStatus::Enabled);
             model.fetch_result = None;
-            model.request_controller = Some(controller);
 
             orders.perform_cmd(async {
-                Msg::Fetched(async { fetch(request).await?.text().await }.await)
+                Msg::Fetched(async { request.send().await?.text().await }.await)
             });
         }
 
         Msg::DisableTimeout => {
-            if let Some(controller) = &model.request_controller {
-                controller.disable_timeout().expect("disable timeout");
+            // Cancel timeout by dropping it.
+            if model.timeout_handle.replace(None).is_none() {
+                // timeout already disabled
             }
             model.status = Status::WaitingForResponse(TimeoutStatus::Disabled);
         }

@@ -8,6 +8,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = {path = "../../"}
-serde = { version = "1.0.137", features = ["derive"] }
+gloo-net = "0.2.6"
 futures = "0.3.21"
+seed = { path = "../../" }
+serde = { version = "1.0.152", features = ["derive"] }

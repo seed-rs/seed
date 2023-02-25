@@ -12,3 +12,4 @@ seed = {path = "../../"}
 graphql_client = "0.10.0"
 serde = "1.0.137"
 itertools = "0.10.3"
+gloo-net = "0.2.6"

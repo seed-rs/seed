@@ -95,7 +95,6 @@ pub use crate::{
         to_drag_event, to_html_el, to_input, to_keyboard_event, to_mouse_event, to_select,
         to_textarea, to_touch_event, to_wheel_event,
     },
-    browser::fetch,
     browser::url::Url,
     browser::util::{
         self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
@@ -187,7 +186,6 @@ pub mod prelude {
             wheel_ev,
         },
         browser::dom::Namespace,
-        browser::fetch::{self, fetch, FetchError, Header, Method, Request, Response, Status},
         browser::util::{
             request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime,
         },

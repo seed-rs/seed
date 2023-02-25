@@ -36,7 +36,7 @@ pulldown-cmark = { version = "0.9.1", optional = true }
 rand = { version = "0.8.5", features = ["small_rng"] }
 # https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
 getrandom = { version = "0.2.7", features = ["js"] }
-serde = { version = "1.0.137", features = ['derive'], optional = true }
+serde = { version = "1.0.152", features = ['derive'], optional = true }
 serde_json = { version = "1.0.81", optional = true }
 serde-wasm-bindgen = { version = "0.4.3", optional = true }
 wasm-bindgen = "0.2.81"

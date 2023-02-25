@@ -1,5 +1,6 @@
 #![allow(clippy::must_use_candidate)]
 
+use gloo_net::http::{Method, Request};
 use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
@@ -73,14 +74,13 @@ impl Page {
 }
 
 fn send_request_to_top_secret(token: String, orders: &mut impl Orders<Msg>) {
-    orders.perform_cmd(async {
+    orders.perform_cmd(async move {
         Msg::TopSecretFetched(
             async {
-                Request::new(format!("{}/top_secret", API_URL))
-                    .header(Header::bearer(token))
-                    .fetch()
+                Request::get(&format!("{}/top_secret", API_URL))
+                    .header("Authorization", &format!("Bearer {}", token))
+                    .send()
                     .await?
-                    .check_status()?
                     .text()
                     .await
             }
@@ -112,8 +112,8 @@ enum Msg {
     EmailChanged(String),
     PasswordChanged(String),
     LoginClicked,
-    LoginFetched(fetch::Result<LoggedUser>),
-    TopSecretFetched(fetch::Result<String>),
+    LoginFetched(Result<LoggedUser, gloo_net::Error>),
+    TopSecretFetched(Result<String, gloo_net::Error>),
     LogoutClicked,
 }
 
@@ -125,16 +125,14 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::EmailChanged(email) => model.email = email,
         Msg::PasswordChanged(password) => model.password = password,
         Msg::LoginClicked => {
-            let request = Request::new(format!("{}/users/login", API_URL))
-                .method(Method::Post)
+            let request = Request::new(&format!("{}/users/login", API_URL))
+                .method(Method::POST)
                 .json(&LoginRequestBody {
                     email: &model.email,
                     password: &model.password,
                 });
             orders.perform_cmd(async {
-                Msg::LoginFetched(
-                    async { request?.fetch().await?.check_status()?.json().await }.await,
-                )
+                Msg::LoginFetched(async { request?.send().await?.json().await }.await)
             });
         }
         Msg::LoginFetched(Ok(logged_user)) => {

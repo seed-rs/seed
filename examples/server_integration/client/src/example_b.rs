@@ -1,13 +1,15 @@
+use gloo_net::http::Request;
 use seed::{prelude::*, *};
 use serde::Deserialize;
-use std::borrow::Cow;
 
 pub const TITLE: &str = "Example B";
 pub const DESCRIPTION: &str =
     "Click button 'Try to Fetch JSON' to send request to non-existent endpoint.
     Server will return status 404 with empty body. `Response::check_status` then return error.";
 
-fn get_request_url() -> impl Into<Cow<'static, str>> {
+type FetchResult<T> = Result<T, gloo_net::Error>;
+
+fn get_request_url() -> &'static str {
     "/api/non-existent-endpoint"
 }
 
@@ -17,7 +19,7 @@ fn get_request_url() -> impl Into<Cow<'static, str>> {
 
 #[derive(Default)]
 pub struct Model {
-    pub fetch_result: Option<fetch::Result<ExpectedResponseData>>,
+    pub fetch_result: Option<FetchResult<ExpectedResponseData>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,7 +34,7 @@ pub struct ExpectedResponseData {
 
 pub enum Msg {
     SendRequest,
-    Fetched(fetch::Result<ExpectedResponseData>),
+    Fetched(FetchResult<ExpectedResponseData>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -40,7 +42,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SendRequest => {
             orders.skip().perform_cmd(async {
                 Msg::Fetched(
-                    async { fetch(get_request_url()).await?.check_status()?.json().await }.await,
+                    async { Request::get(get_request_url()).send().await?.json().await }.await,
                 )
             });
         }

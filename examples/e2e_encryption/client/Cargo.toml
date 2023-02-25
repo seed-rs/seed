@@ -17,5 +17,6 @@ seed = { path = "../../../" }
 # sync with the `rand_core`'s one in `shared`
 # change "wasm-bindgen" to "js" for >=0.2
 getrandom = { version = "0.1.16", features = ["wasm-bindgen"] } 
+gloo-net = "0.2.6"
 
 shared = { path = "../shared" }
