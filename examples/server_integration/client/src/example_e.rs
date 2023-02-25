@@ -1,5 +1,5 @@
+use gloo_net::http::{Method, Request};
 use seed::{prelude::*, *};
-use std::borrow::Cow;
 use std::mem;
 use web_sys::{
     self,
@@ -11,7 +11,9 @@ pub const TITLE: &str = "Example E";
 pub const DESCRIPTION: &str =
     "Fill form and click 'Submit` button. Server echoes the form back. See console log for more info.";
 
-fn get_request_url() -> impl Into<Cow<'static, str>> {
+type FetchResult<T> = Result<T, gloo_net::Error>;
+
+fn get_request_url() -> &'static str {
     "/api/form"
 }
 
@@ -79,7 +81,7 @@ pub enum Msg {
     FileChanged(Option<File>),
     AnswerChanged,
     FormSubmitted(String),
-    ServerResponded(fetch::Result<String>),
+    ServerResponded(FetchResult<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -113,11 +115,11 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn send_request(form: FormData) -> fetch::Result<String> {
+async fn send_request(form: FormData) -> FetchResult<String> {
     Request::new(get_request_url())
-        .method(fetch::Method::Post)
+        .method(Method::POST)
         .body(JsValue::from(form))
-        .fetch()
+        .send()
         .await?
         .text()
         .await

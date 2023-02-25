@@ -1,5 +1,6 @@
 //! Fetch POST example.
 
+use gloo_net::http::{Method, Request};
 use seed::{prelude::*, *};
 
 // ------ ------
@@ -38,19 +39,19 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             // Created outside async block because of lifetime reasons
             // (we can't use reference to `model.form` in async function).
             let request = Request::new("/")
-                .method(Method::Post)
-                .header(Header::custom("Accept-Language", "en"))
-                .header(Header::bearer(token))
+                .method(Method::POST)
+                .header("Accept-Language", "en")
+                .header("Authorization", &format!("Bearer {}", token))
                 .json(&model.form)
                 .expect("Serialization failed");
 
             orders.perform_cmd(async {
-                let response = fetch(request).await.expect("HTTP request failed");
+                let response = request.send().await.expect("HTTP request failed");
 
-                if response.status().is_ok() {
+                if response.ok() {
                     Msg::Submited
                 } else {
-                    Msg::SubmitFailed(response.status().text)
+                    Msg::SubmitFailed(response.status_text())
                 }
             });
         }

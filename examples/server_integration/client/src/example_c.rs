@@ -1,25 +1,37 @@
+use gloo_net::http::Request;
 use seed::{prelude::*, *};
-use std::borrow::Cow;
+use std::rc::Rc;
 
 pub const TITLE: &str = "Example C";
 pub const DESCRIPTION: &str =
     "Click button 'Send request` to send request to endpoint with configurable delay.
     Click again to abort request.";
 
-fn get_request_url() -> impl Into<Cow<'static, str>> {
+type FetchResult<T> = Result<T, gloo_net::Error>;
+
+fn get_request_url() -> String {
     let response_delay_ms: u32 = 2000;
-    format!("/api/delayed-response/{}", response_delay_ms)
+    format!("/api/delayed-response/{response_delay_ms}")
 }
 
 // ------ ------
 //     Model
 // ------ ------
 
-#[derive(Default)]
 pub struct Model {
-    pub fetch_result: Option<fetch::Result<String>>,
-    pub request_controller: Option<fetch::RequestController>,
+    pub fetch_result: Option<FetchResult<String>>,
+    pub abort_controller: Rc<web_sys::AbortController>,
     pub status: Status,
+}
+
+impl Default for Model {
+    fn default() -> Self {
+        Self {
+            fetch_result: None,
+            abort_controller: Rc::new(web_sys::AbortController::new().unwrap()),
+            status: Default::default(),
+        }
+    }
 }
 
 pub enum Status {
@@ -41,25 +53,23 @@ impl Default for Status {
 pub enum Msg {
     SendRequest,
     AbortRequest,
-    Fetched(fetch::Result<String>),
+    Fetched(FetchResult<String>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SendRequest => {
-            let (request, controller) = Request::new(get_request_url()).controller();
+            let abort_signal = model.abort_controller.signal();
+            let request = Request::new(&get_request_url()).abort_signal(Some(&abort_signal));
             model.status = Status::WaitingForResponse;
             model.fetch_result = None;
-            model.request_controller = Some(controller);
             orders.perform_cmd(async {
-                Msg::Fetched(async { fetch(request).await?.text().await }.await)
+                Msg::Fetched(async { request.send().await?.text().await }.await)
             });
         }
 
         Msg::AbortRequest => {
-            if let Some(controller) = &model.request_controller {
-                controller.abort();
-            }
+            model.abort_controller.abort();
             model.status = Status::RequestAborted;
         }
 

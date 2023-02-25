@@ -1,5 +1,6 @@
 //! The simplest fetch example.
 
+use gloo_net::http::Request;
 use seed::{prelude::*, *};
 
 // ------ ------
@@ -30,16 +31,21 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::Fetch => {
             orders.skip(); // No need to rerender
             orders.perform_cmd(async {
-                let response = fetch("user.json").await.expect("HTTP request failed");
-
-                let user = response
-                    .check_status() // ensure we've got 2xx status
-                    .expect("status check failed")
-                    .json::<User>()
+                let response = Request::get("user.json")
+                    .send()
                     .await
-                    .expect("deserialization failed");
+                    .expect("HTTP request failed");
 
-                Msg::Received(user)
+                if !response.ok() {
+                    // TODO: handle error
+                    None
+                } else {
+                    let user = response
+                        .json::<User>()
+                        .await
+                        .expect("deserialization failed");
+                    Some(Msg::Received(user))
+                }
             });
         }
         Msg::Received(user) => {

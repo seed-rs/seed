@@ -8,5 +8,6 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
+gloo-net = "0.2.6"
 seed = {path = "../../"}
 serde = "1.0.137"

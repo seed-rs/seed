@@ -1,12 +1,12 @@
+use gloo_net::http::{Method, Request};
 use seed::{self, prelude::*, *};
-use std::borrow::Cow;
 
 pub const TITLE: &str = "Example A";
 pub const DESCRIPTION: &str = "Write something into input and click on 'Send message'.
     Message will be send to server and then it wil be returned with ordinal number.
     Ordinal number is incremented by server with each request.";
 
-fn get_request_url() -> impl Into<Cow<'static, str>> {
+fn get_request_url() -> &'static str {
     "/api/send-message"
 }
 
@@ -24,10 +24,12 @@ pub struct Model {
 //    Update
 // ------ ------
 
+type FetchResult<T> = Result<T, gloo_net::Error>;
+
 pub enum Msg {
     NewMessageChanged(String),
     SendRequest,
-    Fetched(fetch::Result<shared::SendMessageResponseBody>),
+    Fetched(FetchResult<shared::SendMessageResponseBody>),
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -53,13 +55,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-async fn send_message(new_message: String) -> fetch::Result<shared::SendMessageResponseBody> {
+async fn send_message(new_message: String) -> FetchResult<shared::SendMessageResponseBody> {
     Request::new(get_request_url())
-        .method(Method::Post)
+        .method(Method::POST)
         .json(&shared::SendMessageRequestBody { text: new_message })?
-        .fetch()
+        .send()
         .await?
-        .check_status()?
         .json()
         .await
 }

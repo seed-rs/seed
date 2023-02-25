@@ -1,5 +1,4 @@
 use super::*;
-use js_sys::JsString;
 
 impl From<::serde_json::Error> for Error {
     fn from(err: ::serde_json::Error) -> Self {
@@ -12,15 +11,6 @@ where
     T: Serialize + ?Sized,
 {
     Ok(::serde_json::to_string(v)?)
-}
-
-pub fn to_js_string<T>(v: &T) -> Result<JsString>
-where
-    T: Serialize + ?Sized,
-{
-    let v = to_string(v)?;
-    let js_string = JsString::from(v);
-    Ok(js_string)
 }
 
 pub fn from_str<T>(v: &str) -> Result<T>

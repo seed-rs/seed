@@ -1,5 +1,6 @@
 #![allow(clippy::large_enum_variant, clippy::cognitive_complexity)]
 
+use gloo_net::http::{Method, Request};
 use graphql_client::{GraphQLQuery, Response as GQLResponse};
 use itertools::Itertools;
 use seed::{prelude::*, *};
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 const API_URL: &str = "https://countries.trevorblades.com/";
 
 type Code = String;
+type FetchResult<T> = Result<T, gloo_net::Error>;
 
 // ------ ------
 //    GraphQL
@@ -28,17 +30,16 @@ generate_query!(QContinents);
 generate_query!(QContinent);
 generate_query!(QCountry);
 
-async fn send_graphql_request<V, T>(variables: &V) -> fetch::Result<T>
+async fn send_graphql_request<V, T>(variables: &V) -> FetchResult<T>
 where
     V: Serialize,
     T: for<'de> Deserialize<'de> + 'static,
 {
     Request::new(API_URL)
-        .method(Method::Post)
+        .method(Method::POST)
         .json(variables)?
-        .fetch()
+        .send()
         .await?
-        .check_status()?
         .json()
         .await
 }
@@ -74,11 +75,11 @@ struct Model {
 // ------ ------
 
 enum Msg {
-    ContinentsFetched(fetch::Result<GQLResponse<q_continents::ResponseData>>),
+    ContinentsFetched(FetchResult<GQLResponse<q_continents::ResponseData>>),
     ContinentClicked(Code),
-    CountriesFetched(fetch::Result<GQLResponse<q_continent::ResponseData>>),
+    CountriesFetched(FetchResult<GQLResponse<q_continent::ResponseData>>),
     CountryClicked(Code),
-    CountryFetched(fetch::Result<GQLResponse<q_country::ResponseData>>),
+    CountryFetched(FetchResult<GQLResponse<q_country::ResponseData>>),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
