@@ -63,7 +63,6 @@ exclude = [
 ]
 
 [dependencies]
-cookie = { version = "0.16.2", features = ["percent-encode"] }
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug
 dbg = "1.0.4"

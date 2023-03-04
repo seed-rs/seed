@@ -97,8 +97,7 @@ pub use crate::{
     },
     browser::url::Url,
     browser::util::{
-        self, body, canvas, canvas_context_2d, cookies, document, error, history, html_document,
-        log, window,
+        self, body, canvas, canvas_context_2d, document, error, history, html_document, log, window,
     },
     virtual_dom::{Attrs, EventHandler, Style},
 };
