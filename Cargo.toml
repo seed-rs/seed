@@ -81,7 +81,6 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
 
 # Optional dependencies
-console_error_panic_hook = { version = "0.1.7", optional = true }
 serde = { version = "1.0.152", features = ['derive'], optional = true }
 serde_json = { version = "1.0.93", optional = true }
 serde-wasm-bindgen = { version = "0.4.5", optional = true }
@@ -164,10 +163,9 @@ features = [
 ]
 
 [features]
-default = ["panic-hook", "serde-json"]
+default = ["serde-json"]
 serde-json = ["dep:serde", "dep:serde_json", "wasm-bindgen/serde-serialize"]
 serde-wasm-bindgen = ["dep:serde", "dep:serde-wasm-bindgen"]
-panic-hook = ["dep:console_error_panic_hook"]
 
 [build-dependencies]
 version_check = "0.9.4"

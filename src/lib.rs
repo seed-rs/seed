@@ -102,9 +102,6 @@ pub use crate::{
     virtual_dom::{Attrs, EventHandler, Style},
 };
 
-#[cfg(feature = "panic-hook")]
-pub use console_error_panic_hook;
-
 pub use futures::{
     self,
     future::{self, FutureExt, TryFutureExt},

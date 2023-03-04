@@ -2771,7 +2771,6 @@ dependencies = [
 name = "seed"
 version = "0.9.2"
 dependencies = [
- "console_error_panic_hook",
  "dbg",
  "enclose",
  "futures",

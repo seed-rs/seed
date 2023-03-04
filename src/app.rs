@@ -148,10 +148,6 @@ where
         // https://bugs.webkit.org/show_bug.cgi?id=202881
         std::mem::drop(util::document().query_selector("html"));
 
-        // Allows panic messages to output to the browser console.error.
-        #[cfg(feature = "panic-hook")]
-        console_error_panic_hook::set_once();
-
         let base_path: Rc<[String]> = Rc::from(
             util::document()
                 .query_selector("base")
