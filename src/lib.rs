@@ -189,7 +189,6 @@ pub mod prelude {
         browser::util::{
             request_animation_frame, RequestAnimationFrameHandle, RequestAnimationFrameTime,
         },
-        browser::web_storage::{self, LocalStorage, SessionStorage, WebStorage},
         browser::{Url, UrlSearch},
         helpers::not,
         // macros are exported in crate root

@@ -1,8 +1,9 @@
 pub mod dom;
-mod json;
 pub mod service;
 pub mod url;
 pub mod util;
-pub mod web_storage;
+
+#[cfg(any(feature = "serde-wasm-bindgen", feature = "serde-json"))]
+mod json;
 
 pub use url::{Url, UrlSearch, DUMMY_BASE_URL};
