@@ -319,8 +319,9 @@ fn fix_attrs_order(attrs: &mut Attrs) {
 
 #[allow(clippy::too_many_lines)]
 impl<Ms> From<&web_sys::Element> for El<Ms> {
-    /// Create a vdom node from a `web_sys::Element`. Used in creating elements from html
-    /// and markdown strings. Includes children, recursively added.
+    /// Create a vdom node from a `web_sys::Element`.
+    /// Used in creating elements from html strings.
+    /// Includes children, recursively added.
     #[allow(clippy::too_many_lines)]
     fn from(ws_el: &web_sys::Element) -> Self {
         let namespace = ws_el.namespace_uri().map(Namespace::from);
@@ -458,8 +459,9 @@ impl<Ms> From<&web_sys::Element> for Node<Ms> {
     }
 }
 
-/// Create a vdom node from a `web_sys::Node`. Used in creating elements from html
-/// and markdown strings. Includes children, recursively added.
+/// Create a vdom node from a `web_sys::Node`.
+/// Used in creating elements from html strings.
+/// Includes children, recursively added.
 pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
     match node.node_type() {
         web_sys::Node::ELEMENT_NODE => {
