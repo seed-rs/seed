@@ -9,6 +9,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gloo-net = "0.2.6"
-futures = "0.3.21"
+futures = "0.3.26"
 seed = { path = "../../" }
 serde = { version = "1.0.152", features = ["derive"] }
