@@ -86,44 +86,45 @@ where
 {
     let closure: Closure<dyn Fn(web_sys::Event) -> _> =
         Closure::new(move |event: web_sys::Event| {
-            event.target()
-            .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
-            .and_then(|el| el.closest("a[href]").ok().flatten())
-            .and_then(|href_el| {
-                if href_el.has_attribute("download") {
-                    None
-                } else {
-                    href_el.get_attribute("href")
-                }
-            })
-            // The first character being / or empty href indicates a rel link, which is what
-            // we're intercepting.
-            // @TODO: Resolve it properly, see Elm implementation:
-            // @TODO: https://github.com/elm/browser/blob/9f52d88b424dd12cab391195d5b090dd4639c3b0/src/Elm/Kernel/Browser.js#L157
-            .and_then(|href| {
-                if href.is_empty() || href.starts_with('/') {
-                    Some(href)
-                } else {
-                    None
-                }
-            })
-            .map(|href| {
-                // @TODO should be empty href ignored?
-                if href.is_empty() {
-                    event.prevent_default(); // Prevent page refresh
-                } else {
-                    // Only update when requested for an update by the user.
-                    let url: Url = href.parse().expect("cast link href to `Url`");
+            event
+                .target()
+                .and_then(|et| et.dyn_into::<web_sys::Element>().ok())
+                .and_then(|el| el.closest("a[href]").ok().flatten())
+                .and_then(|href_el| {
+                    if href_el.has_attribute("download") {
+                        None
+                    } else {
+                        href_el.get_attribute("href")
+                    }
+                })
+                // The first character being / or empty href indicates a rel link, which is what
+                // we're intercepting.
+                // @TODO: Resolve it properly, see Elm implementation:
+                // @TODO: https://github.com/elm/browser/blob/9f52d88b424dd12cab391195d5b090dd4639c3b0/src/Elm/Kernel/Browser.js#L157
+                .and_then(|href| {
+                    if href.is_empty() || href.starts_with('/') {
+                        Some(href)
+                    } else {
+                        None
+                    }
+                })
+                .map(|href| {
+                    // @TODO should be empty href ignored?
+                    if href.is_empty() {
+                        event.prevent_default(); // Prevent page refresh
+                    } else {
+                        // Only update when requested for an update by the user.
+                        let url: Url = href.parse().expect("cast link href to `Url`");
 
-                    notify(Notification::new(subs::UrlRequested(
-                        url,
-                        subs::url_requested::UrlRequest::new(
-                            subs::url_requested::UrlRequestStatus::default(),
-                            Some(event.clone()),
-                        ),
-                    )));
-                }
-            });
+                        notify(Notification::new(subs::UrlRequested(
+                            url,
+                            subs::url_requested::UrlRequest::new(
+                                subs::url_requested::UrlRequestStatus::default(),
+                                Some(event.clone()),
+                            ),
+                        )));
+                    }
+                });
         });
 
     (util::document().as_ref() as &web_sys::EventTarget)
