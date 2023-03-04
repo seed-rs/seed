@@ -60,25 +60,6 @@ pub fn canvas_context_2d(canvas: &web_sys::HtmlCanvasElement) -> web_sys::Canvas
         .expect("Problem casting as web_sys::CanvasRenderingContext2d")
 }
 
-/// Convenience function to get all cookies from the current `HtmlDocument`
-/// _Note:_ Returns `None` if parsing cookies fails or there are no cookies.
-pub fn cookies() -> Option<cookie::CookieJar> {
-    let cookies_str = html_document().cookie().ok()?;
-    let mut jar = cookie::CookieJar::new();
-
-    for cookie_str in cookies_str.split(';') {
-        let cookie = cookie::Cookie::parse_encoded(cookie_str).ok()?;
-        jar.add(cookie.into_owned());
-    }
-
-    let jar_is_empty = jar.iter().next().is_none();
-    if jar_is_empty {
-        None
-    } else {
-        Some(jar)
-    }
-}
-
 #[deprecated(
     since = "0.8.0",
     note = "use [`Orders::after_next_render`](../../app/orders/trait.Orders.html#method.after_next_render) instead"
