@@ -146,12 +146,14 @@ pub trait Orders<Ms: 'static> {
     /// # Example
     ///
     /// ```rust,no_run
-    /// fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
+    /// fn create_websocket(orders: &impl Orders<Msg>) -> Result<EventClient, WebSocketError> {
     ///     let msg_sender = orders.msg_sender();
     ///
-    ///     WebSocket::builder(WS_URL, orders)
-    ///         .on_message(move |msg| decode_message(msg, msg_sender))
-    ///         ...
+    ///     let mut client = EventClient::new(WS_URL)?;
+    ///     client.set_on_message(Some(Box::new(move |_: &EventClient, msg: wasm_sockets::Message|
+    ///         decode_message(msg, Rc::clone(&send)),
+    ///     )));
+    ///     // ...
     /// }
     ///
     /// fn decode_message(message: WebSocketMessage, msg_sender: Rc<dyn Fn(Option<Msg>)>) {

@@ -3645,6 +3645,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm-sockets"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d14bbe65995269301ab677e5d69b3b69195447c01137ef44f72b10eecea55c77"
+dependencies = [
+ "js-sys",
+ "log",
+ "thiserror",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "web-push"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3684,6 +3697,7 @@ dependencies = [
  "seed",
  "serde",
  "serde_json",
+ "wasm-sockets",
  "ws",
 ]
 
