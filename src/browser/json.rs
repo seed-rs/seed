@@ -2,11 +2,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use wasm_bindgen::JsValue;
 
 #[derive(Debug)]
-pub enum Error {
-    Serde(JsValue),
-    Parse(JsValue),
-    Stringify(JsValue),
-}
+pub struct Error(JsValue);
 
 type Result<T> = std::result::Result<T, Error>;
 
