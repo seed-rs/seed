@@ -15,40 +15,81 @@ rust-version = "1.61.0"
 
 build = "build.rs"
 
-[build-dependencies]
-version_check = "0.9.4"
+[workspace]
+members = [
+    "examples/animation",
+    "examples/auth",
+    "examples/bunnies",
+    "examples/component_builder",
+    "examples/counter",
+    "examples/counters",
+    "examples/canvas",
+    "examples/charts",
+    "examples/custom_elements",
+    "examples/drag_and_drop",
+    "examples/drop_zone",
+    "examples/el_key",
+    "examples/graphql",
+    "examples/i18n",
+    "examples/intersection_observer",
+    "examples/markdown",
+    "examples/fetch",
+    "examples/no_change",
+    "examples/page_trait",
+    "examples/on_insert",
+    "examples/pages",
+    "examples/pages_hash_routing",
+    "examples/pages_keep_state",
+    "examples/resize_observer",
+    "examples/rust_from_js",
+    "examples/record_screen",
+    "examples/service_worker",
+    "examples/subscribe",
+    "examples/tests",
+    "examples/tea_component",
+    "examples/todomvc",
+    "examples/unsaved_changes",
+    "examples/update_from_js",
+    "examples/url",
+    "examples/user_media",
+    "examples/websocket",
+    "examples/window_events",
+]
 
-[dev-dependencies]
-wasm-bindgen-test = "0.3.31"
-serde_json = "1.0.81"
-serde-wasm-bindgen = "0.4.3"
+# they have own workspaces
+exclude = [
+    "examples/e2e_encryption",
+    "examples/server_integration",
+]
 
 [dependencies]
-console_error_panic_hook = { version = "0.1.7", optional = true }
-cookie = { version = "0.16.0", features = ["percent-encode"] }
-enclose = "1.1.8"
-gloo-timers = { version = "0.2.4", features = ["futures"] }
-gloo-file = { version = "0.2.1", features = ["futures"] }
-gloo-utils = "0.1.4"
-indexmap = "1.9.1"
-js-sys = "0.3.58"
-pulldown-cmark = { version = "0.9.1", optional = true }
-rand = { version = "0.8.5", features = ["small_rng"] }
-# https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
-getrandom = { version = "0.2.7", features = ["js"] }
-serde = { version = "1.0.152", features = ['derive'], optional = true }
-serde_json = { version = "1.0.81", optional = true }
-serde-wasm-bindgen = { version = "0.4.3", optional = true }
-wasm-bindgen = "0.2.81"
-wasm-bindgen-futures = "0.4.31"
+cookie = { version = "0.16.2", features = ["percent-encode"] }
 # @TODO: remove once we can use entities without `Debug` in `log!` and `error!` on `stable` Rust.
 # https://github.com/Centril/rfcs/blob/rfc/quick-debug-macro/text/0000-quick-debug-macro.md#types-which-are-not-debug
 dbg = "1.0.4"
-futures = "0.3.21"
-uuid = { version = "1.1.2", features = ["v4"] }
+enclose = "1.1.8"
+futures = "0.3.26"
+# https://docs.rs/getrandom/0.2.0/getrandom/#webassembly-support
+getrandom = { version = "0.2.8", features = ["js"] }
+gloo-timers = { version = "0.2.6", features = ["futures"] }
+gloo-file = { version = "0.2.3", features = ["futures"] }
+gloo-utils = "0.1.6"
+indexmap = "1.9.2"
+js-sys = "0.3.61"
+rand = { version = "0.8.5", features = ["small_rng"] }
+uuid = { version = "1.3.0", features = ["v4"] }
+wasm-bindgen = "0.2.84"
+wasm-bindgen-futures = "0.4.34"
+
+# Optional dependencies
+console_error_panic_hook = { version = "0.1.7", optional = true }
+pulldown-cmark = { version = "0.9.2", optional = true }
+serde = { version = "1.0.152", features = ['derive'], optional = true }
+serde_json = { version = "1.0.93", optional = true }
+serde-wasm-bindgen = { version = "0.4.5", optional = true }
 
 [dependencies.web-sys]
-version = "0.3.58"
+version = "0.3.61"
 features = [
     "AbortController",
     "AbortSignal",
@@ -124,56 +165,17 @@ features = [
     "UrlSearchParams",
 ]
 
-[workspace]
-members = [
-    "examples/animation",
-    "examples/auth",
-    "examples/bunnies",
-    "examples/component_builder",
-    "examples/counter",
-    "examples/counters",
-    "examples/canvas",
-    "examples/charts",
-    "examples/custom_elements",
-    "examples/drag_and_drop",
-    "examples/drop_zone",
-    "examples/el_key",
-    "examples/graphql",
-    "examples/i18n",
-    "examples/intersection_observer",
-    "examples/markdown",
-    "examples/fetch",
-    "examples/no_change",
-    "examples/page_trait",
-    "examples/on_insert",
-    "examples/pages",
-    "examples/pages_hash_routing",
-    "examples/pages_keep_state",
-    "examples/resize_observer",
-    "examples/rust_from_js",
-    "examples/record_screen",
-    "examples/service_worker",
-    "examples/subscribe",
-    "examples/tests",
-    "examples/tea_component",
-    "examples/todomvc",
-    "examples/unsaved_changes",
-    "examples/update_from_js",
-    "examples/url",
-    "examples/user_media",
-    "examples/websocket",
-    "examples/window_events",
-]
-
-# they have own workspaces
-exclude = [
-    "examples/e2e_encryption",
-    "examples/server_integration",
-]
-
 [features]
 default = ["panic-hook", "serde-json"]
 serde-json = ["dep:serde", "dep:serde_json", "wasm-bindgen/serde-serialize"]
 serde-wasm-bindgen = ["dep:serde", "dep:serde-wasm-bindgen"]
 panic-hook = ["dep:console_error_panic_hook"]
 markdown = ["dep:pulldown-cmark"]
+
+[build-dependencies]
+version_check = "0.9.4"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.34"
+serde_json = "1.0.93"
+serde-wasm-bindgen = "0.4.5"
