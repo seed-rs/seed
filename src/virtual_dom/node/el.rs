@@ -171,20 +171,6 @@ impl<Ms> El<Ms> {
         el
     }
 
-    // todo: Return El instead of Node here? (Same with from_html)
-    /// Create elements from a markdown string.
-    /// _Note:_ Requires the `markdown` feature. All additional markdown [extensions](https://docs.rs/pulldown-cmark/latest/pulldown_cmark/struct.Options.html) enabled.
-    #[cfg(feature = "markdown")]
-    pub fn from_markdown(markdown: &str) -> Vec<Node<Ms>> {
-        let options = pulldown_cmark::Options::all();
-
-        let parser = pulldown_cmark::Parser::new_ext(markdown, options);
-        let mut html_text = String::new();
-        pulldown_cmark::html::push_html(&mut html_text, parser);
-
-        Self::from_html(None, &html_text)
-    }
-
     /// Create elements from an HTML string.
     pub fn from_html(namespace: Option<&Namespace>, html: &str) -> Vec<Node<Ms>> {
         // Create a web_sys::Element, with our HTML wrapped in a (arbitrary) span tag.

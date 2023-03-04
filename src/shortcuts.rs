@@ -292,13 +292,6 @@ macro_rules! raw_svg {
 }
 
 #[macro_export]
-macro_rules! md {
-    ($md:expr) => {
-        Node::from_markdown($md)
-    };
-}
-
-#[macro_export]
 macro_rules! plain {
     ($text:expr) => {
         $crate::virtual_dom::Node::new_text($text)

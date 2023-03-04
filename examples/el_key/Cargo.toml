@@ -8,7 +8,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-seed = { path = "../../", features = ["markdown"] }
+seed = { path = "../../" }
 rand = { version = "0.8.5", features = ["small_rng"] }
 regex = "1.7.1"
 scarlet = "1.1.0"

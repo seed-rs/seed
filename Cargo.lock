@@ -2793,7 +2793,6 @@ dependencies = [
  "gloo-utils",
  "indexmap",
  "js-sys",
- "pulldown-cmark",
  "rand 0.8.5",
  "serde",
  "serde-wasm-bindgen",
