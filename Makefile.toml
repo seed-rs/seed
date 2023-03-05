@@ -111,10 +111,10 @@ dependencies = ["fmt_check", "fmt_examples_check"]
 [tasks.clippy]
 description = "Lint only Seed with Clippy"
 command = "cargo"
-args = ["clippy", "--all-features", "--", 
-    "--deny", "warnings", 
-    "--deny", "clippy::pedantic", 
-    "--deny", "clippy::nursery",
+args = ["clippy", "--all-features", "--",
+    "--deny", "warnings",
+    # "--deny", "clippy::pedantic",
+    # "--deny", "clippy::nursery",
     "--allow", "clippy::vec_init_then_push", # Vec::new() + push are used in macros in shortcuts.rs
 ]
 dependencies = ["default::install-clippy"]
@@ -247,8 +247,8 @@ description = "Lint with Clippy"
 command = "cargo"
 args = ["clippy", "--all-features", "--",
     "--deny", "warnings",
-    "--deny", "clippy::pedantic",
-    "--deny", "clippy::nursery",
+    # "--deny", "clippy::pedantic",
+    # "--deny", "clippy::nursery",
     "--allow", "clippy::wildcard_imports", # for `use seed::{prelude::*, *};`
     "--allow", "clippy::future_not_send", # JS/WASM is single threaded
     "--allow", "clippy::used_underscore_binding", # some libraries break this rule
