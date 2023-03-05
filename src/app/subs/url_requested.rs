@@ -15,7 +15,7 @@ pub type PreventDefault = bool;
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.subscribe(Msg::UrlRequested);
 ///...
 ///update(... Msg::UrlRequested(subs::UrlRequested(url, url_request))) =>

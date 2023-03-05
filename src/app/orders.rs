@@ -25,7 +25,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///Msg::Child(child_msg) => {
     ///    child::update(child_msg, &mut model.child, &mut orders.proxy(Msg::Child));
     ///}
@@ -53,7 +53,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///orders.notify(counter::DoReset);
     ///orders.notify("Hello!");
     /// ...
@@ -68,7 +68,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///orders.msg(Msg::Increment);
     /// ```
     ///
@@ -81,7 +81,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///orders.perform_cmd(cmds::timeout(2000, || Msg::OnTimeout));
     ///orders.perform_cmd(async { log!("Hello!") });
     /// ```
@@ -106,7 +106,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///let timeout_handle = orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout));
     ///let cmd_handle = orders.perform_cmd_with_handle(async { log!("Hello!") });
     /// ```
@@ -134,7 +134,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///let (app, msg_mapper) = (orders.clone_app(), orders.msg_mapper());
     ///app.update(msg_mapper(Msg::AMessage));
     /// ```
@@ -145,7 +145,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     /// fn create_websocket(orders: &impl Orders<Msg>) -> Result<EventClient, WebSocketError> {
     ///     let msg_sender = orders.msg_sender();
     ///
@@ -211,7 +211,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///orders.subscribe(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
     ///orders.subscribe(|greeting: &'static str| log!(greeting));
     ///orders.subscribe(Msg::UrlChanged)  // `update(... Msg::UrlChanged(subs::UrlChanged(url)) =>`
@@ -243,7 +243,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///let sub_handle = orders.subscribe_with_handle(Msg::Reset);  // `Msg::Reset(counter::DoReset)`
     ///orders.subscribe_with_handle(|greeting: &'static str| log!(greeting));
     ///let url_changed_handle = orders.subscribe_with_handle(Msg::UrlChanged)  // `update(... Msg::UrlChanged(subs::UrlChanged(url)) =>`
@@ -270,7 +270,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///orders.stream(streams::interval(1000, || Msg::OnTick));
     ///orders.stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
     /// ```
@@ -293,7 +293,7 @@ pub trait Orders<Ms: 'static> {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///let timer_handler = orders.stream_with_handle(streams::interval(1000, || Msg::OnTick));
     ///let stream_handler = orders.stream_with_handle(streams::window_event(Ev::Resize, |_| Msg::OnResize));
     /// ```

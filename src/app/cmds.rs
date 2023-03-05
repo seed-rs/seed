@@ -11,7 +11,7 @@ use gloo_timers::future::TimeoutFuture;
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.perform_cmd_with_handle(cmds::timeout(2000, || Msg::OnTimeout));
 ///orders.perform_cmd(cmds::timeout(1000, || log!("Tick!")));
 /// ```

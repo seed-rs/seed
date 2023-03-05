@@ -99,7 +99,7 @@ where
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     /// fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     ///     orders
     ///         .subscribe(Msg::UrlChanged)

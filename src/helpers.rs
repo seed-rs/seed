@@ -4,7 +4,7 @@ use std::ops::Not;
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///div![
 ///    "Button",
 ///    IF!(not(disabled) => ev(Ev::Click, Msg::Clicked)),

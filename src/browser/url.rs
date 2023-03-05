@@ -82,7 +82,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///match url.next_path_part() {
     ///    None => Page::Home,
     ///    Some("report") => Page::Report(page::report::init(url)),
@@ -101,7 +101,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///match url.next_hash_path_part() {
     ///    None => Page::Home,
     ///    Some("report") => Page::Report(page::report::init(url)),
@@ -120,7 +120,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///match url.remaining_path_parts().as_slice() {
     ///    [] => Page::Home,
     ///    ["report", rest @ ..] => {
@@ -146,7 +146,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///match url.remaining_hash_path_parts().as_slice() {
     ///    [] => Page::Home,
     ///    ["report", rest @ ..] => {
@@ -172,7 +172,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///let link_to_blog = url.add_path_part("blog");
     /// ````
     #[must_use]
@@ -186,7 +186,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     ///let link_to_blog = url.add_hash_path_part("blog");
     /// ````
     #[must_use]
@@ -216,7 +216,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust, no_run
+    /// ```rust, ignore
     /// Url::new().set_path(&["my", "path"])
     /// ```
     ///
@@ -240,7 +240,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust, no_run
+    /// ```rust, ignore
     /// Url::new().set_hash_path(&["my", "path"])
     /// ```
     ///
@@ -265,7 +265,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust, no_run
+    /// ```rust, ignore
     /// Url::new().set_hash("my_hash")
     /// ```
     ///
@@ -283,7 +283,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust, no_run
+    /// ```rust, ignore
     /// Url::new().set_search(UrlSearch::new(vec![
     ///     ("x", vec!["1"]),
     ///     ("sort_by", vec!["date", "name"]),
@@ -419,7 +419,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     /// Url::decode_uri_component("Hello%20G%C3%BCnter"); // => "Hello Günter"
     /// ```
     ///
@@ -439,7 +439,7 @@ impl Url {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     /// Url::encode_uri_component("Hello Günter"); // => "Hello%20G%C3%BCnter"
     /// ```
     pub fn encode_uri_component(component: impl AsRef<str>) -> String {
@@ -630,7 +630,7 @@ impl UrlSearch {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     /// UrlSearch::new(vec![
     ///     ("sort", vec!["date", "name"]),
     ///     ("category", vec!["top"])

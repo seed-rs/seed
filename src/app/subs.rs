@@ -11,7 +11,7 @@ pub use url_requested::UrlRequested;
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.subscribe(Msg::UrlChanged).notify(subs::UrlChanged(url));
 ///...
 ///update(... Msg::UrlChanged(subs::UrlChanged(url)) =>

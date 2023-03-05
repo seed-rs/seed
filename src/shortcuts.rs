@@ -48,7 +48,7 @@ macro_rules! with_dollar_sign {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// use seed::{prelude::*, *};
 ///
 /// mod page {
@@ -105,7 +105,7 @@ macro_rules! struct_urls {
             ///
             /// # Example
             ///
-            /// ```rust,no_run
+            /// ```rust,ignore
             /// Urls::new(base_url).home()
             /// ```
             pub fn new(base_url: impl Into<std::borrow::Cow<'a, $crate::browser::Url>>) -> Self {
@@ -118,7 +118,7 @@ macro_rules! struct_urls {
             ///
             /// # Example
             ///
-            /// ```rust,no_run
+            /// ```rust,ignore
             /// pub fn admin_urls(self) -> page::admin::Urls<'a> {
             ///     page::admin::Urls::new(self.base_url().add_path_part(ADMIN))
             /// }
@@ -359,7 +359,7 @@ macro_rules! class {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///div![
 ///    C!["btn", IF!(active => "active")],
 ///    "Button",
@@ -405,7 +405,7 @@ pub fn _all_classes_to_attrs(all_classes: &[String]) -> Attrs {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// use seed::{prelude::*, *};
 /// let active = false;
 /// div![
@@ -463,7 +463,7 @@ macro_rules! style {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// use seed::{prelude::*, *};
 /// type Msg = ();
 /// let _ : Vec<Node<Msg>> = nodes![

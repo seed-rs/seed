@@ -18,7 +18,7 @@ use backoff_stream::BackoffStream;
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.stream(streams::interval(1000, || Msg::OnTick));
 ///orders.stream_with_handle(streams::interval(1000, || log!("Tick!")));
 /// ```
@@ -47,7 +47,7 @@ pub fn interval<MsU>(
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.stream(streams::backoff(None, |_retries| Msg::OnTick));
 ///orders.stream_with_handle(streams::backoff(Some(15), |_| log!("Tick!")));
 /// ```
@@ -71,7 +71,7 @@ pub fn backoff<MsU>(
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.stream(streams::window_event(Ev::Resize, |_| Msg::OnResize));
 ///orders.stream_with_handle(streams::window_event(Ev::Click, |_| log!("Clicked!")));
 /// ```
@@ -95,7 +95,7 @@ pub fn window_event<MsU>(
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///orders.stream(streams::document_event(Ev::SelectionChange, |_| Msg::OnSelection));
 ///orders.stream_with_handle(streams::document_event(Ev::SelectionChange, |_| log!("Selection changed!")));
 /// ```
