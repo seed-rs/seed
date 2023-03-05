@@ -4,7 +4,7 @@ use std::fmt;
 
 /// Handle Style separately from Attrs, since it commonly involves multiple parts,
 /// and has a different semantic meaning.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Style {
     pub vals: IndexMap<St, CSSValue>,
 }
@@ -46,6 +46,6 @@ impl fmt::Display for Style {
         } else {
             String::new()
         };
-        write!(f, "{}", string)
+        write!(f, "{string}")
     }
 }

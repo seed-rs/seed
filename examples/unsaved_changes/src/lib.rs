@@ -1,7 +1,10 @@
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-
+use gloo_console::log;
+use gloo_storage::{LocalStorage, Storage};
 use seed::{prelude::*, *};
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 const STORAGE_KEY: &str = "seed_unsaved_changes_text";
 
@@ -63,7 +66,7 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::TextChanged(text) => model.text = text,
         Msg::Save => {
-            LocalStorage::insert(STORAGE_KEY, &model.text).expect("save text");
+            LocalStorage::set(STORAGE_KEY, &model.text).expect("save text");
             model.saved_text_hash = calculate_hash(&model.text);
         }
         Msg::UrlRequested(subs::UrlRequested(_, url_request)) => {

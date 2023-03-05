@@ -1,5 +1,7 @@
+use gloo_console::log;
 use seed::{prelude::*, *};
 use web_sys::{self, HtmlDivElement};
+
 // ------ ------
 //     Init
 // ------ ------

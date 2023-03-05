@@ -1,3 +1,4 @@
+use gloo_console::log;
 use seed::{prelude::*, *};
 use std::cell::RefCell;
 

@@ -1,3 +1,4 @@
+use gloo_console::log;
 use seed::{prelude::*, *};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlMediaElement, MediaStream, MediaStreamConstraints};

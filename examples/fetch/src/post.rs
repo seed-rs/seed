@@ -41,7 +41,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let request = Request::new("/")
                 .method(Method::POST)
                 .header("Accept-Language", "en")
-                .header("Authorization", &format!("Bearer {}", token))
+                .header("Authorization", &format!("Bearer {token}"))
                 .json(&model.form)
                 .expect("Serialization failed");
 
@@ -56,7 +56,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::Submited => {
-            model.form.name = "".into();
+            model.form.name = String::new();
             model.message = Some("Submit succeeded".into());
         }
         Msg::SubmitFailed(reason) => {

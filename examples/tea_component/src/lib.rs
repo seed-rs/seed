@@ -1,6 +1,7 @@
 // NOTE: Don't try to create as many components as possible.
 // Try to reuse already existing `Msg` and other entities to prevent unnecessary nesting and complexity.
 
+use gloo_console::log;
 use seed::{prelude::*, *};
 
 mod counter;
@@ -43,7 +44,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::CounterB(msg) => {
             counter::update(msg, &mut model.counter_b, Msg::CounterChanged, orders);
         }
-        Msg::CounterClicked(counter_id) => log!("CounterClicked", counter_id),
+        Msg::CounterClicked(counter_id) => log!(format!("CounterClicked: {counter_id}")),
         Msg::CounterChanged(value) => log!("CounterChanged", value),
     }
 }

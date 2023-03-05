@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use std::fmt;
 
 /// A thinly-wrapped `HashMap` holding DOM attributes
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Attrs {
     // We use an IndexMap instead of HashMap here, and in Style, to preserve order.
     pub vals: IndexMap<At, AtValue>,
@@ -22,7 +22,7 @@ impl fmt::Display for Attrs {
             })
             .collect::<Vec<_>>()
             .join(" ");
-        write!(f, "{}", string)
+        write!(f, "{string}")
     }
 }
 

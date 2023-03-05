@@ -1,5 +1,6 @@
 #![allow(clippy::large_enum_variant, clippy::cognitive_complexity)]
 
+use gloo_console::log;
 use gloo_net::http::{Method, Request};
 use graphql_client::{GraphQLQuery, Response as GQLResponse};
 use itertools::Itertools;
@@ -89,7 +90,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         })) => {
             model.continents = Some(data.continents);
         }
-        Msg::ContinentsFetched(error) => log!(error),
+        Msg::ContinentsFetched(error) => log!(format!("{error:?}")),
         Msg::ContinentClicked(code) => {
             model.selected_continent = Some(code.clone());
             orders.perform_cmd(async {
@@ -104,7 +105,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         })) => {
             model.countries = data.continent.map(|continent| continent.countries);
         }
-        Msg::CountriesFetched(error) => log!(error),
+        Msg::CountriesFetched(error) => log!(format!("{error:?}")),
         Msg::CountryClicked(code) => {
             model.selected_country = Some(code.clone());
             orders.perform_cmd(async {
@@ -119,7 +120,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         })) => {
             model.country = data.country;
         }
-        Msg::CountryFetched(error) => log!(error),
+        Msg::CountryFetched(error) => log!(format!("{error:?}")),
     }
 }
 

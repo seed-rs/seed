@@ -29,7 +29,7 @@ async fn send_message(
 #[get("delayed-response/{delay}")]
 async fn delayed_response(delay: web::Path<u64>) -> String {
     futures_timer::Delay::new(time::Duration::from_millis(*delay)).await;
-    format!("Delay was set to {}ms.", delay)
+    format!("Delay was set to {delay}ms.")
 }
 
 #[post("form")]
@@ -54,7 +54,7 @@ async fn form(mut form: Multipart) -> String {
 
     let mut output = String::new();
     for (name, text) in name_text_pairs {
-        writeln!(&mut output, "{}: {}", name, text).unwrap();
+        writeln!(&mut output, "{name}: {text}").unwrap();
         writeln!(&mut output, "___________________").unwrap();
     }
     output

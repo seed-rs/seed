@@ -29,7 +29,7 @@ impl Default for Model {
         Self {
             fetch_result: None,
             abort_controller: Rc::new(web_sys::AbortController::new().unwrap()),
-            status: Default::default(),
+            status: Status::default(),
         }
     }
 }
@@ -92,7 +92,7 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
                 model
                     .fetch_result
                     .as_ref()
-                    .map(|result| div![format!("{:#?}", result)]),
+                    .map(|result| div![format!("{result:#?}")]),
                 button![ev(Ev::Click, |_| Msg::SendRequest), "Send request"],
             ],
             Status::WaitingForResponse => nodes![
@@ -103,7 +103,7 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
                 model
                     .fetch_result
                     .as_ref()
-                    .map(|result| div![format!("{:#?}", result)]),
+                    .map(|result| div![format!("{result:#?}")]),
                 button![
                     attrs! {At::Disabled => false.as_at_value()},
                     "Request aborted"

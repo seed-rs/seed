@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 seed = {path = "../../"}
 itertools = "0.10.5"
 futures = "0.3.26"
+gloo-console = "0.2.3"

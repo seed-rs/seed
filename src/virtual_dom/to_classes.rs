@@ -128,7 +128,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn to_classes_ref_option_some() {
-        let option: &Option<&str> = &Some("foo_opt");
+        let option: Option<&str> = Some("foo_opt");
         assert_eq!(
             C![option].vals[&At::Class],
             AtValue::Some("foo_opt".to_owned())

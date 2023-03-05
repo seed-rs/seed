@@ -46,7 +46,7 @@ impl Car {
 
     fn generate_color() -> CarColor {
         let hue = thread_rng().gen_range(0..=360);
-        format!("hsl({}, 80%, 50%)", hue)
+        format!("hsl({hue}, 80%, 50%)")
     }
 }
 

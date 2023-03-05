@@ -56,6 +56,6 @@ impl fmt::Display for State {
             Self::Indeterminate => "indeterminate",
             Self::Checked => "checked",
         };
-        write!(f, "{}", state)
+        write!(f, "{state}")
     }
 }

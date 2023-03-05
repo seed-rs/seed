@@ -196,98 +196,84 @@ mod tests {
     fn update_el_attrs() {
         let attrs: Attrs = attrs!(At::Href => "https://example.com");
         let _el: Node<Ms> = div![attrs];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_attrs() {
         let attrs: &Attrs = &attrs!(At::Href => "https://example.com");
         let _el: Node<Ms> = div![attrs];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_style() {
         let style: Style = style! {St::Left => px(5)};
         let _el: Node<Ms> = div![style];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_style() {
         let style: &Style = &style! {St::Left => px(5)};
         let _el: Node<Ms> = div![style];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_event_handler() {
         let event_handler: EventHandler<Ms> = ev(Ev::Click, |_| ());
         let _el: Node<Ms> = div![event_handler];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_event_handler() {
         let event_handler: &EventHandler<Ms> = &ev(Ev::Click, |_| ());
         let _el: Node<Ms> = div![event_handler];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_el() {
         let el: El<Ms> = El::empty(Tag::H2);
         let _el: Node<Ms> = div![el];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_el() {
         let el: &El<Ms> = &El::empty(Tag::H2);
         let _el: Node<Ms> = div![el];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_node() {
         let node: Node<Ms> = span![];
         let _el: Node<Ms> = div![node];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_node() {
         let node: &Node<Ms> = &span![];
         let _el: Node<Ms> = div![node];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_tag() {
         let tag: Tag = Tag::H1;
         let _el: Node<Ms> = div![tag];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_tag() {
         let tag: &Tag = &Tag::H1;
         let _el: Node<Ms> = div![tag];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_el_ref() {
         let el_ref: ElRef<web_sys::HtmlElement> = ElRef::default();
         let _el: Node<Ms> = div![el_ref];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_el_ref() {
         let el_ref: &ElRef<web_sys::HtmlElement> = &ElRef::default();
         let _el: Node<Ms> = div![el_ref];
-        assert!(true);
     }
 
     // --- Texts ---
@@ -296,21 +282,18 @@ mod tests {
     fn update_el_ref_str() {
         let text: &str = "foo";
         let _el: Node<Ms> = div![text];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_string() {
         let text: String = String::from("bar");
         let _el: Node<Ms> = div![text];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_string() {
         let text: &String = &String::from("ref_bar");
         let _el: Node<Ms> = div![text];
-        assert!(true);
     }
 
     // --- Numbers ---
@@ -319,84 +302,72 @@ mod tests {
     fn update_el_u32() {
         let number: u32 = 100;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_u32() {
         let number: &u32 = &1009;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_i32() {
         let number: i32 = -25;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_i32() {
         let number: &i32 = &-259;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_u64() {
         let number: u64 = 100;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_u64() {
         let number: &u64 = &1009;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_i64() {
         let number: i64 = -25;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_i64() {
         let number: &i64 = &-259;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_usize() {
         let number: usize = 1_012;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_usize() {
         let number: &usize = &10_129;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_f64() {
-        let number: f64 = 3.14;
+        let number: f64 = 3.111;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_f64() {
         let number: &f64 = &3.149;
         let _el: Node<Ms> = div![number];
-        assert!(true);
     }
 
     // --- Containers ---
@@ -405,55 +376,47 @@ mod tests {
     fn update_el_iterator_map() {
         let map_iterator = vec![3, 4].into_iter().map(|n| n * 2);
         let _el: Node<Ms> = div![map_iterator];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_iterator_filter() {
         let filter_iterator = vec![3, 4].into_iter().filter(|n| n % 2 == 1);
         let _el: Node<Ms> = div![filter_iterator];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_vec() {
         let vec: Vec<&str> = vec!["foo_1", "foo_2"];
         let _el: Node<Ms> = div![vec];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_vec() {
         let vec: &Vec<&str> = &vec!["foo_1", "foo_2"];
         let _el: Node<Ms> = div![vec];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_slice() {
         let slice: &[&str] = &["foo_1", "foo_2"];
         let _el: Node<Ms> = div![slice];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_option_some() {
         let option: Option<&str> = Some("foo_opt");
         let _el: Node<Ms> = div![option];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_ref_option_some() {
-        let option: &Option<&str> = &Some("foo_opt");
+        let option: Option<&str> = Some("foo_opt");
         let _el: Node<Ms> = div![option];
-        assert!(true);
     }
 
     #[wasm_bindgen_test]
     fn update_el_option_none() {
         let option: Option<&str> = None;
         let _el: Node<Ms> = div![option];
-        assert!(true);
     }
 }

@@ -252,7 +252,7 @@ args = ["clippy", "--all-features", "--",
     "--allow", "clippy::wildcard_imports", # for `use seed::{prelude::*, *};`
     "--allow", "clippy::future_not_send", # JS/WASM is single threaded
     "--allow", "clippy::used_underscore_binding", # some libraries break this rule
-    "--allow", "clippy::eval_order_dependence", # false positives
+    "--allow", "clippy::mixed_read_write_in_expression", # false positives
     "--allow", "clippy::vec_init_then_push", # Vec::new() + push are used in macros in shortcuts.rs
 ]
 dependencies = ["default::install-clippy"]

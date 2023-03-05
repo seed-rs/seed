@@ -12,6 +12,7 @@ path = "src/lib.rs"
 wasm-bindgen-test = "0.3.20"
 
 [dependencies]
+gloo-console = "0.2.3"
 gloo-net = "0.2.6"
 gloo-timers = "0.2.6"
 seed = { path = "../../../" }

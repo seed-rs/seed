@@ -1,3 +1,4 @@
+use gloo_console::log;
 use seed::{prelude::*, *};
 use std::rc::Rc;
 
@@ -25,7 +26,6 @@ struct Model {
 
 impl Model {
     fn new(mut url: Url, base_path: Rc<[String]>) -> Self {
-        log!(&url);
         log!(url.to_string());
         log!("_______________________________");
 
@@ -74,7 +74,7 @@ fn view(model: &Model) -> Node<Msg> {
                 "Go to '/ui/a/b/c?x=1?#hash'` and reload the page",
                 ev(Ev::Click, |_| {
                     Url::new()
-                        .set_path(&["ui", "a", "b", "c"])
+                        .set_path(["ui", "a", "b", "c"])
                         .set_search(UrlSearch::new(vec![
                             ("x", vec!["1"])
                         ]))

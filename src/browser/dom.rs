@@ -154,7 +154,7 @@ pub mod tests {
             class![
                 "cls_6"
                 "cls_7" => false
-                "cls_8" => 1 == 1
+                "cls_8" => true
             ]
         ];
         e.add_class("cls_9");
@@ -178,8 +178,8 @@ pub mod tests {
 
         let attrs = get_node_attrs(&node);
         let actual_styles = attrs["style"]
-            .split(";")
-            .map(|x| x.to_string())
+            .split(';')
+            .map(std::string::ToString::to_string)
             .collect::<HashSet<String>>();
 
         let mut expected = HashSet::new();
@@ -238,6 +238,6 @@ pub mod tests {
         result_style.add(St::Order, CSSValue::Ignored);
         result_style.add(St::Gap, CSSValue::Some("8px".into()));
 
-        assert_eq!(style, result_style)
+        assert_eq!(style, result_style);
     }
 }

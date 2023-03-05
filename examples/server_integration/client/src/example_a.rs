@@ -1,3 +1,4 @@
+use gloo_console::log;
 use gloo_net::http::{Method, Request};
 use seed::{self, prelude::*, *};
 
@@ -6,7 +7,7 @@ pub const DESCRIPTION: &str = "Write something into input and click on 'Send mes
     Message will be send to server and then it wil be returned with ordinal number.
     Ordinal number is incremented by server with each request.";
 
-fn get_request_url() -> &'static str {
+const fn get_request_url() -> &'static str {
     "/api/send-message"
 }
 
@@ -49,7 +50,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
 
         Msg::Fetched(Err(fetch_error)) => {
-            log!("Example_A error:", fetch_error);
+            log!(format!("Example_A error: {fetch_error:?}"));
             orders.skip();
         }
     }
@@ -85,9 +86,8 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
 }
 
 fn view_message(message: &Option<shared::SendMessageResponseBody>) -> Node<Msg> {
-    let message = match message {
-        Some(message) => message,
-        None => return empty![],
+    let Some(message) = message else {
+        return empty![]
     };
     div![format!(
         r#"{}. message: "{}""#,

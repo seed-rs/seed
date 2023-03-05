@@ -1,4 +1,5 @@
 use crate::js_sys::Uint8Array;
+use gloo_console::log;
 use gloo_net::http::{Method, Request};
 use seed::{prelude::*, *};
 use shared::{
@@ -169,7 +170,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 )
                 .expect("login step 2");
 
-            log!("Shared secret: ", shared_secret);
+            log!(format!("Shared secret: {shared_secret:?}"));
             model.shared_secret = Some(shared_secret);
 
             let request = Request::new("api/login/step-2")

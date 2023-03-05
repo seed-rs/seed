@@ -220,14 +220,9 @@ pub mod tests {
         use crate::prelude::*;
         use crate::virtual_dom::{EventHandler, Node};
 
+        #[derive(Default)]
         struct Model {
             pub val: i32,
-        }
-
-        impl Default for Model {
-            fn default() -> Self {
-                Self { val: 0 }
-            }
         }
 
         #[derive(Clone)]
@@ -249,8 +244,8 @@ pub mod tests {
             vec![mouse_ev("mousemove", |_| Msg::Increment)]
         }
 
-        fn routes(_url: seed::Url) -> Option<Msg> {
-            Some(Msg::Increment)
+        fn routes(_url: &seed::Url) -> Msg {
+            Msg::Increment
         }
 
         #[wasm_bindgen]

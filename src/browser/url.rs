@@ -18,7 +18,7 @@ pub const DUMMY_BASE_URL: &str = "http://example.com";
 /// are considered different also during comparison.
 ///
 /// (If the features above are problems for you, create an [issue](https://github.com/seed-rs/seed/issues/new))
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(
     any(feature = "serde-json", feature = "serde-wasm-bindgen"),
     derive(Serialize, Deserialize)
@@ -522,7 +522,7 @@ impl FromStr for Url {
     fn from_str(str_url: &str) -> Result<Self, Self::Err> {
         web_sys::Url::new_with_base(str_url, DUMMY_BASE_URL)
             .map(|url| Url::from(&url))
-            .map_err(|error| format!("`{}` is invalid relative URL. Error: {:?}", str_url, error))
+            .map_err(|error| format!("`{str_url}` is invalid relative URL. Error: {error:?}"))
     }
 }
 
@@ -540,13 +540,13 @@ impl From<&web_sys::Url> for Url {
                     if path_part.is_empty() {
                         None
                     } else {
-                        let path_part = match Url::decode_uri_component(path_part) {
-                            Ok(decoded_path_part) => decoded_path_part,
-                            Err(_) => {
+                        let path_part = Url::decode_uri_component(path_part).map_or_else(
+                            |_| {
                                 invalid_components.push(path_part.to_owned());
                                 path_part.to_owned()
-                            }
-                        };
+                            },
+                            |decoded_path_part| decoded_path_part,
+                        );
                         Some(path_part)
                     }
                 })
@@ -560,13 +560,13 @@ impl From<&web_sys::Url> for Url {
             } else {
                 // Remove leading `#`.
                 hash.remove(0);
-                let hash = match Url::decode_uri_component(&hash) {
-                    Ok(decoded_hash) => decoded_hash,
-                    Err(_) => {
+                let hash = Url::decode_uri_component(&hash).map_or_else(
+                    |_| {
                         invalid_components.push(hash.clone());
                         hash
-                    }
-                };
+                    },
+                    |decoded_hash| decoded_hash,
+                );
                 Some(hash)
             }
         };
@@ -583,13 +583,13 @@ impl From<&web_sys::Url> for Url {
                         if path_part.is_empty() {
                             None
                         } else {
-                            let path_part = match Url::decode_uri_component(path_part) {
-                                Ok(decoded_path_part) => decoded_path_part,
-                                Err(_) => {
+                            let path_part = Url::decode_uri_component(path_part).map_or_else(
+                                |_| {
                                     invalid_components.push(path_part.to_owned());
                                     path_part.to_owned()
-                                }
-                            };
+                                },
+                                |decoded_path_part| decoded_path_part,
+                            );
                             Some(path_part)
                         }
                     })
@@ -615,7 +615,7 @@ impl From<&web_sys::Url> for Url {
 // ------ UrlSearch ------
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     any(feature = "serde-json", feature = "serde-wasm-bindgen"),
     derive(Serialize, Deserialize)
@@ -749,20 +749,21 @@ impl From<web_sys::UrlSearchParams> for UrlSearch {
                 .as_string()
                 .expect("cast UrlSearchParams value to String");
 
-            let key = match Url::decode_uri_component(&key) {
-                Ok(decoded_key) => decoded_key,
-                Err(_) => {
+            let key = Url::decode_uri_component(&key).map_or_else(
+                |_| {
                     invalid_components.push(key.clone());
                     key
-                }
-            };
-            let value = match Url::decode_uri_component(&value) {
-                Ok(decoded_value) => decoded_value,
-                Err(_) => {
+                },
+                |decoded_key| decoded_key,
+            );
+
+            let value = Url::decode_uri_component(&value).map_or_else(
+                |_| {
                     invalid_components.push(value.clone());
                     value
-                }
-            };
+                },
+                |decoded_value| decoded_value,
+            );
 
             url_search.push_value(key, value);
         }
@@ -798,38 +799,38 @@ mod tests {
         assert_eq!(url.hash(), Some(&"heš/část/hash path part".to_owned()));
         assert_eq!(url.hash_path(), ["heš", "část", "hash path part"]);
 
-        assert_eq!(expected, url.to_string())
+        assert_eq!(expected, url.to_string());
     }
 
     #[wasm_bindgen_test]
     fn parse_url_path() {
-        let expected = Url::new().set_path(&["path1", "path2"]);
+        let expected = Url::new().set_path(["path1", "path2"]);
         let actual: Url = "/path1/path2".parse().unwrap();
-        assert_eq!(expected, actual)
+        assert_eq!(expected, actual);
     }
 
     #[wasm_bindgen_test]
     fn parse_url_with_hash_search() {
         let expected = Url::new()
-            .set_path(&["path"])
+            .set_path(["path"])
             .set_search(UrlSearch::new(vec![("search", vec!["query"])]))
             .set_hash("hash");
         let actual: Url = "/path?search=query#hash".parse().unwrap();
-        assert_eq!(expected, actual)
+        assert_eq!(expected, actual);
     }
 
     #[wasm_bindgen_test]
     fn parse_url_with_hash_only() {
-        let expected = Url::new().set_path(&["path"]).set_hash("hash");
+        let expected = Url::new().set_path(["path"]).set_hash("hash");
         let actual: Url = "/path#hash".parse().unwrap();
-        assert_eq!(expected, actual)
+        assert_eq!(expected, actual);
     }
 
     #[wasm_bindgen_test]
     fn parse_url_with_hash_routing() {
-        let expected = Url::new().set_hash_path(&["discover"]);
+        let expected = Url::new().set_hash_path(["discover"]);
         let actual: Url = "/#discover".parse().unwrap();
-        assert_eq!(expected, actual)
+        assert_eq!(expected, actual);
     }
 
     #[wasm_bindgen_test]
@@ -837,11 +838,11 @@ mod tests {
         let expected = "/foo/bar?q=42&z=13#discover";
 
         let actual = Url::new()
-            .set_path(&["foo", "bar"])
+            .set_path(["foo", "bar"])
             .set_search(UrlSearch::new(vec![("q", vec!["42"]), ("z", vec!["13"])]))
-            .set_hash_path(&["discover"])
+            .set_hash_path(["discover"])
             .to_string();
 
-        assert_eq!(expected, actual)
+        assert_eq!(expected, actual);
     }
 }

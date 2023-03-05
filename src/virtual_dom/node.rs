@@ -39,8 +39,8 @@ impl<Ms> Clone for Node<Ms> {
 impl<Ms> fmt::Display for Node<Ms> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Element(element) => write!(f, "{}", element),
-            Self::Text(text) => write!(f, "{}", text),
+            Self::Element(element) => write!(f, "{element}"),
+            Self::Text(text) => write!(f, "{text}"),
             Self::Empty => write!(f, ""),
             Self::NoChange => write!(f, "[NoChange]"),
         }
@@ -119,7 +119,7 @@ impl<Ms> Node<Ms> {
         match self {
             Node::Element(el) => el.get_text(),
             Node::Text(text) => text.text.to_string(),
-            _ => "".to_string(),
+            _ => String::new(),
         }
     }
 

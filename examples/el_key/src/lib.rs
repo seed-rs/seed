@@ -1,6 +1,7 @@
 //! This example shows how to control a DOM update using element keys and empty nodes.
 //! See README.md for more details.
 
+use gloo_console::log;
 use rand::{rngs::SmallRng, seq::SliceRandom, SeedableRng};
 use regex::Regex;
 use scarlet::{
@@ -54,9 +55,17 @@ impl Model {
             cards: Card::new_cards(),
             el_key_enabled: true,
             empty_enabled: true,
-            readme: md!(&readme),
+            readme: from_md(&readme),
         }
     }
+}
+
+fn from_md<M>(md: &str) -> Vec<Node<M>> {
+    let options = pulldown_cmark::Options::all();
+    let parser = pulldown_cmark::Parser::new_ext(md, options);
+    let mut html_text = String::new();
+    pulldown_cmark::html::push_html(&mut html_text, parser);
+    El::from_html(None, &html_text)
 }
 
 // ------ Card ------
@@ -146,7 +155,7 @@ enum Msg {
 
 #[allow(clippy::needless_pass_by_value)]
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
-    log!("update:", msg);
+    log!(format!("update:{msg:?}"));
     match msg {
         // ------ Selecting ------
         Msg::SelectNone => {

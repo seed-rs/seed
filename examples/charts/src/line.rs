@@ -35,7 +35,7 @@ pub fn chart<Ms: Clone + 'static>(
         C!["chart"],
         style! { St::Display => "block" },
         attrs! {
-            ViewBox => format!("0 0 {} {}", width, height),
+            ViewBox => format!("0 0 {width} {height}"),
         },
         g![
             C!["x-axis"],

@@ -1,3 +1,4 @@
+use gloo_console::log;
 use seed::{prelude::*, *};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{DisplayMediaStreamConstraints, HtmlMediaElement, MediaStream};
@@ -41,7 +42,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .set_src_object(Some(&media_stream));
         }
         Msg::DisplayMedia(Err(error)) => {
-            log!(error);
+            log!(format!("{error:?}"));
         }
     }
 }

@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen as swb;
 use wasm_bindgen::JsValue;
-use wasm_bindgen_test::*;
+use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 
 wasm_bindgen_test_configure!(run_in_browser);
 
@@ -17,38 +17,38 @@ struct User {
 }
 
 impl User {
-    fn new(name: String, age: usize, cool: bool) -> Self {
+    const fn new(name: String, age: usize, cool: bool) -> Self {
         Self { name, age, cool }
     }
 }
 
 #[wasm_bindgen_test]
 fn roundtrip_int() {
-    roundtrip(1);
+    roundtrip(&1);
 }
 
 #[wasm_bindgen_test]
 fn roundtrip_struct() {
     let user = User::new("Jack".to_string(), 8, true);
-    roundtrip(user);
+    roundtrip(&user);
 }
 
 #[wasm_bindgen_test]
 fn roundtrip_string() {
-    let foo: String = "This is a string value".to_string();
-    roundtrip(foo);
+    let value: String = "This is a string value".to_string();
+    roundtrip(&value);
 }
 
-fn roundtrip<T>(data: T)
+fn roundtrip<T>(data: &T)
 where
     T: Serialize + DeserializeOwned + std::fmt::Debug + std::cmp::PartialEq,
 {
-    let a = roundtrip_serde_json(&data).unwrap();
-    let b = roundtrip_swb(&data).unwrap();
-    let c = roundtrip_swb_string(&data).unwrap();
+    let a = roundtrip_serde_json(data).unwrap();
+    let b = roundtrip_swb(data).unwrap();
+    let c = roundtrip_swb_string(data).unwrap();
     assert_eq!(a, b);
     assert_eq!(b, c);
-    assert_eq!(a, data);
+    assert_eq!(&a, data);
 }
 
 fn roundtrip_serde_json<T>(data: &T) -> Option<T>

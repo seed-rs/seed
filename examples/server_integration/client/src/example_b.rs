@@ -9,7 +9,7 @@ pub const DESCRIPTION: &str =
 
 type FetchResult<T> = Result<T, gloo_net::Error>;
 
-fn get_request_url() -> &'static str {
+const fn get_request_url() -> &'static str {
     "/api/non-existent-endpoint"
 }
 
@@ -63,7 +63,7 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
         model
             .fetch_result
             .as_ref()
-            .map(|result| div![format!("{:#?}", result)]),
+            .map(|result| div![format!("{result:#?}")]),
         button![ev(Ev::Click, |_| Msg::SendRequest), "Try to Fetch JSON"],
     ]
 }

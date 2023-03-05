@@ -1,6 +1,7 @@
 #![allow(clippy::must_use_candidate)]
 
 use enclose::enc;
+use gloo_console::log;
 use seed::{prelude::*, *};
 
 // ------ ------

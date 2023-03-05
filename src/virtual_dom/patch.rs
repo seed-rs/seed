@@ -13,9 +13,9 @@ use patch_gen::{PatchCommand, PatchGen};
 // assign them here when we create them.
 // @TODO: "Split" `Node` into 2 structs - one without native nodes and one with them (?).
 
-fn append_el<'a, Ms>(
+fn append_el<Ms>(
     document: &Document,
-    new: &'a mut El<Ms>,
+    new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
 ) {
@@ -23,14 +23,14 @@ fn append_el<'a, Ms>(
     virtual_dom_bridge::attach_el_and_children(new, parent, mailbox);
 }
 
-fn append_text<'a>(document: &Document, new: &'a mut Text, parent: &web_sys::Node) {
+fn append_text(document: &Document, new: &mut Text, parent: &web_sys::Node) {
     virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
     virtual_dom_bridge::attach_text_node(new, parent);
 }
 
-fn insert_el<'a, Ms>(
+fn insert_el<Ms>(
     document: &Document,
-    new: &'a mut El<Ms>,
+    new: &mut El<Ms>,
     parent: &web_sys::Node,
     next_node: web_sys::Node,
     mailbox: &Mailbox<Ms>,
@@ -39,9 +39,9 @@ fn insert_el<'a, Ms>(
     virtual_dom_bridge::insert_el_and_children(new, parent, Some(next_node), mailbox);
 }
 
-fn insert_text<'a>(
+fn insert_text(
     document: &Document,
-    new: &'a mut Text,
+    new: &mut Text,
     parent: &web_sys::Node,
     next_node: web_sys::Node,
 ) {
@@ -53,10 +53,10 @@ fn insert_text<'a>(
     virtual_dom_bridge::insert_node(new_node_ws, parent, Some(next_node));
 }
 
-fn patch_el<'a, Ms, Mdl, INodes>(
+fn patch_el<Ms, Mdl, INodes>(
     document: &Document,
     mut old: El<Ms>,
-    new: &'a mut El<Ms>,
+    new: &mut El<Ms>,
     mailbox: &Mailbox<Ms>,
     app: &App<Ms, Mdl, INodes>,
 ) where
@@ -102,10 +102,10 @@ fn patch_text(mut old: Text, new: &mut Text) {
     new.node_ws.replace(old_node_ws);
 }
 
-fn replace_by_el<'a, Ms>(
+fn replace_by_el<Ms>(
     document: &Document,
     old_node: &web_sys::Node,
-    new: &'a mut El<Ms>,
+    new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
 ) {
@@ -120,10 +120,10 @@ fn replace_by_el<'a, Ms>(
     virtual_dom_bridge::replace_child(new_ws, old_node, parent);
 }
 
-fn replace_by_text<'a>(
+fn replace_by_text(
     document: &Document,
     old_node: &web_sys::Node,
-    new: &'a mut Text,
+    new: &mut Text,
     parent: &web_sys::Node,
 ) {
     virtual_dom_bridge::assign_ws_nodes_to_text(document, new);
@@ -135,10 +135,10 @@ fn replace_by_text<'a>(
     virtual_dom_bridge::replace_child(new_node_ws, old_node, parent);
 }
 
-fn replace_el_by_el<'a, Ms>(
+fn replace_el_by_el<Ms>(
     document: &Document,
     mut old: El<Ms>,
-    new: &'a mut El<Ms>,
+    new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
 ) {
@@ -149,10 +149,10 @@ fn replace_el_by_el<'a, Ms>(
     replace_by_el(document, &old_node, new, parent, mailbox);
 }
 
-fn replace_el_by_text<'a, Ms>(
+fn replace_el_by_text<Ms>(
     document: &Document,
     mut old: El<Ms>,
-    new: &'a mut Text,
+    new: &mut Text,
     parent: &web_sys::Node,
 ) {
     let old_node = old
@@ -162,10 +162,10 @@ fn replace_el_by_text<'a, Ms>(
     replace_by_text(document, &old_node, new, parent);
 }
 
-fn replace_text_by_el<'a, Ms>(
+fn replace_text_by_el<Ms>(
     document: &Document,
     mut old: Text,
-    new: &'a mut El<Ms>,
+    new: &mut El<Ms>,
     parent: &web_sys::Node,
     mailbox: &Mailbox<Ms>,
 ) {
@@ -257,9 +257,9 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
         Node::Element(old_el) => match new {
             Node::Element(new_el) => {
                 if patch_gen::el_can_be_patched(&old_el, new_el) {
-                    patch_el(document, old_el, new_el, mailbox, app)
+                    patch_el(document, old_el, new_el, mailbox, app);
                 } else {
-                    replace_el_by_el(document, old_el, new_el, parent, mailbox)
+                    replace_el_by_el(document, old_el, new_el, parent, mailbox);
                 }
             }
             Node::Text(new_text) => replace_el_by_text(document, old_el, new_text, parent),
@@ -272,16 +272,16 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
             match new {
                 Node::Element(new_el) => {
                     if let Some(next) = next_node {
-                        insert_el(document, new_el, parent, next, mailbox)
+                        insert_el(document, new_el, parent, next, mailbox);
                     } else {
-                        append_el(document, new_el, parent, mailbox)
+                        append_el(document, new_el, parent, mailbox);
                     }
                 }
                 Node::Text(new_text) => {
                     if let Some(next) = next_node {
-                        insert_text(document, new_text, parent, next)
+                        insert_text(document, new_text, parent, next);
                     } else {
-                        append_text(document, new_text, parent)
+                        append_text(document, new_text, parent);
                     }
                 }
                 // If new and old are empty, we don't need to do anything.
@@ -295,7 +295,7 @@ pub(crate) fn patch<'a, Ms, Mdl, INodes: IntoNodes<Ms>>(
             virtual_dom_bridge::assign_ws_nodes(document, new);
             match new {
                 Node::Element(new_el) => {
-                    replace_text_by_el(document, old_text, new_el, parent, mailbox)
+                    replace_text_by_el(document, old_text, new_el, parent, mailbox);
                 }
                 Node::Empty => remove_text(old_text, parent),
                 Node::Text(new_text) => patch_text(old_text, new_text),

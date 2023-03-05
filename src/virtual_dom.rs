@@ -64,7 +64,7 @@ pub mod tests {
         mut new_vdom: Node<Msg>,
         app: &App<Msg, TestModel, Node<Msg>>,
     ) -> Node<Msg> {
-        patch::patch(&doc, old_vdom, &mut new_vdom, parent, None, mailbox, &app);
+        patch::patch(doc, old_vdom, &mut new_vdom, parent, None, mailbox, app);
         new_vdom
     }
 
@@ -309,7 +309,7 @@ pub mod tests {
                 .unwrap()
                 .dyn_into::<Element>()
                 .unwrap();
-            assert_eq!(button.has_attribute("disabled"), false);
+            assert!(!button.has_attribute("disabled"));
 
             // Now add attribute `disabled`
             vdom = call_patch(
@@ -350,7 +350,7 @@ pub mod tests {
                 .unwrap()
                 .dyn_into::<Element>()
                 .unwrap();
-            assert_eq!(button.has_attribute("disabled"), false);
+            assert!(!button.has_attribute("disabled"));
         } else {
             panic!("Node not El")
         }
@@ -484,7 +484,7 @@ pub mod tests {
             let el_ws = vdom_el.node_ws.as_ref().expect("el_ws missing");
             assert!(el_ws.is_same_node(parent.first_child().as_ref()));
             assert_eq!(
-                iter_child_nodes(&el_ws)
+                iter_child_nodes(el_ws)
                     .map(|node| node.text_content().unwrap())
                     .collect::<Vec<_>>(),
                 &["a", "c"],
@@ -758,13 +758,9 @@ pub mod tests {
 
     /// Tests an update() function that repeatedly sends messages or performs commands.
     #[wasm_bindgen_test(async)]
+    #[allow(clippy::items_after_statements)]
     async fn update_promises() {
         // ARRANGE
-
-        // when we call `test_value_sender.send(..)`, future `test_value_receiver` will be marked as resolved
-        let (test_value_sender, test_value_receiver) =
-            futures::channel::oneshot::channel::<Counters>();
-
         // big numbers because we want to test if it doesn't blow call-stack
         // Note: Firefox has bigger call stack then Chrome - see http://2ality.com/2014/04/call-stack-size.html
         const MESSAGES_TO_SEND: i32 = 5_000;
@@ -783,12 +779,17 @@ pub mod tests {
             counters: Counters,
             test_value_sender: Option<futures::channel::oneshot::Sender<Counters>>,
         }
+
         #[derive(Clone)]
         enum Msg {
             MessageReceived,
             CommandPerformed,
             Start,
         }
+
+        // when we call `test_value_sender.send(..)`, future `test_value_receiver` will be marked as resolved
+        let (test_value_sender, test_value_receiver) =
+            futures::channel::oneshot::channel::<Counters>();
 
         fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip();
@@ -816,7 +817,7 @@ pub mod tests {
                     .take()
                     .unwrap()
                     .send(model.counters)
-                    .unwrap()
+                    .unwrap();
             }
         }
 

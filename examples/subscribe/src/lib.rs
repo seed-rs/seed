@@ -1,3 +1,4 @@
+use gloo_console::log;
 use seed::{prelude::*, *};
 
 mod counter;
@@ -102,10 +103,10 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             log!("String Received", message);
         }
         Msg::UrlRequested(subs::UrlRequested(url, _url_request)) => {
-            log!("Url Requested", url);
+            log!(format!("Url Requested {url:?}"));
         }
         Msg::UrlChanged(subs::UrlChanged(url)) => {
-            log!("Url Changed", url);
+            log!(format!("Url Changed: {url:?}"));
         }
         Msg::SetTimeout => {
             log!("--- Set timeout ---");

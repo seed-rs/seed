@@ -1,3 +1,5 @@
+#![allow(opaque_hidden_inferred_bound)]
+
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing_subscriber::{fmt::Subscriber, EnvFilter};

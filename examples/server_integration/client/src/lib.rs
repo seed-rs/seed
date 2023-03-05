@@ -1,6 +1,6 @@
 #![allow(clippy::enum_variant_names, clippy::large_enum_variant)]
 
-use seed::{prelude::*, *};
+use seed::{div, h2, hr, prelude::*, style};
 
 mod example_a;
 mod example_b;

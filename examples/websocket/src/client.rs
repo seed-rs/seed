@@ -1,6 +1,8 @@
+use gloo_console::{error, log};
 use seed::{prelude::*, *};
 use std::rc::Rc;
 use wasm_sockets::{self, ConnectionStatus, EventClient, Message, WebSocketError};
+use web_sys::CloseEvent;
 
 mod shared;
 
@@ -129,7 +131,7 @@ fn create_websocket(orders: &impl Orders<Msg>) -> Result<EventClient, WebSocketE
 
     let send = msg_sender.clone();
     client.set_on_connection(Some(Box::new(move |client: &EventClient| {
-        log!("{:#?}", client.status);
+        log!(format!("{:#?}", client.status));
         let msg = match *client.status.borrow() {
             ConnectionStatus::Connecting => {
                 log!("Connecting...");

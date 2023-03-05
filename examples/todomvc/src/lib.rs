@@ -1,6 +1,7 @@
 #![allow(clippy::use_self)]
 
 use enclose::enc;
+use gloo_storage::{LocalStorage, Storage};
 use indexmap::IndexMap;
 use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
@@ -196,7 +197,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
     }
     // Note: It should be optimized in a real-world application.
-    LocalStorage::insert(STORAGE_KEY, &data).expect("save data to LocalStorage");
+    LocalStorage::set(STORAGE_KEY, &data).expect("save data to LocalStorage");
 }
 
 // ------ ------

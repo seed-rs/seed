@@ -15,6 +15,8 @@
 
 use apply::Apply;
 use futures::future::try_join_all;
+use gloo_console::log;
+use gloo_net::http::{Method, Request};
 use seed::{prelude::*, *};
 use serde_wasm_bindgen as swb;
 
@@ -100,10 +102,10 @@ enum Msg {
     NotificationPermissionRequested(Result<web_sys::NotificationPermission, ServiceWorkerError>),
     Subscribed(Result<PushSubscription, ServiceWorkerError>),
     SendPushNotification,
-    SubscriptionRegisteredWithServer(Option<FetchError>),
+    SubscriptionRegisteredWithServer(Option<gloo_net::Error>),
     ClearCache,
     CacheCleared(Option<ServiceWorkerError>),
-    WebPushRequest(Option<FetchError>),
+    WebPushRequest(Option<gloo_net::Error>),
 }
 
 #[derive(Debug)]
@@ -165,12 +167,10 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SendPushNotification => {
             orders.perform_cmd(async move {
                 let result = Request::new("http://127.0.0.1:8001/send_notification/")
-                    .method(Method::Post)
+                    .method(Method::POST)
                     .mode(web_sys::RequestMode::Cors)
-                    .fetch()
-                    .await
-                    .expect("save subscription to server")
-                    .check_status();
+                    .send()
+                    .await;
 
                 match result {
                     Ok(_) => Msg::WebPushRequest(None),
@@ -292,19 +292,16 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             };
 
             let save_subscription = Request::new("http://127.0.0.1:8001/save_subscription/")
-                .method(Method::Post)
+                .method(Method::POST)
                 .mode(web_sys::RequestMode::Cors)
                 .json(&push_subscription)
                 .expect("parse subscription to json")
-                .fetch();
+                .send();
 
             worker_data.push_subscription = Some(push_subscription);
 
             orders.perform_cmd(async move {
-                let result = save_subscription
-                    .await
-                    .expect("save subscription to server")
-                    .check_status();
+                let result = save_subscription.await;
 
                 match result {
                     Ok(_) => Msg::SubscriptionRegisteredWithServer(None),
@@ -358,7 +355,7 @@ fn log_error(worker_error: &ServiceWorkerError) -> String {
         ServiceWorkerError::SerdeJson(_) => "Serde failed.",
         ServiceWorkerError::WorkerUnregistration(_) => "Failed to unregister service worker.",
     };
-    error!(message, worker_error);
+    gloo_console::error!(message, format!("{worker_error:?}"));
     format!("{}: {:?}", message, worker_error)
 }
 

@@ -1,6 +1,8 @@
 #![allow(clippy::must_use_candidate)]
 
+use gloo_console::log;
 use gloo_net::http::{Method, Request};
+use gloo_storage::{LocalStorage, Storage};
 use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
@@ -77,8 +79,8 @@ fn send_request_to_top_secret(token: String, orders: &mut impl Orders<Msg>) {
     orders.perform_cmd(async move {
         Msg::TopSecretFetched(
             async {
-                Request::get(&format!("{}/top_secret", API_URL))
-                    .header("Authorization", &format!("Bearer {}", token))
+                Request::get(&format!("{API_URL}/top_secret"))
+                    .header("Authorization", &format!("Bearer {token}"))
                     .send()
                     .await?
                     .text()
@@ -125,7 +127,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::EmailChanged(email) => model.email = email,
         Msg::PasswordChanged(password) => model.password = password,
         Msg::LoginClicked => {
-            let request = Request::new(&format!("{}/users/login", API_URL))
+            let request = Request::new(&format!("{API_URL}/users/login"))
                 .method(Method::POST)
                 .json(&LoginRequestBody {
                     email: &model.email,
@@ -136,16 +138,18 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::LoginFetched(Ok(logged_user)) => {
-            LocalStorage::insert(STORAGE_KEY, &logged_user).expect("save user");
+            LocalStorage::set(STORAGE_KEY, &logged_user).expect("save user");
             model.user = Some(logged_user);
             orders.notify(subs::UrlRequested::new(Urls::new(&model.base_url).home()));
         }
         Msg::TopSecretFetched(Ok(secret_message)) => {
             model.secret_message = Some(secret_message);
         }
-        Msg::LoginFetched(Err(error)) | Msg::TopSecretFetched(Err(error)) => log!(error),
+        Msg::LoginFetched(Err(error)) | Msg::TopSecretFetched(Err(error)) => {
+            log!(format!("{error}"));
+        }
         Msg::LogoutClicked => {
-            LocalStorage::remove(STORAGE_KEY).expect("remove saved user");
+            LocalStorage::delete(STORAGE_KEY);
             model.user = None;
             model.secret_message = None;
         }

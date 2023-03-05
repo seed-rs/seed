@@ -1,4 +1,4 @@
-use seed::{prelude::*, *};
+use seed::prelude::*;
 use std::any::Any;
 
 pub trait PageTrait: Sized {
@@ -16,7 +16,7 @@ pub trait PageTrait: Sized {
 
         msg.downcast_mut::<Option<Self::Message>>().and_then(Option::take)
             .map_or_else(||{
-              error!("Msg not handled!");
+              gloo_console::error!("Msg not handled!");
             }, |msg|
             self.update(msg, &mut orders.proxy(|msg| Box::new(Some(msg)) as Box<dyn Any>)));
     }

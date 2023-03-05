@@ -83,5 +83,8 @@ description = "Test with wasm-pack in Firefox"
 # ---- LINT ----
 
 [tasks.clippy]
-alias = "default_clippy"
-
+# NOTE:
+# `wasm-sockets` does not build on non-wasm targets,
+# so ignore clippy temporary.
+# alias = "default_clippy"
+alias = "build_client"

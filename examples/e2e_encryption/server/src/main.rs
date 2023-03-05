@@ -173,7 +173,7 @@ async fn login_step_2_handler(
         .expect("login state")
         .finish(l3.to_vec().as_slice().try_into().expect("l3"))
         .expect("login step 2");
-    println!("Shared secret: {:?}", secret);
+    println!("Shared secret: {secret:?}");
     *shared_secret.lock().await = Some(secret);
     Ok("Login complete")
 }
@@ -185,10 +185,10 @@ async fn echo_handler(
     let shared_secret_option = &(*shared_secret.lock().await);
     let shared_secret = shared_secret_option.as_ref().expect("shared secret");
 
-    let message = decrypt(&message.to_vec(), shared_secret);
+    let message = decrypt(&message, shared_secret);
     let message = String::from_utf8(message).expect("message");
 
-    println!("Message: {}", message);
+    println!("Message: {message}");
 
     let message = encrypt(message.as_bytes(), shared_secret);
     Ok(message)

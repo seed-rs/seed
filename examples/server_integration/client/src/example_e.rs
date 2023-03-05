@@ -1,3 +1,4 @@
+use gloo_console::log;
 use gloo_net::http::{Method, Request};
 use seed::{prelude::*, *};
 use std::mem;
@@ -13,7 +14,7 @@ pub const DESCRIPTION: &str =
 
 type FetchResult<T> = Result<T, gloo_net::Error>;
 
-fn get_request_url() -> &'static str {
+const fn get_request_url() -> &'static str {
     "/api/form"
 }
 
@@ -97,7 +98,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let form_data = form.to_form_data().expect("create from data from form");
             orders.perform_cmd(async { Msg::ServerResponded(send_request(form_data).await) });
             *model = Model::WaitingForResponse(form);
-            log!(format!("Form {} submitted.", id));
+            log!(format!("Form {id} submitted."));
         }
         Msg::ServerResponded(Ok(response_data)) => {
             *model = Model::ReadyToSubmit(Form::default());
@@ -110,7 +111,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::ServerResponded(Err(fetch_error)) => {
             *model = Model::ReadyToSubmit(mem::take(model.form_mut()));
-            error!("Request failed!", fetch_error);
+            gloo_console::error!(format!("Request failed! {fetch_error:?}"));
         }
     }
 }

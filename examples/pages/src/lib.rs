@@ -98,7 +98,7 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                 button![
                     "Go to Url prefixed by base path (see `base` in `index.html`)",
                     ev(Ev::Click, |_| Url::new()
-                        .set_path(&["base", "path"])
+                        .set_path(["base", "path"])
                         .go_and_load())
                 ]
             ],

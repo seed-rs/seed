@@ -109,8 +109,8 @@ pub fn view(model: &Model, intro: impl FnOnce(&str, &str) -> Vec<Node<Msg>>) -> 
         match &model.fetch_result {
             None =>
                 IF!(matches!(model.status, Status::WaitingForResponse(_)) => div!["Waiting for response..."]),
-            Some(Ok(result)) => Some(div![format!("Server returned: {:#?}", result)]),
-            Some(Err(fetch_error)) => Some(div![format!("{:#?}", fetch_error)]),
+            Some(Ok(result)) => Some(div![format!("Server returned: {result:#?}")]),
+            Some(Err(fetch_error)) => Some(div![format!("{fetch_error:#?}")]),
         },
         view_button(&model.status),
     ]

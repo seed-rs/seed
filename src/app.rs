@@ -369,16 +369,16 @@ where
 
         // Execute `after_next_render_callbacks`.
 
-        let render_info = match self.data.render_info.take() {
-            Some(old_render_info) => RenderInfo {
-                timestamp: new_render_timestamp,
-                timestamp_delta: Some(new_render_timestamp - old_render_info.timestamp),
-            },
-            None => RenderInfo {
+        let render_info = self.data.render_info.take().map_or(
+            RenderInfo {
                 timestamp: new_render_timestamp,
                 timestamp_delta: None,
             },
-        };
+            |old_render_info| RenderInfo {
+                timestamp: new_render_timestamp,
+                timestamp_delta: Some(new_render_timestamp - old_render_info.timestamp),
+            },
+        );
         self.data.render_info.set(Some(render_info));
 
         self.process_effect_queue(

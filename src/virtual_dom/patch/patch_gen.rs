@@ -225,7 +225,7 @@ where
                 .or_else(|| self.old_children_iter.next());
             let new = self.new_children_iter.next();
             // We should not issue any command if both the old and the new nodes are `Empty`.
-            if let (Some(Node::Empty), Some(Node::Empty)) = (&old, &new) {
+            if matches!((&old, &new), (Some(Node::Empty), Some(Node::Empty))) {
                 continue;
             }
             break (old, new);

@@ -56,7 +56,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
             node_to_element(el_ws)
                 .and_then(|element| {
                     element.set_attribute(at.as_str(), value).map_err(|error| {
-                        Cow::from(format!("Problem setting an attribute: {:?}", error))
+                        Cow::from(format!("Problem setting an attribute: {error:?}"))
                     })
                 })
                 .unwrap_or_else(|err| {
@@ -67,7 +67,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
             node_to_element(el_ws)
                 .and_then(|element| {
                     element.set_attribute(at.as_str(), "").map_err(|error| {
-                        Cow::from(format!("Problem setting an attribute: {:?}", error))
+                        Cow::from(format!("Problem setting an attribute: {error:?}"))
                     })
                 })
                 .unwrap_or_else(|err| {
@@ -78,7 +78,7 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
             node_to_element(el_ws)
                 .and_then(|element| {
                     element.remove_attribute(at.as_str()).map_err(|error| {
-                        Cow::from(format!("Problem removing an attribute: {:?}", error))
+                        Cow::from(format!("Problem removing an attribute: {error:?}"))
                     })
                 })
                 .unwrap_or_else(|err| {
@@ -98,14 +98,18 @@ fn set_attr_value(el_ws: &web_sys::Node, at: &At, at_value: &AtValue) {
 pub(crate) fn make_websys_el<Ms>(el: &mut El<Ms>, document: &web_sys::Document) -> web_sys::Node {
     let tag = el.tag.as_str();
 
-    let el_ws = match el.namespace {
-        Some(ref ns) => document
-            .create_element_ns(Some(ns.as_str()), tag)
-            .expect("Problem creating web-sys element with namespace"),
-        None => document
-            .create_element(tag)
-            .expect("Problem creating web-sys element"),
-    };
+    let el_ws = el.namespace.as_ref().map_or_else(
+        || {
+            document
+                .create_element(tag)
+                .expect("Problem creating web-sys element")
+        },
+        |ns| {
+            document
+                .create_element_ns(Some(ns.as_str()), tag)
+                .expect("Problem creating web-sys element with namespace")
+        },
+    );
 
     fix_attrs_order(&mut el.attrs);
     for (at, attr_value) in &el.attrs.vals {
@@ -223,17 +227,16 @@ pub(crate) fn patch_el_details<Ms>(
     fix_attrs_order(&mut new.attrs);
 
     for (key, new_val) in &new.attrs.vals {
-        match old.attrs.vals.get(key) {
-            Some(old_val) => {
-                // The value's different
+        old.attrs.vals.get(key).map_or_else(
+            || {
+                set_attr_value(old_el_ws, key, new_val);
+            },
+            |old_val| {
                 if old_val != new_val {
                     set_attr_value(old_el_ws, key, new_val);
                 }
-            }
-            None => {
-                set_attr_value(old_el_ws, key, new_val);
-            }
-        }
+            },
+        );
 
         // We handle value in the vdom using attributes, but the DOM needs
         // to use set_value or set_checked.
@@ -256,8 +259,11 @@ pub(crate) fn patch_el_details<Ms>(
     for (key, old_val) in &old.attrs.vals {
         if new.attrs.vals.get(key).is_none() {
             // todo get to the bottom of this
-            match old_el_ws.dyn_ref::<web_sys::Element>() {
-                Some(el) => {
+            old_el_ws.dyn_ref::<web_sys::Element>().map_or_else(
+                || {
+                    crate::error("Minor error on html element (setting attrs)");
+                },
+                |el| {
                     el.remove_attribute(key.as_str())
                         .expect("Removing an attribute");
 
@@ -279,11 +285,8 @@ pub(crate) fn patch_el_details<Ms>(
                     .unwrap_or_else(|err| {
                         crate::error(err);
                     });
-                }
-                None => {
-                    crate::error("Minor error on html element (setting attrs)");
-                }
-            }
+                },
+            );
         }
     }
 
@@ -479,8 +482,7 @@ pub fn node_from_ws<Ms>(node: &web_sys::Node) -> Option<Node<Ms>> {
         web_sys::Node::COMMENT_NODE => None,
         node_type => {
             crate::error(format!(
-                "HTML node type {} is not supported by Seed",
-                node_type
+                "HTML node type {node_type} is not supported by Seed"
             ));
             None
         }
@@ -508,16 +510,16 @@ pub(crate) fn insert_node(
     parent: &web_sys::Node,
     next: Option<web_sys::Node>,
 ) {
-    match next {
-        Some(n) => {
+    next.map_or_else(
+        || {
+            parent.append_child(node).expect("Problem inserting node");
+        },
+        |n| {
             parent
                 .insert_before(node, Some(&n))
                 .expect("Problem inserting node");
-        }
-        None => {
-            parent.append_child(node).expect("Problem inserting node");
-        }
-    };
+        },
+    );
 }
 
 pub(crate) fn remove_node(node: &web_sys::Node, parent: &web_sys::Node) {

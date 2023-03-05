@@ -148,8 +148,7 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), Cow<'
     set!(HtmlSelectElement);
     set!(HtmlProgressElement, |_| value.parse().map_err(|error| {
         Cow::from(format!(
-            "Can't parse value to `f64` for `HtmlProgressElement`. Error: {:?}",
-            error
+            "Can't parse value to `f64` for `HtmlProgressElement`. Error: {error:?}",
         ))
     }));
     set!(HtmlOptionElement);
@@ -157,14 +156,12 @@ pub fn set_value(target: &web_sys::EventTarget, value: &str) -> Result<(), Cow<'
     set!(HtmlDataElement);
     set!(HtmlMeterElement, |_| value.parse().map_err(|error| {
         Cow::from(format!(
-            "Can't parse value to `f64` for `HtmlMeterElement`. Error: {:?}",
-            error
+            "Can't parse value to `f64` for `HtmlMeterElement`. Error: {error:?}"
         ))
     }));
     set!(HtmlLiElement, |_| value.parse().map_err(|error| {
         Cow::from(format!(
-            "Can't parse value to `i32` for `HtmlLiElement`. Error: {:?}",
-            error
+            "Can't parse value to `i32` for `HtmlLiElement`. Error: {error:?}"
         ))
     }));
     set!(HtmlOutputElement);

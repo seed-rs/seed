@@ -30,6 +30,8 @@ web-push = { version = "0.9.3", optional = true }
 
 # client
 apply = { version = "0.3.0", optional = true }
+gloo-net = { version = "0.2.6", optional = true }
+gloo-console = { version = "0.2.3", optional = true }
 seed =  { path = "../../", optional = true }
 serde-wasm-bindgen = { version = "0.4.5", optional = true }
 
@@ -53,5 +55,5 @@ optional = true
 
 [features]
 default = []
-client = ["apply", "seed", "web-sys"]
+client = ["dep:apply", "dep:seed", "dep:web-sys", "dep:serde_json", "dep:serde-wasm-bindgen", "dep:gloo-console", "dep:gloo-net"]
 server = ["anyhow", "tokio", "warp", "tracing", "tracing-subscriber", "web-push"]

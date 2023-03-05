@@ -14,7 +14,7 @@ impl GetElement for &str {
     fn get_element(self) -> Result<Element, String> {
         document()
             .get_element_by_id(self)
-            .ok_or_else(|| format!("cannot find element with given id: {}", self))
+            .ok_or_else(|| format!("cannot find element with given id: {self}"))
     }
 }
 

@@ -18,5 +18,6 @@ seed = { path = "../../../" }
 # change "wasm-bindgen" to "js" for >=0.2
 getrandom = { version = "0.1.16", features = ["wasm-bindgen"] } 
 gloo-net = "0.2.6"
+gloo-console = "0.2.3"
 
 shared = { path = "../shared" }

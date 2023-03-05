@@ -31,11 +31,7 @@ pub fn setup_popstate_listener(
             .dyn_ref::<web_sys::PopStateEvent>()
             .expect("Problem casting as Popstate event");
 
-        let url = match json::from_js_value(&ev.state()) {
-            Ok(url) => url,
-            // Only update when requested for an update by the user.
-            Err(_) => Url::current(),
-        };
+        let url = json::from_js_value(&ev.state()).map_or_else(|_| Url::current(), |url| url);
 
         notify(Notification::new(subs::UrlChanged(
             url.skip_base_path(&base_path),
