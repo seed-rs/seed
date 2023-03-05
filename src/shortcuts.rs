@@ -4,7 +4,6 @@
 // @TODO merge with `pub use` & `prelude` in `lib.rs` and `browser::util`?
 
 use crate::virtual_dom::{At, Attrs};
-use std::fmt;
 
 /// Allows to write nested macros.
 ///
@@ -486,54 +485,6 @@ macro_rules! nodes {
             nodes
         }
     };
-}
-
-pub const fn wrap_debug<T>(object: T) -> T
-where
-    T: fmt::Debug,
-{
-    object
-}
-
-/// A convenience function for logging to the web browser's console.  We use
-/// a macro to supplement the log function to allow multiple inputs.
-#[macro_export]
-#[deprecated(note = "Use something like https://crates.io/crates/gloo-console instead")]
-macro_rules! log {
-    { $($expr:expr),* $(,)? } => {
-        {
-            let mut formatted_exprs = Vec::new();
-            $(
-                formatted_exprs.push(format!("{:#?}", $crate::shortcuts::wrap_debug(&$expr)));
-            )*
-            $crate::shortcuts::log_1(
-                &formatted_exprs
-                    .as_slice()
-                    .join(" ")
-                    .into()
-            );
-        }
-     };
-}
-
-/// Similar to log!
-#[macro_export]
-#[deprecated(note = "Use something like https://crates.io/crates/gloo-console instead")]
-macro_rules! error {
-    { $($expr:expr),* $(,)? } => {
-        {
-            let mut formatted_exprs = Vec::new();
-            $(
-                formatted_exprs.push(format!("{:#?}", $crate::shortcuts::wrap_debug(&$expr)));
-            )*
-            web_sys::console::error_1(
-                &formatted_exprs
-                    .as_slice()
-                    .join(" ")
-                    .into()
-            );
-        }
-     };
 }
 
 /// A key-value pairs, where the keys and values must implement `ToString`.

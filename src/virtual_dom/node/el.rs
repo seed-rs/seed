@@ -277,8 +277,8 @@ impl<Ms> El<Ms> {
             _ => false,
         };
         if script_found {
-            error!("Script tag found inside mount point! \
-                    Please check https://docs.rs/seed/latest/seed/app/builder/struct.Builder.html#examples");
+            web_sys::console::error_1(&wasm_bindgen::JsValue::from("Script tag found inside mount point! \
+                    Please check https://docs.rs/seed/latest/seed/app/builder/struct.Builder.html#examples"));
         }
 
         for child in &self.children {
