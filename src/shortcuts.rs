@@ -5,7 +5,6 @@
 
 use crate::virtual_dom::{At, Attrs};
 use std::fmt;
-use wasm_bindgen::JsValue;
 
 /// Allows to write nested macros.
 ///
@@ -498,11 +497,8 @@ where
 
 /// A convenience function for logging to the web browser's console.  We use
 /// a macro to supplement the log function to allow multiple inputs.
-///
-/// NOTE: `log!` also accepts entities which don't implement `Debug` on `nightly` Rust.
-/// It's useful because you don't have to add `Debug` bound to many places - implementation for
-/// logged entity is enough.
 #[macro_export]
+#[deprecated(note = "Use something like https://crates.io/crates/gloo-console instead")]
 macro_rules! log {
     { $($expr:expr),* $(,)? } => {
         {
@@ -519,13 +515,10 @@ macro_rules! log {
         }
      };
 }
-// wrapper for `log_1` because we don't want to "leak" `web_sys` dependency through macro
-pub fn log_1(data_1: &JsValue) {
-    web_sys::console::log_1(data_1);
-}
 
 /// Similar to log!
 #[macro_export]
+#[deprecated(note = "Use something like https://crates.io/crates/gloo-console instead")]
 macro_rules! error {
     { $($expr:expr),* $(,)? } => {
         {
@@ -533,7 +526,7 @@ macro_rules! error {
             $(
                 formatted_exprs.push(format!("{:#?}", $crate::shortcuts::wrap_debug(&$expr)));
             )*
-            $crate::shortcuts::error_1(
+            web_sys::console::error_1(
                 &formatted_exprs
                     .as_slice()
                     .join(" ")
@@ -541,10 +534,6 @@ macro_rules! error {
             );
         }
      };
-}
-// wrapper for `error_1` because we don't want to "leak" `web_sys` dependency through macro
-pub fn error_1(data_1: &JsValue) {
-    web_sys::console::error_1(data_1);
 }
 
 /// A key-value pairs, where the keys and values must implement `ToString`.

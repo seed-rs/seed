@@ -13,8 +13,6 @@ categories = ["wasm", "web-programming"]
 edition = "2021"
 rust-version = "1.61.0"
 
-build = "build.rs"
-
 [workspace]
 members = [
     "examples/animation",
