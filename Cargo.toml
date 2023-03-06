@@ -77,7 +77,7 @@ wasm-bindgen-futures = "0.4.34"
 
 # Optional dependencies
 serde = { version = "1.0.152", features = ['derive'], optional = true }
-serde-wasm-bindgen = { version = "0.4.5", optional = true }
+serde-wasm-bindgen = { version = "0.5.0", optional = true }
 
 [dependencies.web-sys]
 version = "0.3.61"
