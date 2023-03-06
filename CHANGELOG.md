@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.10.0
 
 - Updated dependencies
 - Adapted to Rust 1.67.1.
