@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Updated dependencies
+- Adapted to Rust 1.67.1.
+- [BREAKING] removed `fetch` module (use [`gloo-net`](https://docs.rs/gloo-net/))
+- [BREAKING] removed `websocket` module (use [`gloo-net`](https://docs.rs/gloo-net/) or [`wasm-sockets`](https://docs.rs/wasm-sockets/))
+- [BREAKING] removed `web-storage!` module (use [`gloo-storage`](https://docs.rs/gloo-storage/))
+- [BREAKING] removed `log!` and `error!` macros (use [`gloo-console`](https://docs.rs/gloo-console/))
+- [BREAKING] removed `md!` macro (use an external crate + `El::from_html`)
+- [BREAKING] removed `cookies()` function (use an external crate like [cookie](https://docs.rs/cookie/))
+- [BREAKING] removed `panic-hook` feature (use [`console_error_panic_hook`](https://docs.rs/console_error_panic_hook))
+
 ## v0.9.2
 
 #### Fixed
