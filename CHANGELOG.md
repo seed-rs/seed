@@ -11,6 +11,8 @@
 - [BREAKING] removed `md!` macro (use an external crate + `El::from_html`)
 - [BREAKING] removed `cookies()` function (use an external crate like [cookie](https://docs.rs/cookie/))
 - [BREAKING] removed `panic-hook` feature (use [`console_error_panic_hook`](https://docs.rs/console_error_panic_hook))
+- [BREAKING] removed `serde-json` and `serde-wasm-bindgen` features
+- [BREAKING] added `routing` feature
 
 ## v0.9.2
 

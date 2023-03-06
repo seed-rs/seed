@@ -169,7 +169,7 @@ pub fn set_timeout(handler: Box<dyn Fn()>, timeout: i32) {
 /// for element-creation macros, input event constructors, and the `History` struct.
 /// Expose the `wasm_bindgen` prelude.
 pub mod prelude {
-    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+    #[cfg(feature = "routing")]
     pub use crate::app::subs;
     pub use crate::{
         app::{

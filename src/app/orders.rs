@@ -1,11 +1,12 @@
-#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
-use super::subs;
 use super::{App, CmdHandle, RenderInfo, StreamHandle, SubHandle};
-#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
-use crate::browser::Url;
 use crate::virtual_dom::IntoNodes;
 use futures::stream::Stream;
 use std::{any::Any, future::Future, rc::Rc};
+
+#[cfg(feature = "routing")]
+use super::subs;
+#[cfg(feature = "routing")]
+use crate::browser::Url;
 
 // @TODO: Add links to doc comment once https://github.com/rust-lang/rust/issues/43466 is resolved
 // or use nightly rustdoc. Applicable to the entire code base.
@@ -323,7 +324,7 @@ pub trait Orders<Ms: 'static> {
     /// Simulate `<a href="[url]">` element click.
     ///
     /// A thin wrapper for `orders.notify(subs::UrlRequested::new(url))`
-    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+    #[cfg(feature = "routing")]
     fn request_url(&mut self, url: Url) -> &mut Self {
         self.notify(subs::UrlRequested::new(url))
     }

@@ -1,10 +1,11 @@
-#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
-use crate::browser::json;
 use crate::browser::util;
-#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
-use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::BTreeMap, fmt, str::FromStr};
 use wasm_bindgen::JsValue;
+
+#[cfg(feature = "routing")]
+use crate::browser::json;
+#[cfg(feature = "routing")]
+use serde::{Deserialize, Serialize};
 
 pub const DUMMY_BASE_URL: &str = "http://example.com";
 
@@ -19,10 +20,7 @@ pub const DUMMY_BASE_URL: &str = "http://example.com";
 ///
 /// (If the features above are problems for you, create an [issue](https://github.com/seed-rs/seed/issues/new))
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(
-    any(feature = "serde-json", feature = "serde-wasm-bindgen"),
-    derive(Serialize, Deserialize)
-)]
+#[cfg_attr(feature = "routing", derive(Serialize, Deserialize))]
 pub struct Url {
     next_path_part_index: usize,
     next_hash_path_part_index: usize,
@@ -45,7 +43,7 @@ impl Url {
     ///
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
-    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+    #[cfg(feature = "routing")]
     pub fn go_and_push(&self) {
         // We use data to evaluate the path instead of the path displayed in the url.
         let data: JsValue = json::to_js_value(self).expect("Problem serializing route data");
@@ -62,7 +60,7 @@ impl Url {
     /// # References
     /// * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/History_API)
 
-    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+    #[cfg(feature = "routing")]
     pub fn go_and_replace(&self) {
         // We use data to evaluate the path instead of the path displayed in the url.
         let data: JsValue = json::to_js_value(self).expect("Problem serializing route data");
@@ -616,10 +614,7 @@ impl From<&web_sys::Url> for Url {
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    any(feature = "serde-json", feature = "serde-wasm-bindgen"),
-    derive(Serialize, Deserialize)
-)]
+#[cfg_attr(feature = "routing", derive(Serialize, Deserialize))]
 pub struct UrlSearch {
     search: BTreeMap<String, Vec<String>>,
     invalid_components: Vec<String>,

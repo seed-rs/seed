@@ -1,7 +1,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::browser::dom::virtual_dom_bridge;
-#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+#[cfg(feature = "routing")]
 use crate::browser::service::routing;
 use crate::browser::{
     util::{self, window},
@@ -31,7 +31,7 @@ pub mod render_info;
 pub mod stream_manager;
 pub mod streams;
 pub mod sub_manager;
-#[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+#[cfg(feature = "routing")]
 pub mod subs;
 
 pub use cfg::AppCfg;
@@ -196,14 +196,14 @@ where
             &mut orders,
         );
         app.data.model.replace(Some(new_model));
-        #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+        #[cfg(feature = "routing")]
         app.setup_routing(&mut orders);
         app.process_effect_queue(orders.effects);
         app.rerender_vdom();
         app
     }
 
-    #[cfg(any(feature = "serde-json", feature = "serde-wasm-bindgen"))]
+    #[cfg(feature = "routing")]
     fn setup_routing(&self, orders: &mut impl Orders<Ms>) {
         use enclose::enc;
         routing::setup_popstate_listener(

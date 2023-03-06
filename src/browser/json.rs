@@ -6,12 +6,7 @@ pub struct Error(JsValue);
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[cfg(feature = "serde-wasm-bindgen")]
+#[cfg(feature = "routing")]
 mod swb;
-#[cfg(feature = "serde-wasm-bindgen")]
+#[cfg(feature = "routing")]
 pub use swb::*;
-
-#[cfg(all(not(feature = "serde-wasm-bindgen"), feature = "serde-json"))]
-mod serde_json;
-#[cfg(all(not(feature = "serde-wasm-bindgen"), feature = "serde-json"))]
-pub use self::serde_json::*;

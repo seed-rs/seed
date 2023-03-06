@@ -9,4 +9,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gloo-console = "0.2.3"
-seed = {path = "../../"}
+seed = { path = "../../", features = ["routing"] }

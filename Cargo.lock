@@ -2811,7 +2811,6 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "serde-wasm-bindgen",
- "serde_json",
  "uuid",
  "version_check",
  "wasm-bindgen",
@@ -2859,9 +2858,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.93"
+version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cad406b69c91885b5107daf2c29572f6c8cdb3c66826821e286c533490c0bc76"
+checksum = "1c533a59c9d8a93a09c6ab31f0fd5e5f4dd1b8fc9434804029839884765d04ea"
 dependencies = [
  "itoa",
  "ryu",
@@ -3226,6 +3225,7 @@ dependencies = [
  "indexmap",
  "seed",
  "serde",
+ "serde_json",
  "uuid",
 ]
 
@@ -3657,8 +3657,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "31f8dcbc21f30d9b8f2ea926ecb58f6b91192c17e9d33594b3df58b2007ca53b"
 dependencies = [
  "cfg-if 1.0.0",
- "serde",
- "serde_json",
  "wasm-bindgen-macro",
 ]
 

@@ -11,5 +11,5 @@ crate-type = ["cdylib"]
 gloo-console = "0.2.3"
 gloo-net = "0.2.6"
 gloo-storage = "0.2.2"
-seed = {path = "../../"}
+seed = { path = "../../", features = ["routing"] }
 serde = "1.0.152"
