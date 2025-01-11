@@ -6,7 +6,9 @@
   <img src="https://raw.githubusercontent.com/seed-rs/seed-rs.org/81ed1acc77062ede3295683f21f2d39611843192/seed_branding/seed_logo.min.svg" width="256" title="Seed logo">
 </p>
 
-### [Website](https://seed-rs.org) | [Discord](https://discord.gg/JHHcHp5)
+### Website | [Discord](https://discord.gg/JHHcHp5)
+> [!WARNING]
+> The link to seed-rs.org is temporally disabled because a third party may have acquired it (see https://github.com/seed-rs/seed-rs.org/issues/126)
 ---
 Seed is a Rust front-end framework for creating fast and reliable web apps with an Elm-like architecture.
 
@@ -49,7 +51,7 @@ You should now see a working counter app in your browser at `localhost:8080`.
 
 ## Getting into Seed
 
-The [Seed website](https://seed-rs.org/) and the [library docs](https://docs.rs/seed/latest) are the best way to learn about the functionalities of Seed.
+The ~~Seed website~~ and the [library docs](https://docs.rs/seed/latest) are the best way to learn about the functionalities of Seed.
 
 The [Seed examples](examples/) are another good resource.
 
@@ -80,7 +82,7 @@ but if you want to see some features and bring a budget, feel free to contact us
 
 ## Documentation
 
-- Guides can be found at [seed-rs.org](https://seed-rs.org)
+- Guides can be found at ~~seed-rs.org~~
 - API documentation can be found at [docs.rs/seed](https://docs.rs/seed)
 
 ## Resources
