@@ -6,9 +6,8 @@
   <img src="https://raw.githubusercontent.com/seed-rs/seed-rs.org/81ed1acc77062ede3295683f21f2d39611843192/seed_branding/seed_logo.min.svg" width="256" title="Seed logo">
 </p>
 
-### Website | [Discord](https://discord.gg/JHHcHp5)
-> [!WARNING]
-> The link to seed-rs.org is temporally disabled because a third party may have acquired it (see https://github.com/seed-rs/seed-rs.org/issues/126)
+## 2026 update: I now use plain HTML, CSS, and JS for websites. Back where we started?
+
 ---
 Seed is a Rust front-end framework for creating fast and reliable web apps with an Elm-like architecture.
 
